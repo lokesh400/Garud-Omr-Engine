@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Sheet - <%= paper.title %></title>
+    <style>
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body { 
+            background: #e2e8f0; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .print-btn { 
+            margin-bottom: 20px; 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        /* A4 Fixed Size */
+        .omr-container {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            position: relative;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 12mm;
+        }
+
+        @media print {
+            body { 
+                background: white; 
+                padding: 0;
+            }
+            .omr-container {
+                box-shadow: none;
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                page-break-after: always;
+            }
+            .no-print {
+                display: none;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+
+        /* Corner Markers - Using Border to ensure it prints even without color-adjust support */
+        .corner-marker {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 10px solid black; /* Creates a 20x20 black square */
+        }
+        .top-left { top: 8mm; left: 8mm; }
+        .top-right { top: 8mm; right: 8mm; }
+        .bottom-left { bottom: 8mm; left: 8mm; }
+        .bottom-right { bottom: 8mm; right: 8mm; }
+
+        /* Header Layout */
+        .omr-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            margin-top: 10px; 
+        }
+        .student-info {
+            flex: 1;
+        }
+        .student-info h2 { margin: 0 0 10px 0; font-size: 18px; text-transform: uppercase;}
+        .student-info p { margin: 5px 0; font-size: 13px; font-weight: bold;}
+        
+        .id-box {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+            font-size: 9px;
+            width: 100px;
+            height: 55px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: 10px;
+        }
+
+        /* Roll Number Grid */
+        .roll-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 20px;
+        }
+        .roll-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .roll-boxes {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .roll-box {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #000;
+            margin-right: 3px;
+        }
+        .roll-grid {
+            display: flex;
+            flex-direction: column;
+        }
+        .roll-row {
+            display: flex;
+            margin-bottom: 3px;
+        }
+        
+        .bubble {
+            width: 14px;
+            height: 14px;
+            border: 1px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 3px;
+            font-size: 7px;
+            color: #000;
+            background-color: white;
+        }
+
+        /* Questions Layout */
+        .questions-area {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        .q-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+            break-inside: avoid;
+        }
+
+        .q-num {
+            width: 25px;
+            text-align: right;
+            margin-right: 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .q-bubble {
+            width: 14px;
+            height: 14px;
+            border: 1px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 4px;
+            font-size: 7px;
+            color: #000;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Print OMR Sheet</button>
+
+    <div class="omr-container">
+        <!-- 4 Corner Markers -->
+        <div class="corner-marker top-left"></div>
+        <div class="corner-marker top-right"></div>
+        <div class="corner-marker bottom-left"></div>
+        <div class="corner-marker bottom-right"></div>
+
+        <div class="omr-header">
+            <div class="student-info">
+                <h2><%= paper.title %></h2>
+                <p>Name: _______________________________</p>
+                <p>Date: _______________________________</p>
+                <p>Signature: ___________________________</p>
+            </div>
+            
+            <div class="roll-section">
+                <div class="roll-title">ROLL NUMBER (8 DIGITS)</div>
+                <div class="roll-boxes">
+                    <% for(let c=1; c<=8; c++) { %>
+                        <div class="roll-box"></div>
+                    <% } %>
+                </div>
+                <div class="roll-grid">
+                    <% for(let r=0; r<=9; r++) { %>
+                        <div class="roll-row">
+                            <% for(let c=1; c<=8; c++) { %>
+                                <div class="bubble"><%= r %></div>
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="id-box">
+                <strong>PAPER ID</strong>
+                <br>
+                <!-- Reserved for future QR Code or custom ID -->
+                <br><br>
+                <em>Do not mark here</em>
+            </div>
+        </div>
+
+        <div class="questions-area">
+            <% 
+            const questionsPerCol = 40;
+            const maxCols = 5;
+            %>
+            <% for(let col=0; col<maxCols; col++) { %>
+                <div class="q-col">
+                    <% for(let r=1; r<=questionsPerCol; r++) { 
+                        let qNum = (col * questionsPerCol) + r;
+                        if(qNum <= paper.numQuestions && qNum <= (questionsPerCol * maxCols)) {
+                    %>
+                        <div class="q-row">
+                            <div class="q-num"><%= qNum %>.</div>
+                            <div class="q-bubble">A</div>
+                            <div class="q-bubble">B</div>
+                            <div class="q-bubble">C</div>
+                            <div class="q-bubble">D</div>
+                        </div>
+                    <% } 
+                    } %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

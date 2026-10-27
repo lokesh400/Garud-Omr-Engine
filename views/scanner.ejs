@@ -1,0 +1,713 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Camera Scanner - <%= paper.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .scanner-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .viewfinder-card {
+            position: relative;
+            background: #111827;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 480px;
+        }
+        #videoInput {
+            display: none;
+        }
+        #canvasPreview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .shutter-flash {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.08s ease-out;
+            z-index: 50;
+        }
+        .shutter-flash.flash {
+            opacity: 0.9;
+        }
+        .hud-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .hud-badge {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #EF4444;
+        }
+        .pulse-dot.ready {
+            background: #10B981;
+            box-shadow: 0 0 10px #10B981;
+            animation: pulseRing 1.5s infinite;
+        }
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.6; }
+            100% { transform: scale(0.95); opacity: 1; }
+        }
+        .auto-progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            width: 0%;
+            transition: width 0.1s linear;
+            z-index: 30;
+        }
+        .scanner-controls {
+            padding: 1rem 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(31, 41, 55, 0.95);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            z-index: 20;
+        }
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #4B5563;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #10B981; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Results Card */
+        #resultsSection {
+            display: none;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .results-grid { grid-template-columns: 1fr; }
+        }
+        .score-hero {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat-box {
+            background: #F9FAFB;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .stat-box .num { font-size: 1.3rem; font-weight: 700; }
+        .stat-box .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .breakdown-table th, .breakdown-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .breakdown-table th { background: #F9FAFB; font-weight: 600; color: var(--text-muted); }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-correct { background: #DEF7EC; color: #03543F; }
+        .badge-wrong { background: #FDE8E8; color: #9B1C1C; }
+        .badge-blank { background: #F3F4F6; color: #6B7280; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 1100px;">
+        <header>
+            <div>
+                <h1>Auto-Capture OMR Scanner</h1>
+                <p style="color: var(--text-muted); margin-top: 5px;"><%= paper.title %> &bull; Hold the sheet steadily in front of the camera</p>
+            </div>
+            <a href="/paper/<%= paper._id %>" class="btn btn-secondary">&larr; Back to Paper</a>
+        </header>
+
+        <div class="scanner-layout">
+            <!-- Viewfinder Section -->
+            <div id="viewfinderSection" class="viewfinder-card">
+                <div class="video-container">
+                    <div id="shutterFlash" class="shutter-flash"></div>
+                    
+                    <div class="hud-overlay">
+                        <div class="hud-badge">
+                            <div id="pulseDot" class="pulse-dot"></div>
+                            <span id="hudStatus">Starting camera...</span>
+                        </div>
+                        <div id="countdownBadge" class="hud-badge" style="display:none; color: #10B981; font-weight:700;">
+                            Auto-Snapping in 1s...
+                        </div>
+                    </div>
+
+                    <div id="autoProgressBar" class="auto-progress-bar"></div>
+
+                    <video id="videoInput" autoplay playsinline></video>
+                    <canvas id="canvasPreview"></canvas>
+                </div>
+
+                <div class="scanner-controls">
+                    <label class="toggle-switch">
+                        <span class="switch">
+                            <input type="checkbox" id="autoCaptureToggle" checked>
+                            <span class="slider"></span>
+                        </span>
+                        <span>Auto-Click when Aligned</span>
+                    </label>
+
+                    <button id="manualSnapBtn" class="btn btn-primary" onclick="triggerManualCapture()">
+                        📸 Click Photo Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Graded Results Section (Shown after capture) -->
+            <div id="resultsSection">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>Scanned Evaluation</h2>
+                    <button class="btn btn-primary" onclick="restartScanner()" style="display: flex; align-items: center; gap: 8px;">
+                        📷 Scan Another Sheet
+                    </button>
+                </div>
+
+                <div class="results-grid">
+                    <!-- Annotated Sheet Preview -->
+                    <div class="card" style="padding: 1rem; text-align: center;">
+                        <canvas id="canvasResult" style="max-width: 100%; height: auto; border: 2px solid var(--border-color); border-radius: 8px;"></canvas>
+                    </div>
+
+                    <!-- Scorecard & Breakdown -->
+                    <div>
+                        <div class="score-hero">
+                            <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Score</div>
+                            <div class="score-val" id="scoreValue" style="font-size: 3rem; font-weight: 700; margin: 0.5rem 0;">0 / 0</div>
+                            <div id="scorePercentage" style="font-size: 1.1rem; font-weight: 500;">0% Correct</div>
+                        </div>
+
+                        <div class="card" style="padding: 1.25rem;">
+                            <div class="stat-grid">
+                                <div class="stat-box">
+                                    <div class="num" id="statCorrect" style="color: #10B981;">0</div>
+                                    <div class="lbl">Correct</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="num" id="statWrong" style="color: #EF4444;">0</div>
+                                    <div class="lbl">Wrong</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="num" id="statAttempted" style="color: #4F46E5;">0</div>
+                                    <div class="lbl">Attempted</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="num" id="statBlank" style="color: #6B7280;">0</div>
+                                    <div class="lbl">Unmarked</div>
+                                </div>
+                            </div>
+
+                            <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Question Breakdown</h4>
+                            <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                                <table class="breakdown-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Marked</th>
+                                            <th>Key</th>
+                                            <th>Verdict</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const answerKey = <%- answerKey || '{}' %>;
+        const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+
+        const video = document.getElementById('videoInput');
+        const previewCanvas = document.getElementById('canvasPreview');
+        const previewCtx = previewCanvas.getContext('2d');
+        const resultCanvas = document.getElementById('canvasResult');
+        const resultCtx = resultCanvas.getContext('2d');
+
+        const hudStatus = document.getElementById('hudStatus');
+        const pulseDot = document.getElementById('pulseDot');
+        const countdownBadge = document.getElementById('countdownBadge');
+        const autoProgressBar = document.getElementById('autoProgressBar');
+        const autoCaptureToggle = document.getElementById('autoCaptureToggle');
+        const shutterFlash = document.getElementById('shutterFlash');
+
+        let cameraStream = null;
+        let isProcessing = false;
+        let animationFrameId = null;
+
+        // Stability tracking for auto-capture
+        let stableFrames = 0;
+        const REQUIRED_STABLE_FRAMES = 12; // ~1 second of steady alignment at 12-15 FPS
+        let lastMarkers = null;
+        let captured = false;
+
+        // Synthesize camera shutter sound via Web Audio API (offline, zero-latency)
+        function playShutterSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.09);
+            } catch (e) {}
+        }
+
+        async function initCamera() {
+            captured = false;
+            stableFrames = 0;
+            lastMarkers = null;
+            autoProgressBar.style.width = '0%';
+            document.getElementById('viewfinderSection').style.display = 'flex';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+                await video.play();
+
+                previewCanvas.width = video.videoWidth || 1280;
+                previewCanvas.height = video.videoHeight || 720;
+                
+                hudStatus.textContent = 'Align OMR sheet in camera view...';
+                pulseDot.className = 'pulse-dot';
+                
+                scanFrame();
+            } catch (err) {
+                console.error(err);
+                hudStatus.textContent = 'Camera error: ' + err.message;
+            }
+        }
+
+        // Fast Corner Marker Detector on live frame
+        function detectMarkers(ctx, W, H) {
+            const imgData = ctx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            function findCorner(x1, y1, x2, y2) {
+                let count = 0, sumX = 0, sumY = 0;
+                const step = 4;
+                for (let y = Math.floor(y1); y < y2; y += step) {
+                    for (let x = Math.floor(x1); x < x2; x += step) {
+                        const idx = (y * W + x) * 4;
+                        if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 85) {
+                            count++;
+                            sumX += x;
+                            sumY += y;
+                        }
+                    }
+                }
+                return count > 30 ? { x: sumX / count, y: sumY / count, count } : null;
+            }
+
+            const box = Math.round(Math.min(W, H) * 0.20);
+            const tl = findCorner(0, 0, box, box);
+            const tr = findCorner(W - box, 0, W, box);
+            const bl = findCorner(0, H - box, box, H);
+            const br = findCorner(W - box, H - box, W, H);
+
+            if (tl && tr && bl && br) {
+                return { tl, tr, bl, br };
+            }
+            return null;
+        }
+
+        function checkStability(m1, m2) {
+            if (!m1 || !m2) return false;
+            const threshold = 18; // maximum pixel movement allowed per frame
+            const dTL = Math.hypot(m1.tl.x - m2.tl.x, m1.tl.y - m2.tl.y);
+            const dTR = Math.hypot(m1.tr.x - m2.tr.x, m1.tr.y - m2.tr.y);
+            const dBL = Math.hypot(m1.bl.x - m2.bl.x, m1.bl.y - m2.bl.y);
+            const dBR = Math.hypot(m1.br.x - m2.br.x, m1.br.y - m2.br.y);
+            return (dTL < threshold && dTR < threshold && dBL < threshold && dBR < threshold);
+        }
+
+        function scanFrame() {
+            if (captured) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const W = previewCanvas.width;
+                const H = previewCanvas.height;
+                previewCtx.drawImage(video, 0, 0, W, H);
+
+                // Detect markers on frame
+                const markers = detectMarkers(previewCtx, W, H);
+
+                if (markers) {
+                    pulseDot.className = 'pulse-dot ready';
+                    hudStatus.textContent = '🎯 Sheet Detected! Hold steady...';
+
+                    // Draw green targeting reticle connecting the 4 corners
+                    previewCtx.strokeStyle = '#10B981';
+                    previewCtx.lineWidth = 4;
+                    previewCtx.beginPath();
+                    previewCtx.moveTo(markers.tl.x, markers.tl.y);
+                    previewCtx.lineTo(markers.tr.x, markers.tr.y);
+                    previewCtx.lineTo(markers.br.x, markers.br.y);
+                    previewCtx.lineTo(markers.bl.x, markers.bl.y);
+                    previewCtx.closePath();
+                    previewCtx.stroke();
+
+                    // Draw corner brackets
+                    [markers.tl, markers.tr, markers.bl, markers.br].forEach(pt => {
+                        previewCtx.fillStyle = '#10B981';
+                        previewCtx.beginPath();
+                        previewCtx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
+                        previewCtx.fill();
+                    });
+
+                    // Check stability across consecutive frames
+                    if (checkStability(markers, lastMarkers)) {
+                        stableFrames++;
+                    } else {
+                        stableFrames = Math.max(0, stableFrames - 1);
+                    }
+                    lastMarkers = markers;
+
+                    const progressPct = Math.min(100, (stableFrames / REQUIRED_STABLE_FRAMES) * 100);
+                    autoProgressBar.style.width = progressPct + '%';
+
+                    if (autoCaptureToggle.checked) {
+                        countdownBadge.style.display = 'flex';
+                        const remaining = Math.max(0, Math.ceil((REQUIRED_STABLE_FRAMES - stableFrames) / 10));
+                        countdownBadge.textContent = `Auto-snapping (${Math.round(progressPct)}%)...`;
+
+                        if (stableFrames >= REQUIRED_STABLE_FRAMES) {
+                            // Automatically click photo!
+                            autoCapture(markers);
+                            return;
+                        }
+                    } else {
+                        countdownBadge.style.display = 'none';
+                    }
+
+                } else {
+                    pulseDot.className = 'pulse-dot';
+                    hudStatus.textContent = 'Scanning for 4 corner markers...';
+                    countdownBadge.style.display = 'none';
+                    stableFrames = 0;
+                    lastMarkers = null;
+                    autoProgressBar.style.width = '0%';
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(scanFrame);
+        }
+
+        function triggerManualCapture() {
+            if (captured) return;
+            const W = previewCanvas.width;
+            const H = previewCanvas.height;
+            const markers = detectMarkers(previewCtx, W, H) || {
+                tl: { x: W * 0.05, y: H * 0.05 },
+                tr: { x: W * 0.95, y: H * 0.05 },
+                bl: { x: W * 0.05, y: H * 0.95 },
+                br: { x: W * 0.95, y: H * 0.95 }
+            };
+            autoCapture(markers);
+        }
+
+        function autoCapture(markers) {
+            captured = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            // Shutter sound & flash effect
+            playShutterSound();
+            shutterFlash.classList.add('flash');
+            setTimeout(() => shutterFlash.classList.remove('flash'), 120);
+
+            // Freeze high-res frame
+            const W = previewCanvas.width;
+            const H = previewCanvas.height;
+            resultCanvas.width = W;
+            resultCanvas.height = H;
+            resultCtx.drawImage(video, 0, 0, W, H);
+
+            // Stop camera stream to preserve battery
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+            }
+
+            // Grade sheet instantly
+            gradeCapturedSheet(markers, W, H);
+        }
+
+        function gradeCapturedSheet(markers, W, H) {
+            const imgData = resultCtx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            const TL = markers.tl;
+            const TR = markers.tr;
+            const BL = markers.bl;
+            const BR = markers.br;
+
+            function mapPoint(u, v) {
+                const topX = TL.x + u * (TR.x - TL.x);
+                const topY = TL.y + u * (TR.y - TL.y);
+                const botX = BL.x + u * (BR.x - BL.x);
+                const botY = BL.y + u * (BR.y - BL.y);
+                return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
+            }
+
+            function measureDarkness(cx, cy, r) {
+                let count = 0, total = 0;
+                for (let dy = -r; dy <= r; dy++) {
+                    for (let dx = -r; dx <= r; dx++) {
+                        if (dx*dx + dy*dy <= r*r) {
+                            total++;
+                            const x = Math.round(cx + dx);
+                            const y = Math.round(cy + dy);
+                            if (x >= 0 && x < W && y >= 0 && y < H) {
+                                const idx = (y * W + x) * 4;
+                                if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 125) count++;
+                            }
+                        }
+                    }
+                }
+                return Math.round((count / total) * 100);
+            }
+
+            // Calibrated offsets matching omr_sheet.ejs
+            const u_start = (265 - 170.4) / 2161.2;
+            const v_start = (956 - 173.6) / 3171.4;
+            const u_bubble_step = 62.3 / 2161.2;
+            const u_col_step = 447 / 2161.2;
+            const v_row_step = 60.1 / 3171.4;
+            const bubbleRadius = Math.max(7, Math.round(W * 0.007));
+
+            const options = ['A', 'B', 'C', 'D'];
+            const questionsPerCol = 40;
+            let score = 0;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let attemptedCount = 0;
+            let blankCount = 0;
+            let evaluatedKeyCount = 0;
+            let rowsHtml = '';
+
+            for (let q = 1; q <= totalPaperQuestions; q++) {
+                const col = Math.floor((q - 1) / questionsPerCol);
+                const row = (q - 1) % questionsPerCol;
+                const v = v_start + row * v_row_step;
+                const col_u = u_start + col * u_col_step;
+
+                let fills = [];
+                let bubbleCoords = [];
+                for (let b = 0; b < 4; b++) {
+                    const u = col_u + b * u_bubble_step;
+                    const pt = mapPoint(u, v);
+                    const fill = measureDarkness(pt.x, pt.y, bubbleRadius);
+                    fills.push({ opt: options[b], fill, pt });
+                    bubbleCoords.push(pt);
+                }
+
+                const sorted = [...fills].sort((a, b) => b.fill - a.fill);
+                const isFilled = sorted[0].fill > 38;
+                const detectedAnswer = isFilled ? sorted[0].opt : '';
+                const correctAns = answerKey[q.toString()] || '';
+
+                let verdict = 'unmarked';
+                if (correctAns) evaluatedKeyCount++;
+
+                if (detectedAnswer) {
+                    attemptedCount++;
+                    if (correctAns && detectedAnswer === correctAns) {
+                        score++;
+                        correctCount++;
+                        verdict = 'correct';
+                    } else if (correctAns) {
+                        wrongCount++;
+                        verdict = 'wrong';
+                    }
+                } else {
+                    blankCount++;
+                }
+
+                // Draw overlay on canvas
+                for (let b = 0; b < 4; b++) {
+                    const opt = options[b];
+                    const pt = bubbleCoords[b];
+                    resultCtx.beginPath();
+                    resultCtx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
+                    resultCtx.lineWidth = Math.max(3, Math.round(W * 0.002));
+
+                    if (opt === detectedAnswer) {
+                        if (correctAns && detectedAnswer === correctAns) {
+                            resultCtx.strokeStyle = '#10B981';
+                            resultCtx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+                        } else if (correctAns) {
+                            resultCtx.strokeStyle = '#EF4444';
+                            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.5)';
+                        } else {
+                            resultCtx.strokeStyle = '#3B82F6';
+                            resultCtx.fillStyle = 'rgba(59, 130, 246, 0.4)';
+                        }
+                        resultCtx.fill();
+                    } else if (opt === correctAns && detectedAnswer !== correctAns) {
+                        resultCtx.strokeStyle = '#F59E0B';
+                        resultCtx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+                        resultCtx.fill();
+                    } else {
+                        resultCtx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                    }
+                    resultCtx.stroke();
+                }
+
+                let badgeClass = 'badge-blank';
+                let verdictText = 'Unmarked';
+                if (verdict === 'correct') { badgeClass = 'badge-correct'; verdictText = '✓ Correct'; }
+                else if (verdict === 'wrong') { badgeClass = 'badge-wrong'; verdictText = '✗ Wrong'; }
+                else if (detectedAnswer) { badgeClass = 'badge-correct'; verdictText = 'Marked'; }
+
+                rowsHtml += `<tr>
+                    <td><strong>${q}</strong></td>
+                    <td>${detectedAnswer ? '<span style="font-weight:700; font-size:1rem;">' + detectedAnswer + '</span>' : '<span style="color:#9CA3AF;">—</span>'}</td>
+                    <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">—</span>'}</td>
+                    <td><span class="badge ${badgeClass}">${verdictText}</span></td>
+                </tr>`;
+            }
+
+            // Display results
+            const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
+            document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
+            const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+            document.getElementById('scorePercentage').textContent = `${pct}% Correct`;
+
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+            document.getElementById('statAttempted').textContent = attemptedCount;
+            document.getElementById('statBlank').textContent = blankCount;
+            document.getElementById('tableBody').innerHTML = rowsHtml;
+
+            // Switch view
+            document.getElementById('viewfinderSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function restartScanner() {
+            initCamera();
+        }
+
+        // Start on page load
+        window.addEventListener('DOMContentLoaded', initCamera);
+    </script>
+</body>
+</html>

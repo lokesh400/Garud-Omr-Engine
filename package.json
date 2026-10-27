@@ -1,0 +1,21 @@
+{
+  "name": "omr-checker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "jpeg-js": "^0.4.4",
+    "mongoose": "^9.10.3",
+    "multer": "^2.4.0"
+  }
+}

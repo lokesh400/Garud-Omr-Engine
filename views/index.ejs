@@ -1,0 +1,304 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Checker - Intelligent Assessment Suite</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem 2.5rem;
+            color: #FFFFFF;
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(67, 56, 202, 0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.35) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-content h2 {
+            color: #FFFFFF;
+            font-size: 1.85rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .hero-content p {
+            color: #C7D2FE;
+            font-size: 0.98rem;
+            max-width: 580px;
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1;
+        }
+        .stat-lbl {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #A5B4FC;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+        }
+        .paper-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .paper-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0.85;
+            transition: opacity 0.2s ease;
+        }
+        .paper-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: #CBD5E1;
+        }
+        .paper-card:hover::before {
+            opacity: 1;
+            height: 5px;
+        }
+        .paper-card-top {
+            margin-bottom: 1.25rem;
+        }
+        .paper-card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.3;
+        }
+        .paper-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .badge-count {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .badge-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .badge-ready {
+            background: var(--success-light);
+            color: #065F46;
+        }
+        .badge-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .paper-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #F1F5F9;
+        }
+        .btn-icon-only {
+            padding: 0.65rem 0.85rem;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top App Navigation Bar -->
+        <header class="app-header">
+            <div class="brand-logo-wrap">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="9" y1="13" x2="15" y2="13"></line>
+                        <line x1="9" y1="17" x2="13" y2="17"></line>
+                        <circle cx="12" cy="12" r="1"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-badge">OMR System v2.0</div>
+                    <h1 style="font-size: 1.35rem; margin: 0; font-weight: 800;">OMRChecker Suite</h1>
+                </div>
+            </div>
+            <div>
+                <a href="/paper/new" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Create New Paper
+                </a>
+            </div>
+        </header>
+
+        <!-- Hero Overview Banner -->
+        <div class="hero-banner">
+            <div class="hero-content">
+                <h2>Automated Sheet Evaluation</h2>
+                <p>Generate standardized printable sheets, configure question answer keys, and evaluate student responses instantly via camera or image upload.</p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-val"><%= papers ? papers.length : 0 %></div>
+                    <div class="stat-lbl">Active Papers</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.2);"></div>
+                <div class="stat-item">
+                    <div class="stat-val">100%</div>
+                    <div class="stat-lbl">Automated</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Papers Section -->
+        <main>
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span>Your Assessment Papers</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+                        (<%= papers ? papers.length : 0 %> total)
+                    </span>
+                </h2>
+                <% if (papers && papers.length > 0) { %>
+                    <a href="/paper/new" class="btn btn-secondary btn-sm">+ Add Paper</a>
+                <% } %>
+            </div>
+
+            <% if (papers && papers.length > 0) { %>
+                <div class="paper-list">
+                    <% papers.forEach(paper => { %>
+                        <% const hasKey = paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0); %>
+                        <div class="paper-card">
+                            <div class="paper-card-top">
+                                <h3 class="paper-card-title"><%= paper.title %></h3>
+                                <div class="paper-badges">
+                                    <span class="badge-count">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <%= paper.numQuestions %> Questions
+                                    </span>
+                                    <% if (hasKey) { %>
+                                        <span class="badge-status badge-ready">
+                                            ✓ Key Configured
+                                        </span>
+                                    <% } else { %>
+                                        <span class="badge-status badge-pending">
+                                            ● Key Pending
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <div class="paper-actions-grid">
+                                <a href="/paper/<%= paper._id %>" class="btn btn-primary btn-sm">
+                                    Manage & Check
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </a>
+                                <a href="/paper/<%= paper._id %>/omr" target="_blank" class="btn btn-secondary btn-sm btn-icon-only" title="Print Blank OMR Sheet">
+                                    🖨️
+                                </a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">No Papers Created Yet</h3>
+                    <p style="color: var(--text-muted); max-width: 420px; margin: 0 auto 1.5rem;">
+                        Create your first paper to generate custom printable OMR answer sheets and begin automatic evaluation.
+                    </p>
+                    <a href="/paper/new" class="btn btn-primary btn-lg">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create Your First Paper
+                    </a>
+                </div>
+            <% } %>
+        </main>
+    </div>
+</body>
+</html>

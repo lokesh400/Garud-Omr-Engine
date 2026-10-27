@@ -1,0 +1,424 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluate Sheet - <%= paper.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .eval-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.5rem;
+            align-items: start;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .eval-layout { grid-template-columns: 1fr; }
+        }
+        .canvas-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+        }
+        .canvas-wrapper {
+            width: 100%;
+            overflow: auto;
+            max-height: 78vh;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: #2a2e39;
+            text-align: center;
+        }
+        #canvasOutput {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .score-hero {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+        .score-val {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0.5rem 0;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat-box {
+            background: #F9FAFB;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .stat-box .num {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .stat-box .lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .breakdown-table th, .breakdown-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .breakdown-table th {
+            background: #F9FAFB;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-correct { background: #DEF7EC; color: #03543F; }
+        .badge-wrong { background: #FDE8E8; color: #9B1C1C; }
+        .badge-blank { background: #F3F4F6; color: #6B7280; }
+        .legend {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .status-badge {
+            background: #FEF3C7;
+            color: #D97706;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 1280px;">
+        <header>
+            <div>
+                <h1>Evaluation Results</h1>
+                <p style="color: var(--text-muted); margin-top: 5px;"><%= paper.title %> &bull; <%= paper.numQuestions %> Total Questions</p>
+            </div>
+            <a href="/paper/<%= paper._id %>" class="btn btn-secondary">&larr; Back to Paper</a>
+        </header>
+
+        <div id="status" class="status-badge">&bull; Loading sheet & calculating responses...</div>
+
+        <div class="eval-layout">
+            <!-- Sheet Canvas Preview -->
+            <div class="canvas-card">
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:#10B981;"></div> Correct</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#EF4444;"></div> Wrong</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#F59E0B;"></div> Correct Answer</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#3B82F6;"></div> Detected Bubble</div>
+                    </div>
+                    <small style="color: var(--text-muted);">High-precision OMR scan</small>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="canvasOutput"></canvas>
+                </div>
+            </div>
+
+            <!-- Scorecard & Breakdown -->
+            <div>
+                <div class="score-hero">
+                    <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Total Score</div>
+                    <div class="score-val" id="scoreValue">0 / 0</div>
+                    <div id="scorePercentage" style="font-size: 1.1rem; font-weight: 500;">0%</div>
+                </div>
+
+                <div class="card" style="padding: 1.25rem;">
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="num" id="statCorrect" style="color: #10B981;">0</div>
+                            <div class="lbl">Correct</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statWrong" style="color: #EF4444;">0</div>
+                            <div class="lbl">Wrong</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statAttempted" style="color: #4F46E5;">0</div>
+                            <div class="lbl">Attempted</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statBlank" style="color: #6B7280;">0</div>
+                            <div class="lbl">Unmarked</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Question Breakdown</h4>
+                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <table class="breakdown-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Marked</th>
+                                    <th>Key</th>
+                                    <th>Verdict</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden source image element (using absolute hidden so naturalWidth is preserved) -->
+    <img id="uploadedImage" src="<%= imagePath %>" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
+
+    <script>
+        const answerKey = <%- answerKey || '{}' %>;
+        const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+        const img = document.getElementById('uploadedImage');
+        const statusEl = document.getElementById('status');
+        const canvas = document.getElementById('canvasOutput');
+        const ctx = canvas.getContext('2d');
+
+        function startEvaluation() {
+            if (!img.complete || img.naturalWidth === 0) {
+                setTimeout(startEvaluation, 100);
+                return;
+            }
+
+            statusEl.textContent = 'Analyzing sheet & markers...';
+            try {
+                const W = img.naturalWidth;
+                const H = img.naturalHeight;
+                canvas.width = W;
+                canvas.height = H;
+                ctx.drawImage(img, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, W, H);
+                const data = imgData.data;
+
+                // 1. Detect 4 corner markers (black squares from omr_sheet.ejs)
+                function findCorner(x1, y1, x2, y2) {
+                    let count = 0, sumX = 0, sumY = 0;
+                    for (let y = Math.floor(y1); y < y2; y += 2) {
+                        for (let x = Math.floor(x1); x < x2; x += 2) {
+                            const idx = (y * W + x) * 4;
+                            if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 90) {
+                                count++;
+                                sumX += x;
+                                sumY += y;
+                            }
+                        }
+                    }
+                    return count > 200 ? { x: sumX / count, y: sumY / count } : null;
+                }
+
+                const cornerBox = Math.round(Math.min(W, H) * 0.12);
+                let TL = findCorner(0, 0, cornerBox, cornerBox);
+                let TR = findCorner(W - cornerBox, 0, W, cornerBox);
+                let BL = findCorner(0, H - cornerBox, cornerBox, H);
+                let BR = findCorner(W - cornerBox, H - cornerBox, W, H);
+
+                // Fallback to estimated positions if image was pre-cropped
+                if (!TL) TL = { x: W * 0.05, y: H * 0.05 };
+                if (!TR) TR = { x: W * 0.95, y: H * 0.05 };
+                if (!BL) BL = { x: W * 0.05, y: H * 0.95 };
+                if (!BR) BR = { x: W * 0.95, y: H * 0.95 };
+
+                // Bilinear mapping function from canonical (u, v) in [0, 1] to image (x, y)
+                function mapPoint(u, v) {
+                    const topX = TL.x + u * (TR.x - TL.x);
+                    const topY = TL.y + u * (TR.y - TL.y);
+                    const botX = BL.x + u * (BR.x - BL.x);
+                    const botY = BL.y + u * (BR.y - BL.y);
+                    return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
+                }
+
+                // Sample darkness in a circle of radius r
+                function measureDarkness(cx, cy, r) {
+                    let count = 0, total = 0;
+                    for (let dy = -r; dy <= r; dy++) {
+                        for (let dx = -r; dx <= r; dx++) {
+                            if (dx*dx + dy*dy <= r*r) {
+                                total++;
+                                const x = Math.round(cx + dx);
+                                const y = Math.round(cy + dy);
+                                if (x >= 0 && x < W && y >= 0 && y < H) {
+                                    const idx = (y * W + x) * 4;
+                                    if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 128) count++;
+                                }
+                            }
+                        }
+                    }
+                    return Math.round((count / total) * 100);
+                }
+
+                // Calibrated coordinates relative to corner markers
+                const u_start = (265 - 170.4) / 2161.2;
+                const v_start = (956 - 173.6) / 3171.4;
+                const u_bubble_step = 62.3 / 2161.2;
+                const u_col_step = 447 / 2161.2;
+                const v_row_step = 60.1 / 3171.4;
+                const bubbleRadius = Math.max(8, Math.round(W * 0.007));
+
+                const options = ['A', 'B', 'C', 'D'];
+                const questionsPerCol = 40;
+                let score = 0;
+                let correctCount = 0;
+                let wrongCount = 0;
+                let attemptedCount = 0;
+                let blankCount = 0;
+                let evaluatedKeyCount = 0;
+                let rowsHtml = '';
+
+                for (let q = 1; q <= totalPaperQuestions; q++) {
+                    const col = Math.floor((q - 1) / questionsPerCol);
+                    const row = (q - 1) % questionsPerCol;
+                    const v = v_start + row * v_row_step;
+                    const col_u = u_start + col * u_col_step;
+
+                    let fills = [];
+                    let bubbleCoords = [];
+                    for (let b = 0; b < 4; b++) {
+                        const u = col_u + b * u_bubble_step;
+                        const pt = mapPoint(u, v);
+                        const fill = measureDarkness(pt.x, pt.y, bubbleRadius);
+                        fills.push({ opt: options[b], fill, pt });
+                        bubbleCoords.push(pt);
+                    }
+
+                    // Sort descending by fill
+                    const sorted = [...fills].sort((a, b) => b.fill - a.fill);
+                    const isFilled = sorted[0].fill > 40;
+                    const detectedAnswer = isFilled ? sorted[0].opt : '';
+                    const correctAns = answerKey[q.toString()] || '';
+
+                    let verdict = 'unmarked';
+                    if (correctAns) evaluatedKeyCount++;
+
+                    if (detectedAnswer) {
+                        attemptedCount++;
+                        if (correctAns && detectedAnswer === correctAns) {
+                            score++;
+                            correctCount++;
+                            verdict = 'correct';
+                        } else if (correctAns) {
+                            wrongCount++;
+                            verdict = 'wrong';
+                        }
+                    } else {
+                        blankCount++;
+                    }
+
+                    // Draw on Canvas
+                    for (let b = 0; b < 4; b++) {
+                        const opt = options[b];
+                        const pt = bubbleCoords[b];
+                        
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
+                        ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
+
+                        if (opt === detectedAnswer) {
+                            if (correctAns && detectedAnswer === correctAns) {
+                                ctx.strokeStyle = '#10B981'; // Green for correct
+                                ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+                            } else if (correctAns) {
+                                ctx.strokeStyle = '#EF4444'; // Red for wrong
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+                            } else {
+                                ctx.strokeStyle = '#3B82F6'; // Blue detected
+                                ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
+                            }
+                            ctx.fill();
+                        } else if (opt === correctAns && detectedAnswer !== correctAns) {
+                            // Highlight missed correct answer in gold
+                            ctx.strokeStyle = '#F59E0B';
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
+                            ctx.fill();
+                        } else {
+                            ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                        }
+                        ctx.stroke();
+                    }
+
+                    // Build table row
+                    let badgeClass = 'badge-blank';
+                    let verdictText = 'Unmarked';
+                    if (verdict === 'correct') { badgeClass = 'badge-correct'; verdictText = '✓ Correct'; }
+                    else if (verdict === 'wrong') { badgeClass = 'badge-wrong'; verdictText = '✗ Wrong'; }
+                    else if (detectedAnswer) { badgeClass = 'badge-correct'; verdictText = 'Marked'; }
+
+                    rowsHtml += `<tr>
+                        <td><strong>${q}</strong></td>
+                        <td>${detectedAnswer ? '<span style="font-weight:700; font-size:1rem;">' + detectedAnswer + '</span>' : '<span style="color:#9CA3AF;">—</span>'}</td>
+                        <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">—</span>'}</td>
+                        <td><span class="badge ${badgeClass}">${verdictText}</span></td>
+                    </tr>`;
+                }
+
+                // Update UI elements
+                const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
+                document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
+                const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+                document.getElementById('scorePercentage').textContent = `${pct}% Correct`;
+
+                document.getElementById('statCorrect').textContent = correctCount;
+                document.getElementById('statWrong').textContent = wrongCount;
+                document.getElementById('statAttempted').textContent = attemptedCount;
+                document.getElementById('statBlank').textContent = blankCount;
+                document.getElementById('tableBody').innerHTML = rowsHtml;
+
+                statusEl.textContent = '✓ Evaluation Complete!';
+                statusEl.style.background = '#DEF7EC';
+                statusEl.style.color = '#03543F';
+
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Error during evaluation: ' + err.message;
+                statusEl.style.background = '#FDE8E8';
+                statusEl.style.color = '#9B1C1C';
+            }
+        }
+
+        if (img.complete) {
+            startEvaluation();
+        } else {
+            img.onload = startEvaluation;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= paper.title %> - OMR Checker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .answer-key-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .answer-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .answer-input-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .answer-input-group select {
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1><%= paper.title %></h1>
+                <p style="color: var(--text-muted); margin-top: 5px;"><%= paper.numQuestions %> Questions</p>
+            </div>
+            <div>
+                <a href="/paper/<%= paper._id %>/omr" target="_blank" class="btn btn-secondary">🖨️ Print OMR Sheet</a>
+                <a href="/" class="btn btn-secondary" style="margin-left: 10px;">Back</a>
+            </div>
+        </header>
+
+        <main class="grid-2">
+            <!-- Answer Key Section -->
+            <div class="card">
+                <h2>Set Answer Key</h2>
+                <form action="/paper/<%= paper._id %>/answerkey" method="POST">
+                    <div class="answer-key-grid">
+                        <% for(let i=1; i<=paper.numQuestions; i++) { %>
+                            <div class="answer-input-group">
+                                <label>Q<%= i %></label>
+                                <select name="q<%= i %>">
+                                    <option value="">-</option>
+                                    <% ['A','B','C','D'].forEach(opt => { %>
+                                        <option value="<%= opt %>" <%= paper.answerKey && paper.answerKey.get(String(i)) === opt ? 'selected' : '' %>><%= opt %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        <% } %>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Answer Key</button>
+                    <% if (paper.answerKey && paper.answerKey.size > 0) { %>
+                        <span style="color: green; margin-left: 10px; font-size: 0.9rem;">✓ Saved</span>
+                    <% } %>
+                </form>
+            </div>
+
+            <!-- Upload for Checking Section -->
+            <div class="card">
+                <h2>Check Answer Sheet</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Upload a scanned image or photo of a filled OMR sheet to check it against the saved answer key.</p>
+                <form action="/paper/<%= paper._id %>/check" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Select Image File (JPG/PNG)</label>
+                        <input type="file" name="omrSheet" class="form-control" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Upload and Check</button>
+                </form>
+                
+                <div style="text-align: center; margin: 15px 0; color: var(--text-muted);">— OR —</div>
+                
+                <a href="/paper/<%= paper._id %>/scan" class="btn btn-secondary" style="width: 100%; box-sizing: border-box; text-align: center;">📷 Scan via Camera</a>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

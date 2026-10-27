@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Paper - OMR Checker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Create New Paper</h1>
+            <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+        </header>
+
+        <main>
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <form action="/paper/new" method="POST">
+                    <div class="form-group">
+                        <label for="title">Paper Title</label>
+                        <input type="text" id="title" name="title" class="form-control" required placeholder="e.g. Midterm Math Exam">
+                    </div>
+                    <div class="form-group">
+                        <label for="numQuestions">Number of Questions (Max 200)</label>
+                        <input type="number" id="numQuestions" name="numQuestions" class="form-control" required min="1" max="200" value="50">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Paper</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
