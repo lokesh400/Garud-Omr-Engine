@@ -1,34 +1,225 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Paper - OMR Checker</title>
+    <title>Create Paper - OMR Checker Suite</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .page-header-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .breadcrumb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .breadcrumb-wrap a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .form-card {
+            max-width: 620px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            padding: 2.25rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        .form-card-header {
+            margin-bottom: 1.75rem;
+            text-align: center;
+        }
+        .form-icon-circle {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 1rem;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+        .form-card-header h2 {
+            font-size: 1.6rem;
+            margin-bottom: 0.4rem;
+        }
+        .form-card-header p {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            margin: 0;
+        }
+        .preset-badge-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .preset-tag {
+            background: #F1F5F9;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 5px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+        .preset-tag:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .preset-tag.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px var(--primary-glow);
+        }
+        .preview-info-box {
+            background: #F8FAFC;
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 12px 16px;
+            margin: 1.5rem 0;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .preview-info-box strong {
+            color: var(--text-main);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Create New Paper</h1>
-            <a href="/" class="btn btn-secondary">Back to Dashboard</a>
-        </header>
-
-        <main>
-            <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <form action="/paper/new" method="POST">
-                    <div class="form-group">
-                        <label for="title">Paper Title</label>
-                        <input type="text" id="title" name="title" class="form-control" required placeholder="e.g. Midterm Math Exam">
-                    </div>
-                    <div class="form-group">
-                        <label for="numQuestions">Number of Questions (Max 200)</label>
-                        <input type="number" id="numQuestions" name="numQuestions" class="form-control" required min="1" max="200" value="50">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Paper</button>
-                </form>
+        <!-- Page Header Nav -->
+        <div class="page-header-nav">
+            <div class="breadcrumb-wrap">
+                <a href="/">← Dashboard</a>
+                <span>/</span>
+                <span>New Paper</span>
             </div>
-        </main>
+            <a href="/" class="btn btn-secondary btn-sm">Cancel</a>
+        </div>
+
+        <!-- Create Paper Card -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="form-icon-circle">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </div>
+                <h2>Create Assessment Paper</h2>
+                <p>Configure exam title and number of questions to generate standardized OMR sheets.</p>
+            </div>
+
+            <form action="/paper/new" method="POST" id="createPaperForm">
+                <div class="form-group">
+                    <label for="title">Paper / Exam Title</label>
+                    <input 
+                        type="text" 
+                        id="title" 
+                        name="title" 
+                        class="form-control" 
+                        required 
+                        placeholder="e.g. Physics Midterm 2026 - Section A"
+                        autofocus
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="numQuestions">Total Questions (1 - 200)</label>
+                    <input 
+                        type="number" 
+                        id="numQuestions" 
+                        name="numQuestions" 
+                        class="form-control" 
+                        required 
+                        min="1" 
+                        max="200" 
+                        value="50"
+                    >
+                    
+                    <div style="margin-top: 12px;">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Quick Presets:</span>
+                        <div class="preset-badge-group">
+                            <span class="preset-tag" data-val="20">20 Qs (Quiz)</span>
+                            <span class="preset-tag active" data-val="50">50 Qs (Standard)</span>
+                            <span class="preset-tag" data-val="100">100 Qs (Midterm)</span>
+                            <span class="preset-tag" data-val="180">180 Qs (NEET)</span>
+                            <span class="preset-tag" data-val="200">200 Qs (Max)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-info-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <div>
+                        Standard 4-Corner OMR markers with options <strong>A, B, C, D</strong> will be automatically formatted for printable A4 sheets.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-size: 1rem; margin-top: 0.5rem;">
+                    Generate Paper & Configure Keys →
+                </button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        // Preset selector functionality
+        const numInput = document.getElementById('numQuestions');
+        const tags = document.querySelectorAll('.preset-tag');
+
+        tags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                const val = tag.getAttribute('data-val');
+                numInput.value = val;
+                tags.forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+            });
+        });
+
+        numInput.addEventListener('input', () => {
+            tags.forEach(tag => {
+                if (tag.getAttribute('data-val') === numInput.value) {
+                    tag.classList.add('active');
+                } else {
+                    tag.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

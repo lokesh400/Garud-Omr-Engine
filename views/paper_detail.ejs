@@ -1,94 +1,489 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= paper.title %> - OMR Checker</title>
+    <title><%= paper.title %> - OMR Checker Suite</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .page-header-split {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
             gap: 1.5rem;
+            margin-bottom: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .header-meta-group h1 {
+            font-size: 1.6rem;
+            margin: 0 0 0.4rem 0;
+            color: var(--text-main);
+        }
+        .header-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .header-breadcrumbs a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .header-tags {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 1.75rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Answer Key Studio Styling */
+        .key-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .key-progress-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .key-progress-bar {
+            width: 140px;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        .key-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: var(--radius-full);
+            transition: width 0.3s ease;
+        }
+        .quick-fill-btn {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .quick-fill-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
         }
         .answer-key-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
             gap: 10px;
-            margin-bottom: 1rem;
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 6px 4px;
+            background: #F8FAFC;
+            border-radius: var(--radius-md);
+            border: 1px solid #E2E8F0;
+            margin-bottom: 1.25rem;
         }
         .answer-input-group {
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 6px 4px;
+            transition: all 0.2s ease;
+        }
+        .answer-input-group.has-val {
+            border-color: var(--primary);
+            background: #F5F3FF;
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.1);
         }
         .answer-input-group label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 700;
             color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .answer-input-group.has-val label {
+            color: var(--primary);
         }
         .answer-input-group select {
-            padding: 5px;
+            width: 100%;
+            padding: 4px 2px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-align: center;
+            background: #FFFFFF;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+        .answer-input-group.has-val select {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        /* Camera Card Highlight */
+        .camera-card {
+            background: linear-gradient(135deg, #4338CA 0%, #3730A3 100%);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            color: #FFFFFF;
+            box-shadow: var(--shadow-glow);
+            margin-bottom: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .camera-card::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        }
+        .camera-card h3 {
+            color: #FFFFFF;
+            margin: 0 0 0.35rem 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .camera-card p {
+            color: #E0E7FF;
+            font-size: 0.88rem;
+            margin: 0 0 1rem 0;
+            line-height: 1.4;
+        }
+        .dropzone-box {
+            border: 2px dashed #CBD5E1;
+            border-radius: var(--radius-md);
+            padding: 2rem 1.25rem;
+            text-align: center;
+            background: #F8FAFC;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+        .dropzone-box:hover, .dropzone-box.dragover {
+            border-color: var(--primary);
+            background: #EEF2FF;
+        }
+        .dropzone-thumb-preview {
+            max-width: 180px;
+            max-height: 120px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+            box-shadow: var(--shadow-sm);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <div>
+        <!-- Top Navigation & Details -->
+        <div class="page-header-split">
+            <div class="header-meta-group">
+                <div class="header-breadcrumbs">
+                    <a href="/">← Dashboard</a>
+                    <span>/</span>
+                    <span><%= paper.title %></span>
+                </div>
                 <h1><%= paper.title %></h1>
-                <p style="color: var(--text-muted); margin-top: 5px;"><%= paper.numQuestions %> Questions</p>
+                <div class="header-tags">
+                    <span class="pill pill-primary">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <%= paper.numQuestions %> Questions
+                    </span>
+                    <% 
+                        let keyCount = 0;
+                        if (paper.answerKey) {
+                            if (typeof paper.answerKey.get === 'function') {
+                                for(let i = 1; i <= paper.numQuestions; i++) {
+                                    if(paper.answerKey.get(String(i))) keyCount++;
+                                }
+                            } else {
+                                Object.keys(paper.answerKey).forEach(k => { if(paper.answerKey[k]) keyCount++; });
+                            }
+                        }
+                    %>
+                    <% if (keyCount > 0) { %>
+                        <span class="pill pill-success">✓ Answer Key Configured (<%= keyCount %>/<%= paper.numQuestions %>)</span>
+                    <% } else { %>
+                        <span class="pill pill-warning">● Answer Key Not Configured</span>
+                    <% } %>
+                </div>
             </div>
-            <div>
-                <a href="/paper/<%= paper._id %>/omr" target="_blank" class="btn btn-secondary">🖨️ Print OMR Sheet</a>
-                <a href="/" class="btn btn-secondary" style="margin-left: 10px;">Back</a>
-            </div>
-        </header>
 
-        <main class="grid-2">
-            <!-- Answer Key Section -->
+            <div class="header-actions">
+                <a href="/paper/<%= paper._id %>/omr" target="_blank" class="btn btn-secondary">
+                    🖨️ Print OMR Sheet
+                </a>
+                <a href="/" class="btn btn-secondary">
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <main class="layout-grid">
+            <!-- Left: Answer Key Configuration -->
             <div class="card">
-                <h2>Set Answer Key</h2>
-                <form action="/paper/<%= paper._id %>/answerkey" method="POST">
-                    <div class="answer-key-grid">
+                <div class="card-header-styled">
+                    <div>
+                        <h2 style="margin: 0 0 4px 0; font-size: 1.25rem;">Official Answer Key Matrix</h2>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Define the correct option for automatic grading</span>
+                    </div>
+                </div>
+
+                <div class="key-toolbar">
+                    <div class="key-progress-wrap">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" id="progressLabel">
+                            <%= keyCount %> / <%= paper.numQuestions %> configured
+                        </span>
+                        <div class="key-progress-bar">
+                            <div class="key-progress-fill" id="progressFill" style="width: <%= Math.round((keyCount / paper.numQuestions) * 100) %>%;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button type="button" class="quick-fill-btn" onclick="clearAllAnswers()">Clear All</button>
+                    </div>
+                </div>
+
+                <form action="/paper/<%= paper._id %>/answerkey" method="POST" id="answerKeyForm">
+                    <div class="answer-key-grid" id="answerGrid">
                         <% for(let i=1; i<=paper.numQuestions; i++) { %>
-                            <div class="answer-input-group">
-                                <label>Q<%= i %></label>
-                                <select name="q<%= i %>">
+                            <% 
+                                let currentVal = "";
+                                if (paper.answerKey) {
+                                    if (typeof paper.answerKey.get === 'function') {
+                                        currentVal = paper.answerKey.get(String(i)) || "";
+                                    } else {
+                                        currentVal = paper.answerKey[String(i)] || "";
+                                    }
+                                }
+                            %>
+                            <div class="answer-input-group <%= currentVal ? 'has-val' : '' %>" id="group_q<%= i %>">
+                                <label for="select_q<%= i %>">Q<%= i %></label>
+                                <select name="q<%= i %>" id="select_q<%= i %>" onchange="handleSelectChange(this, '<%= i %>')">
                                     <option value="">-</option>
                                     <% ['A','B','C','D'].forEach(opt => { %>
-                                        <option value="<%= opt %>" <%= paper.answerKey && paper.answerKey.get(String(i)) === opt ? 'selected' : '' %>><%= opt %></option>
+                                        <option value="<%= opt %>" <%= currentVal === opt ? 'selected' : '' %>><%= opt %></option>
                                     <% }) %>
                                 </select>
                             </div>
                         <% } %>
                     </div>
-                    <button type="submit" class="btn btn-primary">Save Answer Key</button>
-                    <% if (paper.answerKey && paper.answerKey.size > 0) { %>
-                        <span style="color: green; margin-left: 10px; font-size: 0.9rem;">✓ Saved</span>
-                    <% } %>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Answer Key
+                        </button>
+                        <% if (keyCount > 0) { %>
+                            <span style="color: var(--success); font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 5px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Saved & Active
+                            </span>
+                        <% } %>
+                    </div>
                 </form>
             </div>
 
-            <!-- Upload for Checking Section -->
-            <div class="card">
-                <h2>Check Answer Sheet</h2>
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">Upload a scanned image or photo of a filled OMR sheet to check it against the saved answer key.</p>
-                <form action="/paper/<%= paper._id %>/check" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>Select Image File (JPG/PNG)</label>
-                        <input type="file" name="omrSheet" class="form-control" accept="image/*" required>
+            <!-- Right: Evaluation Methods -->
+            <div>
+                <!-- Method 1: Live Camera Scanner -->
+                <div class="camera-card">
+                    <h3>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        Live 4-Corner Camera Scanner
+                    </h3>
+                    <p>
+                        Point your camera at the printed OMR sheet, mark the 4 corner alignment markers directly on screen, and click proceed to evaluate instantly.
+                    </p>
+                    <a href="/paper/<%= paper._id %>/scan" class="btn btn-secondary" style="width: 100%; box-sizing: border-box; text-align: center; font-weight: 700; color: var(--primary);">
+                        📷 Launch 4-Corner Live Scanner →
+                    </a>
+                </div>
+
+                <!-- Method 2: Image File Upload -->
+                <div class="card">
+                    <div class="card-header-styled">
+                        <div>
+                            <h2 style="margin: 0 0 4px 0; font-size: 1.25rem;">Upload Sheet Image</h2>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Check a pre-scanned photo or JPG/PNG image</span>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Upload and Check</button>
-                </form>
-                
-                <div style="text-align: center; margin: 15px 0; color: var(--text-muted);">— OR —</div>
-                
-                <a href="/paper/<%= paper._id %>/scan" class="btn btn-secondary" style="width: 100%; box-sizing: border-box; text-align: center;">📷 Scan via Camera</a>
+
+                    <form action="/paper/<%= paper._id %>/check" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="dropzone-box" id="dropzoneBox" onclick="document.getElementById('omrFileInput').click()">
+                            <div class="dropzone-icon">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;" id="dropzoneText">
+                                Choose or Drag & Drop OMR Image
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Supports JPG, JPEG, PNG high-resolution sheets
+                            </div>
+                            <img id="thumbPreview" class="dropzone-thumb-preview" alt="OMR Sheet Preview">
+                            <input type="file" id="omrFileInput" name="omrSheet" accept="image/*" required style="display:none;" onchange="handleFileSelected(this)">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem;">
+                            ⚡ Upload & Evaluate Sheet
+                        </button>
+                    </form>
+
+                    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                        <strong style="color: var(--text-main);">Tips for 100% accuracy:</strong>
+                        <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+                            <li>Ensure all 4 solid black corner marker squares are clearly visible.</li>
+                            <li>Avoid heavy shadows or glare over the filled bubble options.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
+
+    <script>
+        const totalQuestions = <%= paper.numQuestions %>;
+
+        function handleSelectChange(selectElem, qNum) {
+            const group = document.getElementById('group_q' + qNum);
+            if (selectElem.value) {
+                group.classList.add('has-val');
+            } else {
+                group.classList.remove('has-val');
+            }
+            updateKeyProgress();
+        }
+
+        function updateKeyProgress() {
+            let count = 0;
+            const selects = document.querySelectorAll('#answerGrid select');
+            selects.forEach(s => {
+                if (s.value) count++;
+            });
+            const pct = Math.round((count / totalQuestions) * 100);
+            const fill = document.getElementById('progressFill');
+            const label = document.getElementById('progressLabel');
+            if (fill) fill.style.width = pct + '%';
+            if (label) label.textContent = count + ' / ' + totalQuestions + ' configured';
+        }
+
+        function clearAllAnswers() {
+            if (confirm("Are you sure you want to clear all selected answers?")) {
+                const selects = document.querySelectorAll('#answerGrid select');
+                selects.forEach(s => {
+                    s.value = "";
+                    const group = s.closest('.answer-input-group');
+                    if (group) group.classList.remove('has-val');
+                });
+                updateKeyProgress();
+            }
+        }
+
+        // File Drag & Drop Handling
+        const dropzone = document.getElementById('dropzoneBox');
+        const fileInput = document.getElementById('omrFileInput');
+        const dropText = document.getElementById('dropzoneText');
+        const thumbPreview = document.getElementById('thumbPreview');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelected(fileInput);
+            }
+        });
+
+        function handleFileSelected(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                dropText.innerHTML = '<span style="color:var(--primary); font-weight:700;">' + file.name + '</span> (' + (file.size / 1024).toFixed(1) + ' KB)';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    thumbPreview.src = e.target.result;
+                    thumbPreview.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
 </body>
 </html>

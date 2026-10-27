@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,13 +23,21 @@
 
         .print-btn { 
             margin-bottom: 20px; 
-            padding: 10px 20px; 
-            font-size: 16px; 
+            padding: 12px 24px; 
+            font-size: 15px; 
+            font-weight: 700;
             cursor: pointer;
-            background: #4F46E5;
+            background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .print-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
         }
         
         /* A4 Fixed Size */
@@ -194,7 +202,7 @@
     </style>
 </head>
 <body>
-    <button class="print-btn no-print" onclick="window.print()">🖨️ Print OMR Sheet</button>
+    <button class="print-btn no-print" onclick="window.print()">&#128424;&#65039; Print Blank OMR Sheet</button>
 
     <div class="omr-container">
         <!-- 4 Corner Markers -->
