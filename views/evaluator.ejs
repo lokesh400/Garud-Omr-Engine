@@ -3,58 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluate Sheet - <%= paper.title %></title>
+    <title>Evaluation Results - <%= paper.title %></title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        .eval-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .eval-header-split {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
         .eval-layout {
             display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 1.5rem;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.75rem;
             align-items: start;
-            margin-top: 1.5rem;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .eval-layout { grid-template-columns: 1fr; }
         }
         .canvas-card {
+            background: #0F172A;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .canvas-toolbar {
+            background: #1E293B;
+            border-bottom: 1px solid #334155;
+            padding: 10px 16px;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+            gap: 8px;
+            color: white;
+            font-size: 0.88rem;
+        }
+        .canvas-toolbar-btn {
+            background: #334155;
+            color: #FFFFFF;
+            border: 1px solid #475569;
+            border-radius: var(--radius-sm);
+            padding: 5px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .canvas-toolbar-btn:hover {
+            background: #475569;
+            border-color: #64748B;
         }
         .canvas-wrapper {
-            width: 100%;
-            overflow: auto;
-            max-height: 78vh;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            background: #2a2e39;
-            text-align: center;
+            position: relative;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            touch-action: none;
+            cursor: crosshair;
         }
         #canvasOutput {
-            max-width: 100%;
+            width: 100%;
             height: auto;
             display: block;
-            margin: 0 auto;
+            touch-action: none;
+        }
+        .tip-banner {
+            background: #EEF2FF;
+            border-left: 4px solid var(--primary);
+            padding: 10px 14px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 0.85rem;
+            color: #3730A3;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
         .score-hero {
             background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
             color: white;
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
             text-align: center;
             margin-bottom: 1.25rem;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
-        }
-        .score-val {
-            font-size: 3rem;
-            font-weight: 700;
-            line-height: 1;
-            margin: 0.5rem 0;
+            box-shadow: var(--shadow-glow);
         }
         .stat-grid {
             display: grid;
@@ -63,102 +108,93 @@
             margin-bottom: 1.25rem;
         }
         .stat-box {
-            background: #F9FAFB;
+            background: #F8FAFC;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
+            border-radius: var(--radius-sm);
+            padding: 0.85rem;
             text-align: center;
         }
-        .stat-box .num {
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-        .stat-box .lbl {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .stat-box .num { font-size: 1.5rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .stat-box .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 2px; }
         .breakdown-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
         }
         .breakdown-table th, .breakdown-table td {
-            padding: 8px 10px;
+            padding: 8px 12px;
             border-bottom: 1px solid var(--border-color);
             text-align: center;
         }
-        .breakdown-table th {
-            background: #F9FAFB;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
+        .breakdown-table th { background: #F8FAFC; font-weight: 700; color: var(--text-muted); }
         .badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
             font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-correct { background: var(--success-light); color: #065F46; }
+        .badge-wrong { background: var(--danger-light); color: #991B1B; }
+        .badge-blank { background: #F1F5F9; color: #64748B; }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.82rem;
             font-weight: 600;
-        }
-        .badge-correct { background: #DEF7EC; color: #03543F; }
-        .badge-wrong { background: #FDE8E8; color: #9B1C1C; }
-        .badge-blank { background: #F3F4F6; color: #6B7280; }
-        .legend {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-            font-size: 0.8rem;
-            flex-wrap: wrap;
-        }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .status-badge {
-            background: #FEF3C7;
-            color: #D97706;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 500;
-            margin-bottom: 15px;
-            display: inline-block;
+            background: #DEF7EC;
+            color: #03543F;
         }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width: 1280px;">
-        <header>
+    <div class="container eval-container">
+        <!-- Header -->
+        <div class="eval-header-split">
             <div>
-                <h1>Evaluation Results</h1>
-                <p style="color: var(--text-muted); margin-top: 5px;"><%= paper.title %> &bull; <%= paper.numQuestions %> Total Questions</p>
+                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">OMR Sheet Evaluation</h1>
+                <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
+                    <%= paper.title %> &bull; <%= paper.numQuestions %> Questions
+                </p>
             </div>
-            <a href="/paper/<%= paper._id %>" class="btn btn-secondary">&larr; Back to Paper</a>
-        </header>
-
-        <div id="status" class="status-badge">&bull; Loading sheet & calculating responses...</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
+                <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-sm">&larr; Back to Paper</a>
+            </div>
+        </div>
 
         <div class="eval-layout">
-            <!-- Sheet Canvas Preview -->
-            <div class="canvas-card">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <div class="legend">
-                        <div class="legend-item"><div class="legend-dot" style="background:#10B981;"></div> Correct</div>
-                        <div class="legend-item"><div class="legend-dot" style="background:#EF4444;"></div> Wrong</div>
-                        <div class="legend-item"><div class="legend-dot" style="background:#F59E0B;"></div> Correct Answer</div>
-                        <div class="legend-item"><div class="legend-dot" style="background:#3B82F6;"></div> Detected Bubble</div>
+            <!-- Left: Interactive Canvas with Draggable 4 Corner Pins -->
+            <div>
+                <div class="canvas-card">
+                    <div class="canvas-toolbar">
+                        <span><strong>Corner Markers:</strong> Drag pins to fine-tune anytime</span>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="canvas-toolbar-btn" onclick="autoDetectCorners()">ðŸŽ¯ Auto-Detect</button>
+                            <button type="button" class="canvas-toolbar-btn" onclick="resetCornersToDefault()">â†º Reset</button>
+                        </div>
                     </div>
-                    <small style="color: var(--text-muted);">High-precision OMR scan</small>
+                    <div class="canvas-wrapper" id="canvasWrapper">
+                        <canvas id="canvasOutput"></canvas>
+                    </div>
                 </div>
-                <div class="canvas-wrapper">
-                    <canvas id="canvasOutput"></canvas>
+
+                <div class="tip-banner">
+                    <div>
+                        <strong>ðŸ’¡ Corner Pinning:</strong> You can drag any of the 4 corner circles (â‘  TL, â‘¡ TR, â‘¢ BR, â‘£ BL) with your mouse or finger to perfectly match the printed black corner squares. The scorecard recalculates instantly!
+                    </div>
                 </div>
             </div>
 
-            <!-- Scorecard & Breakdown -->
+            <!-- Right: Scorecard & Question Breakdown -->
             <div>
                 <div class="score-hero">
-                    <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Total Score</div>
-                    <div class="score-val" id="scoreValue">0 / 0</div>
-                    <div id="scorePercentage" style="font-size: 1.1rem; font-weight: 500;">0%</div>
+                    <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Score Achieved</div>
+                    <div class="score-val" id="scoreValue" style="font-size: 3.25rem; font-weight: 800; margin: 0.25rem 0; font-family: 'Plus Jakarta Sans', sans-serif;">0 / 0</div>
+                    <div id="scorePercentage" style="font-size: 1.15rem; font-weight: 600;">0% Accuracy</div>
                 </div>
 
                 <div class="card" style="padding: 1.25rem;">
@@ -181,8 +217,8 @@
                         </div>
                     </div>
 
-                    <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Question Breakdown</h4>
-                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <h4 style="margin: 1.25rem 0 0.5rem 0; font-size: 0.95rem;">Question Breakdown</h4>
+                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
                         <table class="breakdown-table">
                             <thead>
                                 <tr>
@@ -192,9 +228,7 @@
                                     <th>Verdict</th>
                                 </tr>
                             </thead>
-                            <tbody id="tableBody">
-                                <!-- Populated dynamically -->
-                            </tbody>
+                            <tbody id="tableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -202,222 +236,475 @@
         </div>
     </div>
 
-    <!-- Hidden source image element (using absolute hidden so naturalWidth is preserved) -->
+    <!-- Hidden source image -->
     <img id="uploadedImage" src="<%= imagePath %>" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
 
     <script>
         const answerKey = <%- answerKey || '{}' %>;
         const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
         const img = document.getElementById('uploadedImage');
-        const statusEl = document.getElementById('status');
         const canvas = document.getElementById('canvasOutput');
         const ctx = canvas.getContext('2d');
+        const evalStatus = document.getElementById('evalStatus');
 
-        function startEvaluation() {
+        // Offscreen canvas storing original clean image
+        let baseCanvas = document.createElement('canvas');
+        let baseCtx = baseCanvas.getContext('2d');
+
+        // 4 corner markers: 0: TL, 1: TR, 2: BR, 3: BL
+        const cornerNames = ['Top-Left', 'Top-Right', 'Bottom-Right', 'Bottom-Left'];
+        let corners = [];
+        let activeDragIndex = -1;
+        const HANDLE_RADIUS = 16;
+        const TOUCH_HIT_RADIUS = 36;
+
+        // Accurate Canonical Ratios (measured on standardized A4 template)
+        const U_START = 141.0 / 2235.0;
+        const V_START = 835.5 / 3261.0;
+        const U_BUBBLE_STEP = 62.5 / 2235.0;
+        const V_ROW_STEP = 59.4615 / 3261.0;
+        const U_COL_STEP = 447.5 / 2235.0;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
+
+        function initEvaluator() {
             if (!img.complete || img.naturalWidth === 0) {
-                setTimeout(startEvaluation, 100);
+                setTimeout(initEvaluator, 100);
                 return;
             }
 
-            statusEl.textContent = 'Analyzing sheet & markers...';
-            try {
-                const W = img.naturalWidth;
-                const H = img.naturalHeight;
-                canvas.width = W;
-                canvas.height = H;
-                ctx.drawImage(img, 0, 0);
+            const W = img.naturalWidth;
+            const H = img.naturalHeight;
+            canvas.width = W;
+            canvas.height = H;
+            baseCanvas.width = W;
+            baseCanvas.height = H;
+            baseCtx.drawImage(img, 0, 0);
 
-                const imgData = ctx.getImageData(0, 0, W, H);
-                const data = imgData.data;
+            autoDetectCorners();
+        }
 
-                // 1. Detect 4 corner markers (black squares from omr_sheet.ejs)
-                function findCorner(x1, y1, x2, y2) {
-                    let count = 0, sumX = 0, sumY = 0;
-                    for (let y = Math.floor(y1); y < y2; y += 2) {
-                        for (let x = Math.floor(x1); x < x2; x += 2) {
-                            const idx = (y * W + x) * 4;
-                            if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 90) {
-                                count++;
-                                sumX += x;
-                                sumY += y;
+        // Robust Square Blob Marker Detector using Otsu thresholding + Connected Components in 4 quadrants
+        function autoDetectCorners() {
+            const W = baseCanvas.width;
+            const H = baseCanvas.height;
+            const imgData = baseCtx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            function findSquareMarker(x1, y1, x2, y2) {
+                const pw = Math.round(x2 - x1);
+                const ph = Math.round(y2 - y1);
+                const gray = new Uint8Array(pw * ph);
+                const hist = new Int32Array(256);
+                let idx = 0;
+
+                for (let y = y1; y < y2; y++) {
+                    for (let x = x1; x < x2; x++) {
+                        const pIdx = (y * W + x) * 4;
+                        const g = (data[pIdx] * 77 + data[pIdx+1] * 150 + data[pIdx+2] * 29) >> 8;
+                        gray[idx++] = g;
+                        hist[g]++;
+                    }
+                }
+
+                // Otsu binarization
+                const total = pw * ph;
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * hist[i];
+                let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+                for (let i = 0; i < 256; i++) {
+                    wB += hist[i];
+                    if (wB === 0) continue;
+                    const wF = total - wB;
+                    if (wF === 0) break;
+                    sumB += i * hist[i];
+                    const mB = sumB / wB;
+                    const mF = (sum - sumB) / wF;
+                    const v = wB * wF * (mB - mF) * (mB - mF);
+                    if (v > maxVar) { maxVar = v; thresh = i; }
+                }
+
+                // Connected Components Search
+                const visited = new Uint8Array(pw * ph);
+                let best = null;
+                let bestScore = -1;
+                const minSide = Math.min(W, H);
+                const minArea = (minSide * 0.007) * (minSide * 0.007);
+                const maxArea = (minSide * 0.08) * (minSide * 0.08);
+
+                for (let py = 1; py < ph - 1; py += 2) {
+                    for (let px = 1; px < pw - 1; px += 2) {
+                        const p = py * pw + px;
+                        if (visited[p] || gray[p] >= thresh) continue;
+
+                        let count = 0, sumX = 0, sumY = 0;
+                        let minX = px, maxX = px, minY = py, maxY = py;
+                        const queue = [p];
+                        visited[p] = 1;
+                        let qHead = 0;
+
+                        while (qHead < queue.length) {
+                            const cur = queue[qHead++];
+                            const cy = Math.floor(cur / pw);
+                            const cx = cur % pw;
+                            count++;
+                            sumX += cx;
+                            sumY += cy;
+                            if (cx < minX) minX = cx;
+                            if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy;
+                            if (cy > maxY) maxY = cy;
+
+                            const neighbors = [cur - 1, cur + 1, cur - pw, cur + pw];
+                            for (let k = 0; k < 4; k++) {
+                                const nb = neighbors[k];
+                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                    visited[nb] = 1;
+                                    queue.push(nb);
+                                }
+                            }
+                        }
+
+                        const bw = maxX - minX + 1;
+                        const bh = maxY - minY + 1;
+                        const aspect = bw / bh;
+                        const density = count / (bw * bh);
+
+                        if (aspect > 0.65 && aspect < 1.45 && density > 0.60 && count >= minArea && count <= maxArea) {
+                            const score = density * count;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                best = { x: Math.round(x1 + sumX / count), y: Math.round(y1 + sumY / count) };
                             }
                         }
                     }
-                    return count > 200 ? { x: sumX / count, y: sumY / count } : null;
                 }
+                return best;
+            }
 
-                const cornerBox = Math.round(Math.min(W, H) * 0.12);
-                let TL = findCorner(0, 0, cornerBox, cornerBox);
-                let TR = findCorner(W - cornerBox, 0, W, cornerBox);
-                let BL = findCorner(0, H - cornerBox, cornerBox, H);
-                let BR = findCorner(W - cornerBox, H - cornerBox, W, H);
+            const boxW = Math.round(W * 0.20);
+            const boxH = Math.round(H * 0.20);
 
-                // Fallback to estimated positions if image was pre-cropped
-                if (!TL) TL = { x: W * 0.05, y: H * 0.05 };
-                if (!TR) TR = { x: W * 0.95, y: H * 0.05 };
-                if (!BL) BL = { x: W * 0.05, y: H * 0.95 };
-                if (!BR) BR = { x: W * 0.95, y: H * 0.95 };
+            const tl = findSquareMarker(0, 0, boxW, boxH) || { x: Math.round(W * 0.05), y: Math.round(H * 0.038) };
+            const tr = findSquareMarker(W - boxW, 0, W, boxH) || { x: Math.round(W * 0.95), y: Math.round(H * 0.038) };
+            const br = findSquareMarker(W - boxW, H - boxH, W, H) || { x: Math.round(W * 0.95), y: Math.round(H * 0.962) };
+            const bl = findSquareMarker(0, H - boxH, boxW, H) || { x: Math.round(W * 0.05), y: Math.round(H * 0.962) };
 
-                // Bilinear mapping function from canonical (u, v) in [0, 1] to image (x, y)
-                function mapPoint(u, v) {
-                    const topX = TL.x + u * (TR.x - TL.x);
-                    const topY = TL.y + u * (TR.y - TL.y);
-                    const botX = BL.x + u * (BR.x - BL.x);
-                    const botY = BL.y + u * (BR.y - BL.y);
-                    return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
+            corners = [tl, tr, br, bl];
+            runEvaluation();
+        }
+
+        function resetCornersToDefault() {
+            const W = baseCanvas.width;
+            const H = baseCanvas.height;
+            corners = [
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.948), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.948), y: Math.round(H * 0.962) },
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+            ];
+            runEvaluation();
+        }
+
+        // Bilinear Mapping
+        function mapPoint(TL, TR, BL, BR, u, v) {
+            const topX = TL.x + u * (TR.x - TL.x);
+            const topY = TL.y + u * (TR.y - TL.y);
+            const botX = BL.x + u * (BR.x - BL.x);
+            const botY = BL.y + u * (BR.y - BL.y);
+            return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
+        }
+
+        // Full OMR Evaluation with Local Peak Snapping & Relative Row Contrast
+        function runEvaluation() {
+            if (corners.length < 4) return;
+            evalStatus.textContent = 'Evaluating bubbles...';
+
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.drawImage(baseCanvas, 0, 0);
+
+            const imgData = baseCtx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            const TL = corners[0];
+            const TR = corners[1];
+            const BR = corners[2];
+            const BL = corners[3];
+
+            // Helper to get grayscale value of a pixel
+            function getGray(x, y) {
+                if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                const idx = (y * W + x) * 4;
+                return (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
+            }
+
+            // Measure mean brightness in circle of radius r
+            function sampleCircle(cx, cy, r) {
+                let sum = 0, count = 0;
+                for (let dy = -r; dy <= r; dy++) {
+                    for (let dx = -r; dx <= r; dx++) {
+                        if (dx*dx + dy*dy <= r*r) {
+                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            count++;
+                        }
+                    }
                 }
+                return count > 0 ? (sum / count) : 255;
+            }
 
-                // Sample darkness in a circle of radius r
-                function measureDarkness(cx, cy, r) {
-                    let count = 0, total = 0;
-                    for (let dy = -r; dy <= r; dy++) {
-                        for (let dx = -r; dx <= r; dx++) {
-                            if (dx*dx + dy*dy <= r*r) {
-                                total++;
-                                const x = Math.round(cx + dx);
-                                const y = Math.round(cy + dy);
-                                if (x >= 0 && x < W && y >= 0 && y < H) {
-                                    const idx = (y * W + x) * 4;
-                                    if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 128) count++;
+            const bubbleRadius = Math.max(7, Math.round(Math.min(W, H) * 0.007));
+            let score = 0;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let attemptedCount = 0;
+            let blankCount = 0;
+            let evaluatedKeyCount = 0;
+            let rowsHtml = '';
+
+            for (let q = 1; q <= totalPaperQuestions; q++) {
+                const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const row = (q - 1) % QUESTIONS_PER_COL;
+                const v = V_START + row * V_ROW_STEP;
+                const col_u = U_START + col * U_COL_STEP;
+
+                // Sample local paper baseline right next to this question (25px left)
+                const paperPt = mapPoint(TL, TR, BL, BR, col_u - 0.02, v);
+                const paperVal = sampleCircle(paperPt.x, paperPt.y, 6);
+
+                let bubbleStats = [];
+                for (let b = 0; b < 4; b++) {
+                    const u = col_u + b * U_BUBBLE_STEP;
+                    const pt = mapPoint(TL, TR, BL, BR, u, v);
+
+                    // Local Peak Snapping: search +-4 pixels to lock onto the true bubble center
+                    let bestX = pt.x, bestY = pt.y, minVal = 999;
+                    for (let dy of [-4, 0, 4]) {
+                        for (let dx of [-4, 0, 4]) {
+                            const val = sampleCircle(pt.x + dx, pt.y + dy, Math.round(bubbleRadius * 0.6));
+                            if (val < minVal) {
+                                minVal = val;
+                                bestX = pt.x + dx;
+                                bestY = pt.y + dy;
+                            }
+                        }
+                    }
+
+                    // Sample the full bubble at its exact snapped center
+                    const bubbleMean = sampleCircle(bestX, bestY, bubbleRadius);
+                    const darkness = paperVal - bubbleMean;
+
+                    // Percentage of pixels darker than paper threshold
+                    let darkCount = 0, totalCount = 0;
+                    for (let dy = -bubbleRadius; dy <= bubbleRadius; dy++) {
+                        for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
+                            if (dx*dx + dy*dy <= bubbleRadius*bubbleRadius) {
+                                totalCount++;
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
+                                    darkCount++;
                                 }
                             }
                         }
                     }
-                    return Math.round((count / total) * 100);
+                    const darkRatio = totalCount > 0 ? (darkCount / totalCount) : 0;
+
+                    bubbleStats.push({
+                        opt: OPTIONS[b],
+                        darkness: darkness,
+                        darkRatio: darkRatio,
+                        pt: { x: bestX, y: bestY }
+                    });
                 }
 
-                // Calibrated coordinates relative to corner markers
-                const u_start = (265 - 170.4) / 2161.2;
-                const v_start = (956 - 173.6) / 3171.4;
-                const u_bubble_step = 62.3 / 2161.2;
-                const u_col_step = 447 / 2161.2;
-                const v_row_step = 60.1 / 3171.4;
-                const bubbleRadius = Math.max(8, Math.round(W * 0.007));
+                // Sort descending by darkness intensity
+                const sorted = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
+                const top1 = sorted[0];
+                const top2 = sorted[1];
 
-                const options = ['A', 'B', 'C', 'D'];
-                const questionsPerCol = 40;
-                let score = 0;
-                let correctCount = 0;
-                let wrongCount = 0;
-                let attemptedCount = 0;
-                let blankCount = 0;
-                let evaluatedKeyCount = 0;
-                let rowsHtml = '';
-
-                for (let q = 1; q <= totalPaperQuestions; q++) {
-                    const col = Math.floor((q - 1) / questionsPerCol);
-                    const row = (q - 1) % questionsPerCol;
-                    const v = v_start + row * v_row_step;
-                    const col_u = u_start + col * u_col_step;
-
-                    let fills = [];
-                    let bubbleCoords = [];
-                    for (let b = 0; b < 4; b++) {
-                        const u = col_u + b * u_bubble_step;
-                        const pt = mapPoint(u, v);
-                        const fill = measureDarkness(pt.x, pt.y, bubbleRadius);
-                        fills.push({ opt: options[b], fill, pt });
-                        bubbleCoords.push(pt);
+                // Relative Contrast Rule: top1 must be significantly darker than paper AND top2
+                let isFilled = false;
+                if (top1.darkness >= 16) {
+                    if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.32 || top1.darkness > top2.darkness * 1.35) {
+                        isFilled = true;
                     }
+                }
 
-                    // Sort descending by fill
-                    const sorted = [...fills].sort((a, b) => b.fill - a.fill);
-                    const isFilled = sorted[0].fill > 40;
-                    const detectedAnswer = isFilled ? sorted[0].opt : '';
-                    const correctAns = answerKey[q.toString()] || '';
+                const detectedAnswer = isFilled ? top1.opt : '';
+                const correctAns = answerKey[q.toString()] || '';
 
-                    let verdict = 'unmarked';
-                    if (correctAns) evaluatedKeyCount++;
+                let verdict = 'unmarked';
+                if (correctAns) evaluatedKeyCount++;
 
-                    if (detectedAnswer) {
-                        attemptedCount++;
+                if (detectedAnswer) {
+                    attemptedCount++;
+                    if (correctAns && detectedAnswer === correctAns) {
+                        score++;
+                        correctCount++;
+                        verdict = 'correct';
+                    } else if (correctAns) {
+                        wrongCount++;
+                        verdict = 'wrong';
+                    }
+                } else {
+                    blankCount++;
+                }
+
+                // Draw Bubble Overlay on Canvas
+                for (let b = 0; b < 4; b++) {
+                    const opt = OPTIONS[b];
+                    const pt = bubbleStats[b].pt;
+
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
+
+                    if (opt === detectedAnswer) {
                         if (correctAns && detectedAnswer === correctAns) {
-                            score++;
-                            correctCount++;
-                            verdict = 'correct';
+                            ctx.strokeStyle = '#10B981';
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
                         } else if (correctAns) {
-                            wrongCount++;
-                            verdict = 'wrong';
-                        }
-                    } else {
-                        blankCount++;
-                    }
-
-                    // Draw on Canvas
-                    for (let b = 0; b < 4; b++) {
-                        const opt = options[b];
-                        const pt = bubbleCoords[b];
-                        
-                        ctx.beginPath();
-                        ctx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
-                        ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
-
-                        if (opt === detectedAnswer) {
-                            if (correctAns && detectedAnswer === correctAns) {
-                                ctx.strokeStyle = '#10B981'; // Green for correct
-                                ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
-                            } else if (correctAns) {
-                                ctx.strokeStyle = '#EF4444'; // Red for wrong
-                                ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
-                            } else {
-                                ctx.strokeStyle = '#3B82F6'; // Blue detected
-                                ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
-                            }
-                            ctx.fill();
-                        } else if (opt === correctAns && detectedAnswer !== correctAns) {
-                            // Highlight missed correct answer in gold
-                            ctx.strokeStyle = '#F59E0B';
-                            ctx.fillStyle = 'rgba(245, 158, 11, 0.3)';
-                            ctx.fill();
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
                         } else {
-                            ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                            ctx.strokeStyle = '#3B82F6';
+                            ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
                         }
-                        ctx.stroke();
+                        ctx.fill();
+                    } else if (opt === correctAns && detectedAnswer !== correctAns) {
+                        ctx.strokeStyle = '#F59E0B';
+                        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
                     }
-
-                    // Build table row
-                    let badgeClass = 'badge-blank';
-                    let verdictText = 'Unmarked';
-                    if (verdict === 'correct') { badgeClass = 'badge-correct'; verdictText = '✓ Correct'; }
-                    else if (verdict === 'wrong') { badgeClass = 'badge-wrong'; verdictText = '✗ Wrong'; }
-                    else if (detectedAnswer) { badgeClass = 'badge-correct'; verdictText = 'Marked'; }
-
-                    rowsHtml += `<tr>
-                        <td><strong>${q}</strong></td>
-                        <td>${detectedAnswer ? '<span style="font-weight:700; font-size:1rem;">' + detectedAnswer + '</span>' : '<span style="color:#9CA3AF;">—</span>'}</td>
-                        <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">—</span>'}</td>
-                        <td><span class="badge ${badgeClass}">${verdictText}</span></td>
-                    </tr>`;
+                    ctx.stroke();
                 }
 
-                // Update UI elements
-                const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
-                document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
-                const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
-                document.getElementById('scorePercentage').textContent = `${pct}% Correct`;
+                let badgeClass = 'badge-blank';
+                let verdictText = 'Unmarked';
+                if (verdict === 'correct') { badgeClass = 'badge-correct'; verdictText = 'âœ“ Correct'; }
+                else if (verdict === 'wrong') { badgeClass = 'badge-wrong'; verdictText = 'âœ— Wrong'; }
+                else if (detectedAnswer) { badgeClass = 'badge-correct'; verdictText = 'Marked'; }
 
-                document.getElementById('statCorrect').textContent = correctCount;
-                document.getElementById('statWrong').textContent = wrongCount;
-                document.getElementById('statAttempted').textContent = attemptedCount;
-                document.getElementById('statBlank').textContent = blankCount;
-                document.getElementById('tableBody').innerHTML = rowsHtml;
+                rowsHtml += `<tr>
+                    <td><strong>${q}</strong></td>
+                    <td>${detectedAnswer ? '<span style="font-weight:700; font-size:1rem;">' + detectedAnswer + '</span>' : '<span style="color:#9CA3AF;">-</span>'}</td>
+                    <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>'}</td>
+                    <td><span class="badge ${badgeClass}">${verdictText}</span></td>
+                </tr>`;
+            }
 
-                statusEl.textContent = '✓ Evaluation Complete!';
-                statusEl.style.background = '#DEF7EC';
-                statusEl.style.color = '#03543F';
+            // Draw Quadrilateral & Corner Handles
+            ctx.beginPath();
+            ctx.moveTo(TL.x, TL.y);
+            ctx.lineTo(TR.x, TR.y);
+            ctx.lineTo(BR.x, BR.y);
+            ctx.lineTo(BL.x, BL.y);
+            ctx.closePath();
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
-            } catch (err) {
-                console.error(err);
-                statusEl.textContent = 'Error during evaluation: ' + err.message;
-                statusEl.style.background = '#FDE8E8';
-                statusEl.style.color = '#9B1C1C';
+            corners.forEach((c, idx) => {
+                const isBeingDragged = (idx === activeDragIndex);
+
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, HANDLE_RADIUS, 0, 2 * Math.PI);
+                ctx.fillStyle = isBeingDragged ? '#4F46E5' : '#FFFFFF';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
+                ctx.fill();
+
+                ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.shadowColor = 'rgba(0,0,0,0.85)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(`${idx + 1}: ${cornerNames[idx]}`, c.x + 20, c.y + 4);
+                ctx.shadowBlur = 0;
+            });
+
+            // Update UI Scoreboard
+            const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
+            document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
+            const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+            document.getElementById('scorePercentage').textContent = `${pct}% Accuracy`;
+
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+            document.getElementById('statAttempted').textContent = attemptedCount;
+            document.getElementById('statBlank').textContent = blankCount;
+            document.getElementById('tableBody').innerHTML = rowsHtml;
+
+            evalStatus.textContent = 'âœ“ Evaluation Complete';
+            evalStatus.style.background = '#DEF7EC';
+            evalStatus.style.color = '#03543F';
+        }
+
+        // Pointer coordinate converter
+        function getCanvasPoint(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // Dragging listeners
+        canvas.addEventListener('mousedown', onPointerDown);
+        canvas.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+
+        canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+        canvas.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+
+        function onPointerDown(e) {
+            const pt = getCanvasPoint(e);
+            activeDragIndex = -1;
+            for (let i = 0; i < corners.length; i++) {
+                const dist = Math.hypot(corners[i].x - pt.x, corners[i].y - pt.y);
+                if (dist <= TOUCH_HIT_RADIUS) {
+                    activeDragIndex = i;
+                    e.preventDefault();
+                    break;
+                }
             }
         }
 
+        function onPointerMove(e) {
+            if (activeDragIndex >= 0 && activeDragIndex < corners.length) {
+                e.preventDefault();
+                const pt = getCanvasPoint(e);
+                corners[activeDragIndex] = {
+                    x: Math.max(0, Math.min(canvas.width, Math.round(pt.x))),
+                    y: Math.max(0, Math.min(canvas.height, Math.round(pt.y)))
+                };
+                runEvaluation();
+            }
+        }
+
+        function onPointerUp() {
+            activeDragIndex = -1;
+        }
+
         if (img.complete) {
-            startEvaluation();
+            initEvaluator();
         } else {
-            img.onload = startEvaluation;
+            img.onload = initEvaluator;
         }
     </script>
 </body>

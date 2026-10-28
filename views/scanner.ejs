@@ -309,7 +309,7 @@
             <div style="display:flex; align-items:center; gap:8px;">
                 <span style="font-size: 1.2rem;">ðŸ’¡</span>
                 <span>
-                    <strong>How to scan:</strong> Tap the 4 black corner squares on the sheet (1: Top-Left &rarr; 2: Top-Right &rarr; 3: Bottom-Right &rarr; 4: Bottom-Left). Drag handles to fine-tune anytime.
+                    <strong>How to scan:</strong> Tap the 4 black corner squares on the sheet (1: Top-Left &rarr; 2: Top-Right &rarr; 3: Bottom-Right &rarr; 4: Bottom-Left). Drag handles anytime for millimeter precision.
                 </span>
             </div>
             <span style="font-size: 0.8rem; font-weight: 600; color: var(--primary);" id="cornerCounter">
@@ -411,6 +411,15 @@
         const HANDLE_RADIUS = 16;
         const TOUCH_HIT_RADIUS = 36;
 
+        // Calibrated Standard Grid Ratios
+        const U_START = 141.0 / 2235.0;
+        const V_START = 835.5 / 3261.0;
+        const U_BUBBLE_STEP = 62.5 / 2235.0;
+        const V_ROW_STEP = 59.4615 / 3261.0;
+        const U_COL_STEP = 447.5 / 2235.0;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
+
         async function initCamera() {
             corners = [];
             isFrozen = false;
@@ -451,7 +460,6 @@
             isFrozen = !isFrozen;
 
             if (isFrozen) {
-                // Freeze current video frame into offscreen canvas
                 frozenImageCanvas = document.createElement('canvas');
                 frozenImageCanvas.width = previewCanvas.width;
                 frozenImageCanvas.height = previewCanvas.height;
@@ -474,34 +482,109 @@
             updateUIState();
         }
 
-        // Auto-align helper: runs corner marker algorithm and proposes the 4 pins
+        // Auto-align helper: runs connected-components square finder in 4 quadrants
         function detectAndPlaceCorners() {
             const W = previewCanvas.width;
             const H = previewCanvas.height;
             const imgData = previewCtx.getImageData(0, 0, W, H);
             const data = imgData.data;
 
-            function findCorner(x1, y1, x2, y2) {
-                let count = 0, sumX = 0, sumY = 0;
-                const step = 4;
-                for (let y = Math.floor(y1); y < y2; y += step) {
-                    for (let x = Math.floor(x1); x < x2; x += step) {
-                        const idx = (y * W + x) * 4;
-                        if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 85) {
+            function findSquareMarker(x1, y1, x2, y2) {
+                const pw = Math.round(x2 - x1);
+                const ph = Math.round(y2 - y1);
+                const gray = new Uint8Array(pw * ph);
+                const hist = new Int32Array(256);
+                let idx = 0;
+
+                for (let y = y1; y < y2; y++) {
+                    for (let x = x1; x < x2; x++) {
+                        const pIdx = (y * W + x) * 4;
+                        const g = (data[pIdx] * 77 + data[pIdx+1] * 150 + data[pIdx+2] * 29) >> 8;
+                        gray[idx++] = g;
+                        hist[g]++;
+                    }
+                }
+
+                const total = pw * ph;
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * hist[i];
+                let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+                for (let i = 0; i < 256; i++) {
+                    wB += hist[i];
+                    if (wB === 0) continue;
+                    const wF = total - wB;
+                    if (wF === 0) break;
+                    sumB += i * hist[i];
+                    const mB = sumB / wB;
+                    const mF = (sum - sumB) / wF;
+                    const v = wB * wF * (mB - mF) * (mB - mF);
+                    if (v > maxVar) { maxVar = v; thresh = i; }
+                }
+
+                const visited = new Uint8Array(pw * ph);
+                let best = null;
+                let bestScore = -1;
+                const minSide = Math.min(W, H);
+                const minArea = (minSide * 0.007) * (minSide * 0.007);
+                const maxArea = (minSide * 0.08) * (minSide * 0.08);
+
+                for (let py = 1; py < ph - 1; py += 2) {
+                    for (let px = 1; px < pw - 1; px += 2) {
+                        const p = py * pw + px;
+                        if (visited[p] || gray[p] >= thresh) continue;
+
+                        let count = 0, sumX = 0, sumY = 0;
+                        let minX = px, maxX = px, minY = py, maxY = py;
+                        const queue = [p];
+                        visited[p] = 1;
+                        let qHead = 0;
+
+                        while (qHead < queue.length) {
+                            const cur = queue[qHead++];
+                            const cy = Math.floor(cur / pw);
+                            const cx = cur % pw;
                             count++;
-                            sumX += x;
-                            sumY += y;
+                            sumX += cx;
+                            sumY += cy;
+                            if (cx < minX) minX = cx;
+                            if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy;
+                            if (cy > maxY) maxY = cy;
+
+                            const neighbors = [cur - 1, cur + 1, cur - pw, cur + pw];
+                            for (let k = 0; k < 4; k++) {
+                                const nb = neighbors[k];
+                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                    visited[nb] = 1;
+                                    queue.push(nb);
+                                }
+                            }
+                        }
+
+                        const bw = maxX - minX + 1;
+                        const bh = maxY - minY + 1;
+                        const aspect = bw / bh;
+                        const density = count / (bw * bh);
+
+                        if (aspect > 0.65 && aspect < 1.45 && density > 0.60 && count >= minArea && count <= maxArea) {
+                            const score = density * count;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                best = { x: Math.round(x1 + sumX / count), y: Math.round(y1 + sumY / count) };
+                            }
                         }
                     }
                 }
-                return count > 30 ? { x: Math.round(sumX / count), y: Math.round(sumY / count) } : null;
+                return best;
             }
 
-            const box = Math.round(Math.min(W, H) * 0.22);
-            const tl = findCorner(0, 0, box, box) || { x: Math.round(W * 0.08), y: Math.round(H * 0.08) };
-            const tr = findCorner(W - box, 0, W, box) || { x: Math.round(W * 0.92), y: Math.round(H * 0.08) };
-            const br = findCorner(W - box, H - box, W, H) || { x: Math.round(W * 0.92), y: Math.round(H * 0.92) };
-            const bl = findCorner(0, H - box, box, H) || { x: Math.round(W * 0.08), y: Math.round(H * 0.92) };
+            const boxW = Math.round(W * 0.20);
+            const boxH = Math.round(H * 0.20);
+
+            const tl = findSquareMarker(0, 0, boxW, boxH) || { x: Math.round(W * 0.08), y: Math.round(H * 0.08) };
+            const tr = findSquareMarker(W - boxW, 0, W, boxH) || { x: Math.round(W * 0.92), y: Math.round(H * 0.08) };
+            const br = findSquareMarker(W - boxW, H - boxH, W, H) || { x: Math.round(W * 0.92), y: Math.round(H * 0.92) };
+            const bl = findSquareMarker(0, H - boxH, boxW, H) || { x: Math.round(W * 0.08), y: Math.round(H * 0.92) };
 
             corners = [tl, tr, br, bl];
             updateUIState();
@@ -522,7 +605,6 @@
             }
         }
 
-        // Pointer / Touch coordinate converter
         function getCanvasPoint(e) {
             const rect = previewCanvas.getBoundingClientRect();
             const scaleX = previewCanvas.width / rect.width;
@@ -539,7 +621,6 @@
             };
         }
 
-        // Canvas interaction listeners (Click, Drag, Touch)
         previewCanvas.addEventListener('mousedown', onPointerDown);
         previewCanvas.addEventListener('mousemove', onPointerMove);
         window.addEventListener('mouseup', onPointerUp);
@@ -549,20 +630,17 @@
         window.addEventListener('touchend', onPointerUp);
 
         function onPointerDown(e) {
-            e.preventDefault();
             const pt = getCanvasPoint(e);
-
-            // Check if clicking near an existing corner to drag
             activeDragIndex = -1;
             for (let i = 0; i < corners.length; i++) {
                 const dist = Math.hypot(corners[i].x - pt.x, corners[i].y - pt.y);
                 if (dist <= TOUCH_HIT_RADIUS) {
                     activeDragIndex = i;
+                    e.preventDefault();
                     break;
                 }
             }
 
-            // If not dragging an existing corner, add new corner if < 4
             if (activeDragIndex === -1 && corners.length < 4) {
                 corners.push({ x: Math.round(pt.x), y: Math.round(pt.y) });
                 updateUIState();
@@ -584,19 +662,16 @@
             activeDragIndex = -1;
         }
 
-        // Main Drawing Loop
         function renderLoop() {
             const W = previewCanvas.width;
             const H = previewCanvas.height;
 
-            // Draw video or frozen frame
             if (isFrozen && frozenImageCanvas) {
                 previewCtx.drawImage(frozenImageCanvas, 0, 0, W, H);
             } else if (video.readyState === video.HAVE_ENOUGH_DATA) {
                 previewCtx.drawImage(video, 0, 0, W, H);
             }
 
-            // Draw connecting quadrilateral if corners are placed
             if (corners.length >= 2) {
                 previewCtx.beginPath();
                 previewCtx.moveTo(corners[0].x, corners[0].y);
@@ -616,11 +691,9 @@
                 previewCtx.stroke();
             }
 
-            // Draw Corner Handles
             corners.forEach((c, idx) => {
                 const isBeingDragged = (idx === activeDragIndex);
 
-                // Outer Ring
                 previewCtx.beginPath();
                 previewCtx.arc(c.x, c.y, HANDLE_RADIUS, 0, 2 * Math.PI);
                 previewCtx.fillStyle = isBeingDragged ? '#4F46E5' : '#FFFFFF';
@@ -629,13 +702,11 @@
                 previewCtx.strokeStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
                 previewCtx.stroke();
 
-                // Center crosshair / dot
                 previewCtx.beginPath();
                 previewCtx.arc(c.x, c.y, 4, 0, 2 * Math.PI);
                 previewCtx.fillStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
                 previewCtx.fill();
 
-                // Corner Number Badge
                 previewCtx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
                 previewCtx.fillStyle = '#FFFFFF';
                 previewCtx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -644,7 +715,6 @@
                 previewCtx.shadowBlur = 0;
             });
 
-            // Draw Loupe (Magnifier) when dragging for precision
             if (activeDragIndex >= 0 && activeDragIndex < corners.length) {
                 drawLoupe(corners[activeDragIndex]);
             }
@@ -652,7 +722,6 @@
             animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // Circular Magnifying Loupe above the dragged corner
         function drawLoupe(pt) {
             const loupeRadius = 45;
             const zoom = 2.2;
@@ -664,7 +733,6 @@
             previewCtx.arc(loupeX, loupeY, loupeRadius, 0, 2 * Math.PI);
             previewCtx.clip();
 
-            // Zoomed source area
             const sw = (loupeRadius * 2) / zoom;
             const sh = (loupeRadius * 2) / zoom;
             const sx = pt.x - sw / 2;
@@ -676,7 +744,6 @@
                 previewCtx.drawImage(video, sx, sy, sw, sh, loupeX - loupeRadius, loupeY - loupeRadius, loupeRadius * 2, loupeRadius * 2);
             }
 
-            // Crosshair in Loupe
             previewCtx.strokeStyle = '#EF4444';
             previewCtx.lineWidth = 1.5;
             previewCtx.beginPath();
@@ -688,7 +755,6 @@
 
             previewCtx.restore();
 
-            // Loupe border
             previewCtx.beginPath();
             previewCtx.arc(loupeX, loupeY, loupeRadius, 0, 2 * Math.PI);
             previewCtx.lineWidth = 3;
@@ -713,7 +779,6 @@
             } catch (e) {}
         }
 
-        // Proceed and evaluate the marked corners
         function proceedToEvaluate() {
             if (corners.length < 4) return;
 
@@ -727,19 +792,16 @@
             resultCanvas.width = W;
             resultCanvas.height = H;
 
-            // Draw the base image into resultCanvas
             if (isFrozen && frozenImageCanvas) {
                 resultCtx.drawImage(frozenImageCanvas, 0, 0, W, H);
             } else {
                 resultCtx.drawImage(video, 0, 0, W, H);
             }
 
-            // Stop camera stream to conserve battery
             if (cameraStream) {
                 cameraStream.getTracks().forEach(t => t.stop());
             }
 
-            // Evaluate sheet
             const markers = {
                 tl: corners[0],
                 tr: corners[1],
@@ -749,6 +811,7 @@
             gradeCapturedSheet(markers, W, H);
         }
 
+        // Precision Evaluation Engine with Peak Snapping & Relative Row Contrast
         function gradeCapturedSheet(markers, W, H) {
             const imgData = resultCtx.getImageData(0, 0, W, H);
             const data = imgData.data;
@@ -766,34 +829,26 @@
                 return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
             }
 
-            function measureDarkness(cx, cy, r) {
-                let count = 0, total = 0;
+            function getGray(x, y) {
+                if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                const idx = (y * W + x) * 4;
+                return (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
+            }
+
+            function sampleCircle(cx, cy, r) {
+                let sum = 0, count = 0;
                 for (let dy = -r; dy <= r; dy++) {
                     for (let dx = -r; dx <= r; dx++) {
                         if (dx*dx + dy*dy <= r*r) {
-                            total++;
-                            const x = Math.round(cx + dx);
-                            const y = Math.round(cy + dy);
-                            if (x >= 0 && x < W && y >= 0 && y < H) {
-                                const idx = (y * W + x) * 4;
-                                if ((data[idx] + data[idx+1] + data[idx+2]) / 3 < 125) count++;
-                            }
+                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            count++;
                         }
                     }
                 }
-                return Math.round((count / total) * 100);
+                return count > 0 ? (sum / count) : 255;
             }
 
-            // Calibrated offsets matching omr_sheet.ejs
-            const u_start = (265 - 170.4) / 2161.2;
-            const v_start = (956 - 173.6) / 3171.4;
-            const u_bubble_step = 62.3 / 2161.2;
-            const u_col_step = 447 / 2161.2;
-            const v_row_step = 60.1 / 3171.4;
-            const bubbleRadius = Math.max(7, Math.round(W * 0.007));
-
-            const options = ['A', 'B', 'C', 'D'];
-            const questionsPerCol = 40;
+            const bubbleRadius = Math.max(7, Math.round(Math.min(W, H) * 0.007));
             let score = 0;
             let correctCount = 0;
             let wrongCount = 0;
@@ -803,24 +858,68 @@
             let rowsHtml = '';
 
             for (let q = 1; q <= totalPaperQuestions; q++) {
-                const col = Math.floor((q - 1) / questionsPerCol);
-                const row = (q - 1) % questionsPerCol;
-                const v = v_start + row * v_row_step;
-                const col_u = u_start + col * u_col_step;
+                const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const row = (q - 1) % QUESTIONS_PER_COL;
+                const v = V_START + row * V_ROW_STEP;
+                const col_u = U_START + col * U_COL_STEP;
 
-                let fills = [];
-                let bubbleCoords = [];
+                const paperPt = mapPoint(col_u - 0.02, v);
+                const paperVal = sampleCircle(paperPt.x, paperPt.y, 6);
+
+                let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
-                    const u = col_u + b * u_bubble_step;
+                    const u = col_u + b * U_BUBBLE_STEP;
                     const pt = mapPoint(u, v);
-                    const fill = measureDarkness(pt.x, pt.y, bubbleRadius);
-                    fills.push({ opt: options[b], fill, pt });
-                    bubbleCoords.push(pt);
+
+                    // Local peak search
+                    let bestX = pt.x, bestY = pt.y, minVal = 999;
+                    for (let dy of [-4, 0, 4]) {
+                        for (let dx of [-4, 0, 4]) {
+                            const val = sampleCircle(pt.x + dx, pt.y + dy, Math.round(bubbleRadius * 0.6));
+                            if (val < minVal) {
+                                minVal = val;
+                                bestX = pt.x + dx;
+                                bestY = pt.y + dy;
+                            }
+                        }
+                    }
+
+                    const bubbleMean = sampleCircle(bestX, bestY, bubbleRadius);
+                    const darkness = paperVal - bubbleMean;
+
+                    let darkCount = 0, totalCount = 0;
+                    for (let dy = -bubbleRadius; dy <= bubbleRadius; dy++) {
+                        for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
+                            if (dx*dx + dy*dy <= bubbleRadius*bubbleRadius) {
+                                totalCount++;
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
+                                    darkCount++;
+                                }
+                            }
+                        }
+                    }
+                    const darkRatio = totalCount > 0 ? (darkCount / totalCount) : 0;
+
+                    bubbleStats.push({
+                        opt: OPTIONS[b],
+                        darkness: darkness,
+                        darkRatio: darkRatio,
+                        pt: { x: bestX, y: bestY }
+                    });
                 }
 
-                const sorted = [...fills].sort((a, b) => b.fill - a.fill);
-                const isFilled = sorted[0].fill > 38;
-                const detectedAnswer = isFilled ? sorted[0].opt : '';
+                const sorted = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
+                const top1 = sorted[0];
+                const top2 = sorted[1];
+
+                let isFilled = false;
+                if (top1.darkness >= 16) {
+                    if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.32 || top1.darkness > top2.darkness * 1.35) {
+                        isFilled = true;
+                    }
+                }
+
+                const detectedAnswer = isFilled ? top1.opt : '';
                 const correctAns = answerKey[q.toString()] || '';
 
                 let verdict = 'unmarked';
@@ -842,8 +941,9 @@
 
                 // Draw overlay on canvas
                 for (let b = 0; b < 4; b++) {
-                    const opt = options[b];
-                    const pt = bubbleCoords[b];
+                    const opt = OPTIONS[b];
+                    const pt = bubbleStats[b].pt;
+
                     resultCtx.beginPath();
                     resultCtx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
                     resultCtx.lineWidth = Math.max(3, Math.round(W * 0.002));
@@ -851,13 +951,13 @@
                     if (opt === detectedAnswer) {
                         if (correctAns && detectedAnswer === correctAns) {
                             resultCtx.strokeStyle = '#10B981';
-                            resultCtx.fillStyle = 'rgba(16, 185, 129, 0.5)';
+                            resultCtx.fillStyle = 'rgba(16, 185, 129, 0.45)';
                         } else if (correctAns) {
                             resultCtx.strokeStyle = '#EF4444';
-                            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.5)';
+                            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.45)';
                         } else {
                             resultCtx.strokeStyle = '#3B82F6';
-                            resultCtx.fillStyle = 'rgba(59, 130, 246, 0.4)';
+                            resultCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
                         }
                         resultCtx.fill();
                     } else if (opt === correctAns && detectedAnswer !== correctAns) {
@@ -884,7 +984,6 @@
                 </tr>`;
             }
 
-            // Display results
             const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
             document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
             const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
@@ -896,7 +995,6 @@
             document.getElementById('statBlank').textContent = blankCount;
             document.getElementById('tableBody').innerHTML = rowsHtml;
 
-            // Switch view
             document.getElementById('viewfinderSection').style.display = 'none';
             document.getElementById('instructionsStrip').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
@@ -906,7 +1004,6 @@
             initCamera();
         }
 
-        // Start on load
         window.addEventListener('DOMContentLoaded', initCamera);
     </script>
 </body>
