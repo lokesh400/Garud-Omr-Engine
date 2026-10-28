@@ -460,7 +460,8 @@
                 thresh = Math.max(35, Math.min(thresh, 185));
 
                 const visited = new Uint8Array(pw * ph);
-                const candidates = [];
+                let best = null;
+                let bestScore = -999999;
                 const minSide = Math.min(W, H);
                 const minArea = (minSide * 0.007) * (minSide * 0.007);
                 const maxArea = (minSide * 0.08) * (minSide * 0.08);
@@ -501,50 +502,26 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        if (aspect > 0.60 && aspect < 1.60 && density > 0.55 && count >= minArea && count <= maxArea) {
+                        if (aspect > 0.55 && aspect < 1.75 && density > 0.50 && count >= minArea && count <= maxArea) {
                             const bx = Math.round(x1 + sumX / count);
                             const by = Math.round(y1 + sumY / count);
-
-                            // Isolation check
-                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
-                            let darkRing = 0, totalRing = 0;
-
-                            for (let rdy = -rOut; rdy <= rOut; rdy += 3) {
-                                for (let rdx = -rOut; rdx <= rOut; rdx += 3) {
-                                    const d2 = rdx * rdx + rdy * rdy;
-                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                        const gx = bx + rdx;
-                                        const gy = by + rdy;
-                                        if (gx >= 0 && gx < W && gy >= 0 && gy < H) {
-                                            totalRing++;
-                                            const gIdx = (gy * W + gx) * 4;
-                                            const pixGray = (data[gIdx] * 77 + data[gIdx + 1] * 150 + data[gIdx + 2] * 29) >> 8;
-                                            if (pixGray < thresh) darkRing++;
-                                        }
-                                    }
-                                }
-                            }
-
-                            const ringDarkRatio = totalRing > 0 ? (darkRing / totalRing) : 0;
                             const distToCorner = Math.hypot(bx - cx, by - cy);
                             const normDist = distToCorner / diag;
+                            const score = (density * 2.0) - (normDist * 3.5);
 
-                            if (ringDarkRatio <= 0.08) {
-                                const score = (density * 2.0) - (normDist * 2.5) - (ringDarkRatio * 4.0);
-                                candidates.push({ x: bx, y: by, score: score });
+                            if (score > bestScore) {
+                                bestScore = score;
+                                best = { x: bx, y: by };
                             }
                         }
                     }
                 }
 
-                if (candidates.length === 0) return null;
-                candidates.sort((a, b) => b.score - a.score);
-                return { x: candidates[0].x, y: candidates[0].y };
+                return best;
             }
 
-            const boxW = Math.round(W * 0.22);
-            const boxH = Math.round(H * 0.22);
+            const boxW = Math.round(W * 0.25);
+            const boxH = Math.round(H * 0.25);
 
             const tl = findSquareMarker(0, 0, boxW, boxH, 0, 0) || { x: Math.round(W * 0.056), y: Math.round(H * 0.038) };
             const tr = findSquareMarker(W - boxW, 0, W, boxH, W, 0) || { x: Math.round(W * 0.944), y: Math.round(H * 0.038) };
