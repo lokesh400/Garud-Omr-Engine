@@ -606,7 +606,7 @@
         // Auto-tracking state
         let smoothedCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 3; // Snappy 100ms steady auto-lock
+        const LOCK_REQUIRED_FRAMES = 8; // ~260ms steady lock before auto-snap
 
         // Fast analysis downscale canvas (480px width for 1ms scan time)
         const fastCanvas = document.createElement('canvas');
@@ -733,8 +733,8 @@
                 const H = previewCanvas.height;
                 previewCtx.drawImage(video, 0, 0, W, H);
 
-                // Run fast detector on downscaled canvas (480px width)
-                const fastW = 480;
+                // Run fast detector on downscaled canvas (360 width)
+                const fastW = 360;
                 const fastH = Math.max(1, Math.round(H * (fastW / W)));
                 fastCanvas.width = fastW;
                 fastCanvas.height = fastH;
@@ -755,8 +755,8 @@
                         smoothedCorners = currentCorners;
                     } else {
                         smoothedCorners = smoothedCorners.map((pt, i) => ({
-                            x: pt.x * 0.65 + currentCorners[i].x * 0.35,
-                            y: pt.y * 0.65 + currentCorners[i].y * 0.35
+                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
+                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
                         }));
                     }
 
@@ -808,10 +808,10 @@
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            // Adaptive search quadrants: 44% width and 44% height
-            // Leaves an 12% central corridor unsearched to strictly exclude center bubbles
-            const boxW = Math.round(sw * 0.44);
-            const boxH = Math.round(sh * 0.44);
+            // Search in outer 30% margin corners to prevent reaching question bubbles
+            // (1e8e1a9 used 26%, slightly expanded to detect at natural holding distance)
+            const boxW = Math.round(sw * 0.30);
+            const boxH = Math.round(sh * 0.30);
             const quads = [
                 { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
                 { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
@@ -853,7 +853,7 @@
                     if (v > maxVar) { maxVar = v; thresh = i + 1; }
                 }
 
-                thresh = Math.max(45, Math.min(thresh, 175));
+                thresh = Math.max(35, Math.min(thresh, 185));
 
                 const visited = new Uint8Array(pw * ph);
                 const candidates = [];
@@ -894,16 +894,16 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        // Solid square marker criteria: aspect 0.55 to 1.80, high density > 0.50, count 14 to 3500
-                        if (aspect >= 0.55 && aspect <= 1.80 && density >= 0.50 && count >= 14 && count <= 3500) {
+                        // Solid square marker criteria: aspect 0.60 to 1.60, high density > 0.55
+                        if (aspect > 0.60 && aspect < 1.60 && density > 0.55 && count > 12 && count < 2000) {
                             const bx = q.x1 + sumX / count;
                             const by = q.y1 + sumY / count;
 
                             // Isolation Check:
                             // Corner markers sit in white margins.
                             // Question bubbles sit inside a dense grid with neighbors within 10-18px.
-                            const rIn = Math.round(Math.max(bw, bh) * 0.70);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.50);
+                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
+                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
                             let darkRing = 0, totalRing = 0;
 
                             for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
@@ -926,9 +926,10 @@
                             const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
                             const normDist = distToCorner / diag;
 
-                            // Corner markers have ringDarkRatio <= 0.35 (bubble grids have 0.45+)
-                            if (ringDarkRatio <= 0.35) {
-                                const score = (density * 3.0) - (normDist * 5.0) - (ringDarkRatio * 2.5);
+                            // Only accept isolated blobs (ringDarkRatio <= 0.12)
+                            // 1e8e1a9 used 0.08; 0.12 allows minor desk shadows
+                            if (ringDarkRatio <= 0.12) {
+                                const score = (density * 2.0) - (normDist * 2.5) - (ringDarkRatio * 4.0);
                                 candidates.push({
                                     x: bx,
                                     y: by,
@@ -971,23 +972,23 @@
             const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
             const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.50) return null;
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.50) return null;
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.65) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.65) return null;
 
-            // 3. Aspect ratio check (allows both portrait and landscape orientation)
+            // 3. A4 Aspect ratio check (portrait orientation)
             const avgW = (wTop + wBot) / 2;
             const avgH = (hLeft + hRight) / 2;
             const aspect = avgH / avgW;
-            if (aspect < 0.55 || aspect > 1.95) return null;
+            if (aspect < 0.95 || aspect > 1.95) return null;
 
-            // 4. Area check (at least 8% of camera area)
+            // 4. Area check (at least 15% of camera area)
             const quadArea = 0.5 * Math.abs(
                 (p0.x * p1.y - p0.y * p1.x) +
                 (p1.x * p2.y - p1.y * p2.x) +
                 (p2.x * p3.y - p2.y * p3.x) +
                 (p3.x * p0.y - p3.y * p0.x)
             );
-            if (quadArea < (sw * sh * 0.08)) return null;
+            if (quadArea < (sw * sh * 0.15)) return null;
 
             return foundCorners;
         }
