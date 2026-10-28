@@ -1,12 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI CyberScan - <%= paper.title %></title>
+    <title> AI CyberScan - <%= paper.title %>
+    </title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --cyber-cyan: #06B6D4;
@@ -116,10 +119,13 @@
         }
 
         @keyframes pulse-dot {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
                 opacity: 1;
             }
+
             50% {
                 transform: scale(1.3);
                 opacity: 0.7;
@@ -161,9 +167,11 @@
                 top: 10%;
                 opacity: 0.3;
             }
+
             50% {
                 opacity: 0.9;
             }
+
             100% {
                 top: 90%;
                 opacity: 0.3;
@@ -243,11 +251,11 @@
         .results-grid {
             display: grid;
             grid-template-columns: 1.15fr 1fr;
-            gap: 1.5rem;
+            gap: 1.75rem;
             align-items: start;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .results-grid {
                 grid-template-columns: 1fr;
             }
@@ -256,42 +264,74 @@
         .rectified-canvas-wrap {
             background: #090D16;
             border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            padding: 1.25rem;
+            text-align: center;
             border: 1px solid #1E293B;
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
             position: relative;
+        }
+
+        .rectified-badge {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            z-index: 10;
         }
 
         #canvasResult {
             width: 100%;
             height: auto;
-            display: block;
-        }
-
-        .rectified-badge {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: rgba(16, 185, 129, 0.9);
-            color: white;
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: var(--radius-full);
-            font-family: 'JetBrains Mono', monospace;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            pointer-events: none;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            background: #FFFFFF;
         }
 
         .score-hero {
-            background: linear-gradient(135deg, #090D16 0%, #1E1B4B 100%);
-            border: 1px solid #312E81;
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            text-align: center;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
             color: white;
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            text-align: center;
             margin-bottom: 1.25rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-box {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem;
+            text-align: center;
+        }
+
+        .stat-box .num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .stat-box .lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 2px;
         }
 
         .breakdown-table {
@@ -303,86 +343,80 @@
         .breakdown-table th,
         .breakdown-table td {
             padding: 8px 12px;
-            text-align: left;
             border-bottom: 1px solid var(--border-color);
+            text-align: center;
         }
 
         .breakdown-table th {
-            background: var(--bg-hover);
+            background: #F8FAFC;
             font-weight: 700;
             color: var(--text-muted);
-            font-size: 0.78rem;
-            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
         .badge-correct {
-            background: #DEF7EC;
-            color: #03543F;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.75rem;
+            background: var(--success-light);
+            color: #065F46;
         }
 
         .badge-wrong {
-            background: #FDE8E8;
-            color: #9B1C1C;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.75rem;
+            background: var(--danger-light);
+            color: #991B1B;
+        }
+
+        .badge-blank {
+            background: #F1F5F9;
+            color: #64748B;
         }
 
         .badge-multiple {
             background: #FEE2E2;
             color: #991B1B;
-            border: 1px solid #F87171;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-weight: 800;
-            font-size: 0.75rem;
-            box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+            border: 1px solid #FCA5A5;
         }
 
-        .badge-blank {
-            background: #F3F4F6;
-            color: #4B5563;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-        }
-
+        /* Roll Number Card */
         .roll-number-card {
-            background: #090D16;
+            background: #0F172A;
             border: 1px solid #1E293B;
             border-radius: var(--radius-lg);
             padding: 1rem 1.25rem;
             margin-bottom: 1.25rem;
-            color: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
         .roll-label-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
             margin-bottom: 0.75rem;
         }
 
         .roll-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
             color: #94A3B8;
+            text-transform: uppercase;
         }
 
         .roll-status-pill {
-            font-size: 0.75rem;
+            margin-left: auto;
+            font-size: 0.72rem;
             font-weight: 700;
-            padding: 2px 10px;
+            padding: 2px 8px;
             border-radius: var(--radius-full);
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
             font-family: 'JetBrains Mono', monospace;
-            border: 1px solid;
         }
 
         .roll-boxes-display {
@@ -392,26 +426,26 @@
         }
 
         .roll-digit-box {
-            width: 38px;
+            width: 36px;
             height: 44px;
-            background: #111827;
-            border: 2px solid #374151;
-            border-radius: 6px;
+            background: #1E293B;
+            border: 1.5px solid #334155;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
-            color: #F3F4F6;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+            color: #38BDF8;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
         }
 
         .roll-digit-box.filled {
-            border-color: #06B6D4;
-            color: #22D3EE;
-            background: rgba(6, 182, 212, 0.1);
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+            border-color: #38BDF8;
+            background: #0c2238;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.35), inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .roll-digit-box.unknown {
@@ -461,10 +495,10 @@
                 <div class="hud-top-bar">
                     <div id="hudChip" class="hud-chip">
                         <div id="statusDot" class="status-dot"></div>
-                        <span id="hudStatus">AI SCANNER ACTIVE: ALIGN SHEET IN FRAME</span>
+                        <span id="hudStatus">AI SCANNER ACTIVE: POINT AT SHEET</span>
                     </div>
                     <div id="tiltBadge" class="hud-tilt-badge">
-                        📐 TILT: 0.0° • LEVEL
+                        ðŸ“ TILT: 0.0Â° &bull; LEVEL
                     </div>
                 </div>
 
@@ -482,7 +516,7 @@
                 </div>
                 <div>
                     <button type="button" class="btn-capture-auto" id="captureBtn" onclick="triggerManualCapture()">
-                        ⚡ Snap & Level Sheet
+                        âš¡ Snap & Level Sheet
                     </button>
                 </div>
             </div>
@@ -493,14 +527,14 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0;">
                 <h2 style="margin: 0; font-size: 1.4rem;">Leveled Document & Evaluation</h2>
                 <button class="btn btn-primary" onclick="restartScanner()">
-                    📸 Scan Next Sheet
+                    ðŸ“· Scan Next Sheet
                 </button>
             </div>
 
             <div class="results-grid">
                 <!-- Cropped Leveled Sheet Display -->
                 <div class="rectified-canvas-wrap">
-                    <span class="rectified-badge">✓ Auto-Leveled & Cropped (A4)</span>
+                    <span class="rectified-badge">âœ“ Auto-Leveled & Cropped (A4)</span>
                     <canvas id="canvasResult"></canvas>
                 </div>
 
@@ -606,9 +640,9 @@
         // Auto-tracking state
         let smoothedCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 6; // ~200ms steady hold before auto-snap
+        const LOCK_REQUIRED_FRAMES = 5; // ~160ms steady hold before auto-snap
 
-        // Fast analysis downscale canvas (480px width for 1ms scan time)
+        // Fast analysis downscale canvas
         const fastCanvas = document.createElement('canvas');
         const fastCtx = fastCanvas.getContext('2d');
 
@@ -629,16 +663,15 @@
             isCaptured = false;
             smoothedCorners = null;
             lockStreak = 0;
-            document.getElementById('viewfinderSection').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
-            scanLaser.style.display = 'block';
-
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+            document.getElementById('viewfinderSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            scanLaser.style.display = 'block';
 
-            // Reuse active stream if already playing
+            // Reuse existing active stream if available
             if (cameraStream && cameraStream.active) {
                 try {
                     video.srcObject = cameraStream;
@@ -649,7 +682,7 @@
                     renderLoop();
                     return;
                 } catch (e) {
-                    console.warn('Reusing active stream failed, re-requesting:', e);
+                    console.warn('Reuse stream failed, reopening:', e);
                 }
             }
 
@@ -670,13 +703,11 @@
                 try {
                     stream = await navigator.mediaDevices.getUserMedia(c);
                     if (stream) break;
-                } catch (err) {
-                    console.warn('Camera constraint fallback:', c, err.message);
-                }
+                } catch (err) { }
             }
 
             if (!stream) {
-                hudStatus.textContent = 'CAMERA ERROR: CAMERA NOT FOUND OR PERMISSION DENIED';
+                hudStatus.textContent = 'CAMERA ERROR: CAMERA NOT ACCESSIBLE';
                 return;
             }
 
@@ -740,12 +771,12 @@
                 fastCanvas.height = fastH;
                 fastCtx.drawImage(video, 0, 0, fastW, fastH);
 
-                const detection = detectLiveCorners(fastCtx, fastW, fastH);
+                const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
 
-                if (detection && detection.corners) {
+                if (detectedRaw) {
                     // Scale back up to full preview coordinates
                     const scale = W / fastW;
-                    const currentCorners = detection.corners.map(pt => ({
+                    const currentCorners = detectedRaw.map(pt => ({
                         x: pt.x * scale,
                         y: pt.y * scale
                     }));
@@ -755,8 +786,8 @@
                         smoothedCorners = currentCorners;
                     } else {
                         smoothedCorners = smoothedCorners.map((pt, i) => ({
-                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
-                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
+                            x: pt.x * 0.70 + currentCorners[i].x * 0.30,
+                            y: pt.y * 0.70 + currentCorners[i].y * 0.30
                         }));
                     }
 
@@ -768,10 +799,10 @@
                     lockStreak++;
                     hudChip.classList.add('locked');
                     statusDot.className = 'status-dot active';
-                    const pctLocked = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
-                    hudStatus.textContent = lockStreak >= LOCK_REQUIRED_FRAMES ? 'TARGET LOCKED • AUTO-SNAPPING' : 'LOCKING SHEET (' + pctLocked + '%)';
+                    const pct = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
+                    hudStatus.textContent = lockStreak >= LOCK_REQUIRED_FRAMES ? 'TARGET LOCKED • AUTO-SNAPPING' : 'LOCKING SHEET (' + pct + '%)';
                     tiltBadge.className = 'hud-tilt-badge level';
-                    tiltBadge.textContent = '📐 TILT: ' + (tilt > 0 ? '+' + tilt : tilt) + '° • 4/4 CORNERS';
+                    tiltBadge.textContent = '📐 TILT: ' + (tilt > 0 ? '+' + tilt : tilt) + '° • LEVEL';
                     captureBtn.classList.add('locked');
 
                     // Draw Glowing Cybernetic Polygonal Overlay
@@ -787,40 +818,15 @@
                     if (lockStreak === 0) smoothedCorners = null;
                     hudChip.classList.remove('locked');
                     statusDot.className = 'status-dot';
+                    hudStatus.textContent = 'AI SCANNER: ALIGN OMR SHEET IN FRAME';
+                    tiltBadge.className = 'hud-tilt-badge';
+                    tiltBadge.textContent = '📐 SEARCHING CORNERS';
                     captureBtn.classList.remove('locked');
 
-                    // Draw Framing Guide
-                    drawFramingGuide(previewCtx, W, H);
-
-                    const partials = (detection && detection.partialCorners) ? detection.partialCorners : [];
-
-                    if (partials.length > 0) {
-                        // Draw individual reticles on detected corners
-                        drawPartialCornerReticles(previewCtx, partials, W, H, fastW, fastH);
-
-                        if (partials.length === 3) {
-                            const foundSet = new Set(partials.map(p => p.quadIndex));
-                            const names = ['TOP-LEFT', 'TOP-RIGHT', 'BOTTOM-RIGHT', 'BOTTOM-LEFT'];
-                            let missingName = 'CORNER';
-                            for (let qi = 0; qi < 4; qi++) {
-                                if (!foundSet.has(qi)) { missingName = names[qi]; break; }
-                            }
-                            hudStatus.textContent = '3/4 CORNERS DETECTED: ALIGN ' + missingName + ' IN VIEW';
-                            tiltBadge.className = 'hud-tilt-badge';
-                            tiltBadge.textContent = '📐 3/4 CORNERS FOUND';
-                        } else if (partials.length === 2) {
-                            hudStatus.textContent = '2/4 CORNERS FOUND: FIT ENTIRE SHEET IN FRAME';
-                            tiltBadge.className = 'hud-tilt-badge';
-                            tiltBadge.textContent = '📐 2/4 CORNERS FOUND';
-                        } else {
-                            hudStatus.textContent = '1/4 CORNER FOUND: POSITION SHEET IN FRAME';
-                            tiltBadge.className = 'hud-tilt-badge';
-                            tiltBadge.textContent = '📐 1/4 CORNER FOUND';
-                        }
+                    if (smoothedCorners) {
+                        drawCyberOverlay(previewCtx, smoothedCorners, false);
                     } else {
-                        hudStatus.textContent = 'AI SCANNER: ALIGN OMR SHEET IN FRAME';
-                        tiltBadge.className = 'hud-tilt-badge';
-                        tiltBadge.textContent = '📐 SEARCHING CORNERS';
+                        drawFramingGuide(previewCtx, W, H);
                     }
                 }
             }
@@ -828,28 +834,27 @@
             animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // High-Precision Solid Corner Detector: Isolates 4 solid black corner squares from bubbles
+        // Fast Corner Detector
+        // High-Precision Solid Corner Detector: Isolates 4 Corner Markers with Parallelogram 4th-Corner Fallback
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            // Search in 4 outer quadrants: 44% width and 44% height
-            // Leaves a central 12% corridor unsearched to strictly exclude question bubbles
-            const boxW = Math.round(sw * 0.44);
-            const boxH = Math.round(sh * 0.44);
+            // Search in outer 35% margin corners (leaves a 30% center corridor unsearched)
+            const boxW = Math.round(sw * 0.35);
+            const boxH = Math.round(sh * 0.35);
             const quads = [
-                { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0, name: 'TOP-LEFT', label: 'TL' },
-                { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0, name: 'TOP-RIGHT', label: 'TR' },
-                { x1: sw - boxW, y1: sh - boxH, x2: sw, y2: sh, cx: sw, cy: sh, name: 'BOTTOM-RIGHT', label: 'BR' },
-                { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh, name: 'BOTTOM-LEFT', label: 'BL' }
+                { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
+                { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
+                { x1: sw - boxW, y1: sh - boxH, x2: sw, y2: sh, cx: sw, cy: sh },
+                { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh }
             ];
 
             const diag = Math.hypot(sw, sh);
-            const foundCorners = [];
-            const partialCorners = [];
+            const quadCandidates = [];
 
-            for (let qIndex = 0; qIndex < quads.length; qIndex++) {
-                const q = quads[qIndex];
+            for (let qIdx = 0; qIdx < 4; qIdx++) {
+                const q = quads[qIdx];
                 const pw = q.x2 - q.x1;
                 const ph = q.y2 - q.y1;
                 const gray = new Uint8Array(pw * ph);
@@ -921,31 +926,14 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        // Solid square marker criteria: aspect 0.52 to 1.85, high density > 0.50, count 16 to 4000
-                        if (bw >= 6 && bh >= 6 && bw <= 75 && bh <= 75 && aspect >= 0.52 && aspect <= 1.85 && density >= 0.50 && count >= 16 && count <= 4000) {
+                        // Solid square marker criteria: aspect 0.55 to 1.80, high density > 0.50, count 14 to 3000
+                        if (aspect > 0.55 && aspect < 1.80 && density > 0.50 && count > 14 && count < 3000) {
                             const bx = q.x1 + sumX / count;
                             const by = q.y1 + sumY / count;
 
-                            // Inward Paper Margin Check:
-                            // Towards the center of the sheet (sw/2, sh/2), genuine corner markers have clean white paper.
-                            // Bubbles in a dense grid are surrounded by other dark bubbles inward.
-                            const dirX = Math.sign((sw / 2) - bx);
-                            const dirY = Math.sign((sh / 2) - by);
-                            let whiteInwardCount = 0;
-                            const sampleDists = [Math.round(Math.max(bw, bh) * 0.9), Math.round(Math.max(bw, bh) * 1.4), Math.round(Math.max(bw, bh) * 1.9)];
-
-                            for (let sd of sampleDists) {
-                                const ix = Math.round(bx + dirX * sd);
-                                const iy = Math.round(by + dirY * sd);
-                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
-                                    const inIdx = (iy * sw + ix) * 4;
-                                    const inGray = (data[inIdx] * 77 + data[inIdx + 1] * 150 + data[inIdx + 2] * 29) >> 8;
-                                    if (inGray >= (thresh - 15)) whiteInwardCount++;
-                                }
-                            }
-
-                            // Isolation Ring Check:
-                            // Allows dark desks and shadows (ringDarkRatio <= 0.40) while rejecting dense bubble clusters (0.55+)
+                            // Isolation Check:
+                            // Corner markers sit in white margins.
+                            // Question bubbles sit inside a dense grid with neighbors within 10-18px.
                             const rIn = Math.round(Math.max(bw, bh) * 0.75);
                             const rOut = Math.round(Math.max(bw, bh) * 1.55);
                             let darkRing = 0, totalRing = 0;
@@ -970,17 +958,15 @@
                             const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
                             const normDist = distToCorner / diag;
 
-                            // Accept if isolated or has clean white margin towards center
-                            if (ringDarkRatio <= 0.40 || whiteInwardCount >= 2) {
-                                const score = (density * 3.0) + (Math.min(bw, bh) * 0.08) - (normDist * 3.5) - (ringDarkRatio * 2.0);
+                            // Accept isolated blobs (up to 0.25 to accommodate minor desk shadow/fingers, bubble grids have 0.45+)
+                            if (ringDarkRatio <= 0.25) {
+                                const score = (density * 2.5) - (normDist * 2.5) - (ringDarkRatio * 3.0);
                                 candidates.push({
                                     x: bx,
                                     y: by,
                                     count: count,
                                     score: score,
-                                    distToCorner: distToCorner,
-                                    label: q.label,
-                                    quadIndex: qIndex
+                                    distToCorner: distToCorner
                                 });
                             }
                         }
@@ -989,43 +975,68 @@
 
                 if (candidates.length > 0) {
                     candidates.sort((a, b) => b.score - a.score);
-                    const best = candidates[0];
-                    foundCorners.push({ x: best.x, y: best.y, count: best.count });
-                    partialCorners.push({ x: best.x, y: best.y, quadIndex: qIndex, quadName: q.name, label: q.label });
+                    quadCandidates[qIdx] = candidates[0];
+                } else {
+                    quadCandidates[qIdx] = null;
                 }
             }
 
-            if (foundCorners.length !== 4) {
-                return { corners: null, partialCorners };
+            // Check how many corners were detected directly
+            let foundCorners = [quadCandidates[0], quadCandidates[1], quadCandidates[2], quadCandidates[3]];
+            let detectedCount = foundCorners.filter(Boolean).length;
+
+            // If 3 corners detected, reconstruct the 4th via parallelogram geometry
+            if (detectedCount === 3) {
+                const missingIdx = foundCorners.findIndex(c => c === null);
+                let pred = null;
+                if (missingIdx === 0 && foundCorners[1] && foundCorners[2] && foundCorners[3]) {
+                    // TL = TR + BL - BR
+                    pred = { x: foundCorners[1].x + foundCorners[3].x - foundCorners[2].x, y: foundCorners[1].y + foundCorners[3].y - foundCorners[2].y, count: 50 };
+                } else if (missingIdx === 1 && foundCorners[0] && foundCorners[2] && foundCorners[3]) {
+                    // TR = TL + BR - BL
+                    pred = { x: foundCorners[0].x + foundCorners[2].x - foundCorners[3].x, y: foundCorners[0].y + foundCorners[2].y - foundCorners[3].y, count: 50 };
+                } else if (missingIdx === 2 && foundCorners[0] && foundCorners[1] && foundCorners[3]) {
+                    // BR = TR + BL - TL
+                    pred = { x: foundCorners[1].x + foundCorners[3].x - foundCorners[0].x, y: foundCorners[1].y + foundCorners[3].y - foundCorners[0].y, count: 50 };
+                } else if (missingIdx === 3 && foundCorners[0] && foundCorners[1] && foundCorners[2]) {
+                    // BL = TL + BR - TR
+                    pred = { x: foundCorners[0].x + foundCorners[2].x - foundCorners[1].x, y: foundCorners[0].y + foundCorners[2].y - foundCorners[1].y, count: 50 };
+                }
+                if (pred && pred.x >= 0 && pred.x < sw && pred.y >= 0 && pred.y < sh) {
+                    foundCorners[missingIdx] = pred;
+                    detectedCount = 4;
+                }
             }
 
-            // Quad Geometry Validation
+            if (detectedCount !== 4) return null;
+
+            // Strict Quad Geometry Validation
             const p0 = foundCorners[0], p1 = foundCorners[1], p2 = foundCorners[2], p3 = foundCorners[3];
 
-            // 1. Convexity check (clockwise cross products > 0)
+            // 1. Convexity check (clockwise cross-products > 0)
             const pts = [p0, p1, p2, p3];
             for (let i = 0; i < 4; i++) {
                 const a = pts[i];
                 const b = pts[(i + 1) % 4];
                 const c = pts[(i + 2) % 4];
                 const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-                if (cross <= 0) return { corners: null, partialCorners };
+                if (cross <= 0) return null;
             }
 
-            // 2. Parallelism and proportional opposite sides (allows handheld perspective foreshortening)
+            // 2. Parallelism and proportional opposite sides
             const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
             const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
             const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
             const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.55) return { corners: null, partialCorners };
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.55) return { corners: null, partialCorners };
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.55) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.55) return null;
 
-            // 3. Aspect ratio check (allows both portrait and landscape orientations)
+            // 3. Aspect ratio check (allows both portrait and landscape orientation)
             const avgW = (wTop + wBot) / 2;
             const avgH = (hLeft + hRight) / 2;
             const aspect = avgH / avgW;
-            if (aspect < 0.50 || aspect > 2.05) return { corners: null, partialCorners };
+            if (aspect < 0.50 || aspect > 2.05) return null;
 
             // 4. Area check (at least 8% of camera area)
             const quadArea = 0.5 * Math.abs(
@@ -1034,9 +1045,9 @@
                 (p2.x * p3.y - p2.y * p3.x) +
                 (p3.x * p0.y - p3.y * p0.x)
             );
-            if (quadArea < (sw * sh * 0.08)) return { corners: null, partialCorners };
+            if (quadArea < (sw * sh * 0.08)) return null;
 
-            return { corners: foundCorners, partialCorners };
+            return foundCorners;
         }
 
         // Draw Sleek Framing Guide when searching
@@ -1068,7 +1079,7 @@
             // Top-Right
             ctx.beginPath();
             ctx.moveTo(gx + gw - cornerLen, gy);
-            ctx.lineTo(gx + gw, gy);
+            ctx.lineTo(gx + gw);
             ctx.lineTo(gx + gw, gy + cornerLen);
             ctx.stroke();
 
@@ -1085,42 +1096,6 @@
             ctx.lineTo(gx, gy + gh);
             ctx.lineTo(gx, gy + gh - cornerLen);
             ctx.stroke();
-
-            ctx.restore();
-        }
-
-        // Draw live reticles on detected corners when 1-3 corners are in view
-        function drawPartialCornerReticles(ctx, partials, W, H, fastW, fastH) {
-            ctx.save();
-            const scaleX = W / fastW;
-            const scaleY = H / fastH;
-
-            partials.forEach(pt => {
-                const px = pt.x * scaleX;
-                const py = pt.y * scaleY;
-
-                // Glowing outer target ring
-                ctx.beginPath();
-                ctx.arc(px, py, 18, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#06B6D4';
-                ctx.lineWidth = 2.5;
-                ctx.shadowColor = '#06B6D4';
-                ctx.shadowBlur = 10;
-                ctx.stroke();
-
-                // Solid center dot
-                ctx.beginPath();
-                ctx.arc(px, py, 7, 0, 2 * Math.PI);
-                ctx.fillStyle = '#06B6D4';
-                ctx.fill();
-
-                // Corner label tag
-                ctx.font = '700 11px "JetBrains Mono", monospace';
-                ctx.fillStyle = '#FFFFFF';
-                ctx.shadowColor = '#000000';
-                ctx.shadowBlur = 4;
-                ctx.fillText(pt.label || 'OK', px + 12, py - 10);
-            });
 
             ctx.restore();
         }
@@ -1189,7 +1164,10 @@
         // Warps the perspective into a perfectly flat, upright, leveled A4 sheet
         function snapAndWarpSheet() {
             isCaptured = true;
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
 
             playShutter();
             flashScreen.classList.add('flash');
@@ -1257,7 +1235,7 @@
 
             resultCtx.putImageData(dstImgData, 0, 0);
 
-            // Pause video to save CPU/battery, but KEEP stream open for instant restart
+            // Pause video to conserve battery/CPU, keep stream alive
             video.pause();
 
             // Evaluate sheet on the leveled, rectified canvas
@@ -1268,7 +1246,9 @@
             document.getElementById('resultsSection').style.display = 'block';
         }
 
+        // Evaluate bubbles on the flat, leveled A4 sheet
         // Evaluate bubbles and roll number on the flat, leveled A4 sheet
+        // High-Precision Core-Based Bubble & Roll Number Evaluator
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
@@ -1354,8 +1334,8 @@
                 const top2 = colStats[1];
 
                 let isColFilled = false;
-                if ((top1.coreDarkness >= 65) || (top1.coreDarkness >= 35 && top1.darkRatio >= 0.30)) {
-                    if (top1.coreDarkness - top2.coreDarkness >= 12 || top1.darkRatio >= 0.40) {
+                if ((top1.coreDarkness >= 75) || (top1.coreDarkness >= 40 && top1.darkRatio >= 0.35)) {
+                    if (top1.coreDarkness - top2.coreDarkness >= 15 || top1.darkRatio >= 0.45) {
                         isColFilled = true;
                     }
                 }
@@ -1394,9 +1374,9 @@
                 for (let c = 0; c < 8; c++) {
                     const item = rollDigitsArray[c];
                     if (item.isFilled) {
-                        rollBoxesHtml += '<div class="roll-digit-box filled">' + item.digit + '</div>';
+                        rollBoxesHtml += `<div class="roll-digit-box filled">${item.digit}</div>`;
                     } else {
-                        rollBoxesHtml += '<div class="roll-digit-box unknown">-</div>';
+                        rollBoxesHtml += `<div class="roll-digit-box unknown">-</div>`;
                     }
                 }
                 rollBoxesEl.innerHTML = rollBoxesHtml;
@@ -1409,7 +1389,7 @@
                     rollStatusPill.style.color = '#34D399';
                     rollStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
                 } else if (detectedDigitsCount > 0) {
-                    rollStatusPill.textContent = detectedDigitsCount + '/8 DIGITS DETECTED';
+                    rollStatusPill.textContent = `${detectedDigitsCount}/8 DIGITS DETECTED`;
                     rollStatusPill.style.background = 'rgba(245, 158, 11, 0.2)';
                     rollStatusPill.style.color = '#FBBF24';
                     rollStatusPill.style.borderColor = 'rgba(245, 158, 11, 0.4)';
@@ -1435,8 +1415,8 @@
 
             function isBubbleGenuinelyFilled(b) {
                 // Must have solid ink in inner core (avoiding outer printed border)
-                if (b.coreDarkness >= 70) return true;
-                if (b.coreDarkness >= 38 && b.darkRatio >= 0.30) return true;
+                if (b.coreDarkness >= 85) return true;
+                if (b.coreDarkness >= 45 && b.darkRatio >= 0.35) return true;
                 return false;
             }
 
@@ -1587,27 +1567,27 @@
                 if (verdict === 'multiple') {
                     badgeClass = 'badge-multiple';
                     verdictText = '❌ Multiple (Invalid)';
-                    markedCellHtml = '<strong style="color: #EF4444; font-size:1rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#DC2626; font-weight:700;">(Multi)</span>';
+                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong> <span style="font-size:0.75rem; color:#DC2626; font-weight:700;">(Multi)</span>`;
                 } else if (verdict === 'correct') {
                     badgeClass = 'badge-correct';
                     verdictText = '✓ Correct';
-                    markedCellHtml = '<strong style="color: #10B981; font-size:1rem;">' + detectedAnswer + '</strong>';
+                    markedCellHtml = `<strong style="color: #10B981; font-size:1rem;">${detectedAnswer}</strong>`;
                 } else if (verdict === 'wrong') {
                     badgeClass = 'badge-wrong';
                     verdictText = '✗ Wrong';
-                    markedCellHtml = '<strong style="color: #EF4444; font-size:1rem;">' + detectedAnswer + '</strong>';
+                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong>`;
                 } else if (verdict === 'marked') {
                     badgeClass = 'badge-correct';
                     verdictText = 'Marked';
-                    markedCellHtml = '<strong style="font-size:1rem;">' + detectedAnswer + '</strong>';
+                    markedCellHtml = `<strong style="font-size:1rem;">${detectedAnswer}</strong>`;
                 }
 
-                rowsHtml += '<tr>' +
-                    '<td><strong>' + q + '</strong></td>' +
-                    '<td>' + markedCellHtml + '</td>' +
-                    '<td>' + (correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>') + '</td>' +
-                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
-                '</tr>';
+                rowsHtml += `<tr>
+                    <td><strong>${q}</strong></td>
+                    <td>${markedCellHtml}</td>
+                    <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>'}</td>
+                    <td><span class="badge ${badgeClass}">${verdictText}</span></td>
+                </tr>`;
             }
 
             // Safe UI Scoreboard Updates
@@ -1617,9 +1597,9 @@
             };
 
             const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
-            safeSetText('scoreValue', score + ' / ' + totalGraded);
+            safeSetText('scoreValue', `${score} / ${totalGraded}`);
             const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
-            safeSetText('scorePercentage', pct + '% Accuracy');
+            safeSetText('scorePercentage', `${pct}% Accuracy`);
 
             safeSetText('statCorrect', correctCount);
             safeSetText('statWrong', wrongCount);
@@ -1632,24 +1612,10 @@
         }
 
         function restartScanner() {
-            isCaptured = false;
-            smoothedCorners = null;
-            lockStreak = 0;
-            document.getElementById('viewfinderSection').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
-            if (cameraStream && cameraStream.active) {
-                video.play().catch(e => console.warn(e));
-                renderLoop();
-            } else {
-                initCamera();
-            }
+            initCamera();
         }
 
         window.addEventListener('DOMContentLoaded', initCamera);
-        window.addEventListener('beforeunload', () => {
-            if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        });
     </script>
 </body>
 
