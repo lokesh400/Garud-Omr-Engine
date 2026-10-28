@@ -637,26 +637,14 @@
         let animationFrameId = null;
         let isCaptured = false;
 
-        // Auto-tracking state: Snappy 3-frame lock (~100ms)
+        // Auto-tracking state
         let smoothedCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 3;
+        const LOCK_REQUIRED_FRAMES = 6; // ~0.8s steady lock
 
-        // Fast analysis downscale canvas (320px width for max speed)
-        const fastW = 320;
-        let fastH = 240;
+        // Fast analysis downscale canvas
         const fastCanvas = document.createElement('canvas');
-        fastCanvas.width = fastW;
-        fastCanvas.height = fastH;
-        const fastCtx = fastCanvas.getContext('2d', { willReadFrequently: true });
-
-        // Zero-Allocation Pre-allocated Static Buffers (Prevents Garbage Collection Freezes!)
-        const MAX_FAST_PIXELS = 480 * 480;
-        const sharedGray = new Uint8Array(MAX_FAST_PIXELS);
-        const sharedVisited = new Int32Array(MAX_FAST_PIXELS);
-        const sharedQueue = new Int32Array(MAX_FAST_PIXELS);
-        const sharedHist = new Int32Array(256);
-        let visitedToken = 1;
+        const fastCtx = fastCanvas.getContext('2d');
 
         // Standardized A4 Leveled Canvas Dimensions
         const TARGET_W = 1000;
@@ -716,24 +704,12 @@
                 video.muted = true;
                 await video.play();
 
-                const syncDimensions = () => {
-                    if (video.videoWidth > 0 && video.videoHeight > 0) {
-                        const W = video.videoWidth;
-                        const H = video.videoHeight;
-                        previewCanvas.width = W;
-                        previewCanvas.height = H;
-                        fastH = Math.round(fastW * (H / W));
-                        fastCanvas.height = fastH;
-                    }
-                };
-
-                video.onloadedmetadata = syncDimensions;
-                video.oncanplay = syncDimensions;
-                syncDimensions();
+                previewCanvas.width = video.videoWidth || 1280;
+                previewCanvas.height = video.videoHeight || 720;
 
                 renderLoop();
             } catch (err) {
-                console.error('Camera play error:', err);
+                console.error(err);
                 hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
             }
         }
@@ -750,7 +726,7 @@
             for (let i = 0; i < n; i++) {
                 let maxRow = i;
                 for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
-                [A[i], A[maxRow]] = [A[maxRow], A[i]]; [B[i], B[maxRow]] = [B[maxRow], B[i]];
+                [A[i], A[maxRow]] = [A[maxRow], A[i]];[B[i], B[maxRow]] = [B[maxRow], B[i]];
                 const pivot = A[i][i];
                 if (Math.abs(pivot) < 1e-10) return null;
                 for (let j = i; j < n; j++) A[i][j] /= pivot;
@@ -766,184 +742,165 @@
             return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
         }
 
-        // Throttled frame timer for maximum speed and zero CPU stall
-        let lastAnalysisTime = 0;
-        const ANALYSIS_INTERVAL_MS = 35; // ~28 FPS analysis (plenty fast, zero lag!)
-
         // Live Frame Detection Loop
         function renderLoop() {
             if (isCaptured) return;
 
-            if (video.videoWidth > 0 && video.videoHeight > 0) {
-                const W = video.videoWidth;
-                const H = video.videoHeight;
-
-                if (previewCanvas.width !== W || previewCanvas.height !== H) {
-                    previewCanvas.width = W;
-                    previewCanvas.height = H;
-                    fastH = Math.round(fastW * (H / W));
-                    fastCanvas.height = fastH;
-                }
-
-                // Render live camera video directly onto preview canvas (1:1 pixel match, zero offset, zero black screen)
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const W = previewCanvas.width;
+                const H = previewCanvas.height;
                 previewCtx.drawImage(video, 0, 0, W, H);
 
-                const now = performance.now();
-                if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS) {
-                    lastAnalysisTime = now;
+                // Run fast detector on downscaled canvas (360 width)
+                const fastW = 360;
+                const fastH = Math.round(H * (fastW / W));
+                fastCanvas.width = fastW;
+                fastCanvas.height = fastH;
+                fastCtx.drawImage(video, 0, 0, fastW, fastH);
 
-                    fastCtx.drawImage(video, 0, 0, fastW, fastH);
-                    const detectedRaw = fastDetectCorners(fastCtx, fastW, fastH);
+                const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
 
-                    if (detectedRaw) {
-                        const scale = W / fastW;
-                        const currentCorners = [
-                            { x: detectedRaw[0].x * scale, y: detectedRaw[0].y * scale },
-                            { x: detectedRaw[1].x * scale, y: detectedRaw[1].y * scale },
-                            { x: detectedRaw[2].x * scale, y: detectedRaw[2].y * scale },
-                            { x: detectedRaw[3].x * scale, y: detectedRaw[3].y * scale }
-                        ];
+                if (detectedRaw) {
+                    // Scale back up to full preview coordinates
+                    const scale = W / fastW;
+                    const currentCorners = detectedRaw.map(pt => ({
+                        x: pt.x * scale,
+                        y: pt.y * scale
+                    }));
 
-                        // Smooth with EMA
-                        if (!smoothedCorners) {
-                            smoothedCorners = currentCorners;
-                        } else {
-                            for (let i = 0; i < 4; i++) {
-                                smoothedCorners[i].x = smoothedCorners[i].x * 0.65 + currentCorners[i].x * 0.35;
-                                smoothedCorners[i].y = smoothedCorners[i].y * 0.65 + currentCorners[i].y * 0.35;
-                            }
-                        }
-
-                        // Tilt Angle
-                        const dX = smoothedCorners[1].x - smoothedCorners[0].x;
-                        const dY = smoothedCorners[1].y - smoothedCorners[0].y;
-                        const tilt = (Math.atan2(dY, dX) * (180 / Math.PI)).toFixed(1);
-
-                        lockStreak = Math.min(LOCK_REQUIRED_FRAMES + 2, lockStreak + 1);
-                        hudChip.classList.add('locked');
-                        statusDot.className = 'status-dot active';
-                        hudStatus.textContent = `TARGET LOCKED (${Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100))}%) - SCANNING`;
-                        tiltBadge.className = 'hud-tilt-badge level';
-                        tiltBadge.textContent = `?? TILT: ${tilt > 0 ? '+' + tilt : tilt}? ? AUTO-LEVELLING`;
-                        captureBtn.classList.add('locked');
-
-                        // Auto-snap when steady lock is reached
-                        if (autoSnapToggle.checked && lockStreak >= LOCK_REQUIRED_FRAMES) {
-                            snapAndWarpSheet();
-                            return;
-                        }
+                    // Smooth with Exponential Moving Average (EMA)
+                    if (!smoothedCorners) {
+                        smoothedCorners = currentCorners;
                     } else {
-                        lockStreak = Math.max(0, lockStreak - 1);
-                        if (lockStreak === 0) {
-                            smoothedCorners = null;
-                            hudChip.classList.remove('locked');
-                            statusDot.className = 'status-dot';
-                            hudStatus.textContent = 'AI SCANNER: POSITION SHEET IN VIEW';
-                            tiltBadge.className = 'hud-tilt-badge';
-                            tiltBadge.textContent = '?? SEARCHING CORNERS';
-                            captureBtn.classList.remove('locked');
-                        }
+                        smoothedCorners = smoothedCorners.map((pt, i) => ({
+                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
+                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
+                        }));
                     }
-                }
 
-                // Render bounding polygon & glowing reticles or framing guide
-                if (smoothedCorners) {
-                    drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES);
+                    // Compute Tilt Angle
+                    const dX = smoothedCorners[1].x - smoothedCorners[0].x;
+                    const dY = smoothedCorners[1].y - smoothedCorners[0].y;
+                    const tilt = (Math.atan2(dY, dX) * (180 / Math.PI)).toFixed(1);
+
+                    lockStreak++;
+                    hudChip.classList.add('locked');
+                    statusDot.className = 'status-dot active';
+                    hudStatus.textContent = `TARGET LOCKED & LEVELED (${lockStreak >= LOCK_REQUIRED_FRAMES ? 'READY' : Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100) + '%'})`;
+                    tiltBadge.className = 'hud-tilt-badge level';
+                    tiltBadge.textContent = `ðŸ“ TILT: ${tilt > 0 ? '+' + tilt : tilt}Â° â€¢ AUTO-LEVELLING`;
+                    captureBtn.classList.add('locked');
+
+                    // Draw Glowing Cybernetic Polygonal Overlay
+                    drawCyberOverlay(previewCtx, smoothedCorners, true);
+
+                    // Auto-snap if held steady
+                    if (autoSnapToggle.checked && lockStreak >= LOCK_REQUIRED_FRAMES) {
+                        snapAndWarpSheet();
+                        return;
+                    }
                 } else {
-                    drawFramingGuide(previewCtx, W, H);
+                    lockStreak = Math.max(0, lockStreak - 1);
+                    if (lockStreak === 0) smoothedCorners = null;
+                    hudChip.classList.remove('locked');
+                    statusDot.className = 'status-dot';
+                    hudStatus.textContent = 'AI SCANNER: POSITION SHEET IN VIEW';
+                    tiltBadge.className = 'hud-tilt-badge';
+                    tiltBadge.textContent = 'ðŸ“ SEARCHING CORNERS';
+                    captureBtn.classList.remove('locked');
+
+                    if (smoothedCorners) {
+                        drawCyberOverlay(previewCtx, smoothedCorners, false);
+                    }
                 }
             }
 
             animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // Ultra-Fast Zero-Allocation Corner Detector (0.5ms per frame!)
-        function fastDetectCorners(ctx, sw, sh) {
-            const totalPixels = sw * sh;
+        // Fast Corner Detector
+        // High-Precision Corner Detector: Strictly isolates Corner Markers from Question Bubbles
+        function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
-            const d = imgData.data;
+            const data = imgData.data;
 
-            // Single contiguous pass grayscale conversion
-            for (let i = 0, p = 0; i < totalPixels; i++, p += 4) {
-                sharedGray[i] = (d[p] * 77 + d[p+1] * 150 + d[p+2] * 29) >> 8;
-            }
-
-            // Fast adaptive Otsu threshold
-            sharedHist.fill(0);
-            for (let i = 0; i < totalPixels; i += 2) {
-                sharedHist[sharedGray[i]]++;
-            }
-            const halfTotal = Math.floor(totalPixels / 2);
-            let sum = 0;
-            for (let i = 0; i < 256; i++) sum += i * sharedHist[i];
-            let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 125;
-            for (let i = 0; i < 256; i++) {
-                wB += sharedHist[i];
-                if (wB === 0) continue;
-                const wF = halfTotal - wB;
-                if (wF === 0) break;
-                sumB += i * sharedHist[i];
-                const v = wB * wF * (sumB / wB - (sum - sumB) / wF) * (sumB / wB - (sum - sumB) / wF);
-                if (v > maxVar) { maxVar = v; otsuThresh = i; }
-            }
-
-            // STRATEGY A: Detect 4 Solid Black Corner Markers on Sheet
-            // 4 Overlapping quadrants covering full screen with center overlap
+            // Search in outer 26% margin corners to prevent reaching question bubbles
+            const boxW = Math.round(sw * 0.26);
+            const boxH = Math.round(sh * 0.26);
             const quads = [
-                { x1: 0, y1: 0, x2: Math.round(sw * 0.58), y2: Math.round(sh * 0.58), tx: 0, ty: 0 },
-                { x1: Math.round(sw * 0.42), y1: 0, x2: sw, y2: Math.round(sh * 0.58), tx: sw, ty: 0 },
-                { x1: Math.round(sw * 0.42), y1: Math.round(sh * 0.42), x2: sw, y2: sh, tx: sw, ty: sh },
-                { x1: 0, y1: Math.round(sh * 0.42), x2: Math.round(sw * 0.58), y2: sh, tx: 0, ty: sh }
+                { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
+                { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
+                { x1: sw - boxW, y1: sh - boxH, x2: sw, y2: sh, cx: sw, cy: sh },
+                { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh }
             ];
 
-            visitedToken++;
-            const darkThresh = Math.min(otsuThresh - 15, 110);
-            const markers = [];
+            const diag = Math.hypot(sw, sh);
+            const foundCorners = [];
 
-            for (let q = 0; q < 4; q++) {
-                const quad = quads[q];
-                let bestCand = null;
-                let bestScore = -999999;
+            for (let q of quads) {
+                const pw = q.x2 - q.x1;
+                const ph = q.y2 - q.y1;
+                const gray = new Uint8Array(pw * ph);
+                const hist = new Int32Array(256);
+                let idx = 0;
 
-                for (let py = quad.y1 + 1; py < quad.y2 - 1; py += 2) {
-                    const rowOff = py * sw;
-                    for (let px = quad.x1 + 1; px < quad.x2 - 1; px += 2) {
-                        const p = rowOff + px;
-                        if (sharedVisited[p] === visitedToken || sharedGray[p] >= darkThresh) continue;
+                for (let y = q.y1; y < q.y2; y++) {
+                    for (let x = q.x1; x < q.x2; x++) {
+                        const pIdx = (y * sw + x) * 4;
+                        const g = (data[pIdx] * 77 + data[pIdx + 1] * 150 + data[pIdx + 2] * 29) >> 8;
+                        gray[idx++] = g;
+                        hist[g]++;
+                    }
+                }
+
+                // Otsu threshold clamped to prevent edge skipping
+                const total = pw * ph;
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * hist[i];
+                let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+                for (let i = 0; i < 256; i++) {
+                    wB += hist[i];
+                    if (wB === 0) continue;
+                    const wF = total - wB;
+                    if (wF === 0) break;
+                    sumB += i * hist[i];
+                    const v = wB * wF * (sumB / wB - (sum - sumB) / wF) * (sumB / wB - (sum - sumB) / wF);
+                    if (v > maxVar) { maxVar = v; thresh = i + 1; }
+                }
+
+                thresh = Math.max(35, Math.min(thresh, 185));
+
+                const visited = new Uint8Array(pw * ph);
+                const candidates = [];
+
+                for (let py = 1; py < ph - 1; py += 2) {
+                    for (let px = 1; px < pw - 1; px += 2) {
+                        const p = py * pw + px;
+                        if (visited[p] || gray[p] >= thresh) continue;
 
                         let count = 0, sumX = 0, sumY = 0;
                         let minX = px, maxX = px, minY = py, maxY = py;
-                        let qHead = 0, qTail = 0;
-                        sharedQueue[qTail++] = p;
-                        sharedVisited[p] = visitedToken;
+                        const queue = [p];
+                        visited[p] = 1;
+                        let qHead = 0;
 
-                        while (qHead < qTail && qTail < 2500) {
-                            const cur = sharedQueue[qHead++];
-                            const cy_p = Math.floor(cur / sw);
-                            const cx_p = cur % sw;
+                        while (qHead < queue.length) {
+                            const cur = queue[qHead++];
+                            const cy = Math.floor(cur / pw);
+                            const cx = cur % pw;
                             count++;
-                            sumX += cx_p;
-                            sumY += cy_p;
-                            if (cx_p < minX) minX = cx_p;
-                            if (cx_p > maxX) maxX = cx_p;
-                            if (cy_p < minY) minY = cy_p;
-                            if (cy_p > maxY) maxY = cy_p;
+                            sumX += cx;
+                            sumY += cy;
+                            if (cx < minX) minX = cx;
+                            if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy;
+                            if (cy > maxY) maxY = cy;
 
-                            if (cx_p > quad.x1 && sharedVisited[cur - 1] !== visitedToken && sharedGray[cur - 1] < darkThresh) {
-                                sharedVisited[cur - 1] = visitedToken;
-                                sharedQueue[qTail++] = cur - 1;
-                            }
-                            if (cx_p < quad.x2 - 1 && sharedVisited[cur + 1] !== visitedToken && sharedGray[cur + 1] < darkThresh) {
-                                sharedVisited[cur + 1] = visitedToken;
-                                sharedQueue[qTail++] = cur + 1;
-                            }
-                            if (cy_p > quad.y1 && sharedVisited[cur - sw] !== visitedToken && sharedGray[cur - sw] < darkThresh) {
-                                sharedVisited[cur - sw] = visitedToken;
-                                sharedQueue[qTail++] = cur - sw;
-                            }
-                            if (cy_p < quad.y2 - 1 && sharedVisited[cur + sw] !== visitedToken && sharedGray[cur + sw] < darkThresh) {
-                                sharedVisited[cur + sw] = visitedToken;
-                                sharedQueue[qTail++] = cur + sw;
+                            for (let nb of [cur - 1, cur + 1, cur - pw, cur + pw]) {
+                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                    visited[nb] = 1;
+                                    queue.push(nb);
+                                }
                             }
                         }
 
@@ -952,97 +909,102 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        if (aspect > 0.45 && aspect < 2.2 && density > 0.38 && count >= 5 && count < 2000) {
-                            const bx = sumX / count;
-                            const by = sumY / count;
-                            const distToCorner = Math.hypot(bx - quad.tx, by - quad.ty);
-                            const score = (density * count * 2) - (distToCorner * 0.5);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestCand = { x: bx, y: by, count: count };
+                        // Solid square marker criteria: aspect 0.60 to 1.60, high density > 0.55
+                        if (aspect > 0.60 && aspect < 1.60 && density > 0.55 && count > 12 && count < 1800) {
+                            const bx = q.x1 + sumX / count;
+                            const by = q.y1 + sumY / count;
+
+                            // Isolation Check:
+                            // Corner markers sit in white margins.
+                            // Question bubbles sit inside a dense grid with neighbors within 10-18px.
+                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
+                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
+                            let darkRing = 0, totalRing = 0;
+
+                            for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
+                                for (let rdx = -rOut; rdx <= rOut; rdx += 2) {
+                                    const d2 = rdx * rdx + rdy * rdy;
+                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                        const gx = Math.round(bx + rdx);
+                                        const gy = Math.round(by + rdy);
+                                        if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                            totalRing++;
+                                            const gIdx = (gy * sw + gx) * 4;
+                                            const pixGray = (data[gIdx] * 77 + data[gIdx + 1] * 150 + data[gIdx + 2] * 29) >> 8;
+                                            if (pixGray < thresh) darkRing++;
+                                        }
+                                    }
+                                }
+                            }
+
+                            const ringDarkRatio = totalRing > 0 ? (darkRing / totalRing) : 0;
+                            const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
+                            const normDist = distToCorner / diag;
+
+                            // Only accept isolated blobs (ringDarkRatio <= 0.08)
+                            if (ringDarkRatio <= 0.08) {
+                                const score = (density * 2.0) - (normDist * 2.5) - (ringDarkRatio * 4.0);
+                                candidates.push({
+                                    x: bx,
+                                    y: by,
+                                    count: count,
+                                    score: score,
+                                    distToCorner: distToCorner
+                                });
                             }
                         }
                     }
                 }
-                if (bestCand) markers.push(bestCand);
-            }
 
-            if (markers.length === 4) {
-                const w1 = Math.hypot(markers[1].x - markers[0].x, markers[1].y - markers[0].y);
-                const w2 = Math.hypot(markers[2].x - markers[3].x, markers[2].y - markers[3].y);
-                const h1 = Math.hypot(markers[3].x - markers[0].x, markers[3].y - markers[0].y);
-                const h2 = Math.hypot(markers[2].x - markers[1].x, markers[2].y - markers[1].y);
-                if (w1 > sw * 0.15 && w2 > sw * 0.15 && h1 > sh * 0.15 && h2 > sh * 0.15) {
-                    return markers;
+                if (candidates.length === 0) {
+                    return null; // A corner is missing or obstructed - do NOT lock onto bubbles
                 }
+
+                // Pick the candidate with best score (most isolated and closest to outer quadrant corner)
+                candidates.sort((a, b) => b.score - a.score);
+                foundCorners.push({ x: candidates[0].x, y: candidates[0].y, count: candidates[0].count });
             }
 
-            // STRATEGY B: Bright Page Sheet Quadrilateral Fallback (Finds white A4 sheet contour)
-            let minSum = 999999, maxSum = -999999;
-            let minDiff = 999999, maxDiff = -999999;
-            let pTL = null, pTR = null, pBR = null, pBL = null;
-            let brightCount = 0;
+            if (foundCorners.length !== 4) return null;
 
-            for (let y = 4; y < sh - 4; y += 4) {
-                const rowOff = y * sw;
-                for (let x = 4; x < sw - 4; x += 4) {
-                    if (sharedGray[rowOff + x] >= otsuThresh) {
-                        brightCount++;
-                        const s = x + y;
-                        const d = x - y;
-                        if (s < minSum) { minSum = s; pTL = { x, y }; }
-                        if (s > maxSum) { maxSum = s; pBR = { x, y }; }
-                        if (d > maxDiff) { maxDiff = d; pTR = { x, y }; }
-                        if (d < minDiff) { minDiff = d; pBL = { x, y }; }
-                    }
-                }
+            // Strict Quad Geometry Validation
+            const p0 = foundCorners[0], p1 = foundCorners[1], p2 = foundCorners[2], p3 = foundCorners[3];
+
+            // 1. Convexity check
+            const pts = [p0, p1, p2, p3];
+            for (let i = 0; i < 4; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % 4];
+                const c = pts[(i + 2) % 4];
+                const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                if (cross <= 0) return null;
             }
 
-            if (brightCount > (totalPixels / 16) * 0.15 && pTL && pTR && pBR && pBL) {
-                const pageW = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
-                const pageH = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
-                if (pageW > sw * 0.18 && pageH > sh * 0.18) {
-                    // Derive corner marker centers: 5.6% x, 3.8% y from page edges
-                    const mTL = { x: pTL.x + (pTR.x - pTL.x) * 0.056 + (pBL.x - pTL.x) * 0.038, y: pTL.y + (pTR.y - pTL.y) * 0.056 + (pBL.y - pTL.y) * 0.038 };
-                    const mTR = { x: pTR.x - (pTR.x - pTL.x) * 0.056 + (pBR.x - pTR.x) * 0.038, y: pTR.y - (pTR.y - pTL.y) * 0.056 + (pBR.y - pTR.y) * 0.038 };
-                    const mBR = { x: pBR.x - (pBR.x - pBL.x) * 0.056 - (pBR.x - pTR.x) * 0.038, y: pBR.y - (pBR.y - pBL.y) * 0.056 - (pBR.y - pTR.y) * 0.038 };
-                    const mBL = { x: pBL.x + (pBR.x - pBL.x) * 0.056 - (pBL.x - pTL.x) * 0.038, y: pBL.y + (pBR.y - pBL.y) * 0.056 - (pBL.y - pTL.y) * 0.038 };
-                    return [mTL, mTR, mBR, mBL];
-                }
-            }
+            // 2. Parallelism and proportional opposite sides
+            const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+            const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
+            const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
+            const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            return null;
-        }
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.65) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.65) return null;
 
-        // Framing Guide: Visual cue for sheet positioning
-        function drawFramingGuide(ctx, W, H) {
-            ctx.save();
-            const gx1 = Math.round(W * 0.15), gy1 = Math.round(H * 0.08);
-            const gx2 = Math.round(W * 0.85), gy2 = Math.round(H * 0.92);
-            const len = Math.min(28, Math.round(W * 0.04));
+            // 3. A4 Aspect ratio check
+            const avgW = (wTop + wBot) / 2;
+            const avgH = (hLeft + hRight) / 2;
+            const aspect = avgH / avgW;
+            if (aspect < 0.95 || aspect > 1.95) return null;
 
-            ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 6]);
-            ctx.strokeRect(gx1, gy1, gx2 - gx1, gy2 - gy1);
-            ctx.setLineDash([]);
+            // 4. Area check
+            const quadArea = 0.5 * Math.abs(
+                (p0.x * p1.y - p0.y * p1.x) +
+                (p1.x * p2.y - p1.y * p2.x) +
+                (p2.x * p3.y - p2.y * p3.x) +
+                (p3.x * p0.y - p3.y * p0.x)
+            );
+            if (quadArea < (sw * sh * 0.15)) return null;
 
-            ctx.strokeStyle = '#06B6D4';
-            ctx.lineWidth = 3.5;
-            // TL
-            ctx.beginPath(); ctx.moveTo(gx1, gy1 + len); ctx.lineTo(gx1, gy1); ctx.lineTo(gx1 + len, gy1); ctx.stroke();
-            // TR
-            ctx.beginPath(); ctx.moveTo(gx2 - len, gy1); ctx.lineTo(gx2, gy1); ctx.lineTo(gx2, gy1 + len); ctx.stroke();
-            // BR
-            ctx.beginPath(); ctx.moveTo(gx2, gy2 - len); ctx.lineTo(gx2, gy2); ctx.lineTo(gx2 - len, gy2); ctx.stroke();
-            // BL
-            ctx.beginPath(); ctx.moveTo(gx1 + len, gy2); ctx.lineTo(gx1, gy2); ctx.lineTo(gx1, gy2 - len); ctx.stroke();
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-            ctx.font = '700 13px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('ALIGN OMR SHEET WITHIN CORNERS', W / 2, Math.max(24, gy1 - 10));
-            ctx.restore();
+            return foundCorners;
         }
 
         // Draw High-Tech Cyber Reticles & Bounding Quad
@@ -1055,26 +1017,27 @@
             ctx.lineTo(pts[3].x, pts[3].y);
             ctx.closePath();
 
-            ctx.fillStyle = isLocked ? 'rgba(16, 185, 129, 0.18)' : 'rgba(6, 182, 212, 0.08)';
+            ctx.fillStyle = isLocked ? 'rgba(16, 185, 129, 0.14)' : 'rgba(6, 182, 212, 0.08)';
             ctx.fill();
 
-            ctx.lineWidth = isLocked ? 4 : 2;
+            ctx.lineWidth = 3;
             ctx.strokeStyle = isLocked ? '#10B981' : '#06B6D4';
             ctx.shadowColor = isLocked ? '#10B981' : '#06B6D4';
-            ctx.shadowBlur = isLocked ? 14 : 6;
+            ctx.shadowBlur = 10;
             ctx.stroke();
 
             // Cybernetic Corner Brackets
             pts.forEach((pt, i) => {
+                const len = 22;
                 ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 8, 0, 2 * Math.PI);
+                ctx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
                 ctx.fillStyle = isLocked ? '#10B981' : '#06B6D4';
                 ctx.fill();
 
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 16, 0, 2 * Math.PI);
+                ctx.arc(pt.x, pt.y, 18, 0, 2 * Math.PI);
                 ctx.stroke();
             });
             ctx.restore();
@@ -1118,22 +1081,12 @@
             const W = previewCanvas.width;
             const H = previewCanvas.height;
 
-            let corners = smoothedCorners;
-            if (!corners) {
-                const detected = fastDetectCorners(fastCtx, fastW, fastH);
-                if (detected) {
-                    const scale = W / fastW;
-                    corners = detected.map(pt => ({ x: pt.x * scale, y: pt.y * scale }));
-                }
-            }
-            if (!corners) {
-                corners = [
-                    { x: Math.round(W * 0.12), y: Math.round(H * 0.08) },
-                    { x: Math.round(W * 0.88), y: Math.round(H * 0.08) },
-                    { x: Math.round(W * 0.88), y: Math.round(H * 0.92) },
-                    { x: Math.round(W * 0.12), y: Math.round(H * 0.92) }
-                ];
-            }
+            const corners = smoothedCorners || [
+                { x: W * 0.08, y: H * 0.06 },
+                { x: W * 0.92, y: H * 0.06 },
+                { x: W * 0.92, y: H * 0.94 },
+                { x: W * 0.08, y: H * 0.94 }
+            ];
 
             // Target Leveled Canvas: 1000 x 1414
             resultCanvas.width = TARGET_W;
@@ -1200,6 +1153,8 @@
             document.getElementById('resultsSection').style.display = 'block';
         }
 
+        // Evaluate bubbles on the flat, leveled A4 sheet
+        // Evaluate bubbles and roll number on the flat, leveled A4 sheet
         // High-Precision Core-Based Bubble & Roll Number Evaluator
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
@@ -1208,14 +1163,14 @@
             function getGray(x, y) {
                 if (x < 0 || x >= W || y < 0 || y >= H) return 255;
                 const idx = (y * W + x) * 4;
-                return (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
+                return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
             }
 
             function sampleCircle(cx, cy, r) {
                 let sum = 0, count = 0;
                 for (let dy = -r; dy <= r; dy++) {
                     for (let dx = -r; dx <= r; dx++) {
-                        if (dx*dx + dy*dy <= r*r) {
+                        if (dx * dx + dy * dy <= r * r) {
                             sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
                             count++;
                         }
@@ -1262,7 +1217,7 @@
                     let darkCount = 0, totalCount = 0;
                     for (let dy = -rollRadius; dy <= rollRadius; dy++) {
                         for (let dx = -rollRadius; dx <= rollRadius; dx++) {
-                            if (dx*dx + dy*dy <= rollRadius*rollRadius) {
+                            if (dx * dx + dy * dy <= rollRadius * rollRadius) {
                                 totalCount++;
                                 if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
                                     darkCount++;
@@ -1366,6 +1321,7 @@
             let rowsHtml = '';
 
             function isBubbleGenuinelyFilled(b) {
+                // Must have solid ink in inner core (avoiding outer printed border)
                 if (b.coreDarkness >= 85) return true;
                 if (b.coreDarkness >= 45 && b.darkRatio >= 0.35) return true;
                 return false;
@@ -1398,13 +1354,14 @@
                         }
                     }
 
+                    // Inner core brightness
                     const coreMean = sampleCircle(bestX, bestY, bubbleCoreRadius);
                     const coreDarkness = paperVal - coreMean;
 
                     let darkCount = 0, totalCount = 0;
                     for (let dy = -bubbleRadius; dy <= bubbleRadius; dy++) {
                         for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
-                            if (dx*dx + dy*dy <= bubbleRadius*bubbleRadius) {
+                            if (dx * dx + dy * dy <= bubbleRadius * bubbleRadius) {
                                 totalCount++;
                                 if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
                                     darkCount++;
@@ -1425,6 +1382,8 @@
                 }
 
                 const sorted = [...bubbleStats].sort((a, b) => b.coreDarkness - a.coreDarkness);
+
+                // Identify all genuinely filled bubbles
                 const filledBubbles = sorted.filter(b => isBubbleGenuinelyFilled(b));
 
                 const isMultiple = filledBubbles.length > 1;
@@ -1435,6 +1394,7 @@
                 if (correctAns) evaluatedKeyCount++;
 
                 if (isMultiple) {
+                    // Multiple bubbles filled: mark as INCORRECT
                     attemptedCount++;
                     wrongCount++;
                     multipleCount++;
@@ -1467,11 +1427,13 @@
                     ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
 
                     if (isMultiple && isThisBubbleFilled) {
+                        // Highlight ALL multiple markings in prominent RED!
                         ctx.strokeStyle = '#EF4444';
                         ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
                         ctx.fill();
                         ctx.stroke();
 
+                        // Draw white 'X' over the multiple marked bubble
                         ctx.strokeStyle = '#FFFFFF';
                         ctx.lineWidth = 2;
                         const sz = Math.round(bubbleRadius * 0.5);
@@ -1557,14 +1519,6 @@
         }
 
         function restartScanner() {
-            isCaptured = false;
-            smoothedCorners = null;
-            lockStreak = 0;
-            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
-            smoothedCorners = null;
-            lockStreak = 0;
-            document.getElementById('viewfinderSection').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
             initCamera();
         }
 
@@ -1575,4 +1529,5 @@
         });
     </script>
 </body>
+
 </html>
