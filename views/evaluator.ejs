@@ -135,6 +135,75 @@
         .badge-correct { background: var(--success-light); color: #065F46; }
         .badge-wrong { background: var(--danger-light); color: #991B1B; }
         .badge-blank { background: #F1F5F9; color: #64748B; }
+        .badge-multiple {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+        /* Roll Number Card */
+        .roll-number-card {
+            background: #0F172A;
+            border: 1px solid #1E293B;
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        }
+        .roll-label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .roll-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #94A3B8;
+            text-transform: uppercase;
+        }
+        .roll-status-pill {
+            margin-left: auto;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .roll-boxes-display {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+        .roll-digit-box {
+            width: 36px;
+            height: 44px;
+            background: #1E293B;
+            border: 1.5px solid #334155;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #38BDF8;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        .roll-digit-box.filled {
+            border-color: #38BDF8;
+            background: #0c2238;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.35), inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .roll-digit-box.unknown {
+            color: #64748B;
+            border-style: dashed;
+        }
+
         .status-pill {
             display: inline-flex;
             align-items: center;
@@ -182,6 +251,25 @@
 
             <!-- Right: Scorecard & Breakdown -->
             <div>
+                <!-- Student Roll Number Card -->
+                <div class="roll-number-card">
+                    <div class="roll-label-row">
+                        <span style="font-size: 1.1rem;">🎓</span>
+                        <span class="roll-title">Student Roll Number</span>
+                        <span class="roll-status-pill" id="rollStatusPill">Detecting...</span>
+                    </div>
+                    <div class="roll-boxes-display" id="rollBoxesDisplay">
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                    </div>
+                </div>
+
                 <div class="score-hero">
                     <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Score Achieved</div>
                     <div class="score-val" id="scoreValue" style="font-size: 3.25rem; font-weight: 800; margin: 0.25rem 0; font-family: 'Plus Jakarta Sans', sans-serif;">0 / 0</div>
@@ -189,7 +277,7 @@
                 </div>
 
                 <div class="card" style="padding: 1.25rem;">
-                    <div class="stat-grid">
+                    <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
                         <div class="stat-box">
                             <div class="num" id="statCorrect" style="color: #10B981;">0</div>
                             <div class="lbl">Correct</div>
@@ -199,8 +287,8 @@
                             <div class="lbl">Wrong</div>
                         </div>
                         <div class="stat-box">
-                            <div class="num" id="statAttempted" style="color: #4F46E5;">0</div>
-                            <div class="lbl">Attempted</div>
+                            <div class="num" id="statMultiple" style="color: #DC2626;">0</div>
+                            <div class="lbl">Multiple</div>
                         </div>
                         <div class="stat-box">
                             <div class="num" id="statBlank" style="color: #6B7280;">0</div>
@@ -477,7 +565,7 @@
             evalStatus.style.color = '#03543F';
         }
 
-        function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+                function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
 
@@ -500,14 +588,149 @@
                 return count > 0 ? (sum / count) : 255;
             }
 
+            // 1. DETECT 8-DIGIT ROLL NUMBER
+            const U_ROLL_START = 1386.5 / 2235.0;
+            const V_ROLL_START = 191.0 / 3261.0;
+            const U_ROLL_COL_STEP = 59.5 / 2235.0;
+            const V_ROLL_ROW_STEP = 59.5 / 3261.0;
+            const rollRadius = Math.max(6, Math.round(Math.min(W, H) * 0.0065));
+
+            let detectedRollNumber = '';
+            let rollDigitsArray = [];
+            let detectedDigitsCount = 0;
+
+            for (let c = 0; c < 8; c++) {
+                const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
+                const paperVal = sampleCircle(colX - 12, markerT + V_ROLL_START * markerH, 4);
+
+                let colStats = [];
+                for (let d = 0; d < 10; d++) {
+                    const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
+
+                    let bestX = colX, bestY = rowY, minVal = 999;
+                    for (let dy of [-2, 0, 2]) {
+                        for (let dx of [-2, 0, 2]) {
+                            const val = sampleCircle(colX + dx, rowY + dy, Math.round(rollRadius * 0.6));
+                            if (val < minVal) {
+                                minVal = val;
+                                bestX = colX + dx;
+                                bestY = rowY + dy;
+                            }
+                        }
+                    }
+
+                    const bubbleMean = sampleCircle(bestX, bestY, rollRadius);
+                    const darkness = paperVal - bubbleMean;
+
+                    let darkCount = 0, totalCount = 0;
+                    for (let dy = -rollRadius; dy <= rollRadius; dy++) {
+                        for (let dx = -rollRadius; dx <= rollRadius; dx++) {
+                            if (dx*dx + dy*dy <= rollRadius*rollRadius) {
+                                totalCount++;
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
+                                    darkCount++;
+                                }
+                            }
+                        }
+                    }
+                    const darkRatio = totalCount > 0 ? (darkCount / totalCount) : 0;
+
+                    colStats.push({
+                        digit: d,
+                        darkness: darkness,
+                        darkRatio: darkRatio,
+                        x: bestX,
+                        y: bestY
+                    });
+                }
+
+                colStats.sort((a, b) => b.darkness - a.darkness);
+                const top1 = colStats[0];
+                const top2 = colStats[1];
+
+                let isColFilled = false;
+                if (top1.darkness >= 16 && (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.30 || top1.darkness > top2.darkness * 1.35)) {
+                    isColFilled = true;
+                }
+
+                const detectedDigit = isColFilled ? top1.digit.toString() : '-';
+                if (isColFilled) detectedDigitsCount++;
+                detectedRollNumber += detectedDigit;
+                rollDigitsArray.push({
+                    digit: detectedDigit,
+                    isFilled: isColFilled,
+                    chosen: isColFilled ? top1 : null,
+                    all: colStats
+                });
+
+                // Draw roll number grid overlays on canvas
+                for (let d = 0; d < 10; d++) {
+                    const stat = colStats.find(s => s.digit === d);
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
+
+                    if (isColFilled && d === top1.digit) {
+                        ctx.strokeStyle = '#06B6D4';
+                        ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            // Update Roll Number UI Display
+            const rollBoxesEl = document.getElementById('rollBoxesDisplay');
+            if (rollBoxesEl) {
+                let rollBoxesHtml = '';
+                for (let c = 0; c < 8; c++) {
+                    const item = rollDigitsArray[c];
+                    if (item.isFilled) {
+                        rollBoxesHtml += `<div class="roll-digit-box filled">${item.digit}</div>`;
+                    } else {
+                        rollBoxesHtml += `<div class="roll-digit-box unknown">-</div>`;
+                    }
+                }
+                rollBoxesEl.innerHTML = rollBoxesHtml;
+            }
+            const rollStatusPill = document.getElementById('rollStatusPill');
+            if (rollStatusPill) {
+                if (detectedDigitsCount === 8) {
+                    rollStatusPill.textContent = '✓ 8/8 DIGITS DETECTED';
+                    rollStatusPill.style.background = 'rgba(16, 185, 129, 0.2)';
+                    rollStatusPill.style.color = '#34D399';
+                    rollStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                } else if (detectedDigitsCount > 0) {
+                    rollStatusPill.textContent = `${detectedDigitsCount}/8 DIGITS DETECTED`;
+                    rollStatusPill.style.background = 'rgba(245, 158, 11, 0.2)';
+                    rollStatusPill.style.color = '#FBBF24';
+                    rollStatusPill.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+                } else {
+                    rollStatusPill.textContent = 'NO ROLL NO DETECTED';
+                    rollStatusPill.style.background = 'rgba(100, 116, 139, 0.2)';
+                    rollStatusPill.style.color = '#94A3B8';
+                    rollStatusPill.style.borderColor = 'rgba(100, 116, 139, 0.3)';
+                }
+            }
+
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS
             const bubbleRadius = Math.max(7, Math.round(Math.min(W, H) * 0.007));
             let score = 0;
             let correctCount = 0;
             let wrongCount = 0;
+            let multipleCount = 0;
             let attemptedCount = 0;
             let blankCount = 0;
             let evaluatedKeyCount = 0;
             let rowsHtml = '';
+
+            function isBubbleMarked(b) {
+                if (b.darkness >= 65) return true;
+                if (b.darkness >= 22 && b.darkRatio >= 0.33) return true;
+                return false;
+            }
 
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
@@ -523,8 +746,8 @@
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
                     let bestX = bubbleX, bestY = rowY, minVal = 999;
-                    for (let dy of [-4, 0, 4]) {
-                        for (let dx of [-4, 0, 4]) {
+                    for (let dy of [-2, 0, 2]) {
+                        for (let dx of [-2, 0, 2]) {
                             const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.6));
                             if (val < minVal) {
                                 minVal = val;
@@ -563,43 +786,76 @@
                 const top1 = sorted[0];
                 const top2 = sorted[1];
 
-                let isFilled = false;
-                if (top1.darkness >= 16) {
-                    if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.32 || top1.darkness > top2.darkness * 1.35) {
-                        isFilled = true;
+                let filledBubbles = sorted.filter(b => isBubbleMarked(b));
+                if (filledBubbles.length === 0 && top1.darkness >= 16) {
+                    if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.30 || top1.darkness > top2.darkness * 1.35) {
+                        filledBubbles.push(top1);
+                    }
+                } else if (filledBubbles.length === 1 && top2.darkness >= 18 && top2.darkRatio >= 0.28) {
+                    if (top1.darkness - top2.darkness < 18 || top2.darkRatio >= 0.36) {
+                        filledBubbles.push(top2);
                     }
                 }
 
-                const detectedAnswer = isFilled ? top1.opt : '';
+                const isMultiple = filledBubbles.length > 1;
+                const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
                 const correctAns = answerKey[q.toString()] || '';
 
                 let verdict = 'unmarked';
                 if (correctAns) evaluatedKeyCount++;
 
-                if (detectedAnswer) {
+                if (isMultiple) {
+                    // Multiple bubbles filled: mark as INCORRECT
                     attemptedCount++;
-                    if (correctAns && detectedAnswer === correctAns) {
+                    wrongCount++;
+                    multipleCount++;
+                    verdict = 'multiple';
+                } else if (filledBubbles.length === 1) {
+                    const singleAns = filledBubbles[0].opt;
+                    attemptedCount++;
+                    if (correctAns && singleAns === correctAns) {
                         score++;
                         correctCount++;
                         verdict = 'correct';
                     } else if (correctAns) {
                         wrongCount++;
                         verdict = 'wrong';
+                    } else {
+                        verdict = 'marked';
                     }
                 } else {
                     blankCount++;
                 }
 
+                // Draw Overlay Rings on the Leveled Cropped Sheet
                 for (let b = 0; b < 4; b++) {
                     const opt = OPTIONS[b];
                     const stat = bubbleStats[b];
+                    const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
 
                     ctx.beginPath();
                     ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
                     ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
 
-                    if (opt === detectedAnswer) {
-                        if (correctAns && detectedAnswer === correctAns) {
+                    if (isMultiple && isThisBubbleFilled) {
+                        // Highlight ALL multiple markings in prominent RED!
+                        ctx.strokeStyle = '#EF4444';
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        ctx.fill();
+                        ctx.stroke();
+
+                        // Draw white 'X' over the multiple marked bubble
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 2;
+                        const sz = Math.round(bubbleRadius * 0.5);
+                        ctx.beginPath();
+                        ctx.moveTo(stat.x - sz, stat.y - sz);
+                        ctx.lineTo(stat.x + sz, stat.y + sz);
+                        ctx.moveTo(stat.x + sz, stat.y - sz);
+                        ctx.lineTo(stat.x - sz, stat.y + sz);
+                        ctx.stroke();
+                    } else if (!isMultiple && isThisBubbleFilled) {
+                        if (correctAns && opt === correctAns) {
                             ctx.strokeStyle = '#10B981';
                             ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
                         } else if (correctAns) {
@@ -610,30 +866,49 @@
                             ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
                         }
                         ctx.fill();
-                    } else if (opt === correctAns && detectedAnswer !== correctAns) {
+                        ctx.stroke();
+                    } else if (opt === correctAns && !isThisBubbleFilled) {
                         ctx.strokeStyle = '#F59E0B';
                         ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
                         ctx.fill();
+                        ctx.stroke();
                     } else {
                         ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                        ctx.stroke();
                     }
-                    ctx.stroke();
                 }
 
                 let badgeClass = 'badge-blank';
                 let verdictText = 'Unmarked';
-                if (verdict === 'correct') { badgeClass = 'badge-correct'; verdictText = 'âœ“ Correct'; }
-                else if (verdict === 'wrong') { badgeClass = 'badge-wrong'; verdictText = 'âœ— Wrong'; }
-                else if (detectedAnswer) { badgeClass = 'badge-correct'; verdictText = 'Marked'; }
+                let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
+
+                if (verdict === 'multiple') {
+                    badgeClass = 'badge-multiple';
+                    verdictText = '❌ Multiple (Invalid)';
+                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong> <span style="font-size:0.75rem; color:#DC2626; font-weight:700;">(Multi)</span>`;
+                } else if (verdict === 'correct') {
+                    badgeClass = 'badge-correct';
+                    verdictText = '✓ Correct';
+                    markedCellHtml = `<strong style="color: #10B981; font-size:1rem;">${detectedAnswer}</strong>`;
+                } else if (verdict === 'wrong') {
+                    badgeClass = 'badge-wrong';
+                    verdictText = '✗ Wrong';
+                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong>`;
+                } else if (verdict === 'marked') {
+                    badgeClass = 'badge-correct';
+                    verdictText = 'Marked';
+                    markedCellHtml = `<strong style="font-size:1rem;">${detectedAnswer}</strong>`;
+                }
 
                 rowsHtml += `<tr>
                     <td><strong>${q}</strong></td>
-                    <td>${detectedAnswer ? '<span style="font-weight:700; font-size:1rem;">' + detectedAnswer + '</span>' : '<span style="color:#9CA3AF;">-</span>'}</td>
+                    <td>${markedCellHtml}</td>
                     <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>'}</td>
                     <td><span class="badge ${badgeClass}">${verdictText}</span></td>
                 </tr>`;
             }
 
+            // Update UI Scoreboard
             const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
             document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
             const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
@@ -641,6 +916,9 @@
 
             document.getElementById('statCorrect').textContent = correctCount;
             document.getElementById('statWrong').textContent = wrongCount;
+            if (document.getElementById('statMultiple')) {
+                document.getElementById('statMultiple').textContent = multipleCount;
+            }
             document.getElementById('statAttempted').textContent = attemptedCount;
             document.getElementById('statBlank').textContent = blankCount;
             document.getElementById('tableBody').innerHTML = rowsHtml;
