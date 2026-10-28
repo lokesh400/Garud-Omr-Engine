@@ -764,8 +764,8 @@
                 const H = previewCanvas.height;
                 previewCtx.drawImage(video, 0, 0, W, H);
 
-                // Run fast detector on downscaled canvas (360 width)
-                const fastW = 360;
+                // Run fast detector on downscaled canvas (320px width for <1ms execution)
+                const fastW = 320;
                 const fastH = Math.max(1, Math.round(H * (fastW / W)));
                 fastCanvas.width = fastW;
                 fastCanvas.height = fastH;
@@ -834,15 +834,15 @@
             animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // Fast Corner Detector
-        // High-Precision Solid Corner Detector: Isolates 4 Corner Markers with Parallelogram 4th-Corner Fallback
+        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
+        // Strictly avoids question bubbles via 28% margin restriction, count >= 26, and inner margin check
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            // Search in outer 35% margin corners (leaves a 30% center corridor unsearched)
-            const boxW = Math.round(sw * 0.35);
-            const boxH = Math.round(sh * 0.35);
+            // Search in outer 28% margin corners (strictly stays outside central question grid)
+            const boxW = Math.round(sw * 0.28);
+            const boxH = Math.round(sh * 0.28);
             const quads = [
                 { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
                 { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
@@ -851,10 +851,9 @@
             ];
 
             const diag = Math.hypot(sw, sh);
-            const quadCandidates = [];
+            const foundCorners = [];
 
-            for (let qIdx = 0; qIdx < 4; qIdx++) {
-                const q = quads[qIdx];
+            for (let q of quads) {
                 const pw = q.x2 - q.x1;
                 const ph = q.y2 - q.y1;
                 const gray = new Uint8Array(pw * ph);
@@ -870,7 +869,7 @@
                     }
                 }
 
-                // Otsu threshold clamped to prevent edge skipping
+                // Otsu threshold clamped to prevent noise skipping
                 const total = pw * ph;
                 let sum = 0;
                 for (let i = 0; i < 256; i++) sum += i * hist[i];
@@ -902,6 +901,9 @@
                         let qHead = 0;
 
                         while (qHead < queue.length) {
+                            // Freeze protection: terminate large non-marker regions immediately
+                            if (count > 2000) break;
+
                             const cur = queue[qHead++];
                             const cy = Math.floor(cur / pw);
                             const cx = cur % pw;
@@ -926,14 +928,29 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        // Solid square marker criteria: aspect 0.55 to 1.80, high density > 0.50, count 14 to 3000
-                        if (aspect > 0.55 && aspect < 1.80 && density > 0.50 && count > 14 && count < 3000) {
+                        // Solid Square Corner Marker Criteria:
+                        // bw, bh >= 7 (bubbles are 3-4px), count >= 26 (bubbles are <= 14px), density >= 0.55
+                        if (bw >= 7 && bh >= 7 && bw <= 55 && bh <= 55 && aspect >= 0.60 && aspect <= 1.60 && density >= 0.55 && count >= 26 && count <= 2000) {
                             const bx = q.x1 + sumX / count;
                             const by = q.y1 + sumY / count;
 
-                            // Isolation Check:
-                            // Corner markers sit in white margins.
-                            // Question bubbles sit inside a dense grid with neighbors within 10-18px.
+                            // Inward paper margin check: genuine corner markers have white paper inward towards sheet center
+                            const dirX = Math.sign((sw / 2) - bx);
+                            const dirY = Math.sign((sh / 2) - by);
+                            let whiteInward = 0;
+                            const d1 = Math.round(Math.max(bw, bh) * 1.0);
+                            const d2 = Math.round(Math.max(bw, bh) * 1.6);
+                            for (let sd of [d1, d2]) {
+                                const ix = Math.round(bx + dirX * sd);
+                                const iy = Math.round(by + dirY * sd);
+                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
+                                    const inIdx = (iy * sw + ix) * 4;
+                                    const inGray = (data[inIdx] * 77 + data[inIdx + 1] * 150 + data[inIdx + 2] * 29) >> 8;
+                                    if (inGray >= (thresh - 10)) whiteInward++;
+                                }
+                            }
+
+                            // Isolation Ring Check: Corner markers sit in white margins (ringDarkRatio <= 0.18)
                             const rIn = Math.round(Math.max(bw, bh) * 0.75);
                             const rOut = Math.round(Math.max(bw, bh) * 1.55);
                             let darkRing = 0, totalRing = 0;
@@ -958,8 +975,8 @@
                             const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
                             const normDist = distToCorner / diag;
 
-                            // Accept isolated blobs (up to 0.25 to accommodate minor desk shadow/fingers, bubble grids have 0.45+)
-                            if (ringDarkRatio <= 0.25) {
+                            // Accept only isolated solid square markers with clean inward margin
+                            if (ringDarkRatio <= 0.18 && whiteInward >= 1) {
                                 const score = (density * 2.5) - (normDist * 2.5) - (ringDarkRatio * 3.0);
                                 candidates.push({
                                     x: bx,
@@ -973,42 +990,16 @@
                     }
                 }
 
-                if (candidates.length > 0) {
-                    candidates.sort((a, b) => b.score - a.score);
-                    quadCandidates[qIdx] = candidates[0];
-                } else {
-                    quadCandidates[qIdx] = null;
+                if (candidates.length === 0) {
+                    return null; // A corner is missing or obstructed - do NOT lock onto bubbles
                 }
+
+                // Pick the candidate with best score (most isolated and closest to outer quadrant corner)
+                candidates.sort((a, b) => b.score - a.score);
+                foundCorners.push({ x: candidates[0].x, y: candidates[0].y, count: candidates[0].count });
             }
 
-            // Check how many corners were detected directly
-            let foundCorners = [quadCandidates[0], quadCandidates[1], quadCandidates[2], quadCandidates[3]];
-            let detectedCount = foundCorners.filter(Boolean).length;
-
-            // If 3 corners detected, reconstruct the 4th via parallelogram geometry
-            if (detectedCount === 3) {
-                const missingIdx = foundCorners.findIndex(c => c === null);
-                let pred = null;
-                if (missingIdx === 0 && foundCorners[1] && foundCorners[2] && foundCorners[3]) {
-                    // TL = TR + BL - BR
-                    pred = { x: foundCorners[1].x + foundCorners[3].x - foundCorners[2].x, y: foundCorners[1].y + foundCorners[3].y - foundCorners[2].y, count: 50 };
-                } else if (missingIdx === 1 && foundCorners[0] && foundCorners[2] && foundCorners[3]) {
-                    // TR = TL + BR - BL
-                    pred = { x: foundCorners[0].x + foundCorners[2].x - foundCorners[3].x, y: foundCorners[0].y + foundCorners[2].y - foundCorners[3].y, count: 50 };
-                } else if (missingIdx === 2 && foundCorners[0] && foundCorners[1] && foundCorners[3]) {
-                    // BR = TR + BL - TL
-                    pred = { x: foundCorners[1].x + foundCorners[3].x - foundCorners[0].x, y: foundCorners[1].y + foundCorners[3].y - foundCorners[0].y, count: 50 };
-                } else if (missingIdx === 3 && foundCorners[0] && foundCorners[1] && foundCorners[2]) {
-                    // BL = TL + BR - TR
-                    pred = { x: foundCorners[0].x + foundCorners[2].x - foundCorners[1].x, y: foundCorners[0].y + foundCorners[2].y - foundCorners[1].y, count: 50 };
-                }
-                if (pred && pred.x >= 0 && pred.x < sw && pred.y >= 0 && pred.y < sh) {
-                    foundCorners[missingIdx] = pred;
-                    detectedCount = 4;
-                }
-            }
-
-            if (detectedCount !== 4) return null;
+            if (foundCorners.length !== 4) return null;
 
             // Strict Quad Geometry Validation
             const p0 = foundCorners[0], p1 = foundCorners[1], p2 = foundCorners[2], p3 = foundCorners[3];
@@ -1029,8 +1020,8 @@
             const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
             const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.55) return null;
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.55) return null;
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.58) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.58) return null;
 
             // 3. Aspect ratio check (allows both portrait and landscape orientation)
             const avgW = (wTop + wBot) / 2;
@@ -1247,7 +1238,6 @@
         }
 
         // Evaluate bubbles on the flat, leveled A4 sheet
-        // Evaluate bubbles and roll number on the flat, leveled A4 sheet
         // High-Precision Core-Based Bubble & Roll Number Evaluator
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
@@ -1312,7 +1302,7 @@
                         for (let dx = -rollRadius; dx <= rollRadius; dx++) {
                             if (dx * dx + dy * dy <= rollRadius * rollRadius) {
                                 totalCount++;
-                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
                                     darkCount++;
                                 }
                             }
@@ -1333,11 +1323,10 @@
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
+                // Detect filled roll number digit via relative contrast & darkness
                 let isColFilled = false;
-                if ((top1.coreDarkness >= 75) || (top1.coreDarkness >= 40 && top1.darkRatio >= 0.35)) {
-                    if (top1.coreDarkness - top2.coreDarkness >= 15 || top1.darkRatio >= 0.45) {
-                        isColFilled = true;
-                    }
+                if ((top1.coreDarkness >= 22 && (top1.coreDarkness - top2.coreDarkness >= 12)) || top1.coreDarkness >= 48) {
+                    isColFilled = true;
                 }
 
                 const detectedDigit = isColFilled ? top1.digit.toString() : '-';
@@ -1374,9 +1363,9 @@
                 for (let c = 0; c < 8; c++) {
                     const item = rollDigitsArray[c];
                     if (item.isFilled) {
-                        rollBoxesHtml += `<div class="roll-digit-box filled">${item.digit}</div>`;
+                        rollBoxesHtml += '<div class="roll-digit-box filled">' + item.digit + '</div>';
                     } else {
-                        rollBoxesHtml += `<div class="roll-digit-box unknown">-</div>`;
+                        rollBoxesHtml += '<div class="roll-digit-box unknown">-</div>';
                     }
                 }
                 rollBoxesEl.innerHTML = rollBoxesHtml;
@@ -1389,7 +1378,7 @@
                     rollStatusPill.style.color = '#34D399';
                     rollStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.4)';
                 } else if (detectedDigitsCount > 0) {
-                    rollStatusPill.textContent = `${detectedDigitsCount}/8 DIGITS DETECTED`;
+                    rollStatusPill.textContent = detectedDigitsCount + '/8 DIGITS DETECTED';
                     rollStatusPill.style.background = 'rgba(245, 158, 11, 0.2)';
                     rollStatusPill.style.color = '#FBBF24';
                     rollStatusPill.style.borderColor = 'rgba(245, 158, 11, 0.4)';
@@ -1401,7 +1390,7 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (ACCURATE CORE-FILL DISCRIMINATION)
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (ACCURATE RELATIVE CONTRAST DISCRIMINATION)
             const bubbleRadius = Math.max(7, Math.round(Math.min(W, H) * 0.007));
             const bubbleCoreRadius = Math.max(3, Math.round(bubbleRadius * 0.55));
             let score = 0;
@@ -1412,13 +1401,6 @@
             let blankCount = 0;
             let evaluatedKeyCount = 0;
             let rowsHtml = '';
-
-            function isBubbleGenuinelyFilled(b) {
-                // Must have solid ink in inner core (avoiding outer printed border)
-                if (b.coreDarkness >= 85) return true;
-                if (b.coreDarkness >= 45 && b.darkRatio >= 0.35) return true;
-                return false;
-            }
 
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
@@ -1436,9 +1418,9 @@
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
                     let bestX = bubbleX, bestY = rowY, minVal = 999;
-                    for (let dy of [-2, 0, 2]) {
-                        for (let dx of [-2, 0, 2]) {
-                            const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.5));
+                    for (let dy of [-3, -1, 0, 1, 3]) {
+                        for (let dx of [-3, -1, 0, 1, 3]) {
+                            const val = sampleCircle(bubbleX + dx, rowY + dy, 3);
                             if (val < minVal) {
                                 minVal = val;
                                 bestX = bubbleX + dx;
@@ -1456,7 +1438,7 @@
                         for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
                             if (dx * dx + dy * dy <= bubbleRadius * bubbleRadius) {
                                 totalCount++;
-                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
                                     darkCount++;
                                 }
                             }
@@ -1467,7 +1449,6 @@
                     bubbleStats.push({
                         opt: OPTIONS[b],
                         coreDarkness: coreDarkness,
-                        coreMean: coreMean,
                         darkRatio: darkRatio,
                         x: bestX,
                         y: bestY
@@ -1475,9 +1456,19 @@
                 }
 
                 const sorted = [...bubbleStats].sort((a, b) => b.coreDarkness - a.coreDarkness);
+                const top = sorted[0];
+                const second = sorted[1];
 
-                // Identify all genuinely filled bubbles
-                const filledBubbles = sorted.filter(b => isBubbleGenuinelyFilled(b));
+                // Detect filled bubbles with relative contrast (accommodates pencil, gel, ballpoint)
+                let filledBubbles = [];
+                if (top.coreDarkness >= 22) {
+                    if (second.coreDarkness >= 20 && (top.coreDarkness - second.coreDarkness < 15 || second.coreDarkness >= 35)) {
+                        // Multiple markings detected
+                        filledBubbles = [top, second];
+                    } else if (top.coreDarkness - second.coreDarkness >= 12 || top.coreDarkness >= 45) {
+                        filledBubbles = [top];
+                    }
+                }
 
                 const isMultiple = filledBubbles.length > 1;
                 const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
@@ -1487,7 +1478,6 @@
                 if (correctAns) evaluatedKeyCount++;
 
                 if (isMultiple) {
-                    // Multiple bubbles filled: mark as INCORRECT
                     attemptedCount++;
                     wrongCount++;
                     multipleCount++;
@@ -1520,13 +1510,11 @@
                     ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
 
                     if (isMultiple && isThisBubbleFilled) {
-                        // Highlight ALL multiple markings in prominent RED!
                         ctx.strokeStyle = '#EF4444';
                         ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
                         ctx.fill();
                         ctx.stroke();
 
-                        // Draw white 'X' over the multiple marked bubble
                         ctx.strokeStyle = '#FFFFFF';
                         ctx.lineWidth = 2;
                         const sz = Math.round(bubbleRadius * 0.5);
@@ -1536,58 +1524,58 @@
                         ctx.moveTo(stat.x + sz, stat.y - sz);
                         ctx.lineTo(stat.x - sz, stat.y + sz);
                         ctx.stroke();
-                    } else if (!isMultiple && isThisBubbleFilled) {
-                        if (correctAns && opt === correctAns) {
+                    } else if (isThisBubbleFilled) {
+                        if (verdict === 'correct') {
                             ctx.strokeStyle = '#10B981';
-                            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
-                        } else if (correctAns) {
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
+                        } else if (verdict === 'wrong') {
                             ctx.strokeStyle = '#EF4444';
-                            ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
                         } else {
-                            ctx.strokeStyle = '#3B82F6';
-                            ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+                            ctx.strokeStyle = '#06B6D4';
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
                         }
                         ctx.fill();
                         ctx.stroke();
-                    } else if (opt === correctAns && !isThisBubbleFilled) {
-                        ctx.strokeStyle = '#F59E0B';
-                        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
-                        ctx.fill();
+                    } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                        ctx.strokeStyle = '#10B981';
+                        ctx.setLineDash([3, 3]);
                         ctx.stroke();
+                        ctx.setLineDash([]);
                     } else {
-                        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
                         ctx.stroke();
                     }
                 }
 
                 let badgeClass = 'badge-blank';
-                let verdictText = 'Unmarked';
+                let verdictText = 'Blank';
                 let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
 
                 if (verdict === 'multiple') {
                     badgeClass = 'badge-multiple';
                     verdictText = '❌ Multiple (Invalid)';
-                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong> <span style="font-size:0.75rem; color:#DC2626; font-weight:700;">(Multi)</span>`;
+                    markedCellHtml = '<strong style="color: #EF4444; font-size:1rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#DC2626; font-weight:700;">(Multi)</span>';
                 } else if (verdict === 'correct') {
                     badgeClass = 'badge-correct';
                     verdictText = '✓ Correct';
-                    markedCellHtml = `<strong style="color: #10B981; font-size:1rem;">${detectedAnswer}</strong>`;
+                    markedCellHtml = '<strong style="color: #10B981; font-size:1rem;">' + detectedAnswer + '</strong>';
                 } else if (verdict === 'wrong') {
                     badgeClass = 'badge-wrong';
                     verdictText = '✗ Wrong';
-                    markedCellHtml = `<strong style="color: #EF4444; font-size:1rem;">${detectedAnswer}</strong>`;
+                    markedCellHtml = '<strong style="color: #EF4444; font-size:1rem;">' + detectedAnswer + '</strong>';
                 } else if (verdict === 'marked') {
                     badgeClass = 'badge-correct';
                     verdictText = 'Marked';
-                    markedCellHtml = `<strong style="font-size:1rem;">${detectedAnswer}</strong>`;
+                    markedCellHtml = '<strong style="font-size:1rem;">' + detectedAnswer + '</strong>';
                 }
 
-                rowsHtml += `<tr>
-                    <td><strong>${q}</strong></td>
-                    <td>${markedCellHtml}</td>
-                    <td>${correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>'}</td>
-                    <td><span class="badge ${badgeClass}">${verdictText}</span></td>
-                </tr>`;
+                rowsHtml += '<tr>' +
+                    '<td><strong>' + q + '</strong></td>' +
+                    '<td>' + markedCellHtml + '</td>' +
+                    '<td>' + (correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>') + '</td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                '</tr>';
             }
 
             // Safe UI Scoreboard Updates
