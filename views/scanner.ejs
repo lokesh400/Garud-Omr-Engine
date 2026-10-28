@@ -45,24 +45,33 @@
         .video-wrapper {
             position: relative;
             width: 100%;
-            background: #000;
+            background: #090D16;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 520px;
+            min-height: 480px;
+            overflow: hidden;
             user-select: none;
             touch-action: none;
             cursor: pointer;
         }
 
         #videoInput {
-            display: none;
+            width: 100%;
+            height: auto;
+            max-height: 75vh;
+            display: block;
+            object-fit: contain;
+            background: #000;
         }
 
         #canvasPreview {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            pointer-events: none;
         }
 
         /* High-Tech HUD Overlays */
@@ -679,27 +688,51 @@
             document.getElementById('resultsSection').style.display = 'none';
             scanLaser.style.display = 'block';
 
+            let stream = null;
+            // Robust multi-constraint fallback (works on Mobile Back Camera, Front Webcams, USB & Desktop!)
+            const constraintsList = [
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+                { video: { facingMode: 'environment' }, audio: false },
+                { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+                { video: true, audio: false }
+            ];
+
+            for (const c of constraintsList) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(c);
+                    if (stream) break;
+                } catch (err) {
+                    console.warn('Constraint fallback:', c, err.message);
+                }
+            }
+
+            if (!stream) {
+                hudStatus.textContent = 'CAMERA ERROR: CAMERA NOT FOUND OR PERMISSION DENIED';
+                return;
+            }
+
             try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                });
+                cameraStream = stream;
                 video.srcObject = cameraStream;
                 await video.play();
 
-                previewCanvas.width = video.videoWidth || 1280;
-                previewCanvas.height = video.videoHeight || 720;
-                fastH = Math.round(previewCanvas.height * (fastW / previewCanvas.width));
-                fastCanvas.height = fastH;
+                const updateDims = () => {
+                    const W = video.videoWidth || 1280;
+                    const H = video.videoHeight || 720;
+                    previewCanvas.width = W;
+                    previewCanvas.height = H;
+                    fastH = Math.round(fastW * (H / W));
+                    fastCanvas.height = fastH;
+                };
+
+                video.onloadedmetadata = updateDims;
+                video.oncanplay = updateDims;
+                updateDims();
 
                 renderLoop();
             } catch (err) {
                 console.error(err);
-                hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
+                hudStatus.textContent = 'CAMERA PLAY ERROR: ' + err.message;
             }
         }
 
@@ -739,10 +772,19 @@
         function renderLoop() {
             if (isCaptured) return;
 
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                const W = previewCanvas.width;
-                const H = previewCanvas.height;
-                previewCtx.drawImage(video, 0, 0, W, H);
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+                const W = video.videoWidth;
+                const H = video.videoHeight;
+
+                if (previewCanvas.width !== W || previewCanvas.height !== H) {
+                    previewCanvas.width = W;
+                    previewCanvas.height = H;
+                    fastH = Math.round(fastW * (H / W));
+                    fastCanvas.height = fastH;
+                }
+
+                // Clear overlay canvas so only cybernetic reticles & polygons are drawn over the live video
+                previewCtx.clearRect(0, 0, W, H);
 
                 const now = performance.now();
                 if (now - lastAnalysisTime >= ANALYSIS_INTERVAL_MS) {
@@ -760,7 +802,6 @@
                             { x: detectedRaw[3].x * scale, y: detectedRaw[3].y * scale }
                         ];
 
-                        // Smooth with EMA
                         if (!smoothedCorners) {
                             smoothedCorners = currentCorners;
                         } else {
@@ -801,7 +842,7 @@
                     }
                 }
 
-                // Render bounding polygon & glowing reticles
+                // Render bounding polygon & glowing reticles on top of live video
                 if (smoothedCorners) {
                     drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES);
                 }
@@ -1046,8 +1087,8 @@
             flashScreen.classList.add('flash');
             setTimeout(() => flashScreen.classList.remove('flash'), 120);
 
-            const W = previewCanvas.width;
-            const H = previewCanvas.height;
+            const W = video.videoWidth || previewCanvas.width || 1280;
+            const H = video.videoHeight || previewCanvas.height || 720;
 
             const corners = smoothedCorners || [
                 { x: W * 0.08, y: H * 0.06 },
@@ -1073,11 +1114,16 @@
                 { x: m_L, y: m_B }
             ];
 
-            // Perspective Transform Matrix H (dst -> src)
             const H_mat = getPerspectiveTransform(dstRectCorners, corners);
 
-            // Read source frame pixels
-            const srcImgData = previewCtx.getImageData(0, 0, W, H);
+            // Read high-res frame directly from video element
+            const capCanvas = document.createElement('canvas');
+            capCanvas.width = W;
+            capCanvas.height = H;
+            const capCtx = capCanvas.getContext('2d');
+            capCtx.drawImage(video, 0, 0, W, H);
+
+            const srcImgData = capCtx.getImageData(0, 0, W, H);
             const src32 = new Uint32Array(srcImgData.data.buffer);
 
             // Create target rectified image
@@ -1100,7 +1146,7 @@
                     if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
                         dst32[dstIdx] = src32[sy * W + sx];
                     } else {
-                        dst32[dstIdx] = 0xFFFFFFFF; // White border outside sheet
+                        dst32[dstIdx] = 0xFFFFFFFF;
                     }
                     dstIdx++;
                 }
