@@ -776,6 +776,7 @@
                     }
                 } else {
                     lockStreak = Math.max(0, lockStreak - 1);
+                    if (lockStreak === 0) smoothedCorners = null;
                     hudChip.classList.remove('locked');
                     statusDot.className = 'status-dot';
                     hudStatus.textContent = 'AI SCANNER: POSITION SHEET IN VIEW';
@@ -793,12 +794,14 @@
         }
 
         // Fast Corner Detector
+        // High-Precision Corner Detector: Strictly isolates Corner Markers from Question Bubbles
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            const boxW = Math.round(sw * 0.32);
-            const boxH = Math.round(sh * 0.32);
+            // Search in outer 26% margin corners to prevent reaching question bubbles
+            const boxW = Math.round(sw * 0.26);
+            const boxH = Math.round(sh * 0.26);
             const quads = [
                 { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
                 { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
@@ -806,7 +809,9 @@
                 { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh }
             ];
 
-            const found = [];
+            const diag = Math.hypot(sw, sh);
+            const foundCorners = [];
+
             for (let q of quads) {
                 const pw = q.x2 - q.x1;
                 const ph = q.y2 - q.y1;
@@ -823,7 +828,7 @@
                     }
                 }
 
-                // Quick threshold
+                // Otsu threshold clamped to prevent edge skipping
                 const total = pw * ph;
                 let sum = 0;
                 for (let i = 0; i < 256; i++) sum += i * hist[i];
@@ -839,10 +844,9 @@
                 }
 
                 thresh = Math.max(35, Math.min(thresh, 185));
-                // Find solid square blob
+
                 const visited = new Uint8Array(pw * ph);
-                let best = null;
-                let bestScore = -1;
+                const candidates = [];
 
                 for (let py = 1; py < ph - 1; py += 2) {
                     for (let px = 1; px < pw - 1; px += 2) {
@@ -880,24 +884,102 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        if (aspect > 0.65 && aspect < 1.45 && density > 0.60 && count > 12 && count < 1800) {
-                            const score = density * count;
-                            if (score > bestScore) {
-                                bestScore = score;
-                                best = { x: q.x1 + sumX / count, y: q.y1 + sumY / count };
+                        // Solid square marker criteria: aspect 0.60 to 1.60, high density > 0.55
+                        if (aspect > 0.60 && aspect < 1.60 && density > 0.55 && count > 12 && count < 1800) {
+                            const bx = q.x1 + sumX / count;
+                            const by = q.y1 + sumY / count;
+
+                            // Isolation Check:
+                            // Corner markers sit in white margins.
+                            // Question bubbles sit inside a dense grid with neighbors within 10-18px.
+                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
+                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
+                            let darkRing = 0, totalRing = 0;
+
+                            for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
+                                for (let rdx = -rOut; rdx <= rOut; rdx += 2) {
+                                    const d2 = rdx * rdx + rdy * rdy;
+                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                        const gx = Math.round(bx + rdx);
+                                        const gy = Math.round(by + rdy);
+                                        if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                            totalRing++;
+                                            const gIdx = (gy * sw + gx) * 4;
+                                            const pixGray = (data[gIdx] * 77 + data[gIdx + 1] * 150 + data[gIdx + 2] * 29) >> 8;
+                                            if (pixGray < thresh) darkRing++;
+                                        }
+                                    }
+                                }
+                            }
+
+                            const ringDarkRatio = totalRing > 0 ? (darkRing / totalRing) : 0;
+                            const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
+                            const normDist = distToCorner / diag;
+
+                            // Only accept isolated blobs (ringDarkRatio <= 0.08)
+                            if (ringDarkRatio <= 0.08) {
+                                const score = (density * 2.0) - (normDist * 2.5) - (ringDarkRatio * 4.0);
+                                candidates.push({
+                                    x: bx,
+                                    y: by,
+                                    count: count,
+                                    score: score,
+                                    distToCorner: distToCorner
+                                });
                             }
                         }
                     }
                 }
 
-                if (best) {
-                    found.push(best);
-                } else {
-                    return null; // Not all 4 corner markers visible yet
+                if (candidates.length === 0) {
+                    return null; // A corner is missing or obstructed - do NOT lock onto bubbles
                 }
+
+                // Pick the candidate with best score (most isolated and closest to outer quadrant corner)
+                candidates.sort((a, b) => b.score - a.score);
+                foundCorners.push({ x: candidates[0].x, y: candidates[0].y, count: candidates[0].count });
             }
 
-            return found.length === 4 ? found : null;
+            if (foundCorners.length !== 4) return null;
+
+            // Strict Quad Geometry Validation
+            const p0 = foundCorners[0], p1 = foundCorners[1], p2 = foundCorners[2], p3 = foundCorners[3];
+
+            // 1. Convexity check
+            const pts = [p0, p1, p2, p3];
+            for (let i = 0; i < 4; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % 4];
+                const c = pts[(i + 2) % 4];
+                const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                if (cross <= 0) return null;
+            }
+
+            // 2. Parallelism and proportional opposite sides
+            const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+            const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
+            const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
+            const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.65) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.65) return null;
+
+            // 3. A4 Aspect ratio check
+            const avgW = (wTop + wBot) / 2;
+            const avgH = (hLeft + hRight) / 2;
+            const aspect = avgH / avgW;
+            if (aspect < 0.95 || aspect > 1.95) return null;
+
+            // 4. Area check
+            const quadArea = 0.5 * Math.abs(
+                (p0.x * p1.y - p0.y * p1.x) +
+                (p1.x * p2.y - p1.y * p2.x) +
+                (p2.x * p3.y - p2.y * p3.x) +
+                (p3.x * p0.y - p3.y * p0.x)
+            );
+            if (quadArea < (sw * sh * 0.15)) return null;
+
+            return foundCorners;
         }
 
         // Draw High-Tech Cyber Reticles & Bounding Quad
