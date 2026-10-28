@@ -277,11 +277,28 @@
                 </div>
 
                 <div class="card" style="padding: 1.25rem;">
-                    <div class="stat-grid">
+                    <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); gap: 8px;">
                         <div class="stat-box">
                             <div class="num" id="statCorrect" style="color: #10B981;">0</div>
                             <div class="lbl">Correct</div>
                         </div>
+                        <div class="stat-box">
+                            <div class="num" id="statWrong" style="color: #EF4444;">0</div>
+                            <div class="lbl">Wrong</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statMultiple" style="color: #DC2626;">0</div>
+                            <div class="lbl">Multiple</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statAttempted" style="color: #4F46E5;">0</div>
+                            <div class="lbl">Attempted</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statBlank" style="color: #6B7280;">0</div>
+                            <div class="lbl">Blank</div>
+                        </div>
+                    </div>
                         <div class="stat-box">
                             <div class="num" id="statWrong" style="color: #EF4444;">0</div>
                             <div class="lbl">Wrong</div>
@@ -436,7 +453,7 @@
                     if (wF === 0) break;
                     sumB += i * hist[i];
                     const v = wB * wF * (sumB/wB - (sum - sumB)/wF) * (sumB/wB - (sum - sumB)/wF);
-                    if (v > maxVar) { maxVar = v; thresh = i; }
+                    if (v > maxVar) { maxVar = v; thresh = i + 1; }
                 }
 
                 const visited = new Uint8Array(pw * ph);
@@ -566,6 +583,7 @@
         }
 
         // Evaluate bubbles and roll number on the flat, leveled A4 sheet
+        // High-Precision Core-Based Bubble & Roll Number Evaluator
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
@@ -595,6 +613,7 @@
             const U_ROLL_COL_STEP = 59.5 / 2235.0;
             const V_ROLL_ROW_STEP = 59.5 / 3261.0;
             const rollRadius = Math.max(6, Math.round(Math.min(W, H) * 0.0065));
+            const rollCoreRadius = Math.max(3, Math.round(rollRadius * 0.55));
 
             let detectedRollNumber = '';
             let rollDigitsArray = [];
@@ -611,7 +630,7 @@
                     let bestX = colX, bestY = rowY, minVal = 999;
                     for (let dy of [-2, 0, 2]) {
                         for (let dx of [-2, 0, 2]) {
-                            const val = sampleCircle(colX + dx, rowY + dy, Math.round(rollRadius * 0.6));
+                            const val = sampleCircle(colX + dx, rowY + dy, Math.round(rollRadius * 0.5));
                             if (val < minVal) {
                                 minVal = val;
                                 bestX = colX + dx;
@@ -620,15 +639,15 @@
                         }
                     }
 
-                    const bubbleMean = sampleCircle(bestX, bestY, rollRadius);
-                    const darkness = paperVal - bubbleMean;
+                    const coreMean = sampleCircle(bestX, bestY, rollCoreRadius);
+                    const coreDarkness = paperVal - coreMean;
 
                     let darkCount = 0, totalCount = 0;
                     for (let dy = -rollRadius; dy <= rollRadius; dy++) {
                         for (let dx = -rollRadius; dx <= rollRadius; dx++) {
                             if (dx*dx + dy*dy <= rollRadius*rollRadius) {
                                 totalCount++;
-                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
                                     darkCount++;
                                 }
                             }
@@ -638,20 +657,22 @@
 
                     colStats.push({
                         digit: d,
-                        darkness: darkness,
+                        coreDarkness: coreDarkness,
                         darkRatio: darkRatio,
                         x: bestX,
                         y: bestY
                     });
                 }
 
-                colStats.sort((a, b) => b.darkness - a.darkness);
+                colStats.sort((a, b) => b.coreDarkness - a.coreDarkness);
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
                 let isColFilled = false;
-                if (top1.darkness >= 16 && (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.30 || top1.darkness > top2.darkness * 1.35)) {
-                    isColFilled = true;
+                if ((top1.coreDarkness >= 75) || (top1.coreDarkness >= 40 && top1.darkRatio >= 0.35)) {
+                    if (top1.coreDarkness - top2.coreDarkness >= 15 || top1.darkRatio >= 0.45) {
+                        isColFilled = true;
+                    }
                 }
 
                 const detectedDigit = isColFilled ? top1.digit.toString() : '-';
@@ -715,8 +736,9 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (ACCURATE CORE-FILL DISCRIMINATION)
             const bubbleRadius = Math.max(7, Math.round(Math.min(W, H) * 0.007));
+            const bubbleCoreRadius = Math.max(3, Math.round(bubbleRadius * 0.55));
             let score = 0;
             let correctCount = 0;
             let wrongCount = 0;
@@ -726,9 +748,10 @@
             let evaluatedKeyCount = 0;
             let rowsHtml = '';
 
-            function isBubbleMarked(b) {
-                if (b.darkness >= 65) return true;
-                if (b.darkness >= 22 && b.darkRatio >= 0.33) return true;
+            function isBubbleGenuinelyFilled(b) {
+                // Must have solid ink in inner core (avoiding outer printed border)
+                if (b.coreDarkness >= 85) return true;
+                if (b.coreDarkness >= 45 && b.darkRatio >= 0.35) return true;
                 return false;
             }
 
@@ -750,7 +773,7 @@
                     let bestX = bubbleX, bestY = rowY, minVal = 999;
                     for (let dy of [-2, 0, 2]) {
                         for (let dx of [-2, 0, 2]) {
-                            const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.6));
+                            const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.5));
                             if (val < minVal) {
                                 minVal = val;
                                 bestX = bubbleX + dx;
@@ -759,15 +782,16 @@
                         }
                     }
 
-                    const bubbleMean = sampleCircle(bestX, bestY, bubbleRadius);
-                    const darkness = paperVal - bubbleMean;
+                    // Inner core brightness
+                    const coreMean = sampleCircle(bestX, bestY, bubbleCoreRadius);
+                    const coreDarkness = paperVal - coreMean;
 
                     let darkCount = 0, totalCount = 0;
                     for (let dy = -bubbleRadius; dy <= bubbleRadius; dy++) {
                         for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
                             if (dx*dx + dy*dy <= bubbleRadius*bubbleRadius) {
                                 totalCount++;
-                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 25)) {
+                                if (getGray(Math.round(bestX + dx), Math.round(bestY + dy)) < (paperVal - 30)) {
                                     darkCount++;
                                 }
                             }
@@ -777,27 +801,18 @@
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
-                        darkness: darkness,
+                        coreDarkness: coreDarkness,
+                        coreMean: coreMean,
                         darkRatio: darkRatio,
                         x: bestX,
                         y: bestY
                     });
                 }
 
-                const sorted = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
-                const top1 = sorted[0];
-                const top2 = sorted[1];
+                const sorted = [...bubbleStats].sort((a, b) => b.coreDarkness - a.coreDarkness);
 
-                let filledBubbles = sorted.filter(b => isBubbleMarked(b));
-                if (filledBubbles.length === 0 && top1.darkness >= 16) {
-                    if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.30 || top1.darkness > top2.darkness * 1.35) {
-                        filledBubbles.push(top1);
-                    }
-                } else if (filledBubbles.length === 1 && top2.darkness >= 18 && top2.darkRatio >= 0.28) {
-                    if (top1.darkness - top2.darkness < 18 || top2.darkRatio >= 0.36) {
-                        filledBubbles.push(top2);
-                    }
-                }
+                // Identify all genuinely filled bubbles
+                const filledBubbles = sorted.filter(b => isBubbleGenuinelyFilled(b));
 
                 const isMultiple = filledBubbles.length > 1;
                 const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
