@@ -3,28 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live 4-Corner Scanner - <%= paper.title %></title>
+    <title>AI CyberScan - <%= paper.title %></title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --cyber-cyan: #06B6D4;
+            --cyber-emerald: #10B981;
+            --cyber-glow: rgba(6, 182, 212, 0.4);
+            --cyber-emerald-glow: rgba(16, 185, 129, 0.4);
+            --dark-card: #0F172A;
+        }
         .scanner-container {
-            max-width: 1040px;
+            max-width: 1100px;
             margin: 0 auto;
         }
-        .scanner-header-split {
+        .scanner-topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
         .viewfinder-card {
-            background: #0F172A;
+            background: #090D16;
             border-radius: var(--radius-lg);
             overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border: 1px solid #1E293B;
             position: relative;
         }
         .video-wrapper {
@@ -34,10 +41,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 480px;
-            cursor: crosshair;
+            min-height: 520px;
             user-select: none;
             touch-action: none;
+            cursor: pointer;
         }
         #videoInput {
             display: none;
@@ -46,21 +53,9 @@
             width: 100%;
             height: auto;
             display: block;
-            touch-action: none;
         }
-        .shutter-flash {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.08s ease-out;
-            z-index: 50;
-        }
-        .shutter-flash.flash {
-            opacity: 0.9;
-        }
-        .hud-banner {
+        /* High-Tech HUD Overlays */
+        .hud-top-bar {
             position: absolute;
             top: 14px;
             left: 14px;
@@ -71,48 +66,82 @@
             flex-wrap: wrap;
             gap: 8px;
             pointer-events: none;
-            z-index: 20;
+            z-index: 25;
         }
-        .hud-step-pill {
+        .hud-chip {
             background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
             color: #FFFFFF;
             padding: 8px 16px;
             border-radius: var(--radius-full);
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            gap: 10px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            letter-spacing: 0.5px;
         }
-        .step-dot {
+        .hud-chip.locked {
+            border-color: var(--cyber-emerald);
+            color: #6EE7B7;
+            box-shadow: 0 0 20px var(--cyber-emerald-glow);
+        }
+        .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             background: #F59E0B;
-            box-shadow: 0 0 8px #F59E0B;
+            box-shadow: 0 0 10px #F59E0B;
+            transition: all 0.2s ease;
         }
-        .step-dot.complete {
-            background: #10B981;
-            box-shadow: 0 0 10px #10B981;
+        .status-dot.active {
+            background: var(--cyber-emerald);
+            box-shadow: 0 0 12px var(--cyber-emerald);
+            animation: pulse-dot 1.2s infinite;
         }
-        .freeze-indicator {
-            background: rgba(239, 68, 68, 0.85);
-            color: white;
-            padding: 4px 12px;
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+        .hud-tilt-badge {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            color: #94A3B8;
+            padding: 6px 14px;
             border-radius: var(--radius-full);
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            display: none;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
-        .scanner-toolbar {
-            background: #1E293B;
-            border-top: 1px solid #334155;
-            padding: 1rem 1.25rem;
+        .hud-tilt-badge.level {
+            color: #34D399;
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+        /* Scanning Laser Beam */
+        .scan-laser {
+            position: absolute;
+            left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, var(--cyber-cyan) 50%, transparent 100%);
+            box-shadow: 0 0 15px var(--cyber-cyan), 0 0 30px var(--cyber-cyan);
+            pointer-events: none;
+            z-index: 20;
+            display: none;
+            animation: laser-sweep 2s ease-in-out infinite alternate;
+        }
+        @keyframes laser-sweep {
+            0% { top: 10%; opacity: 0.3; }
+            50% { opacity: 0.9; }
+            100% { top: 90%; opacity: 0.3; }
+        }
+        /* Bottom Control Bar */
+        .scanner-bottom-bar {
+            background: #111827;
+            border-top: 1px solid #1E293B;
+            padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -120,87 +149,95 @@
             gap: 12px;
             color: white;
         }
-        .toolbar-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .tool-btn {
-            background: #334155;
-            color: #FFFFFF;
-            border: 1px solid #475569;
-            border-radius: var(--radius-md);
-            padding: 8px 14px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-        .tool-btn:hover {
-            background: #475569;
-            border-color: #64748B;
-        }
-        .tool-btn.active {
-            background: #4F46E5;
-            border-color: #818CF8;
-            box-shadow: 0 0 12px rgba(79, 70, 229, 0.4);
-        }
-        .btn-proceed {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        .btn-capture-auto {
+            background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            padding: 10px 22px;
+            padding: 12px 26px;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+            gap: 10px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(6, 182, 212, 0.4);
         }
-        .btn-proceed:hover:not(:disabled) {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+        .btn-capture-auto:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(6, 182, 212, 0.6);
         }
-        .btn-proceed:disabled {
+        .btn-capture-auto.locked {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+        }
+        .btn-capture-auto:disabled {
             opacity: 0.45;
             cursor: not-allowed;
-            box-shadow: none;
+            transform: none;
         }
-        .instructions-strip {
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 12px 18px;
-            margin-top: 1.25rem;
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            display: flex;
+        .toggle-chip {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
+            user-select: none;
         }
-        /* Results Section */
+        .toggle-chip input {
+            cursor: pointer;
+        }
+        /* Results View */
         #resultsSection {
             display: none;
             width: 100%;
         }
         .results-grid {
             display: grid;
-            grid-template-columns: 1.1fr 1fr;
+            grid-template-columns: 1.15fr 1fr;
             gap: 1.75rem;
             align-items: start;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .results-grid { grid-template-columns: 1fr; }
+        }
+        .rectified-canvas-wrap {
+            background: #090D16;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            text-align: center;
+            border: 1px solid #1E293B;
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .rectified-badge {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            z-index: 10;
+        }
+        #canvasResult {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            background: #FFFFFF;
         }
         .score-hero {
             background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
@@ -247,14 +284,24 @@
         .badge-correct { background: var(--success-light); color: #065F46; }
         .badge-wrong { background: var(--danger-light); color: #991B1B; }
         .badge-blank { background: #F1F5F9; color: #64748B; }
+        .flash-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.08s ease-out;
+            z-index: 50;
+        }
+        .flash-screen.flash { opacity: 0.95; }
     </style>
 </head>
 <body>
     <div class="container scanner-container">
-        <!-- Header -->
-        <div class="scanner-header-split">
+        <!-- Top Navigation -->
+        <div class="scanner-topbar">
             <div>
-                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">Live 4-Corner Sheet Scanner</h1>
+                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">Live AI Auto-Scanner & Rectifier</h1>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
                     <%= paper.title %> &bull; <%= paper.numQuestions %> Questions
                 </p>
@@ -262,19 +309,20 @@
             <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-sm">&larr; Back to Paper</a>
         </div>
 
-        <!-- Viewfinder Card -->
+        <!-- Live Viewfinder Section -->
         <div id="viewfinderSection" class="viewfinder-card">
-            <div class="video-wrapper" id="videoWrapper">
-                <div id="shutterFlash" class="shutter-flash"></div>
+            <div class="video-wrapper" id="videoWrapper" onclick="handleTapToCapture()">
+                <div id="flashScreen" class="flash-screen"></div>
+                <div id="scanLaser" class="scan-laser"></div>
 
-                <!-- HUD Status -->
-                <div class="hud-banner">
-                    <div class="hud-step-pill">
-                        <div id="stepDot" class="step-dot"></div>
-                        <span id="stepInstruction">Tap Corner 1: ðŸ“ Top-Left marker</span>
+                <!-- Live HUD -->
+                <div class="hud-top-bar">
+                    <div id="hudChip" class="hud-chip">
+                        <div id="statusDot" class="status-dot"></div>
+                        <span id="hudStatus">AI SCANNER ACTIVE: POINT AT SHEET</span>
                     </div>
-                    <div id="freezeIndicator" class="freeze-indicator">
-                        â„ Frame Frozen
+                    <div id="tiltBadge" class="hud-tilt-badge">
+                        ðŸ“ TILT: 0.0Â° &bull; LEVEL
                     </div>
                 </div>
 
@@ -282,61 +330,42 @@
                 <canvas id="canvasPreview"></canvas>
             </div>
 
-            <!-- Toolbar Controls -->
-            <div class="scanner-toolbar">
-                <div class="toolbar-group">
-                    <button type="button" class="tool-btn" id="freezeBtn" onclick="toggleFreezeFrame()">
-                        ðŸ“¸ Freeze Frame
-                    </button>
-                    <button type="button" class="tool-btn" id="autoDetectBtn" onclick="detectAndPlaceCorners()">
-                        ðŸŽ¯ Auto-Align
-                    </button>
-                    <button type="button" class="tool-btn" onclick="resetCorners()">
-                        â†º Reset Corners
-                    </button>
+            <!-- Bottom Toolbar -->
+            <div class="scanner-bottom-bar">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <label class="toggle-chip">
+                        <input type="checkbox" id="autoSnapToggle" checked>
+                        <span>Auto-Snap on Steady Lock</span>
+                    </label>
                 </div>
-
-                <div class="toolbar-group">
-                    <button type="button" class="btn-proceed" id="proceedBtn" onclick="proceedToEvaluate()" disabled>
-                        Proceed & Evaluate Sheet â†’
+                <div>
+                    <button type="button" class="btn-capture-auto" id="captureBtn" onclick="triggerManualCapture()">
+                        âš¡ Snap & Level Sheet
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Usage Help Strip -->
-        <div class="instructions-strip" id="instructionsStrip">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size: 1.2rem;">ðŸ’¡</span>
-                <span>
-                    <strong>How to scan:</strong> Tap the 4 black corner squares on the sheet (1: Top-Left &rarr; 2: Top-Right &rarr; 3: Bottom-Right &rarr; 4: Bottom-Left). Drag handles anytime for millimeter precision.
-                </span>
-            </div>
-            <span style="font-size: 0.8rem; font-weight: 600; color: var(--primary);" id="cornerCounter">
-                0 of 4 corners marked
-            </span>
-        </div>
-
-        <!-- Results Section (Displayed upon Proceed) -->
+        <!-- High-Tech Cropped & Leveled Results Section -->
         <div id="resultsSection">
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0;">
-                <h2 style="margin: 0; font-size: 1.4rem;">Evaluation Results</h2>
+                <h2 style="margin: 0; font-size: 1.4rem;">Leveled Document & Evaluation</h2>
                 <button class="btn btn-primary" onclick="restartScanner()">
-                    ðŸ“· Scan Another Sheet
+                    ðŸ“· Scan Next Sheet
                 </button>
             </div>
 
             <div class="results-grid">
-                <!-- Annotated Overlay Preview -->
-                <div class="card" style="padding: 1rem; text-align: center;">
-                    <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--text-muted);">Graded OMR Sheet Overlay</h3>
-                    <canvas id="canvasResult" style="max-width: 100%; height: auto; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"></canvas>
+                <!-- Cropped Leveled Sheet Display -->
+                <div class="rectified-canvas-wrap">
+                    <span class="rectified-badge">âœ“ Auto-Leveled & Cropped (A4)</span>
+                    <canvas id="canvasResult"></canvas>
                 </div>
 
                 <!-- Scorecard & Breakdown -->
                 <div>
                     <div class="score-hero">
-                        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Total Score</div>
+                        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Score Achieved</div>
                         <div class="score-val" id="scoreValue" style="font-size: 3.25rem; font-weight: 800; margin: 0.25rem 0; font-family: 'Plus Jakarta Sans', sans-serif;">0 / 0</div>
                         <div id="scorePercentage" style="font-size: 1.15rem; font-weight: 600;">0% Accuracy</div>
                     </div>
@@ -362,7 +391,7 @@
                         </div>
 
                         <h4 style="margin: 1.25rem 0 0.5rem 0; font-size: 0.95rem;">Question Breakdown</h4>
-                        <div style="max-height: 320px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                        <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
                             <table class="breakdown-table">
                                 <thead>
                                     <tr>
@@ -391,27 +420,33 @@
         const resultCanvas = document.getElementById('canvasResult');
         const resultCtx = resultCanvas.getContext('2d');
 
-        const stepInstruction = document.getElementById('stepInstruction');
-        const stepDot = document.getElementById('stepDot');
-        const freezeIndicator = document.getElementById('freezeIndicator');
-        const freezeBtn = document.getElementById('freezeBtn');
-        const proceedBtn = document.getElementById('proceedBtn');
-        const cornerCounter = document.getElementById('cornerCounter');
-        const shutterFlash = document.getElementById('shutterFlash');
+        const hudChip = document.getElementById('hudChip');
+        const hudStatus = document.getElementById('hudStatus');
+        const statusDot = document.getElementById('statusDot');
+        const tiltBadge = document.getElementById('tiltBadge');
+        const captureBtn = document.getElementById('captureBtn');
+        const autoSnapToggle = document.getElementById('autoSnapToggle');
+        const flashScreen = document.getElementById('flashScreen');
+        const scanLaser = document.getElementById('scanLaser');
 
         let cameraStream = null;
         let animationFrameId = null;
-        let isFrozen = false;
-        let frozenImageCanvas = null;
+        let isCaptured = false;
 
-        // 4 corners: 0: TL, 1: TR, 2: BR, 3: BL
-        const cornerNames = ['Top-Left', 'Top-Right', 'Bottom-Right', 'Bottom-Left'];
-        let corners = [];
-        let activeDragIndex = -1;
-        const HANDLE_RADIUS = 16;
-        const TOUCH_HIT_RADIUS = 36;
+        // Auto-tracking state
+        let smoothedCorners = null;
+        let lockStreak = 0;
+        const LOCK_REQUIRED_FRAMES = 12; // ~0.8s steady lock
 
-        // Calibrated Standard Grid Ratios
+        // Fast analysis downscale canvas
+        const fastCanvas = document.createElement('canvas');
+        const fastCtx = fastCanvas.getContext('2d');
+
+        // Standardized A4 Leveled Canvas Dimensions
+        const TARGET_W = 1000;
+        const TARGET_H = 1414; // 1000 * 1.414 (exact A4 ratio)
+
+        // Measured Standard Ratios
         const U_START = 141.0 / 2235.0;
         const V_START = 835.5 / 3261.0;
         const U_BUBBLE_STEP = 62.5 / 2235.0;
@@ -421,17 +456,12 @@
         const OPTIONS = ['A', 'B', 'C', 'D'];
 
         async function initCamera() {
-            corners = [];
-            isFrozen = false;
-            frozenImageCanvas = null;
-            freezeIndicator.style.display = 'none';
-            freezeBtn.textContent = 'ðŸ“¸ Freeze Frame';
-            freezeBtn.classList.remove('active');
-            updateUIState();
-
+            isCaptured = false;
+            smoothedCorners = null;
+            lockStreak = 0;
             document.getElementById('viewfinderSection').style.display = 'block';
-            document.getElementById('instructionsStrip').style.display = 'flex';
             document.getElementById('resultsSection').style.display = 'none';
+            scanLaser.style.display = 'block';
 
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({
@@ -451,60 +481,145 @@
                 renderLoop();
             } catch (err) {
                 console.error(err);
-                stepInstruction.textContent = 'Camera error: ' + err.message;
+                hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
             }
         }
 
-        function toggleFreezeFrame() {
-            if (!video.videoWidth) return;
-            isFrozen = !isFrozen;
-
-            if (isFrozen) {
-                frozenImageCanvas = document.createElement('canvas');
-                frozenImageCanvas.width = previewCanvas.width;
-                frozenImageCanvas.height = previewCanvas.height;
-                const fCtx = frozenImageCanvas.getContext('2d');
-                fCtx.drawImage(video, 0, 0, previewCanvas.width, previewCanvas.height);
-
-                freezeIndicator.style.display = 'inline-block';
-                freezeBtn.textContent = 'â–¶ Live Video';
-                freezeBtn.classList.add('active');
-            } else {
-                frozenImageCanvas = null;
-                freezeIndicator.style.display = 'none';
-                freezeBtn.textContent = 'ðŸ“¸ Freeze Frame';
-                freezeBtn.classList.remove('active');
+        // 4-point Perspective Transform (Homography) solver: dst -> src
+        function getPerspectiveTransform(src, dst) {
+            const A = [], B = [];
+            for (let i = 0; i < 4; i++) {
+                const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
             }
+            const n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                [A[i], A[maxRow]] = [A[maxRow], A[i]]; [B[i], B[maxRow]] = [B[maxRow], B[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot) < 1e-10) return null;
+                for (let j = i; j < n; j++) A[i][j] /= pivot;
+                B[i] /= pivot;
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = A[k][i];
+                        for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                        B[k] -= factor * B[i];
+                    }
+                }
+            }
+            return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
         }
 
-        function resetCorners() {
-            corners = [];
-            updateUIState();
+        // Live Frame Detection Loop
+        function renderLoop() {
+            if (isCaptured) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const W = previewCanvas.width;
+                const H = previewCanvas.height;
+                previewCtx.drawImage(video, 0, 0, W, H);
+
+                // Run fast detector on downscaled canvas (360 width)
+                const fastW = 360;
+                const fastH = Math.round(H * (fastW / W));
+                fastCanvas.width = fastW;
+                fastCanvas.height = fastH;
+                fastCtx.drawImage(video, 0, 0, fastW, fastH);
+
+                const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
+
+                if (detectedRaw) {
+                    // Scale back up to full preview coordinates
+                    const scale = W / fastW;
+                    const currentCorners = detectedRaw.map(pt => ({
+                        x: pt.x * scale,
+                        y: pt.y * scale
+                    }));
+
+                    // Smooth with Exponential Moving Average (EMA)
+                    if (!smoothedCorners) {
+                        smoothedCorners = currentCorners;
+                    } else {
+                        smoothedCorners = smoothedCorners.map((pt, i) => ({
+                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
+                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
+                        }));
+                    }
+
+                    // Compute Tilt Angle
+                    const dX = smoothedCorners[1].x - smoothedCorners[0].x;
+                    const dY = smoothedCorners[1].y - smoothedCorners[0].y;
+                    const tilt = (Math.atan2(dY, dX) * (180 / Math.PI)).toFixed(1);
+
+                    lockStreak++;
+                    hudChip.classList.add('locked');
+                    statusDot.className = 'status-dot active';
+                    hudStatus.textContent = `TARGET LOCKED & LEVELED (${lockStreak >= LOCK_REQUIRED_FRAMES ? 'READY' : Math.round((lockStreak/LOCK_REQUIRED_FRAMES)*100) + '%'})`;
+                    tiltBadge.className = 'hud-tilt-badge level';
+                    tiltBadge.textContent = `ðŸ“ TILT: ${tilt > 0 ? '+' + tilt : tilt}Â° â€¢ AUTO-LEVELLING`;
+                    captureBtn.classList.add('locked');
+
+                    // Draw Glowing Cybernetic Polygonal Overlay
+                    drawCyberOverlay(previewCtx, smoothedCorners, true);
+
+                    // Auto-snap if held steady
+                    if (autoSnapToggle.checked && lockStreak >= LOCK_REQUIRED_FRAMES) {
+                        snapAndWarpSheet();
+                        return;
+                    }
+                } else {
+                    lockStreak = Math.max(0, lockStreak - 1);
+                    hudChip.classList.remove('locked');
+                    statusDot.className = 'status-dot';
+                    hudStatus.textContent = 'AI SCANNER: POSITION SHEET IN VIEW';
+                    tiltBadge.className = 'hud-tilt-badge';
+                    tiltBadge.textContent = 'ðŸ“ SEARCHING CORNERS';
+                    captureBtn.classList.remove('locked');
+
+                    if (smoothedCorners) {
+                        drawCyberOverlay(previewCtx, smoothedCorners, false);
+                    }
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // Auto-align helper: runs connected-components square finder in 4 quadrants
-        function detectAndPlaceCorners() {
-            const W = previewCanvas.width;
-            const H = previewCanvas.height;
-            const imgData = previewCtx.getImageData(0, 0, W, H);
+        // Fast Corner Detector
+        function detectLiveCorners(ctx, sw, sh) {
+            const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            function findSquareMarker(x1, y1, x2, y2) {
-                const pw = Math.round(x2 - x1);
-                const ph = Math.round(y2 - y1);
+            const boxW = Math.round(sw * 0.32);
+            const boxH = Math.round(sh * 0.32);
+            const quads = [
+                { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
+                { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
+                { x1: sw - boxW, y1: sh - boxH, x2: sw, y2: sh, cx: sw, cy: sh },
+                { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh }
+            ];
+
+            const found = [];
+            for (let q of quads) {
+                const pw = q.x2 - q.x1;
+                const ph = q.y2 - q.y1;
                 const gray = new Uint8Array(pw * ph);
                 const hist = new Int32Array(256);
                 let idx = 0;
 
-                for (let y = y1; y < y2; y++) {
-                    for (let x = x1; x < x2; x++) {
-                        const pIdx = (y * W + x) * 4;
+                for (let y = q.y1; y < q.y2; y++) {
+                    for (let x = q.x1; x < q.x2; x++) {
+                        const pIdx = (y * sw + x) * 4;
                         const g = (data[pIdx] * 77 + data[pIdx+1] * 150 + data[pIdx+2] * 29) >> 8;
                         gray[idx++] = g;
                         hist[g]++;
                     }
                 }
 
+                // Quick threshold
                 const total = pw * ph;
                 let sum = 0;
                 for (let i = 0; i < 256; i++) sum += i * hist[i];
@@ -515,18 +630,14 @@
                     const wF = total - wB;
                     if (wF === 0) break;
                     sumB += i * hist[i];
-                    const mB = sumB / wB;
-                    const mF = (sum - sumB) / wF;
-                    const v = wB * wF * (mB - mF) * (mB - mF);
+                    const v = wB * wF * (sumB/wB - (sum - sumB)/wF) * (sumB/wB - (sum - sumB)/wF);
                     if (v > maxVar) { maxVar = v; thresh = i; }
                 }
 
+                // Find solid square blob
                 const visited = new Uint8Array(pw * ph);
                 let best = null;
                 let bestScore = -1;
-                const minSide = Math.min(W, H);
-                const minArea = (minSide * 0.007) * (minSide * 0.007);
-                const maxArea = (minSide * 0.08) * (minSide * 0.08);
 
                 for (let py = 1; py < ph - 1; py += 2) {
                     for (let px = 1; px < pw - 1; px += 2) {
@@ -551,9 +662,7 @@
                             if (cy < minY) minY = cy;
                             if (cy > maxY) maxY = cy;
 
-                            const neighbors = [cur - 1, cur + 1, cur - pw, cur + pw];
-                            for (let k = 0; k < 4; k++) {
-                                const nb = neighbors[k];
+                            for (let nb of [cur - 1, cur + 1, cur - pw, cur + pw]) {
                                 if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
                                     visited[nb] = 1;
                                     queue.push(nb);
@@ -566,268 +675,176 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        if (aspect > 0.65 && aspect < 1.45 && density > 0.60 && count >= minArea && count <= maxArea) {
+                        if (aspect > 0.65 && aspect < 1.45 && density > 0.60 && count > 12 && count < 1800) {
                             const score = density * count;
                             if (score > bestScore) {
                                 bestScore = score;
-                                best = { x: Math.round(x1 + sumX / count), y: Math.round(y1 + sumY / count) };
+                                best = { x: q.x1 + sumX / count, y: q.y1 + sumY / count };
                             }
                         }
                     }
                 }
-                return best;
-            }
 
-            const boxW = Math.round(W * 0.20);
-            const boxH = Math.round(H * 0.20);
-
-            const tl = findSquareMarker(0, 0, boxW, boxH) || { x: Math.round(W * 0.08), y: Math.round(H * 0.08) };
-            const tr = findSquareMarker(W - boxW, 0, W, boxH) || { x: Math.round(W * 0.92), y: Math.round(H * 0.08) };
-            const br = findSquareMarker(W - boxW, H - boxH, W, H) || { x: Math.round(W * 0.92), y: Math.round(H * 0.92) };
-            const bl = findSquareMarker(0, H - boxH, boxW, H) || { x: Math.round(W * 0.08), y: Math.round(H * 0.92) };
-
-            corners = [tl, tr, br, bl];
-            updateUIState();
-        }
-
-        function updateUIState() {
-            const count = corners.length;
-            cornerCounter.textContent = `${count} of 4 corners marked`;
-
-            if (count < 4) {
-                stepDot.className = 'step-dot';
-                stepInstruction.textContent = `Tap Corner ${count + 1}: ðŸ“ ${cornerNames[count]} marker`;
-                proceedBtn.disabled = true;
-            } else {
-                stepDot.className = 'step-dot complete';
-                stepInstruction.textContent = 'âœ“ 4 Corners Marked! Fine-tune or Proceed.';
-                proceedBtn.disabled = false;
-            }
-        }
-
-        function getCanvasPoint(e) {
-            const rect = previewCanvas.getBoundingClientRect();
-            const scaleX = previewCanvas.width / rect.width;
-            const scaleY = previewCanvas.height / rect.height;
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
-
-        previewCanvas.addEventListener('mousedown', onPointerDown);
-        previewCanvas.addEventListener('mousemove', onPointerMove);
-        window.addEventListener('mouseup', onPointerUp);
-
-        previewCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
-        previewCanvas.addEventListener('touchmove', onPointerMove, { passive: false });
-        window.addEventListener('touchend', onPointerUp);
-
-        function onPointerDown(e) {
-            const pt = getCanvasPoint(e);
-            activeDragIndex = -1;
-            for (let i = 0; i < corners.length; i++) {
-                const dist = Math.hypot(corners[i].x - pt.x, corners[i].y - pt.y);
-                if (dist <= TOUCH_HIT_RADIUS) {
-                    activeDragIndex = i;
-                    e.preventDefault();
-                    break;
-                }
-            }
-
-            if (activeDragIndex === -1 && corners.length < 4) {
-                corners.push({ x: Math.round(pt.x), y: Math.round(pt.y) });
-                updateUIState();
-            }
-        }
-
-        function onPointerMove(e) {
-            if (activeDragIndex >= 0 && activeDragIndex < corners.length) {
-                e.preventDefault();
-                const pt = getCanvasPoint(e);
-                corners[activeDragIndex] = {
-                    x: Math.max(0, Math.min(previewCanvas.width, Math.round(pt.x))),
-                    y: Math.max(0, Math.min(previewCanvas.height, Math.round(pt.y)))
-                };
-            }
-        }
-
-        function onPointerUp() {
-            activeDragIndex = -1;
-        }
-
-        function renderLoop() {
-            const W = previewCanvas.width;
-            const H = previewCanvas.height;
-
-            if (isFrozen && frozenImageCanvas) {
-                previewCtx.drawImage(frozenImageCanvas, 0, 0, W, H);
-            } else if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                previewCtx.drawImage(video, 0, 0, W, H);
-            }
-
-            if (corners.length >= 2) {
-                previewCtx.beginPath();
-                previewCtx.moveTo(corners[0].x, corners[0].y);
-                for (let i = 1; i < corners.length; i++) {
-                    previewCtx.lineTo(corners[i].x, corners[i].y);
-                }
-                if (corners.length === 4) {
-                    previewCtx.closePath();
-                    previewCtx.fillStyle = 'rgba(79, 70, 229, 0.16)';
-                    previewCtx.fill();
-                    previewCtx.strokeStyle = '#10B981';
-                    previewCtx.lineWidth = 4;
+                if (best) {
+                    found.push(best);
                 } else {
-                    previewCtx.strokeStyle = '#F59E0B';
-                    previewCtx.lineWidth = 3;
+                    return null; // Not all 4 corner markers visible yet
                 }
-                previewCtx.stroke();
             }
 
-            corners.forEach((c, idx) => {
-                const isBeingDragged = (idx === activeDragIndex);
+            return found.length === 4 ? found : null;
+        }
 
-                previewCtx.beginPath();
-                previewCtx.arc(c.x, c.y, HANDLE_RADIUS, 0, 2 * Math.PI);
-                previewCtx.fillStyle = isBeingDragged ? '#4F46E5' : '#FFFFFF';
-                previewCtx.fill();
-                previewCtx.lineWidth = 3;
-                previewCtx.strokeStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
-                previewCtx.stroke();
+        // Draw High-Tech Cyber Reticles & Bounding Quad
+        function drawCyberOverlay(ctx, pts, isLocked) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[1].x, pts[1].y);
+            ctx.lineTo(pts[2].x, pts[2].y);
+            ctx.lineTo(pts[3].x, pts[3].y);
+            ctx.closePath();
 
-                previewCtx.beginPath();
-                previewCtx.arc(c.x, c.y, 4, 0, 2 * Math.PI);
-                previewCtx.fillStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
-                previewCtx.fill();
+            ctx.fillStyle = isLocked ? 'rgba(16, 185, 129, 0.14)' : 'rgba(6, 182, 212, 0.08)';
+            ctx.fill();
 
-                previewCtx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
-                previewCtx.fillStyle = '#FFFFFF';
-                previewCtx.shadowColor = 'rgba(0,0,0,0.8)';
-                previewCtx.shadowBlur = 4;
-                previewCtx.fillText(`${idx + 1}: ${cornerNames[idx]}`, c.x + 20, c.y + 4);
-                previewCtx.shadowBlur = 0;
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = isLocked ? '#10B981' : '#06B6D4';
+            ctx.shadowColor = isLocked ? '#10B981' : '#06B6D4';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+
+            // Cybernetic Corner Brackets
+            pts.forEach((pt, i) => {
+                const len = 22;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = isLocked ? '#10B981' : '#06B6D4';
+                ctx.fill();
+
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 18, 0, 2 * Math.PI);
+                ctx.stroke();
             });
-
-            if (activeDragIndex >= 0 && activeDragIndex < corners.length) {
-                drawLoupe(corners[activeDragIndex]);
-            }
-
-            animationFrameId = requestAnimationFrame(renderLoop);
+            ctx.restore();
         }
 
-        function drawLoupe(pt) {
-            const loupeRadius = 45;
-            const zoom = 2.2;
-            const loupeY = Math.max(loupeRadius + 15, pt.y - 75);
-            const loupeX = pt.x;
-
-            previewCtx.save();
-            previewCtx.beginPath();
-            previewCtx.arc(loupeX, loupeY, loupeRadius, 0, 2 * Math.PI);
-            previewCtx.clip();
-
-            const sw = (loupeRadius * 2) / zoom;
-            const sh = (loupeRadius * 2) / zoom;
-            const sx = pt.x - sw / 2;
-            const sy = pt.y - sh / 2;
-
-            if (isFrozen && frozenImageCanvas) {
-                previewCtx.drawImage(frozenImageCanvas, sx, sy, sw, sh, loupeX - loupeRadius, loupeY - loupeRadius, loupeRadius * 2, loupeRadius * 2);
-            } else {
-                previewCtx.drawImage(video, sx, sy, sw, sh, loupeX - loupeRadius, loupeY - loupeRadius, loupeRadius * 2, loupeRadius * 2);
-            }
-
-            previewCtx.strokeStyle = '#EF4444';
-            previewCtx.lineWidth = 1.5;
-            previewCtx.beginPath();
-            previewCtx.moveTo(loupeX - 12, loupeY);
-            previewCtx.lineTo(loupeX + 12, loupeY);
-            previewCtx.moveTo(loupeX, loupeY - 12);
-            previewCtx.lineTo(loupeX, loupeY + 12);
-            previewCtx.stroke();
-
-            previewCtx.restore();
-
-            previewCtx.beginPath();
-            previewCtx.arc(loupeX, loupeY, loupeRadius, 0, 2 * Math.PI);
-            previewCtx.lineWidth = 3;
-            previewCtx.strokeStyle = '#FFFFFF';
-            previewCtx.stroke();
+        function handleTapToCapture() {
+            triggerManualCapture();
         }
 
-        function playShutterSound() {
+        function triggerManualCapture() {
+            if (isCaptured) return;
+            snapAndWarpSheet();
+        }
+
+        function playShutter() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.09);
+                osc.stop(audioCtx.currentTime + 0.1);
             } catch (e) {}
         }
 
-        function proceedToEvaluate() {
-            if (corners.length < 4) return;
-
+        // Warps the perspective into a perfectly flat, upright, leveled A4 sheet
+        function snapAndWarpSheet() {
+            isCaptured = true;
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            playShutterSound();
-            shutterFlash.classList.add('flash');
-            setTimeout(() => shutterFlash.classList.remove('flash'), 120);
+
+            playShutter();
+            flashScreen.classList.add('flash');
+            setTimeout(() => flashScreen.classList.remove('flash'), 120);
 
             const W = previewCanvas.width;
             const H = previewCanvas.height;
-            resultCanvas.width = W;
-            resultCanvas.height = H;
 
-            if (isFrozen && frozenImageCanvas) {
-                resultCtx.drawImage(frozenImageCanvas, 0, 0, W, H);
-            } else {
-                resultCtx.drawImage(video, 0, 0, W, H);
+            const corners = smoothedCorners || [
+                { x: W * 0.08, y: H * 0.06 },
+                { x: W * 0.92, y: H * 0.06 },
+                { x: W * 0.92, y: H * 0.94 },
+                { x: W * 0.08, y: H * 0.94 }
+            ];
+
+            // Target Leveled Canvas: 1000 x 1414
+            resultCanvas.width = TARGET_W;
+            resultCanvas.height = TARGET_H;
+
+            // Target canonical marker positions on the leveled A4 canvas
+            const m_L = TARGET_W * 0.056;
+            const m_R = TARGET_W * 0.944;
+            const m_T = TARGET_H * 0.038;
+            const m_B = TARGET_H * 0.962;
+
+            const dstRectCorners = [
+                { x: m_L, y: m_T },
+                { x: m_R, y: m_T },
+                { x: m_R, y: m_B },
+                { x: m_L, y: m_B }
+            ];
+
+            // Perspective Transform Matrix H (dst -> src)
+            const H_mat = getPerspectiveTransform(dstRectCorners, corners);
+
+            // Read source frame pixels
+            const srcImgData = previewCtx.getImageData(0, 0, W, H);
+            const src32 = new Uint32Array(srcImgData.data.buffer);
+
+            // Create target rectified image
+            const dstImgData = resultCtx.createImageData(TARGET_W, TARGET_H);
+            const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+            const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+            const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+            const h6 = H_mat[6], h7 = H_mat[7];
+
+            let dstIdx = 0;
+            for (let y = 0; y < TARGET_H; y++) {
+                const wx = h1 * y + h2;
+                const wy = h4 * y + h5;
+                const wz = h7 * y + 1;
+                for (let x = 0; x < TARGET_W; x++) {
+                    const z = 1 / (h6 * x + wz);
+                    const sx = Math.round((h0 * x + wx) * z);
+                    const sy = Math.round((h3 * x + wy) * z);
+                    if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                        dst32[dstIdx] = src32[sy * W + sx];
+                    } else {
+                        dst32[dstIdx] = 0xFFFFFFFF; // White border outside sheet
+                    }
+                    dstIdx++;
+                }
             }
 
+            resultCtx.putImageData(dstImgData, 0, 0);
+
+            // Turn off camera stream
             if (cameraStream) {
                 cameraStream.getTracks().forEach(t => t.stop());
             }
 
-            const markers = {
-                tl: corners[0],
-                tr: corners[1],
-                br: corners[2],
-                bl: corners[3]
-            };
-            gradeCapturedSheet(markers, W, H);
+            // Evaluate sheet on the leveled, rectified canvas
+            evaluateLeveledSheet(resultCtx, TARGET_W, TARGET_H, m_L, m_T, m_R - m_L, m_B - m_T);
+
+            // Switch to Results View
+            document.getElementById('viewfinderSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
         }
 
-        // Precision Evaluation Engine with Peak Snapping & Relative Row Contrast
-        function gradeCapturedSheet(markers, W, H) {
-            const imgData = resultCtx.getImageData(0, 0, W, H);
+        // Evaluate bubbles on the flat, leveled A4 sheet
+        function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+            const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
-
-            const TL = markers.tl;
-            const TR = markers.tr;
-            const BL = markers.bl;
-            const BR = markers.br;
-
-            function mapPoint(u, v) {
-                const topX = TL.x + u * (TR.x - TL.x);
-                const topY = TL.y + u * (TR.y - TL.y);
-                const botX = BL.x + u * (BR.x - BL.x);
-                const botY = BL.y + u * (BR.y - BL.y);
-                return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
-            }
 
             function getGray(x, y) {
                 if (x < 0 || x >= W || y < 0 || y >= H) return 255;
@@ -860,26 +877,27 @@
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
                 const row = (q - 1) % QUESTIONS_PER_COL;
-                const v = V_START + row * V_ROW_STEP;
-                const col_u = U_START + col * U_COL_STEP;
 
-                const paperPt = mapPoint(col_u - 0.02, v);
-                const paperVal = sampleCircle(paperPt.x, paperPt.y, 6);
+                // Exact pixel coordinates on the leveled sheet!
+                const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                // Sample local paper baseline
+                const paperVal = sampleCircle(colX - 18, rowY, 6);
 
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
-                    const u = col_u + b * U_BUBBLE_STEP;
-                    const pt = mapPoint(u, v);
+                    const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
-                    // Local peak search
-                    let bestX = pt.x, bestY = pt.y, minVal = 999;
+                    // Local peak search (locks onto the exact circle center)
+                    let bestX = bubbleX, bestY = rowY, minVal = 999;
                     for (let dy of [-4, 0, 4]) {
                         for (let dx of [-4, 0, 4]) {
-                            const val = sampleCircle(pt.x + dx, pt.y + dy, Math.round(bubbleRadius * 0.6));
+                            const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.6));
                             if (val < minVal) {
                                 minVal = val;
-                                bestX = pt.x + dx;
-                                bestY = pt.y + dy;
+                                bestX = bubbleX + dx;
+                                bestY = rowY + dy;
                             }
                         }
                     }
@@ -904,10 +922,12 @@
                         opt: OPTIONS[b],
                         darkness: darkness,
                         darkRatio: darkRatio,
-                        pt: { x: bestX, y: bestY }
+                        x: bestX,
+                        y: bestY
                     });
                 }
 
+                // Relative Contrast Sorting
                 const sorted = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
                 const top1 = sorted[0];
                 const top2 = sorted[1];
@@ -939,35 +959,35 @@
                     blankCount++;
                 }
 
-                // Draw overlay on canvas
+                // Draw Overlay Rings on the Leveled Cropped Sheet
                 for (let b = 0; b < 4; b++) {
                     const opt = OPTIONS[b];
-                    const pt = bubbleStats[b].pt;
+                    const stat = bubbleStats[b];
 
-                    resultCtx.beginPath();
-                    resultCtx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
-                    resultCtx.lineWidth = Math.max(3, Math.round(W * 0.002));
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
 
                     if (opt === detectedAnswer) {
                         if (correctAns && detectedAnswer === correctAns) {
-                            resultCtx.strokeStyle = '#10B981';
-                            resultCtx.fillStyle = 'rgba(16, 185, 129, 0.45)';
+                            ctx.strokeStyle = '#10B981';
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
                         } else if (correctAns) {
-                            resultCtx.strokeStyle = '#EF4444';
-                            resultCtx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
                         } else {
-                            resultCtx.strokeStyle = '#3B82F6';
-                            resultCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+                            ctx.strokeStyle = '#3B82F6';
+                            ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
                         }
-                        resultCtx.fill();
+                        ctx.fill();
                     } else if (opt === correctAns && detectedAnswer !== correctAns) {
-                        resultCtx.strokeStyle = '#F59E0B';
-                        resultCtx.fillStyle = 'rgba(245, 158, 11, 0.35)';
-                        resultCtx.fill();
+                        ctx.strokeStyle = '#F59E0B';
+                        ctx.fillStyle = 'rgba(245, 158, 11, 0.35)';
+                        ctx.fill();
                     } else {
-                        resultCtx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+                        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
                     }
-                    resultCtx.stroke();
+                    ctx.stroke();
                 }
 
                 let badgeClass = 'badge-blank';
@@ -984,6 +1004,7 @@
                 </tr>`;
             }
 
+            // Update UI Scoreboard
             const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
             document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
             const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
@@ -994,10 +1015,6 @@
             document.getElementById('statAttempted').textContent = attemptedCount;
             document.getElementById('statBlank').textContent = blankCount;
             document.getElementById('tableBody').innerHTML = rowsHtml;
-
-            document.getElementById('viewfinderSection').style.display = 'none';
-            document.getElementById('instructionsStrip').style.display = 'none';
-            document.getElementById('resultsSection').style.display = 'block';
         }
 
         function restartScanner() {

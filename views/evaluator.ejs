@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluation Results - <%= paper.title %></title>
+    <title>AI Leveled Evaluation - <%= paper.title %></title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         .eval-container {
             max-width: 1200px;
@@ -21,7 +21,7 @@
         }
         .eval-layout {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 1.15fr 1fr;
             gap: 1.75rem;
             align-items: start;
         }
@@ -29,16 +29,16 @@
             .eval-layout { grid-template-columns: 1fr; }
         }
         .canvas-card {
-            background: #0F172A;
+            background: #090D16;
             border-radius: var(--radius-lg);
             overflow: hidden;
-            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #334155;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
+            border: 1px solid #1E293B;
             position: relative;
         }
         .canvas-toolbar {
-            background: #1E293B;
-            border-bottom: 1px solid #334155;
+            background: #111827;
+            border-bottom: 1px solid #1E293B;
             padding: 10px 16px;
             display: flex;
             justify-content: space-between;
@@ -49,48 +49,46 @@
             font-size: 0.88rem;
         }
         .canvas-toolbar-btn {
-            background: #334155;
+            background: #1E293B;
             color: #FFFFFF;
-            border: 1px solid #475569;
+            border: 1px solid #334155;
             border-radius: var(--radius-sm);
-            padding: 5px 12px;
+            padding: 6px 14px;
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .canvas-toolbar-btn:hover {
-            background: #475569;
-            border-color: #64748B;
+            background: #334155;
+            border-color: #06B6D4;
         }
         .canvas-wrapper {
             position: relative;
-            background: #000;
+            background: #090D16;
+            padding: 1rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            user-select: none;
-            touch-action: none;
-            cursor: crosshair;
         }
         #canvasOutput {
             width: 100%;
             height: auto;
             display: block;
-            touch-action: none;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            background: #FFFFFF;
         }
-        .tip-banner {
-            background: #EEF2FF;
-            border-left: 4px solid var(--primary);
-            padding: 10px 14px;
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-            font-size: 0.85rem;
-            color: #3730A3;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+        .level-badge {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
         }
         .score-hero {
             background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
@@ -155,41 +153,34 @@
         <!-- Header -->
         <div class="eval-header-split">
             <div>
-                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">OMR Sheet Evaluation</h1>
+                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">AI Leveled Evaluation</h1>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
                     <%= paper.title %> &bull; <%= paper.numQuestions %> Questions
                 </p>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
-                <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
+                <span id="evalStatus" class="status-pill">Analyzing & Leveling...</span>
                 <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-sm">&larr; Back to Paper</a>
             </div>
         </div>
 
         <div class="eval-layout">
-            <!-- Left: Interactive Canvas with Draggable 4 Corner Pins -->
+            <!-- Left: Leveled & Cropped Sheet -->
             <div>
                 <div class="canvas-card">
                     <div class="canvas-toolbar">
-                        <span><strong>Corner Markers:</strong> Drag pins to fine-tune anytime</span>
+                        <span class="level-badge">âœ“ Auto-Leveled & Cropped (A4)</span>
                         <div style="display:flex; gap:6px;">
-                            <button type="button" class="canvas-toolbar-btn" onclick="autoDetectCorners()">ðŸŽ¯ Auto-Detect</button>
-                            <button type="button" class="canvas-toolbar-btn" onclick="resetCornersToDefault()">â†º Reset</button>
+                            <button type="button" class="canvas-toolbar-btn" id="toggleViewBtn" onclick="toggleRawView()">ðŸ–¼ View Raw Upload</button>
                         </div>
                     </div>
-                    <div class="canvas-wrapper" id="canvasWrapper">
+                    <div class="canvas-wrapper">
                         <canvas id="canvasOutput"></canvas>
-                    </div>
-                </div>
-
-                <div class="tip-banner">
-                    <div>
-                        <strong>ðŸ’¡ Corner Pinning:</strong> You can drag any of the 4 corner circles (â‘  TL, â‘¡ TR, â‘¢ BR, â‘£ BL) with your mouse or finger to perfectly match the printed black corner squares. The scorecard recalculates instantly!
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Scorecard & Question Breakdown -->
+            <!-- Right: Scorecard & Breakdown -->
             <div>
                 <div class="score-hero">
                     <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Score Achieved</div>
@@ -246,19 +237,17 @@
         const canvas = document.getElementById('canvasOutput');
         const ctx = canvas.getContext('2d');
         const evalStatus = document.getElementById('evalStatus');
+        const toggleViewBtn = document.getElementById('toggleViewBtn');
 
-        // Offscreen canvas storing original clean image
-        let baseCanvas = document.createElement('canvas');
-        let baseCtx = baseCanvas.getContext('2d');
+        let rawCanvas = document.createElement('canvas');
+        let rawCtx = rawCanvas.getContext('2d');
+        let leveledCanvas = document.createElement('canvas');
+        let leveledCtx = leveledCanvas.getContext('2d');
+        let showingRaw = false;
 
-        // 4 corner markers: 0: TL, 1: TR, 2: BR, 3: BL
-        const cornerNames = ['Top-Left', 'Top-Right', 'Bottom-Right', 'Bottom-Left'];
-        let corners = [];
-        let activeDragIndex = -1;
-        const HANDLE_RADIUS = 16;
-        const TOUCH_HIT_RADIUS = 36;
+        const TARGET_W = 1000;
+        const TARGET_H = 1414; // A4 1:1.414
 
-        // Accurate Canonical Ratios (measured on standardized A4 template)
         const U_START = 141.0 / 2235.0;
         const V_START = 835.5 / 3261.0;
         const U_BUBBLE_STEP = 62.5 / 2235.0;
@@ -275,20 +264,61 @@
 
             const W = img.naturalWidth;
             const H = img.naturalHeight;
-            canvas.width = W;
-            canvas.height = H;
-            baseCanvas.width = W;
-            baseCanvas.height = H;
-            baseCtx.drawImage(img, 0, 0);
+            rawCanvas.width = W;
+            rawCanvas.height = H;
+            rawCtx.drawImage(img, 0, 0);
 
-            autoDetectCorners();
+            // Auto-detect 4 corner square markers
+            const corners = autoDetectCorners(rawCtx, W, H);
+
+            // Warp & level into the flat upright A4 canvas
+            warpAndEvaluate(corners, W, H);
         }
 
-        // Robust Square Blob Marker Detector using Otsu thresholding + Connected Components in 4 quadrants
-        function autoDetectCorners() {
-            const W = baseCanvas.width;
-            const H = baseCanvas.height;
-            const imgData = baseCtx.getImageData(0, 0, W, H);
+        function toggleRawView() {
+            showingRaw = !showingRaw;
+            if (showingRaw) {
+                canvas.width = rawCanvas.width;
+                canvas.height = rawCanvas.height;
+                ctx.drawImage(rawCanvas, 0, 0);
+                toggleViewBtn.textContent = 'ðŸ“ View Leveled & Cropped';
+            } else {
+                canvas.width = leveledCanvas.width;
+                canvas.height = leveledCanvas.height;
+                ctx.drawImage(leveledCanvas, 0, 0);
+                toggleViewBtn.textContent = 'ðŸ–¼ View Raw Upload';
+            }
+        }
+
+        function getPerspectiveTransform(src, dst) {
+            const A = [], B = [];
+            for (let i = 0; i < 4; i++) {
+                const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
+            }
+            const n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                [A[i], A[maxRow]] = [A[maxRow], A[i]]; [B[i], B[maxRow]] = [B[maxRow], B[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot) < 1e-10) return null;
+                for (let j = i; j < n; j++) A[i][j] /= pivot;
+                B[i] /= pivot;
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = A[k][i];
+                        for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                        B[k] -= factor * B[i];
+                    }
+                }
+            }
+            return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
+        }
+
+        function autoDetectCorners(ctx, W, H) {
+            const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
 
             function findSquareMarker(x1, y1, x2, y2) {
@@ -307,7 +337,6 @@
                     }
                 }
 
-                // Otsu binarization
                 const total = pw * ph;
                 let sum = 0;
                 for (let i = 0; i < 256; i++) sum += i * hist[i];
@@ -318,13 +347,10 @@
                     const wF = total - wB;
                     if (wF === 0) break;
                     sumB += i * hist[i];
-                    const mB = sumB / wB;
-                    const mF = (sum - sumB) / wF;
-                    const v = wB * wF * (mB - mF) * (mB - mF);
+                    const v = wB * wF * (sumB/wB - (sum - sumB)/wF) * (sumB/wB - (sum - sumB)/wF);
                     if (v > maxVar) { maxVar = v; thresh = i; }
                 }
 
-                // Connected Components Search
                 const visited = new Uint8Array(pw * ph);
                 let best = null;
                 let bestScore = -1;
@@ -355,9 +381,7 @@
                             if (cy < minY) minY = cy;
                             if (cy > maxY) maxY = cy;
 
-                            const neighbors = [cur - 1, cur + 1, cur - pw, cur + pw];
-                            for (let k = 0; k < 4; k++) {
-                                const nb = neighbors[k];
+                            for (let nb of [cur - 1, cur + 1, cur - pw, cur + pw]) {
                                 if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
                                     visited[nb] = 1;
                                     queue.push(nb);
@@ -382,64 +406,87 @@
                 return best;
             }
 
-            const boxW = Math.round(W * 0.20);
-            const boxH = Math.round(H * 0.20);
+            const boxW = Math.round(W * 0.22);
+            const boxH = Math.round(H * 0.22);
 
-            const tl = findSquareMarker(0, 0, boxW, boxH) || { x: Math.round(W * 0.05), y: Math.round(H * 0.038) };
-            const tr = findSquareMarker(W - boxW, 0, W, boxH) || { x: Math.round(W * 0.95), y: Math.round(H * 0.038) };
-            const br = findSquareMarker(W - boxW, H - boxH, W, H) || { x: Math.round(W * 0.95), y: Math.round(H * 0.962) };
-            const bl = findSquareMarker(0, H - boxH, boxW, H) || { x: Math.round(W * 0.05), y: Math.round(H * 0.962) };
+            const tl = findSquareMarker(0, 0, boxW, boxH) || { x: Math.round(W * 0.056), y: Math.round(H * 0.038) };
+            const tr = findSquareMarker(W - boxW, 0, W, boxH) || { x: Math.round(W * 0.944), y: Math.round(H * 0.038) };
+            const br = findSquareMarker(W - boxW, H - boxH, W, H) || { x: Math.round(W * 0.944), y: Math.round(H * 0.962) };
+            const bl = findSquareMarker(0, H - boxH, boxW, H) || { x: Math.round(W * 0.056), y: Math.round(H * 0.962) };
 
-            corners = [tl, tr, br, bl];
-            runEvaluation();
+            return [tl, tr, br, bl];
         }
 
-        function resetCornersToDefault() {
-            const W = baseCanvas.width;
-            const H = baseCanvas.height;
-            corners = [
-                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
-                { x: Math.round(W * 0.948), y: Math.round(H * 0.038) },
-                { x: Math.round(W * 0.948), y: Math.round(H * 0.962) },
-                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+        function warpAndEvaluate(corners, W, H) {
+            leveledCanvas.width = TARGET_W;
+            leveledCanvas.height = TARGET_H;
+
+            const m_L = TARGET_W * 0.056;
+            const m_R = TARGET_W * 0.944;
+            const m_T = TARGET_H * 0.038;
+            const m_B = TARGET_H * 0.962;
+
+            const dstRectCorners = [
+                { x: m_L, y: m_T },
+                { x: m_R, y: m_T },
+                { x: m_R, y: m_B },
+                { x: m_L, y: m_B }
             ];
-            runEvaluation();
+
+            const H_mat = getPerspectiveTransform(dstRectCorners, corners);
+            const srcImgData = rawCtx.getImageData(0, 0, W, H);
+            const src32 = new Uint32Array(srcImgData.data.buffer);
+
+            const dstImgData = leveledCtx.createImageData(TARGET_W, TARGET_H);
+            const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+            const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+            const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+            const h6 = H_mat[6], h7 = H_mat[7];
+
+            let dstIdx = 0;
+            for (let y = 0; y < TARGET_H; y++) {
+                const wx = h1 * y + h2;
+                const wy = h4 * y + h5;
+                const wz = h7 * y + 1;
+                for (let x = 0; x < TARGET_W; x++) {
+                    const z = 1 / (h6 * x + wz);
+                    const sx = Math.round((h0 * x + wx) * z);
+                    const sy = Math.round((h3 * x + wy) * z);
+                    if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                        dst32[dstIdx] = src32[sy * W + sx];
+                    } else {
+                        dst32[dstIdx] = 0xFFFFFFFF;
+                    }
+                    dstIdx++;
+                }
+            }
+
+            leveledCtx.putImageData(dstImgData, 0, 0);
+
+            // Grade bubbles on the leveled cropped sheet
+            evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, m_L, m_T, m_R - m_L, m_B - m_T);
+
+            // Draw leveled sheet to main canvas
+            canvas.width = TARGET_W;
+            canvas.height = TARGET_H;
+            ctx.drawImage(leveledCanvas, 0, 0);
+
+            evalStatus.textContent = 'âœ“ Leveled & Graded (100% Locked)';
+            evalStatus.style.background = '#DEF7EC';
+            evalStatus.style.color = '#03543F';
         }
 
-        // Bilinear Mapping
-        function mapPoint(TL, TR, BL, BR, u, v) {
-            const topX = TL.x + u * (TR.x - TL.x);
-            const topY = TL.y + u * (TR.y - TL.y);
-            const botX = BL.x + u * (BR.x - BL.x);
-            const botY = BL.y + u * (BR.y - BL.y);
-            return { x: topX + v * (botX - topX), y: topY + v * (botY - topY) };
-        }
-
-        // Full OMR Evaluation with Local Peak Snapping & Relative Row Contrast
-        function runEvaluation() {
-            if (corners.length < 4) return;
-            evalStatus.textContent = 'Evaluating bubbles...';
-
-            const W = canvas.width;
-            const H = canvas.height;
-            ctx.drawImage(baseCanvas, 0, 0);
-
-            const imgData = baseCtx.getImageData(0, 0, W, H);
+        function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+            const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
 
-            const TL = corners[0];
-            const TR = corners[1];
-            const BR = corners[2];
-            const BL = corners[3];
-
-            // Helper to get grayscale value of a pixel
             function getGray(x, y) {
                 if (x < 0 || x >= W || y < 0 || y >= H) return 255;
                 const idx = (y * W + x) * 4;
                 return (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
             }
 
-            // Measure mean brightness in circle of radius r
             function sampleCircle(cx, cy, r) {
                 let sum = 0, count = 0;
                 for (let dy = -r; dy <= r; dy++) {
@@ -465,36 +512,31 @@
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
                 const row = (q - 1) % QUESTIONS_PER_COL;
-                const v = V_START + row * V_ROW_STEP;
-                const col_u = U_START + col * U_COL_STEP;
 
-                // Sample local paper baseline right next to this question (25px left)
-                const paperPt = mapPoint(TL, TR, BL, BR, col_u - 0.02, v);
-                const paperVal = sampleCircle(paperPt.x, paperPt.y, 6);
+                const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                const paperVal = sampleCircle(colX - 18, rowY, 6);
 
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
-                    const u = col_u + b * U_BUBBLE_STEP;
-                    const pt = mapPoint(TL, TR, BL, BR, u, v);
+                    const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
-                    // Local Peak Snapping: search +-4 pixels to lock onto the true bubble center
-                    let bestX = pt.x, bestY = pt.y, minVal = 999;
+                    let bestX = bubbleX, bestY = rowY, minVal = 999;
                     for (let dy of [-4, 0, 4]) {
                         for (let dx of [-4, 0, 4]) {
-                            const val = sampleCircle(pt.x + dx, pt.y + dy, Math.round(bubbleRadius * 0.6));
+                            const val = sampleCircle(bubbleX + dx, rowY + dy, Math.round(bubbleRadius * 0.6));
                             if (val < minVal) {
                                 minVal = val;
-                                bestX = pt.x + dx;
-                                bestY = pt.y + dy;
+                                bestX = bubbleX + dx;
+                                bestY = rowY + dy;
                             }
                         }
                     }
 
-                    // Sample the full bubble at its exact snapped center
                     const bubbleMean = sampleCircle(bestX, bestY, bubbleRadius);
                     const darkness = paperVal - bubbleMean;
 
-                    // Percentage of pixels darker than paper threshold
                     let darkCount = 0, totalCount = 0;
                     for (let dy = -bubbleRadius; dy <= bubbleRadius; dy++) {
                         for (let dx = -bubbleRadius; dx <= bubbleRadius; dx++) {
@@ -512,16 +554,15 @@
                         opt: OPTIONS[b],
                         darkness: darkness,
                         darkRatio: darkRatio,
-                        pt: { x: bestX, y: bestY }
+                        x: bestX,
+                        y: bestY
                     });
                 }
 
-                // Sort descending by darkness intensity
                 const sorted = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
                 const top1 = sorted[0];
                 const top2 = sorted[1];
 
-                // Relative Contrast Rule: top1 must be significantly darker than paper AND top2
                 let isFilled = false;
                 if (top1.darkness >= 16) {
                     if (top1.darkness - top2.darkness >= 9 || top1.darkRatio > 0.32 || top1.darkness > top2.darkness * 1.35) {
@@ -549,13 +590,12 @@
                     blankCount++;
                 }
 
-                // Draw Bubble Overlay on Canvas
                 for (let b = 0; b < 4; b++) {
                     const opt = OPTIONS[b];
-                    const pt = bubbleStats[b].pt;
+                    const stat = bubbleStats[b];
 
                     ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
                     ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
 
                     if (opt === detectedAnswer) {
@@ -594,42 +634,6 @@
                 </tr>`;
             }
 
-            // Draw Quadrilateral & Corner Handles
-            ctx.beginPath();
-            ctx.moveTo(TL.x, TL.y);
-            ctx.lineTo(TR.x, TR.y);
-            ctx.lineTo(BR.x, BR.y);
-            ctx.lineTo(BL.x, BL.y);
-            ctx.closePath();
-            ctx.strokeStyle = '#10B981';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            corners.forEach((c, idx) => {
-                const isBeingDragged = (idx === activeDragIndex);
-
-                ctx.beginPath();
-                ctx.arc(c.x, c.y, HANDLE_RADIUS, 0, 2 * Math.PI);
-                ctx.fillStyle = isBeingDragged ? '#4F46E5' : '#FFFFFF';
-                ctx.fill();
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.arc(c.x, c.y, 4, 0, 2 * Math.PI);
-                ctx.fillStyle = isBeingDragged ? '#FFFFFF' : '#4F46E5';
-                ctx.fill();
-
-                ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
-                ctx.fillStyle = '#FFFFFF';
-                ctx.shadowColor = 'rgba(0,0,0,0.85)';
-                ctx.shadowBlur = 4;
-                ctx.fillText(`${idx + 1}: ${cornerNames[idx]}`, c.x + 20, c.y + 4);
-                ctx.shadowBlur = 0;
-            });
-
-            // Update UI Scoreboard
             const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
             document.getElementById('scoreValue').textContent = `${score} / ${totalGraded}`;
             const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
@@ -640,65 +644,6 @@
             document.getElementById('statAttempted').textContent = attemptedCount;
             document.getElementById('statBlank').textContent = blankCount;
             document.getElementById('tableBody').innerHTML = rowsHtml;
-
-            evalStatus.textContent = 'âœ“ Evaluation Complete';
-            evalStatus.style.background = '#DEF7EC';
-            evalStatus.style.color = '#03543F';
-        }
-
-        // Pointer coordinate converter
-        function getCanvasPoint(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
-
-        // Dragging listeners
-        canvas.addEventListener('mousedown', onPointerDown);
-        canvas.addEventListener('mousemove', onPointerMove);
-        window.addEventListener('mouseup', onPointerUp);
-
-        canvas.addEventListener('touchstart', onPointerDown, { passive: false });
-        canvas.addEventListener('touchmove', onPointerMove, { passive: false });
-        window.addEventListener('touchend', onPointerUp);
-
-        function onPointerDown(e) {
-            const pt = getCanvasPoint(e);
-            activeDragIndex = -1;
-            for (let i = 0; i < corners.length; i++) {
-                const dist = Math.hypot(corners[i].x - pt.x, corners[i].y - pt.y);
-                if (dist <= TOUCH_HIT_RADIUS) {
-                    activeDragIndex = i;
-                    e.preventDefault();
-                    break;
-                }
-            }
-        }
-
-        function onPointerMove(e) {
-            if (activeDragIndex >= 0 && activeDragIndex < corners.length) {
-                e.preventDefault();
-                const pt = getCanvasPoint(e);
-                corners[activeDragIndex] = {
-                    x: Math.max(0, Math.min(canvas.width, Math.round(pt.x))),
-                    y: Math.max(0, Math.min(canvas.height, Math.round(pt.y)))
-                };
-                runEvaluation();
-            }
-        }
-
-        function onPointerUp() {
-            activeDragIndex = -1;
         }
 
         if (img.complete) {
