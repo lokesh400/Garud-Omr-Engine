@@ -791,7 +791,7 @@
                 previewCtx.drawImage(video, 0, 0, W, H);
 
                 // Run fast detector on downscaled canvas (320px width for <1ms execution)
-                const fastW = 480;
+                const fastW = 360;
                 const fastH = Math.max(1, Math.round(H * (fastW / W)));
                 fastCanvas.width = fastW;
                 fastCanvas.height = fastH;
@@ -863,13 +863,14 @@
         // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
         // Strictly avoids question bubbles via 28% margin restriction, count >= 26, and inner margin check
         // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
+        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            // Search in outer 36% margin corners for wide placement tolerance
-            const boxW = Math.round(sw * 0.36);
-            const boxH = Math.round(sh * 0.36);
+            // Search in outer 28% margin corners (strictly stays outside central question grid)
+            const boxW = Math.round(sw * 0.28);
+            const boxH = Math.round(sh * 0.28);
             const quads = [
                 { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
                 { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
@@ -928,7 +929,7 @@
                         let qHead = 0;
 
                         while (qHead < queue.length) {
-                            if (count > 2500) break;
+                            if (count > 2000) break;
                             const cur = queue[qHead++];
                             const cy = Math.floor(cur / pw);
                             const cx = cur % pw;
@@ -953,15 +954,32 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        // Solid Square Corner Marker Criteria (at 480px scale):
-                        // bw, bh >= 5, count >= 16 (excludes tiny question bubbles), density >= 0.50
-                        if (bw >= 5 && bh >= 5 && bw <= 65 && bh <= 65 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.50 && count >= 16 && count <= 2500) {
-                            const bx = q.x1 + sumX / count;
-                            const by = q.y1 + sumY / count;
+                        // Solid Square Corner Marker Criteria:
+                        // bw, bh >= 6, density >= 0.52, count >= 20
+                        if (bw >= 6 && bh >= 6 && bw <= 55 && bh <= 55 && aspect >= 0.58 && aspect <= 1.70 && density >= 0.52 && count >= 20 && count <= 2000) {
+                            // Center derived from bounding box (symmetric and immune to gradient shadows)
+                            const bx = q.x1 + (minX + maxX) / 2;
+                            const by = q.y1 + (minY + maxY) / 2;
+
+                            // Inward paper margin check: genuine corner markers have white paper inward towards sheet center
+                            const dirX = Math.sign((sw / 2) - bx);
+                            const dirY = Math.sign((sh / 2) - by);
+                            let whiteInward = 0;
+                            const d1 = Math.round(Math.max(bw, bh) * 1.0);
+                            const d2 = Math.round(Math.max(bw, bh) * 1.6);
+                            for (let sd of [d1, d2]) {
+                                const ix = Math.round(bx + dirX * sd);
+                                const iy = Math.round(by + dirY * sd);
+                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
+                                    const inIdx = (iy * sw + ix) * 4;
+                                    const inGray = (data[inIdx] * 77 + data[inIdx + 1] * 150 + data[inIdx + 2] * 29) >> 8;
+                                    if (inGray >= (thresh - 15)) whiteInward++;
+                                }
+                            }
 
                             // Isolation Ring Check: Corner markers sit in white margins
-                            const rIn = Math.round(Math.max(bw, bh) * 0.70);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.50);
+                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
+                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
                             let darkRing = 0, totalRing = 0;
 
                             for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
@@ -984,9 +1002,8 @@
                             const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
                             const normDist = distToCorner / diag;
 
-                            // Accept isolated solid markers with high contrast
-                            if (ringDarkRatio <= 0.32) {
-                                const score = (density * 2.5) - (normDist * 2.0) - (ringDarkRatio * 2.5);
+                            if (ringDarkRatio <= 0.22 && whiteInward >= 1) {
+                                const score = (density * 3.0) - (normDist * 2.0) - (ringDarkRatio * 3.0);
                                 candidates.push({
                                     x: bx,
                                     y: by,
@@ -1000,7 +1017,7 @@
                 }
 
                 if (candidates.length === 0) {
-                    return null; // A corner is missing or obscured
+                    return null; // A corner is missing or obstructed
                 }
 
                 candidates.sort((a, b) => b.score - a.score);
@@ -1009,33 +1026,42 @@
 
             if (foundCorners.length !== 4) return null;
 
-            // Order corners clockwise starting from Top-Left: [TL, TR, BR, BL]
             const ordered = orderCorners(foundCorners);
             const p0 = ordered[0], p1 = ordered[1], p2 = ordered[2], p3 = ordered[3];
 
-            // Parallelism and proportional opposite sides
+            // 1. Convexity check (clockwise cross-products > 0)
+            const pts = [p0, p1, p2, p3];
+            for (let i = 0; i < 4; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % 4];
+                const c = pts[(i + 2) % 4];
+                const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                if (cross <= 0) return null;
+            }
+
+            // 2. Parallelism and proportional opposite sides
             const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
             const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
             const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
             const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.45) return null;
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.45) return null;
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.52) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.52) return null;
 
-            // Aspect ratio check for natural perspective angles
+            // 3. Aspect ratio check
             const avgW = (wTop + wBot) / 2;
             const avgH = (hLeft + hRight) / 2;
             const aspect = avgH / avgW;
-            if (aspect < 0.45 || aspect > 2.25) return null;
+            if (aspect < 0.50 || aspect > 2.10) return null;
 
-            // Area check (at least 5% of camera area)
+            // 4. Area check (at least 6% of camera area)
             const quadArea = 0.5 * Math.abs(
                 (p0.x * p1.y - p0.y * p1.x) +
                 (p1.x * p2.y - p1.y * p2.x) +
                 (p2.x * p3.y - p2.y * p3.x) +
                 (p3.x * p0.y - p3.y * p0.x)
             );
-            if (quadArea < (sw * sh * 0.05)) return null;
+            if (quadArea < (sw * sh * 0.06)) return null;
 
             return ordered;
         }
@@ -1257,7 +1283,7 @@
             }
 
             // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
-            const rollRadius = 8;
+            const rollRadius = 8.5;
             const rollCoreRadius = 3.5;
 
             let detectedRollNumber = '';
@@ -1266,19 +1292,32 @@
 
             for (let c = 0; c < 8; c++) {
                 const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
-                const paperVal = sampleCircle(colX - 12, markerT + V_ROLL_START * markerH, 4);
+                // Sample clean paper baseline vertically above the column
+                const paperVal = sampleCircle(colX, markerT + (V_ROLL_START - 0.015) * markerH, 4);
 
                 let colStats = [];
                 for (let d = 0; d < 10; d++) {
                     const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
 
-                    // Inner core brightness sampled strictly at canonical center (no border search)
-                    const coreMean = sampleCircle(colX, rowY, rollCoreRadius);
+                    let sum = 0, count = 0, darkCount = 0;
+                    for (let dy = -rollCoreRadius; dy <= rollCoreRadius; dy++) {
+                        for (let dx = -rollCoreRadius; dx <= rollCoreRadius; dx++) {
+                            if (dx * dx + dy * dy <= rollCoreRadius * rollCoreRadius) {
+                                const g = getGray(Math.round(colX + dx), Math.round(rowY + dy));
+                                sum += g;
+                                count++;
+                                if (g < (paperVal - 30)) darkCount++;
+                            }
+                        }
+                    }
+                    const coreMean = count > 0 ? (sum / count) : 255;
                     const coreDarkness = paperVal - coreMean;
+                    const darkRatio = count > 0 ? (darkCount / count) : 0;
 
                     colStats.push({
                         digit: d,
                         coreDarkness: coreDarkness,
+                        darkRatio: darkRatio,
                         x: colX,
                         y: rowY
                     });
@@ -1288,10 +1327,11 @@
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
-                // Detect filled roll number digit via relative contrast & darkness
                 let isColFilled = false;
-                if ((top1.coreDarkness >= 22 && (top1.coreDarkness - top2.coreDarkness >= 12)) || top1.coreDarkness >= 45) {
-                    isColFilled = true;
+                if ((top1.darkRatio >= 0.35 && top1.coreDarkness >= 30) || top1.coreDarkness >= 55) {
+                    if (top1.coreDarkness - top2.coreDarkness >= 12 || top1.darkRatio >= 0.50) {
+                        isColFilled = true;
+                    }
                 }
 
                 const detectedDigit = isColFilled ? top1.digit.toString() : '-';
@@ -1355,8 +1395,8 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (ACCURATE RELATIVE CONTRAST DISCRIMINATION)
-            const bubbleRadius = 8.5;
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO BORDER-SAMPLING & NO FALSE CROSSES)
+            const bubbleRadius = 9.0;
             const bubbleCoreRadius = 3.5;
             let score = 0;
             let correctCount = 0;
@@ -1375,41 +1415,45 @@
                 const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
                 const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
 
-                // Sample local paper baseline
-                const paperVal = sampleCircle(colX - 16, rowY, 4);
+                // Sample clean paper baseline in the vertical gap between rows (avoids question number ink)
+                const paperVal = sampleCircle(colX, rowY - 11, 3.5);
 
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
-                    // Inner core brightness sampled strictly at canonical center (no border jumping)
-                    const coreMean = sampleCircle(bubbleX, rowY, bubbleCoreRadius);
+                    // Count dark pixels inside inner core disk
+                    let sum = 0, count = 0, darkCount = 0;
+                    for (let dy = -bubbleCoreRadius; dy <= bubbleCoreRadius; dy++) {
+                        for (let dx = -bubbleCoreRadius; dx <= bubbleCoreRadius; dx++) {
+                            if (dx * dx + dy * dy <= bubbleCoreRadius * bubbleCoreRadius) {
+                                const g = getGray(Math.round(bubbleX + dx), Math.round(rowY + dy));
+                                sum += g;
+                                count++;
+                                if (g < (paperVal - 30)) darkCount++;
+                            }
+                        }
+                    }
+                    const coreMean = count > 0 ? (sum / count) : 255;
                     const coreDarkness = paperVal - coreMean;
+                    const darkRatio = count > 0 ? (darkCount / count) : 0;
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
                         coreDarkness: coreDarkness,
+                        darkRatio: darkRatio,
                         x: bubbleX,
                         y: rowY
                     });
                 }
 
-                const sorted = [...bubbleStats].sort((a, b) => b.coreDarkness - a.coreDarkness);
-                const top = sorted[0];
-                const second = sorted[1];
-                const third = sorted[2];
-
-                // Detect filled bubbles with relative contrast (accommodates pencil, gel, ballpoint)
-                let filledBubbles = [];
-                if (top.coreDarkness >= 22) {
-                    if (second.coreDarkness >= 20 && (second.coreDarkness >= 38 || (second.coreDarkness - third.coreDarkness >= 10))) {
-                        // Multiple markings detected
-                        filledBubbles = [top, second];
-                    } else if (top.coreDarkness - second.coreDarkness >= 12 || top.coreDarkness >= 45) {
-                        filledBubbles = [top];
-                    }
+                // Solid Ink Check: Genuinely filled bubbles have >= 35% dark ink in core or >= 55 darkness.
+                // A printed circular border touching the sample only has <= 14% dark ratio and is completely ignored!
+                function isBubbleFilled(b) {
+                    return (b.darkRatio >= 0.35 && b.coreDarkness >= 30) || (b.coreDarkness >= 55);
                 }
 
+                const filledBubbles = bubbleStats.filter(b => isBubbleFilled(b));
                 const isMultiple = filledBubbles.length > 1;
                 const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
                 const correctAns = answerKey[q.toString()] || '';
@@ -1447,7 +1491,7 @@
 
                     ctx.beginPath();
                     ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
-                    ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
 
                     if (isMultiple && isThisBubbleFilled) {
                         ctx.strokeStyle = '#EF4444';
@@ -1505,15 +1549,15 @@
                     verdictText = '✗ Wrong';
                     markedCellHtml = '<strong style="color: #EF4444; font-size:1rem;">' + detectedAnswer + '</strong>';
                 } else if (verdict === 'marked') {
-                    badgeClass = 'badge-correct';
-                    verdictText = 'Marked';
-                    markedCellHtml = '<strong style="font-size:1rem;">' + detectedAnswer + '</strong>';
+                    badgeClass = 'badge-marked';
+                    verdictText = 'Recorded';
+                    markedCellHtml = '<strong style="color: #06B6D4; font-size:1rem;">' + detectedAnswer + '</strong>';
                 }
 
                 rowsHtml += '<tr>' +
-                    '<td><strong>' + q + '</strong></td>' +
+                    '<td style="font-weight:700; color:#CBD5E1;">Q' + q + '</td>' +
                     '<td>' + markedCellHtml + '</td>' +
-                    '<td>' + (correctAns ? '<strong style="color:var(--primary);">' + correctAns + '</strong>' : '<span style="color:#9CA3AF;">-</span>') + '</td>' +
+                    '<td>' + (correctAns ? '<span style="font-weight:700; color:#38BDF8;">' + correctAns + '</span>' : '<span style="color:#64748B;">None</span>') + '</td>' +
                     '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
                 '</tr>';
             }

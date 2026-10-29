@@ -635,14 +635,14 @@
             function getGray(x, y) {
                 if (x < 0 || x >= W || y < 0 || y >= H) return 255;
                 const idx = (y * W + x) * 4;
-                return (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
+                return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
             }
 
             function sampleCircle(cx, cy, r) {
                 let sum = 0, count = 0;
                 for (let dy = -r; dy <= r; dy++) {
                     for (let dx = -r; dx <= r; dx++) {
-                        if (dx*dx + dy*dy <= r*r) {
+                        if (dx * dx + dy * dy <= r * r) {
                             sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
                             count++;
                         }
@@ -652,7 +652,7 @@
             }
 
             // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
-            const rollRadius = 8;
+            const rollRadius = 8.5;
             const rollCoreRadius = 3.5;
 
             let detectedRollNumber = '';
@@ -661,19 +661,32 @@
 
             for (let c = 0; c < 8; c++) {
                 const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
-                const paperVal = sampleCircle(colX - 12, markerT + V_ROLL_START * markerH, 4);
+                // Sample clean paper baseline vertically above the column
+                const paperVal = sampleCircle(colX, markerT + (V_ROLL_START - 0.015) * markerH, 4);
 
                 let colStats = [];
                 for (let d = 0; d < 10; d++) {
                     const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
 
-                    // Strict center core sampling, no minVal border search
-                    const coreMean = sampleCircle(colX, rowY, rollCoreRadius);
+                    let sum = 0, count = 0, darkCount = 0;
+                    for (let dy = -rollCoreRadius; dy <= rollCoreRadius; dy++) {
+                        for (let dx = -rollCoreRadius; dx <= rollCoreRadius; dx++) {
+                            if (dx * dx + dy * dy <= rollCoreRadius * rollCoreRadius) {
+                                const g = getGray(Math.round(colX + dx), Math.round(rowY + dy));
+                                sum += g;
+                                count++;
+                                if (g < (paperVal - 30)) darkCount++;
+                            }
+                        }
+                    }
+                    const coreMean = count > 0 ? (sum / count) : 255;
                     const coreDarkness = paperVal - coreMean;
+                    const darkRatio = count > 0 ? (darkCount / count) : 0;
 
                     colStats.push({
                         digit: d,
                         coreDarkness: coreDarkness,
+                        darkRatio: darkRatio,
                         x: colX,
                         y: rowY
                     });
@@ -684,8 +697,10 @@
                 const top2 = colStats[1];
 
                 let isColFilled = false;
-                if ((top1.coreDarkness >= 22 && (top1.coreDarkness - top2.coreDarkness >= 12)) || top1.coreDarkness >= 45) {
-                    isColFilled = true;
+                if ((top1.darkRatio >= 0.35 && top1.coreDarkness >= 30) || top1.coreDarkness >= 55) {
+                    if (top1.coreDarkness - top2.coreDarkness >= 12 || top1.darkRatio >= 0.50) {
+                        isColFilled = true;
+                    }
                 }
 
                 const detectedDigit = isColFilled ? top1.digit.toString() : '-';
@@ -749,8 +764,8 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (ACCURATE RELATIVE CONTRAST DISCRIMINATION)
-            const bubbleRadius = 8.5;
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO BORDER-SAMPLING & NO FALSE CROSSES)
+            const bubbleRadius = 9.0;
             const bubbleCoreRadius = 3.5;
             let score = 0;
             let correctCount = 0;
@@ -769,41 +784,45 @@
                 const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
                 const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
 
-                // Sample local paper baseline
-                const paperVal = sampleCircle(colX - 16, rowY, 4);
+                // Sample clean paper baseline in the vertical gap between rows (avoids question number ink)
+                const paperVal = sampleCircle(colX, rowY - 11, 3.5);
 
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
 
-                    // Inner core brightness sampled strictly at canonical center (no border jumping)
-                    const coreMean = sampleCircle(bubbleX, rowY, bubbleCoreRadius);
+                    // Count dark pixels inside inner core disk
+                    let sum = 0, count = 0, darkCount = 0;
+                    for (let dy = -bubbleCoreRadius; dy <= bubbleCoreRadius; dy++) {
+                        for (let dx = -bubbleCoreRadius; dx <= bubbleCoreRadius; dx++) {
+                            if (dx * dx + dy * dy <= bubbleCoreRadius * bubbleCoreRadius) {
+                                const g = getGray(Math.round(bubbleX + dx), Math.round(rowY + dy));
+                                sum += g;
+                                count++;
+                                if (g < (paperVal - 30)) darkCount++;
+                            }
+                        }
+                    }
+                    const coreMean = count > 0 ? (sum / count) : 255;
                     const coreDarkness = paperVal - coreMean;
+                    const darkRatio = count > 0 ? (darkCount / count) : 0;
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
                         coreDarkness: coreDarkness,
+                        darkRatio: darkRatio,
                         x: bubbleX,
                         y: rowY
                     });
                 }
 
-                const sorted = [...bubbleStats].sort((a, b) => b.coreDarkness - a.coreDarkness);
-                const top = sorted[0];
-                const second = sorted[1];
-                const third = sorted[2];
-
-                // Detect filled bubbles with relative contrast (accommodates pencil, gel, ballpoint)
-                let filledBubbles = [];
-                if (top.coreDarkness >= 22) {
-                    if (second.coreDarkness >= 20 && (second.coreDarkness >= 38 || (second.coreDarkness - third.coreDarkness >= 10))) {
-                        // Multiple markings detected
-                        filledBubbles = [top, second];
-                    } else if (top.coreDarkness - second.coreDarkness >= 12 || top.coreDarkness >= 45) {
-                        filledBubbles = [top];
-                    }
+                // Solid Ink Check: Genuinely filled bubbles have >= 35% dark ink in core or >= 55 darkness.
+                // A printed circular border touching the sample only has <= 14% dark ratio and is completely ignored!
+                function isBubbleFilled(b) {
+                    return (b.darkRatio >= 0.35 && b.coreDarkness >= 30) || (b.coreDarkness >= 55);
                 }
 
+                const filledBubbles = bubbleStats.filter(b => isBubbleFilled(b));
                 const isMultiple = filledBubbles.length > 1;
                 const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
                 const correctAns = answerKey[q.toString()] || '';
@@ -841,7 +860,7 @@
 
                     ctx.beginPath();
                     ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
-                    ctx.lineWidth = Math.max(3, Math.round(W * 0.002));
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
 
                     if (isMultiple && isThisBubbleFilled) {
                         ctx.strokeStyle = '#EF4444';
