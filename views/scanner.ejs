@@ -735,11 +735,23 @@
         }
 
         // 4-point Perspective Transform (Homography) solver: dst -> src
-                function orderCorners(pts) {
-            const sortedY = [...pts].sort((a, b) => a.y - b.y);
-            const topPts = sortedY.slice(0, 2).sort((a, b) => a.x - b.x);
-            const bottomPts = sortedY.slice(2, 4).sort((a, b) => a.x - b.x);
-            return [topPts[0], topPts[1], bottomPts[1], bottomPts[0]]; // [TL, TR, BR, BL]
+        function orderCorners(pts) {
+            if (!pts || pts.length !== 4) return pts;
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+            const withAngles = pts.map(p => ({
+                x: p.x,
+                y: p.y,
+                angle: Math.atan2(p.y - cy, p.x - cx)
+            }));
+            withAngles.forEach(p => {
+                let a = p.angle - (-2.35619);
+                while (a < 0) a += 2 * Math.PI;
+                while (a >= 2 * Math.PI) a -= 2 * Math.PI;
+                p.normAngle = a;
+            });
+            withAngles.sort((a, b) => a.normAngle - b.normAngle);
+            return withAngles.map(p => ({ x: p.x, y: p.y }));
         }
 
         function getPerspectiveTransform(src, dst) {
@@ -779,7 +791,7 @@
                 previewCtx.drawImage(video, 0, 0, W, H);
 
                 // Run fast detector on downscaled canvas (320px width for <1ms execution)
-                const fastW = 320;
+                const fastW = 480;
                 const fastH = Math.max(1, Math.round(H * (fastW / W)));
                 fastCanvas.width = fastW;
                 fastCanvas.height = fastH;
@@ -850,13 +862,14 @@
 
         // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
         // Strictly avoids question bubbles via 28% margin restriction, count >= 26, and inner margin check
+        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
 
-            // Search in outer 28% margin corners (strictly stays outside central question grid)
-            const boxW = Math.round(sw * 0.28);
-            const boxH = Math.round(sh * 0.28);
+            // Search in outer 36% margin corners for wide placement tolerance
+            const boxW = Math.round(sw * 0.36);
+            const boxH = Math.round(sh * 0.36);
             const quads = [
                 { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
                 { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
@@ -915,9 +928,7 @@
                         let qHead = 0;
 
                         while (qHead < queue.length) {
-                            // Freeze protection: terminate large non-marker regions immediately
-                            if (count > 2000) break;
-
+                            if (count > 2500) break;
                             const cur = queue[qHead++];
                             const cy = Math.floor(cur / pw);
                             const cx = cur % pw;
@@ -942,31 +953,15 @@
                         const aspect = bw / bh;
                         const density = count / (bw * bh);
 
-                        // Solid Square Corner Marker Criteria:
-                        // bw, bh >= 7 (bubbles are 3-4px), count >= 26 (bubbles are <= 14px), density >= 0.55
-                        if (bw >= 7 && bh >= 7 && bw <= 55 && bh <= 55 && aspect >= 0.60 && aspect <= 1.60 && density >= 0.55 && count >= 26 && count <= 2000) {
+                        // Solid Square Corner Marker Criteria (at 480px scale):
+                        // bw, bh >= 5, count >= 16 (excludes tiny question bubbles), density >= 0.50
+                        if (bw >= 5 && bh >= 5 && bw <= 65 && bh <= 65 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.50 && count >= 16 && count <= 2500) {
                             const bx = q.x1 + sumX / count;
                             const by = q.y1 + sumY / count;
 
-                            // Inward paper margin check: genuine corner markers have white paper inward towards sheet center
-                            const dirX = Math.sign((sw / 2) - bx);
-                            const dirY = Math.sign((sh / 2) - by);
-                            let whiteInward = 0;
-                            const d1 = Math.round(Math.max(bw, bh) * 1.0);
-                            const d2 = Math.round(Math.max(bw, bh) * 1.6);
-                            for (let sd of [d1, d2]) {
-                                const ix = Math.round(bx + dirX * sd);
-                                const iy = Math.round(by + dirY * sd);
-                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
-                                    const inIdx = (iy * sw + ix) * 4;
-                                    const inGray = (data[inIdx] * 77 + data[inIdx + 1] * 150 + data[inIdx + 2] * 29) >> 8;
-                                    if (inGray >= (thresh - 10)) whiteInward++;
-                                }
-                            }
-
-                            // Isolation Ring Check: Corner markers sit in white margins (ringDarkRatio <= 0.18)
-                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
+                            // Isolation Ring Check: Corner markers sit in white margins
+                            const rIn = Math.round(Math.max(bw, bh) * 0.70);
+                            const rOut = Math.round(Math.max(bw, bh) * 1.50);
                             let darkRing = 0, totalRing = 0;
 
                             for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
@@ -989,9 +984,9 @@
                             const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
                             const normDist = distToCorner / diag;
 
-                            // Accept only isolated solid square markers with clean inward margin
-                            if (ringDarkRatio <= 0.18 && whiteInward >= 1) {
-                                const score = (density * 2.5) - (normDist * 2.5) - (ringDarkRatio * 3.0);
+                            // Accept isolated solid markers with high contrast
+                            if (ringDarkRatio <= 0.32) {
+                                const score = (density * 2.5) - (normDist * 2.0) - (ringDarkRatio * 2.5);
                                 candidates.push({
                                     x: bx,
                                     y: by,
@@ -1005,57 +1000,46 @@
                 }
 
                 if (candidates.length === 0) {
-                    return null; // A corner is missing or obstructed - do NOT lock onto bubbles
+                    return null; // A corner is missing or obscured
                 }
 
-                // Pick the candidate with best score (most isolated and closest to outer quadrant corner)
                 candidates.sort((a, b) => b.score - a.score);
                 foundCorners.push({ x: candidates[0].x, y: candidates[0].y, count: candidates[0].count });
             }
 
             if (foundCorners.length !== 4) return null;
 
-            // Strict Quad Geometry Validation
-            const p0 = foundCorners[0], p1 = foundCorners[1], p2 = foundCorners[2], p3 = foundCorners[3];
+            // Order corners clockwise starting from Top-Left: [TL, TR, BR, BL]
+            const ordered = orderCorners(foundCorners);
+            const p0 = ordered[0], p1 = ordered[1], p2 = ordered[2], p3 = ordered[3];
 
-            // 1. Convexity check (clockwise cross-products > 0)
-            const pts = [p0, p1, p2, p3];
-            for (let i = 0; i < 4; i++) {
-                const a = pts[i];
-                const b = pts[(i + 1) % 4];
-                const c = pts[(i + 2) % 4];
-                const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-                if (cross <= 0) return null;
-            }
-
-            // 2. Parallelism and proportional opposite sides
+            // Parallelism and proportional opposite sides
             const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
             const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
             const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
             const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.58) return null;
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.58) return null;
+            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.45) return null;
+            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.45) return null;
 
-            // 3. Aspect ratio check (allows both portrait and landscape orientation)
+            // Aspect ratio check for natural perspective angles
             const avgW = (wTop + wBot) / 2;
             const avgH = (hLeft + hRight) / 2;
             const aspect = avgH / avgW;
-            if (aspect < 0.50 || aspect > 2.05) return null;
+            if (aspect < 0.45 || aspect > 2.25) return null;
 
-            // 4. Area check (at least 8% of camera area)
+            // Area check (at least 5% of camera area)
             const quadArea = 0.5 * Math.abs(
                 (p0.x * p1.y - p0.y * p1.x) +
                 (p1.x * p2.y - p1.y * p2.x) +
                 (p2.x * p3.y - p2.y * p3.x) +
                 (p3.x * p0.y - p3.y * p0.x)
             );
-            if (quadArea < (sw * sh * 0.08)) return null;
+            if (quadArea < (sw * sh * 0.05)) return null;
 
-            return foundCorners;
+            return ordered;
         }
 
-        // Draw Sleek Framing Guide when searching
         function drawFramingGuide(ctx, W, H) {
             ctx.save();
             const gw = Math.round(W * 0.65);
