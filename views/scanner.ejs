@@ -648,7 +648,7 @@
 
         // Standardized A4 Leveled Canvas Dimensions
         const TARGET_W = 1000;
-        const TARGET_H = 1414; // 1000 * 1.414 (exact A4 ratio)
+        const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
 
         // Measured Standard Ratios
         // Measured Exact Ratios from Rendered A4 Sheet
@@ -735,6 +735,13 @@
         }
 
         // 4-point Perspective Transform (Homography) solver: dst -> src
+                function orderCorners(pts) {
+            const sortedY = [...pts].sort((a, b) => a.y - b.y);
+            const topPts = sortedY.slice(0, 2).sort((a, b) => a.x - b.x);
+            const bottomPts = sortedY.slice(2, 4).sort((a, b) => a.x - b.x);
+            return [topPts[0], topPts[1], bottomPts[1], bottomPts[0]]; // [TL, TR, BR, BL]
+        }
+
         function getPerspectiveTransform(src, dst) {
             const A = [], B = [];
             for (let i = 0; i < 4; i++) {
@@ -1174,29 +1181,24 @@
             const W = previewCanvas.width;
             const H = previewCanvas.height;
 
-            const corners = smoothedCorners || [
-                { x: W * 0.12, y: H * 0.08 },
-                { x: W * 0.88, y: H * 0.08 },
-                { x: W * 0.88, y: H * 0.92 },
-                { x: W * 0.12, y: H * 0.92 }
-            ];
+            const corners = orderCorners(smoothedCorners || [
+                { x: W * 0.10, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.94 },
+                { x: W * 0.10, y: H * 0.94 }
+            ]);
 
-            // Target Leveled Canvas: 1000 x 1414
+            // Target Leveled Canvas: 1000 x 1461
+            // Directly cropped and unwarped about the 4 detected corners
+            // Completely eliminates horizontal tilt, vertical tilt, and perspective distortion
             resultCanvas.width = TARGET_W;
             resultCanvas.height = TARGET_H;
 
-            // Target canonical marker positions on the leveled A4 canvas (1000 x 1414)
-            // Derived from A4 210mm x 297mm with 8mm margin + 10px corner markers
-            const m_L = 50.7;
-            const m_R = 949.3;
-            const m_T = 50.7;
-            const m_B = 1363.3;
-
             const dstRectCorners = [
-                { x: m_L, y: m_T },
-                { x: m_R, y: m_T },
-                { x: m_R, y: m_B },
-                { x: m_L, y: m_B }
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
             ];
 
             // Perspective Transform Matrix H (dst -> src)
@@ -1238,7 +1240,7 @@
             video.pause();
 
             // Evaluate sheet on the leveled, rectified canvas
-            evaluateLeveledSheet(resultCtx, TARGET_W, TARGET_H, m_L, m_T, m_R - m_L, m_B - m_T);
+            evaluateLeveledSheet(resultCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
 
             // Switch to Results View
             document.getElementById('viewfinderSection').style.display = 'none';

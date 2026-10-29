@@ -351,7 +351,7 @@
         let showingRaw = false;
 
         const TARGET_W = 1000;
-        const TARGET_H = 1414; // A4 1:1.414
+        const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
 
         // Measured Exact Ratios from Rendered A4 Sheet
         const U_START = 0.061846;
@@ -400,6 +400,13 @@
                 ctx.drawImage(leveledCanvas, 0, 0);
                 toggleViewBtn.textContent = 'ðŸ–¼ View Raw Upload';
             }
+        }
+
+                function orderCorners(pts) {
+            const sortedY = [...pts].sort((a, b) => a.y - b.y);
+            const topPts = sortedY.slice(0, 2).sort((a, b) => a.x - b.x);
+            const bottomPts = sortedY.slice(2, 4).sort((a, b) => a.x - b.x);
+            return [topPts[0], topPts[1], bottomPts[1], bottomPts[0]]; // [TL, TR, BR, BL]
         }
 
         function getPerspectiveTransform(src, dst) {
@@ -565,20 +572,17 @@
             leveledCanvas.width = TARGET_W;
             leveledCanvas.height = TARGET_H;
 
-            // Target canonical marker positions on the leveled A4 canvas (1000 x 1414)
-            const m_L = 50.7;
-            const m_R = 949.3;
-            const m_T = 50.7;
-            const m_B = 1363.3;
+            const orderedCorners = orderCorners(corners);
 
+            // Warp and crop strictly about the 4 detected corners
             const dstRectCorners = [
-                { x: m_L, y: m_T },
-                { x: m_R, y: m_T },
-                { x: m_R, y: m_B },
-                { x: m_L, y: m_B }
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
             ];
 
-            const H_mat = getPerspectiveTransform(dstRectCorners, corners);
+            const H_mat = getPerspectiveTransform(dstRectCorners, orderedCorners);
             const srcImgData = rawCtx.getImageData(0, 0, W, H);
             const src32 = new Uint32Array(srcImgData.data.buffer);
 
@@ -610,7 +614,7 @@
             leveledCtx.putImageData(dstImgData, 0, 0);
 
             // Grade bubbles on the leveled cropped sheet
-            evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, m_L, m_T, m_R - m_L, m_B - m_T);
+            evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
 
             // Draw leveled sheet to main canvas
             canvas.width = TARGET_W;
