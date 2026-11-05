@@ -403,10 +403,52 @@
         }
 
                 function orderCorners(pts) {
-            const sortedY = [...pts].sort((a, b) => a.y - b.y);
-            const topPts = sortedY.slice(0, 2).sort((a, b) => a.x - b.x);
-            const bottomPts = sortedY.slice(2, 4).sort((a, b) => a.x - b.x);
-            return [topPts[0], topPts[1], bottomPts[1], bottomPts[0]]; // [TL, TR, BR, BL]
+            if (!pts || pts.length !== 4) return pts;
+            let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
+            let minSum = pts[0].x + pts[0].y, maxSum = minSum;
+            let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
+
+            for (let i = 1; i < pts.length; i++) {
+                const p = pts[i];
+                const sum = p.x + p.y;
+                const diff = p.x - p.y;
+                if (sum < minSum) { minSum = sum; tl = p; }
+                if (sum > maxSum) { maxSum = sum; br = p; }
+                if (diff > maxDiff) { maxDiff = diff; tr = p; }
+                if (diff < minDiff) { minDiff = diff; bl = p; }
+            }
+
+            const unique = new Set([tl, tr, br, bl]);
+            if (unique.size === 4) {
+                return [tl, tr, br, bl];
+            }
+
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+            const sorted = [...pts].map(p => ({
+                x: p.x,
+                y: p.y,
+                angle: Math.atan2(p.y - cy, p.x - cx)
+            })).sort((a, b) => a.angle - b.angle);
+
+            let minAngleDiff = Infinity;
+            let tlIdx = 0;
+            const targetAngle = -2.35619;
+            sorted.forEach((p, idx) => {
+                let diff = Math.abs(p.angle - targetAngle);
+                if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                if (diff < minAngleDiff) {
+                    minAngleDiff = diff;
+                    tlIdx = idx;
+                }
+            });
+
+            return [
+                sorted[tlIdx],
+                sorted[(tlIdx + 1) % 4],
+                sorted[(tlIdx + 2) % 4],
+                sorted[(tlIdx + 3) % 4]
+            ].map(p => ({ x: p.x, y: p.y }));
         }
 
         function getPerspectiveTransform(src, dst) {
@@ -437,135 +479,226 @@
         }
 
         function autoDetectCorners(ctx, W, H) {
-            const imgData = ctx.getImageData(0, 0, W, H);
+            // Work on downscaled canvas for fast and robust analysis
+            const procW = 500;
+            const procH = Math.max(1, Math.round(H * (procW / W)));
+            const procCanvas = document.createElement('canvas');
+            procCanvas.width = procW;
+            procCanvas.height = procH;
+            const procCtx = procCanvas.getContext('2d');
+            procCtx.drawImage(ctx.canvas, 0, 0, procW, procH);
+
+            const imgData = procCtx.getImageData(0, 0, procW, procH);
             const data = imgData.data;
-            const diag = Math.hypot(W, H);
+            const total = procW * procH;
 
-            function findSquareMarker(x1, y1, x2, y2, cx, cy) {
-                const pw = Math.round(x2 - x1);
-                const ph = Math.round(y2 - y1);
-                const gray = new Uint8Array(pw * ph);
-                const hist = new Int32Array(256);
-                let idx = 0;
+            const gray = new Uint8Array(total);
+            const hist = new Int32Array(256);
+            let pIdx = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                gray[pIdx++] = g;
+                hist[g]++;
+            }
 
-                for (let y = y1; y < y2; y++) {
-                    for (let x = x1; x < x2; x++) {
-                        const pIdx = (y * W + x) * 4;
-                        const g = (data[pIdx] * 77 + data[pIdx+1] * 150 + data[pIdx+2] * 29) >> 8;
-                        gray[idx++] = g;
-                        hist[g]++;
-                    }
-                }
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (wB === 0) continue;
+                const wF = total - wB;
+                if (wF === 0) break;
+                sumB += i * hist[i];
+                const diff = (sumB / wB) - ((sum - sumB) / wF);
+                const v = wB * wF * diff * diff;
+                if (v > maxVar) { maxVar = v; thresh = i + 1; }
+            }
+            thresh = Math.max(40, Math.min(thresh, 175));
 
-                const total = pw * ph;
-                let sum = 0;
-                for (let i = 0; i < 256; i++) sum += i * hist[i];
-                let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
-                for (let i = 0; i < 256; i++) {
-                    wB += hist[i];
-                    if (wB === 0) continue;
-                    const wF = total - wB;
-                    if (wF === 0) break;
-                    sumB += i * hist[i];
-                    const v = wB * wF * (sumB/wB - (sum - sumB)/wF) * (sumB/wB - (sum - sumB)/wF);
-                    if (v > maxVar) { maxVar = v; thresh = i + 1; }
-                }
+            const visited = new Uint8Array(total);
+            const candidates = [];
+            const queue = new Int32Array(total);
 
-                thresh = Math.max(35, Math.min(thresh, 185));
+            for (let py = 4; py < procH - 4; py += 2) {
+                for (let px = 4; px < procW - 4; px += 2) {
+                    const startP = py * procW + px;
+                    if (visited[startP] || gray[startP] >= thresh) continue;
 
-                const visited = new Uint8Array(pw * ph);
-                const candidates = [];
-                const minSide = Math.min(W, H);
-                const minArea = (minSide * 0.007) * (minSide * 0.007);
-                const maxArea = (minSide * 0.08) * (minSide * 0.08);
+                    let count = 0, sumX = 0, sumY = 0;
+                    let minX = px, maxX = px, minY = py, maxY = py;
+                    let qHead = 0, qTail = 0;
+                    queue[qTail++] = startP;
+                    visited[startP] = 1;
 
-                for (let py = 1; py < ph - 1; py += 2) {
-                    for (let px = 1; px < pw - 1; px += 2) {
-                        const p = py * pw + px;
-                        if (visited[p] || gray[p] >= thresh) continue;
+                    while (qHead < qTail) {
+                        if (count > 3000) break;
+                        const cur = queue[qHead++];
+                        const cy = Math.floor(cur / procW);
+                        const cx = cur % procW;
+                        count++;
+                        sumX += cx;
+                        sumY += cy;
+                        if (cx < minX) minX = cx;
+                        if (cx > maxX) maxX = cx;
+                        if (cy < minY) minY = cy;
+                        if (cy > maxY) maxY = cy;
 
-                        let count = 0, sumX = 0, sumY = 0;
-                        let minX = px, maxX = px, minY = py, maxY = py;
-                        const queue = [p];
-                        visited[p] = 1;
-                        let qHead = 0;
-
-                        while (qHead < queue.length) {
-                            const cur = queue[qHead++];
-                            const cy_p = Math.floor(cur / pw);
-                            const cx_p = cur % pw;
-                            count++;
-                            sumX += cx_p;
-                            sumY += cy_p;
-                            if (cx_p < minX) minX = cx_p;
-                            if (cx_p > maxX) maxX = cx_p;
-                            if (cy_p < minY) minY = cy_p;
-                            if (cy_p > maxY) maxY = cy_p;
-
-                            for (let nb of [cur - 1, cur + 1, cur - pw, cur + pw]) {
-                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
-                                    visited[nb] = 1;
-                                    queue.push(nb);
-                                }
+                        const neighbors = [cur - 1, cur + 1, cur - procW, cur + procW];
+                        for (let k = 0; k < 4; k++) {
+                            const nb = neighbors[k];
+                            if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                visited[nb] = 1;
+                                queue[qTail++] = nb;
                             }
                         }
+                    }
 
-                        const bw = maxX - minX + 1;
-                        const bh = maxY - minY + 1;
-                        const aspect = bw / bh;
-                        const density = count / (bw * bh);
+                    const bw = maxX - minX + 1;
+                    const bh = maxY - minY + 1;
+                    const aspect = bw / bh;
+                    const density = count / (bw * bh);
 
-                        if (aspect > 0.60 && aspect < 1.60 && density > 0.55 && count >= minArea && count <= maxArea) {
-                            const bx = Math.round(x1 + sumX / count);
-                            const by = Math.round(y1 + sumY / count);
+                    if (bw >= 5 && bh >= 5 && bw <= 45 && bh <= 45 && aspect >= 0.60 && aspect <= 1.65 && density >= 0.50 && count >= 16 && count <= 1200) {
+                        const bx = (minX + maxX) / 2;
+                        const by = (minY + maxY) / 2;
+                        const blobR = Math.max(bw, bh) / 2;
 
-                            // Isolation check
-                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
-                            let darkRing = 0, totalRing = 0;
+                        // Isolation ring check
+                        const rIn = Math.round(blobR * 1.4);
+                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.6));
+                        let darkPixels = 0, totalRing = 0;
 
-                            for (let rdy = -rOut; rdy <= rOut; rdy += 3) {
-                                for (let rdx = -rOut; rdx <= rOut; rdx += 3) {
-                                    const d2 = rdx * rdx + rdy * rdy;
-                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                        const gx = bx + rdx;
-                                        const gy = by + rdy;
-                                        if (gx >= 0 && gx < W && gy >= 0 && gy < H) {
-                                            totalRing++;
-                                            const gIdx = (gy * W + gx) * 4;
-                                            const pixGray = (data[gIdx] * 77 + data[gIdx + 1] * 150 + data[gIdx + 2] * 29) >> 8;
-                                            if (pixGray < thresh) darkRing++;
-                                        }
+                        for (let dy = -rOut; dy <= rOut; dy += 2) {
+                            for (let dx = -rOut; dx <= rOut; dx += 2) {
+                                const d2 = dx * dx + dy * dy;
+                                if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                    const gx = Math.round(bx + dx);
+                                    const gy = Math.round(by + dy);
+                                    if (gx >= 0 && gx < procW && gy >= 0 && gy < procH) {
+                                        totalRing++;
+                                        if (gray[gy * procW + gx] < thresh) darkPixels++;
                                     }
                                 }
                             }
+                        }
 
-                            const ringDarkRatio = totalRing > 0 ? (darkRing / totalRing) : 0;
-                            const distToCorner = Math.hypot(bx - cx, by - cy);
-                            const normDist = distToCorner / diag;
+                        const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
+                        if (ringDarkRatio > 0.08) continue;
 
-                            if (ringDarkRatio <= 0.08) {
-                                const score = (density * 2.0) - (normDist * 2.5) - (ringDarkRatio * 4.0);
-                                candidates.push({ x: bx, y: by, score: score });
+                        // Inward white path check
+                        const dirX = Math.sign((procW / 2) - bx);
+                        const dirY = Math.sign((procH / 2) - by);
+                        let whiteInwardCount = 0;
+                        const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
+                        for (let d of testDists) {
+                            const ix = Math.round(bx + dirX * d);
+                            const iy = Math.round(by + dirY * d);
+                            if (ix >= 0 && ix < procW && iy >= 0 && iy < procH) {
+                                if (gray[iy * procW + ix] >= thresh) whiteInwardCount++;
+                            }
+                        }
+                        if (whiteInwardCount < testDists.length) continue;
+
+                        const distFromCenter = Math.hypot(bx - procW / 2, by - procH / 2);
+                        const score = (density * 3.0) + (distFromCenter / (procW * 0.5) * 2.0) - (ringDarkRatio * 10.0);
+
+                        candidates.push({
+                            x: bx,
+                            y: by,
+                            bw,
+                            bh,
+                            count,
+                            score
+                        });
+                    }
+                }
+            }
+
+            // Fallback default corners if detection fails
+            const defaultCorners = [
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+            ];
+
+            if (candidates.length < 4) return defaultCorners;
+
+            candidates.sort((a, b) => b.score - a.score);
+            const topCandidates = candidates.slice(0, 8);
+            const n = topCandidates.length;
+            let bestQuad = null;
+
+            function evaluateQuadCandidate(ordered) {
+                const [pTL, pTR, pBR, pBL] = ordered;
+
+                const pts = [pTL, pTR, pBR, pBL];
+                for (let i = 0; i < 4; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % 4];
+                    const c = pts[(i + 2) % 4];
+                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                    if (cross <= 0) return null;
+                }
+
+                const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
+                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
+                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
+                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
+
+                const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
+                const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
+                if (wRatio < 0.68 || hRatio < 0.68) return null;
+
+                const avgW = (wTop + wBot) / 2;
+                const avgH = (hLeft + hRight) / 2;
+                const aspect = avgH / avgW;
+                if (aspect < 1.15 || aspect > 1.80) return null;
+
+                const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
+                const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.72) return null;
+
+                const quadArea = 0.5 * Math.abs(
+                    (pTL.x * pTR.y - pTL.y * pTR.x) +
+                    (pTR.x * pBR.y - pTR.y * pBR.x) +
+                    (pBR.x * pBL.y - pBR.y * pBL.x) +
+                    (pBL.x * pTL.y - pBL.y * pTL.x)
+                );
+                if (quadArea < procW * procH * 0.10) return null;
+
+                const aspectDev = Math.abs(aspect - 1.461);
+                const score = quadArea * (1.0 - aspectDev * 0.5) * wRatio * hRatio;
+
+                return { ordered, score };
+            }
+
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    for (let k = j + 1; k < n; k++) {
+                        for (let l = k + 1; l < n; l++) {
+                            const quad4 = [topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]];
+                            const ordered = orderCorners(quad4);
+                            if (!ordered) continue;
+                            const res = evaluateQuadCandidate(ordered);
+                            if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                bestQuad = res;
                             }
                         }
                     }
                 }
-
-                if (candidates.length === 0) return null;
-                candidates.sort((a, b) => b.score - a.score);
-                return { x: candidates[0].x, y: candidates[0].y };
             }
 
-            const boxW = Math.round(W * 0.22);
-            const boxH = Math.round(H * 0.22);
+            if (!bestQuad) return defaultCorners;
 
-            const tl = findSquareMarker(0, 0, boxW, boxH, 0, 0) || { x: Math.round(W * 0.056), y: Math.round(H * 0.038) };
-            const tr = findSquareMarker(W - boxW, 0, W, boxH, W, 0) || { x: Math.round(W * 0.944), y: Math.round(H * 0.038) };
-            const br = findSquareMarker(W - boxW, H - boxH, W, H, W, H) || { x: Math.round(W * 0.944), y: Math.round(H * 0.962) };
-            const bl = findSquareMarker(0, H - boxH, boxW, H, 0, H) || { x: Math.round(W * 0.056), y: Math.round(H * 0.962) };
-
-            return [tl, tr, br, bl];
+            // Scale coordinates back to original image dimensions (W, H)
+            const scaleX = W / procW;
+            const scaleY = H / procH;
+            return bestQuad.ordered.map(p => ({
+                x: Math.round(p.x * scaleX),
+                y: Math.round(p.y * scaleY)
+            }));
         }
 
         function warpAndEvaluate(corners, W, H) {

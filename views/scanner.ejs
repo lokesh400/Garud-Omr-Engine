@@ -97,6 +97,30 @@
             letter-spacing: 0.5px;
         }
 
+        
+        .lock-meter {
+            width: 75px;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+            margin-left: 6px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+        }
+
+        .lock-meter.active {
+            display: block;
+        }
+
+        .lock-meter-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #06B6D4 0%, #10B981 100%);
+            border-radius: 4px;
+            transition: width 0.08s ease-out;
+        }
+
         .hud-chip.locked {
             border-color: var(--cyber-emerald);
             color: #6EE7B7;
@@ -516,7 +540,7 @@
                 </div>
                 <div>
                     <button type="button" class="btn-capture-auto" id="captureBtn" onclick="triggerManualCapture()">
-                        âš¡ Snap & Level Sheet
+                        ⚡ Snap & Level Sheet
                     </button>
                 </div>
             </div>
@@ -527,14 +551,14 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0;">
                 <h2 style="margin: 0; font-size: 1.4rem;">Leveled Document & Evaluation</h2>
                 <button class="btn btn-primary" onclick="restartScanner()">
-                    ðŸ“· Scan Next Sheet
+                    📷 Scan Next Sheet
                 </button>
             </div>
 
             <div class="results-grid">
                 <!-- Cropped Leveled Sheet Display -->
                 <div class="rectified-canvas-wrap">
-                    <span class="rectified-badge">âœ“ Auto-Leveled & Cropped (A4)</span>
+                    <span class="rectified-badge">✓ Auto-Leveled & Cropped (A4)</span>
                     <canvas id="canvasResult"></canvas>
                 </div>
 
@@ -639,8 +663,11 @@
 
         // Auto-tracking state
         let smoothedCorners = null;
+        let lastRawCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 5; // ~160ms steady hold before auto-snap
+        const LOCK_REQUIRED_FRAMES = 35; // ~1.2s steady hold before auto-snap
+        const lockMeter = document.getElementById('lockMeter');
+        const lockMeterFill = document.getElementById('lockMeterFill');
 
         // Fast analysis downscale canvas
         const fastCanvas = document.createElement('canvas');
@@ -669,6 +696,7 @@
         async function initCamera() {
             isCaptured = false;
             smoothedCorners = null;
+            lastRawCorners = null;
             lockStreak = 0;
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
@@ -734,24 +762,57 @@
             }
         }
 
-        // 4-point Perspective Transform (Homography) solver: dst -> src
+        // Robust 4-corner ordering [TL, TR, BR, BL]
         function orderCorners(pts) {
             if (!pts || pts.length !== 4) return pts;
+            // TL has min(x + y), BR has max(x + y)
+            // TR has max(x - y), BL has min(x - y)
+            let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
+            let minSum = pts[0].x + pts[0].y, maxSum = minSum;
+            let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
+
+            for (let i = 1; i < pts.length; i++) {
+                const p = pts[i];
+                const sum = p.x + p.y;
+                const diff = p.x - p.y;
+                if (sum < minSum) { minSum = sum; tl = p; }
+                if (sum > maxSum) { maxSum = sum; br = p; }
+                if (diff > maxDiff) { maxDiff = diff; tr = p; }
+                if (diff < minDiff) { minDiff = diff; bl = p; }
+            }
+
+            const unique = new Set([tl, tr, br, bl]);
+            if (unique.size === 4) {
+                return [tl, tr, br, bl];
+            }
+
+            // Fallback: order by angle from centroid
             const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
             const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
-            const withAngles = pts.map(p => ({
+            const sorted = [...pts].map(p => ({
                 x: p.x,
                 y: p.y,
                 angle: Math.atan2(p.y - cy, p.x - cx)
-            }));
-            withAngles.forEach(p => {
-                let a = p.angle - (-2.35619);
-                while (a < 0) a += 2 * Math.PI;
-                while (a >= 2 * Math.PI) a -= 2 * Math.PI;
-                p.normAngle = a;
+            })).sort((a, b) => a.angle - b.angle);
+
+            let minAngleDiff = Infinity;
+            let tlIdx = 0;
+            const targetAngle = -2.35619; // -135 deg
+            sorted.forEach((p, idx) => {
+                let diff = Math.abs(p.angle - targetAngle);
+                if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                if (diff < minAngleDiff) {
+                    minAngleDiff = diff;
+                    tlIdx = idx;
+                }
             });
-            withAngles.sort((a, b) => a.normAngle - b.normAngle);
-            return withAngles.map(p => ({ x: p.x, y: p.y }));
+
+            return [
+                sorted[tlIdx],
+                sorted[(tlIdx + 1) % 4],
+                sorted[(tlIdx + 2) % 4],
+                sorted[(tlIdx + 3) % 4]
+            ].map(p => ({ x: p.x, y: p.y }));
         }
 
         function getPerspectiveTransform(src, dst) {
@@ -790,8 +851,8 @@
                 const H = previewCanvas.height;
                 previewCtx.drawImage(video, 0, 0, W, H);
 
-                // Run fast detector on downscaled canvas (320px width for <1ms execution)
-                const fastW = 360;
+                // Run fast detector on downscaled canvas (400px width for <2ms execution)
+                const fastW = 400;
                 const fastH = Math.max(1, Math.round(H * (fastW / W)));
                 fastCanvas.width = fastW;
                 fastCanvas.height = fastH;
@@ -807,13 +868,33 @@
                         y: pt.y * scale
                     }));
 
-                    // Smooth with Exponential Moving Average (EMA)
+                    // Stability check: measure jitter between consecutive frames
+                    let isSteady = false;
+                    if (lastRawCorners) {
+                        const maxDelta = Math.max(...currentCorners.map((pt, i) =>
+                            Math.hypot(pt.x - lastRawCorners[i].x, pt.y - lastRawCorners[i].y)
+                        ));
+                        if (maxDelta < 9.0) {
+                            isSteady = true;
+                        }
+                    } else {
+                        isSteady = true;
+                    }
+                    lastRawCorners = currentCorners;
+
+                    if (isSteady) {
+                        lockStreak++;
+                    } else {
+                        lockStreak = Math.max(0, lockStreak - 5);
+                    }
+
+                    // Smooth corners with Exponential Moving Average (EMA)
                     if (!smoothedCorners) {
                         smoothedCorners = currentCorners;
                     } else {
                         smoothedCorners = smoothedCorners.map((pt, i) => ({
-                            x: pt.x * 0.70 + currentCorners[i].x * 0.30,
-                            y: pt.y * 0.70 + currentCorners[i].y * 0.30
+                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
+                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
                         }));
                     }
 
@@ -822,35 +903,63 @@
                     const dY = smoothedCorners[1].y - smoothedCorners[0].y;
                     const tilt = (Math.atan2(dY, dX) * (180 / Math.PI)).toFixed(1);
 
-                    lockStreak++;
-                    hudChip.classList.add('locked');
-                    statusDot.className = 'status-dot active';
+                    const isLocked = lockStreak >= LOCK_REQUIRED_FRAMES;
                     const pct = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
-                    hudStatus.textContent = lockStreak >= LOCK_REQUIRED_FRAMES ? 'TARGET LOCKED • AUTO-SNAPPING' : 'LOCKING SHEET (' + pct + '%)';
+
+                    hudChip.classList.add('locked');
+                    statusDot.className = isLocked ? 'status-dot active' : 'status-dot';
+                    statusDot.style.background = isLocked ? 'var(--cyber-emerald)' : '#06B6D4';
+                    statusDot.style.boxShadow = isLocked ? '0 0 12px var(--cyber-emerald)' : '0 0 10px #06B6D4';
+
+                    if (isLocked) {
+                        hudStatus.textContent = '✓ TARGET LOCKED • AUTO-SNAPPING';
+                    } else if (isSteady) {
+                        hudStatus.textContent = `SHEET DETECTED • HOLD STEADY (${pct}%)`;
+                    } else {
+                        hudStatus.textContent = `ALIGNING SHEET • HOLD STEADY (${pct}%)`;
+                    }
+
+                    if (lockMeter) {
+                        lockMeter.classList.add('active');
+                        if (lockMeterFill) lockMeterFill.style.width = pct + '%';
+                    }
+
                     tiltBadge.className = 'hud-tilt-badge level';
                     tiltBadge.textContent = '📐 TILT: ' + (tilt > 0 ? '+' + tilt : tilt) + '° • LEVEL';
+
                     captureBtn.classList.add('locked');
+                    captureBtn.innerHTML = isLocked ? '⚡ Snapping...' : '⚡ Snap & Level Sheet (Ready)';
 
                     // Draw Glowing Cybernetic Polygonal Overlay
-                    drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES);
+                    drawCyberOverlay(previewCtx, smoothedCorners, isLocked, pct);
 
                     // Auto-snap if held steady
-                    if (autoSnapToggle.checked && lockStreak >= LOCK_REQUIRED_FRAMES) {
+                    if (autoSnapToggle.checked && isLocked) {
                         snapAndWarpSheet();
                         return;
                     }
                 } else {
-                    lockStreak = Math.max(0, lockStreak - 1);
+                    lockStreak = Math.max(0, lockStreak - 2);
+                    lastRawCorners = null;
                     if (lockStreak === 0) smoothedCorners = null;
+
                     hudChip.classList.remove('locked');
                     statusDot.className = 'status-dot';
+                    statusDot.style.background = '#F59E0B';
+                    statusDot.style.boxShadow = '0 0 10px #F59E0B';
                     hudStatus.textContent = 'AI SCANNER: ALIGN OMR SHEET IN FRAME';
                     tiltBadge.className = 'hud-tilt-badge';
                     tiltBadge.textContent = '📐 SEARCHING CORNERS';
                     captureBtn.classList.remove('locked');
+                    captureBtn.innerHTML = '⚡ Snap & Level Sheet';
+
+                    if (lockMeter) {
+                        lockMeter.classList.remove('active');
+                        if (lockMeterFill) lockMeterFill.style.width = '0%';
+                    }
 
                     if (smoothedCorners) {
-                        drawCyberOverlay(previewCtx, smoothedCorners, false);
+                        drawCyberOverlay(previewCtx, smoothedCorners, false, 0);
                     } else {
                         drawFramingGuide(previewCtx, W, H);
                     }
@@ -860,210 +969,241 @@
             animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
-        // Strictly avoids question bubbles via 28% margin restriction, count >= 26, and inner margin check
-        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
-        // High-Precision Solid Corner Detector: Isolates 4 Solid Black Corner Markers
+        // High-Precision Solid Corner Detector:
+        // Scans the full frame, isolates solid square corner markers using:
+        // 1. Fill density >= 0.50 (solid squares)
+        // 2. Strict isolation ring check (rejects question bubbles & roll numbers)
+        // 3. Inward white margin check (confirms paper margin)
+        // 4. Quadrilateral geometry solver (confirms A4 aspect ratio 1.46)
         function detectLiveCorners(ctx, sw, sh) {
             const imgData = ctx.getImageData(0, 0, sw, sh);
             const data = imgData.data;
+            const total = sw * sh;
 
-            // Search in outer 28% margin corners (strictly stays outside central question grid)
-            const boxW = Math.round(sw * 0.28);
-            const boxH = Math.round(sh * 0.28);
-            const quads = [
-                { x1: 0, y1: 0, x2: boxW, y2: boxH, cx: 0, cy: 0 },
-                { x1: sw - boxW, y1: 0, x2: sw, y2: boxH, cx: sw, cy: 0 },
-                { x1: sw - boxW, y1: sh - boxH, x2: sw, y2: sh, cx: sw, cy: sh },
-                { x1: 0, y1: sh - boxH, x2: boxW, y2: sh, cx: 0, cy: sh }
-            ];
+            // 1. Grayscale & Histogram
+            const gray = new Uint8Array(total);
+            const hist = new Int32Array(256);
+            let pIdx = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                gray[pIdx++] = g;
+                hist[g]++;
+            }
 
-            const diag = Math.hypot(sw, sh);
-            const foundCorners = [];
+            // 2. Global Otsu Threshold
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (wB === 0) continue;
+                const wF = total - wB;
+                if (wF === 0) break;
+                sumB += i * hist[i];
+                const diff = (sumB / wB) - ((sum - sumB) / wF);
+                const v = wB * wF * diff * diff;
+                if (v > maxVar) { maxVar = v; thresh = i + 1; }
+            }
+            thresh = Math.max(40, Math.min(thresh, 175));
 
-            for (let q of quads) {
-                const pw = q.x2 - q.x1;
-                const ph = q.y2 - q.y1;
-                const gray = new Uint8Array(pw * ph);
-                const hist = new Int32Array(256);
-                let idx = 0;
+            // 3. Connected Component Analysis across the frame
+            const visited = new Uint8Array(total);
+            const candidates = [];
+            const queue = new Int32Array(total);
 
-                for (let y = q.y1; y < q.y2; y++) {
-                    for (let x = q.x1; x < q.x2; x++) {
-                        const pIdx = (y * sw + x) * 4;
-                        const g = (data[pIdx] * 77 + data[pIdx + 1] * 150 + data[pIdx + 2] * 29) >> 8;
-                        gray[idx++] = g;
-                        hist[g]++;
-                    }
-                }
+            // Step by 2 for sub-millisecond execution
+            for (let py = 4; py < sh - 4; py += 2) {
+                for (let px = 4; px < sw - 4; px += 2) {
+                    const startP = py * sw + px;
+                    if (visited[startP] || gray[startP] >= thresh) continue;
 
-                // Otsu threshold clamped to prevent noise skipping
-                const total = pw * ph;
-                let sum = 0;
-                for (let i = 0; i < 256; i++) sum += i * hist[i];
-                let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
-                for (let i = 0; i < 256; i++) {
-                    wB += hist[i];
-                    if (wB === 0) continue;
-                    const wF = total - wB;
-                    if (wF === 0) break;
-                    sumB += i * hist[i];
-                    const v = wB * wF * (sumB / wB - (sum - sumB) / wF) * (sumB / wB - (sum - sumB) / wF);
-                    if (v > maxVar) { maxVar = v; thresh = i + 1; }
-                }
+                    let count = 0, sumX = 0, sumY = 0;
+                    let minX = px, maxX = px, minY = py, maxY = py;
+                    let qHead = 0, qTail = 0;
+                    queue[qTail++] = startP;
+                    visited[startP] = 1;
 
-                thresh = Math.max(35, Math.min(thresh, 185));
+                    while (qHead < qTail) {
+                        if (count > 2500) break;
+                        const cur = queue[qHead++];
+                        const cy = Math.floor(cur / sw);
+                        const cx = cur % sw;
+                        count++;
+                        sumX += cx;
+                        sumY += cy;
+                        if (cx < minX) minX = cx;
+                        if (cx > maxX) maxX = cx;
+                        if (cy < minY) minY = cy;
+                        if (cy > maxY) maxY = cy;
 
-                const visited = new Uint8Array(pw * ph);
-                const candidates = [];
-
-                for (let py = 1; py < ph - 1; py += 2) {
-                    for (let px = 1; px < pw - 1; px += 2) {
-                        const p = py * pw + px;
-                        if (visited[p] || gray[p] >= thresh) continue;
-
-                        let count = 0, sumX = 0, sumY = 0;
-                        let minX = px, maxX = px, minY = py, maxY = py;
-                        const queue = [p];
-                        visited[p] = 1;
-                        let qHead = 0;
-
-                        while (qHead < queue.length) {
-                            if (count > 2000) break;
-                            const cur = queue[qHead++];
-                            const cy = Math.floor(cur / pw);
-                            const cx = cur % pw;
-                            count++;
-                            sumX += cx;
-                            sumY += cy;
-                            if (cx < minX) minX = cx;
-                            if (cx > maxX) maxX = cx;
-                            if (cy < minY) minY = cy;
-                            if (cy > maxY) maxY = cy;
-
-                            for (let nb of [cur - 1, cur + 1, cur - pw, cur + pw]) {
-                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
-                                    visited[nb] = 1;
-                                    queue.push(nb);
-                                }
+                        const neighbors = [cur - 1, cur + 1, cur - sw, cur + sw];
+                        for (let k = 0; k < 4; k++) {
+                            const nb = neighbors[k];
+                            if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                visited[nb] = 1;
+                                queue[qTail++] = nb;
                             }
                         }
+                    }
 
-                        const bw = maxX - minX + 1;
-                        const bh = maxY - minY + 1;
-                        const aspect = bw / bh;
-                        const density = count / (bw * bh);
+                    const bw = maxX - minX + 1;
+                    const bh = maxY - minY + 1;
+                    const aspect = bw / bh;
+                    const density = count / (bw * bh);
 
-                        // Solid Square Corner Marker Criteria:
-                        // bw, bh >= 6, density >= 0.52, count >= 20
-                        if (bw >= 6 && bh >= 6 && bw <= 55 && bh <= 55 && aspect >= 0.58 && aspect <= 1.70 && density >= 0.52 && count >= 20 && count <= 2000) {
-                            // Center derived from bounding box (symmetric and immune to gradient shadows)
-                            const bx = q.x1 + (minX + maxX) / 2;
-                            const by = q.y1 + (minY + maxY) / 2;
+                    // Solid Square Corner Marker Criteria
+                    if (bw >= 5 && bh >= 5 && bw <= 36 && bh <= 36 && aspect >= 0.60 && aspect <= 1.65 && density >= 0.50 && count >= 16 && count <= 800) {
+                        const bx = (minX + maxX) / 2;
+                        const by = (minY + maxY) / 2;
+                        const blobR = Math.max(bw, bh) / 2;
 
-                            // Inward paper margin check: genuine corner markers have white paper inward towards sheet center
-                            const dirX = Math.sign((sw / 2) - bx);
-                            const dirY = Math.sign((sh / 2) - by);
-                            let whiteInward = 0;
-                            const d1 = Math.round(Math.max(bw, bh) * 1.0);
-                            const d2 = Math.round(Math.max(bw, bh) * 1.6);
-                            for (let sd of [d1, d2]) {
-                                const ix = Math.round(bx + dirX * sd);
-                                const iy = Math.round(by + dirY * sd);
-                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
-                                    const inIdx = (iy * sw + ix) * 4;
-                                    const inGray = (data[inIdx] * 77 + data[inIdx + 1] * 150 + data[inIdx + 2] * 29) >> 8;
-                                    if (inGray >= (thresh - 15)) whiteInward++;
-                                }
-                            }
+                        // ISOLATION RING CHECK:
+                        // Completely rejects question bubbles, which have other bubbles/text 3-4mm away.
+                        const rIn = Math.round(blobR * 1.4);
+                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.6));
+                        let darkPixels = 0, totalRing = 0;
 
-                            // Isolation Ring Check: Corner markers sit in white margins
-                            const rIn = Math.round(Math.max(bw, bh) * 0.75);
-                            const rOut = Math.round(Math.max(bw, bh) * 1.55);
-                            let darkRing = 0, totalRing = 0;
-
-                            for (let rdy = -rOut; rdy <= rOut; rdy += 2) {
-                                for (let rdx = -rOut; rdx <= rOut; rdx += 2) {
-                                    const d2 = rdx * rdx + rdy * rdy;
-                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                        const gx = Math.round(bx + rdx);
-                                        const gy = Math.round(by + rdy);
-                                        if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
-                                            totalRing++;
-                                            const gIdx = (gy * sw + gx) * 4;
-                                            const pixGray = (data[gIdx] * 77 + data[gIdx + 1] * 150 + data[gIdx + 2] * 29) >> 8;
-                                            if (pixGray < thresh) darkRing++;
-                                        }
+                        for (let dy = -rOut; dy <= rOut; dy += 2) {
+                            for (let dx = -rOut; dx <= rOut; dx += 2) {
+                                const d2 = dx * dx + dy * dy;
+                                if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                    const gx = Math.round(bx + dx);
+                                    const gy = Math.round(by + dy);
+                                    if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                        totalRing++;
+                                        if (gray[gy * sw + gx] < thresh) darkPixels++;
                                     }
                                 }
                             }
+                        }
 
-                            const ringDarkRatio = totalRing > 0 ? (darkRing / totalRing) : 0;
-                            const distToCorner = Math.hypot(bx - q.cx, by - q.cy);
-                            const normDist = distToCorner / diag;
+                        const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
+                        if (ringDarkRatio > 0.08) {
+                            // Non-isolated: rejected (question bubble, roll number, or text)
+                            continue;
+                        }
 
-                            if (ringDarkRatio <= 0.22 && whiteInward >= 1) {
-                                const score = (density * 3.0) - (normDist * 2.0) - (ringDarkRatio * 3.0);
-                                candidates.push({
-                                    x: bx,
-                                    y: by,
-                                    count: count,
-                                    score: score,
-                                    distToCorner: distToCorner
-                                });
+                        // INWARD WHITE PAPER MARGIN CHECK:
+                        // Genuine corner markers sit in white paper margins pointing inward
+                        const dirX = Math.sign((sw / 2) - bx);
+                        const dirY = Math.sign((sh / 2) - by);
+                        let whiteInwardCount = 0;
+                        const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
+                        for (let d of testDists) {
+                            const ix = Math.round(bx + dirX * d);
+                            const iy = Math.round(by + dirY * d);
+                            if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
+                                if (gray[iy * sw + ix] >= thresh) whiteInwardCount++;
+                            }
+                        }
+
+                        if (whiteInwardCount < testDists.length) {
+                            // Inward path blocked: rejected
+                            continue;
+                        }
+
+                        const distFromCenter = Math.hypot(bx - sw / 2, by - sh / 2);
+                        const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.0) - (ringDarkRatio * 10.0);
+
+                        candidates.push({
+                            x: bx,
+                            y: by,
+                            bw,
+                            bh,
+                            count,
+                            score,
+                            density,
+                            distFromCenter
+                        });
+                    }
+                }
+            }
+
+            if (candidates.length < 4) return null;
+
+            // Sort candidates by score (best isolated solid markers first)
+            candidates.sort((a, b) => b.score - a.score);
+
+            // Limit to top 8 candidates for combination search
+            const topCandidates = candidates.slice(0, 8);
+            const n = topCandidates.length;
+
+            let bestQuad = null;
+
+            function evaluateQuadCandidate(ordered) {
+                const [pTL, pTR, pBR, pBL] = ordered;
+
+                // 1. Strict Clockwise Convexity
+                const pts = [pTL, pTR, pBR, pBL];
+                for (let i = 0; i < 4; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % 4];
+                    const c = pts[(i + 2) % 4];
+                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                    if (cross <= 0) return null;
+                }
+
+                // 2. Parallelism and proportional opposite sides
+                const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
+                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
+                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
+                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
+
+                const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
+                const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
+                if (wRatio < 0.68 || hRatio < 0.68) return null;
+
+                // 3. A4 Aspect Ratio Check (Corner marker aspect ratio is ~1.46)
+                const avgW = (wTop + wBot) / 2;
+                const avgH = (hLeft + hRight) / 2;
+                const aspect = avgH / avgW;
+                if (aspect < 1.15 || aspect > 1.80) return null;
+
+                // 4. Diagonal Check
+                const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
+                const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.72) return null;
+
+                // 5. Area Check (at least 10% of camera frame)
+                const quadArea = 0.5 * Math.abs(
+                    (pTL.x * pTR.y - pTL.y * pTR.x) +
+                    (pTR.x * pBR.y - pTR.y * pBR.x) +
+                    (pBR.x * pBL.y - pBR.y * pBL.x) +
+                    (pBL.x * pTL.y - pBL.y * pTL.x)
+                );
+                if (quadArea < sw * sh * 0.10) return null;
+
+                // 6. Corner area consistency (the 4 markers have similar printed sizes)
+                const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
+                const minC = Math.min(...counts);
+                const maxC = Math.max(...counts);
+                if (minC / maxC < 0.28) return null;
+
+                const aspectDev = Math.abs(aspect - 1.461);
+                const score = quadArea * (1.0 - aspectDev * 0.5) * wRatio * hRatio;
+
+                return { ordered, score };
+            }
+
+            // Test 4-candidate combinations
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    for (let k = j + 1; k < n; k++) {
+                        for (let l = k + 1; l < n; l++) {
+                            const quad4 = [topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]];
+                            const ordered = orderCorners(quad4);
+                            if (!ordered) continue;
+                            const res = evaluateQuadCandidate(ordered);
+                            if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                bestQuad = res;
                             }
                         }
                     }
                 }
-
-                if (candidates.length === 0) {
-                    return null; // A corner is missing or obstructed
-                }
-
-                candidates.sort((a, b) => b.score - a.score);
-                foundCorners.push({ x: candidates[0].x, y: candidates[0].y, count: candidates[0].count });
             }
 
-            if (foundCorners.length !== 4) return null;
-
-            const ordered = orderCorners(foundCorners);
-            const p0 = ordered[0], p1 = ordered[1], p2 = ordered[2], p3 = ordered[3];
-
-            // 1. Convexity check (clockwise cross-products > 0)
-            const pts = [p0, p1, p2, p3];
-            for (let i = 0; i < 4; i++) {
-                const a = pts[i];
-                const b = pts[(i + 1) % 4];
-                const c = pts[(i + 2) % 4];
-                const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-                if (cross <= 0) return null;
-            }
-
-            // 2. Parallelism and proportional opposite sides
-            const wTop = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-            const wBot = Math.hypot(p2.x - p3.x, p2.y - p3.y);
-            const hLeft = Math.hypot(p3.x - p0.x, p3.y - p0.y);
-            const hRight = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-
-            if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.52) return null;
-            if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.52) return null;
-
-            // 3. Aspect ratio check
-            const avgW = (wTop + wBot) / 2;
-            const avgH = (hLeft + hRight) / 2;
-            const aspect = avgH / avgW;
-            if (aspect < 0.50 || aspect > 2.10) return null;
-
-            // 4. Area check (at least 6% of camera area)
-            const quadArea = 0.5 * Math.abs(
-                (p0.x * p1.y - p0.y * p1.x) +
-                (p1.x * p2.y - p1.y * p2.x) +
-                (p2.x * p3.y - p2.y * p3.x) +
-                (p3.x * p0.y - p3.y * p0.x)
-            );
-            if (quadArea < (sw * sh * 0.06)) return null;
-
-            return ordered;
+            if (!bestQuad) return null;
+            return bestQuad.ordered;
         }
 
         function drawFramingGuide(ctx, W, H) {
@@ -1112,11 +1252,17 @@
             ctx.lineTo(gx, gy + gh - cornerLen);
             ctx.stroke();
 
+            // Center Guidance Text
+            ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
+            ctx.textAlign = 'center';
+            ctx.fillText('ALIGN 4 CORNER DOTS IN FRAME', W / 2, gy + gh / 2);
+
             ctx.restore();
         }
 
-        // Draw High-Tech Cyber Reticles & Bounding Quad
-        function drawCyberOverlay(ctx, pts, isLocked) {
+        // Draw High-Tech Cyber Reticles, Corner Tags, & Bounding Quad
+        function drawCyberOverlay(ctx, pts, isLocked, pct) {
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y);
@@ -1125,28 +1271,67 @@
             ctx.lineTo(pts[3].x, pts[3].y);
             ctx.closePath();
 
-            ctx.fillStyle = isLocked ? 'rgba(16, 185, 129, 0.16)' : 'rgba(6, 182, 212, 0.08)';
+            const primaryColor = isLocked ? '#10B981' : '#06B6D4';
+            const shadowColor = isLocked ? '#10B981' : '#06B6D4';
+            const fillColor = isLocked ? 'rgba(16, 185, 129, 0.18)' : 'rgba(6, 182, 212, 0.10)';
+
+            ctx.fillStyle = fillColor;
             ctx.fill();
 
             ctx.lineWidth = 3.5;
-            ctx.strokeStyle = isLocked ? '#10B981' : '#06B6D4';
-            ctx.shadowColor = isLocked ? '#10B981' : '#06B6D4';
-            ctx.shadowBlur = 12;
+            ctx.strokeStyle = primaryColor;
+            ctx.shadowColor = shadowColor;
+            ctx.shadowBlur = 14;
             ctx.stroke();
 
-            // Cybernetic Corner Brackets & Rings
-            pts.forEach((pt, i) => {
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 8, 0, 2 * Math.PI);
-                ctx.fillStyle = isLocked ? '#10B981' : '#06B6D4';
-                ctx.fill();
+            const cornerLabels = ['TL', 'TR', 'BR', 'BL'];
 
-                ctx.lineWidth = 3;
+            pts.forEach((pt, i) => {
+                // Outer ring
+                ctx.lineWidth = 2.5;
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.beginPath();
                 ctx.arc(pt.x, pt.y, 16, 0, 2 * Math.PI);
                 ctx.stroke();
+
+                // Target center dot
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = primaryColor;
+                ctx.fill();
+
+                // Crosshairs
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = primaryColor;
+                ctx.beginPath();
+                ctx.moveTo(pt.x - 22, pt.y);
+                ctx.lineTo(pt.x - 10, pt.y);
+                ctx.moveTo(pt.x + 10, pt.y);
+                ctx.lineTo(pt.x + 22, pt.y);
+                ctx.moveTo(pt.x, pt.y - 22);
+                ctx.lineTo(pt.x - 10, pt.y);
+                ctx.moveTo(pt.x, pt.y + 10);
+                ctx.lineTo(pt.x + 22, pt.y);
+                ctx.stroke();
+
+                // Corner Tag Badge
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                const tag = cornerLabels[i];
+                const tagW = ctx.measureText(tag).width + 8;
+                const tagH = 16;
+                const tagX = i === 0 || i === 3 ? pt.x - tagW - 14 : pt.x + 14;
+                const tagY = i === 0 || i === 1 ? pt.y - 12 : pt.y + 16;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillRect(tagX, tagY - 12, tagW, tagH);
+                ctx.strokeStyle = primaryColor;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(tagX, tagY - 12, tagW, tagH);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(tag, tagX + 4, tagY);
             });
+
             ctx.restore();
         }
 

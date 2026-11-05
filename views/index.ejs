@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V2</title>
+    <title>V3</title>
     <link rel="stylesheet" href="/css/style.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
@@ -409,26 +409,38 @@
 
                                 <div class="paper-tiles-grid">
                                     <!-- Tile 1: Answer Key -->
-                                    <a href="/paper/<%= paper._id %>" class="action-tile action-tile-key" title="Configure Question Answer Key">
+                                    <a href="/paper/<%= paper._id %>" class="action-tile action-tile-key"
+                                        title="Configure Question Answer Key">
                                         <div class="tile-top">
                                             <div class="tile-icon-box icon-key">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-2 2 1.5 1.5-3 3a5.5 5.5 0 1 0 7.78 7.78l3-3 1.5 1.5 2-2-1.5-1.5 1.5-1.5 2-2z"></path>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path
+                                                        d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-2 2 1.5 1.5-3 3a5.5 5.5 0 1 0 7.78 7.78l3-3 1.5 1.5 2-2-1.5-1.5 1.5-1.5 2-2z">
+                                                    </path>
                                                     <circle cx="7.5" cy="16.5" r="1.5"></circle>
                                                 </svg>
                                             </div>
                                             <span class="tile-arrow">→</span>
                                         </div>
                                         <div class="tile-title">Answer Key</div>
-                                        <div class="tile-sub"><%= hasKey ? '✓ Configured' : 'Configure Key' %></div>
+                                        <div class="tile-sub">
+                                            <%= hasKey ? '✓ Configured' : 'Configure Key' %>
+                                        </div>
                                     </a>
 
                                     <!-- Tile 2: Scan Paper (Live 4-Corner Camera) -->
-                                    <a href="/paper/<%= paper._id %>/scan" class="action-tile action-tile-scan" title="Launch Live 4-Corner AI Scanner">
+                                    <a href="/paper/<%= paper._id %>/scan" class="action-tile action-tile-scan"
+                                        title="Launch Live 4-Corner AI Scanner">
                                         <div class="tile-top">
                                             <div class="tile-icon-box icon-scan">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path
+                                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                    </path>
                                                     <circle cx="12" cy="13" r="4"></circle>
                                                 </svg>
                                             </div>
@@ -439,12 +451,17 @@
                                     </a>
 
                                     <!-- Tile 3: Generate OMR -->
-                                    <a href="/paper/<%= paper._id %>/omr" target="_blank" class="action-tile action-tile-omr" title="Generate & Print Blank A4 OMR Sheet">
+                                    <a href="/paper/<%= paper._id %>/omr" target="_blank"
+                                        class="action-tile action-tile-omr" title="Generate & Print Blank A4 OMR Sheet">
                                         <div class="tile-top">
                                             <div class="tile-icon-box icon-omr">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
                                                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                                    <path
+                                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
+                                                    </path>
                                                     <rect x="6" y="14" width="12" height="8"></rect>
                                                 </svg>
                                             </div>
@@ -455,10 +472,13 @@
                                     </a>
 
                                     <!-- Tile 4: Results & Upload Evaluation -->
-                                    <a href="/paper/<%= paper._id %>" class="action-tile action-tile-results" title="View Evaluation Results & Upload Sheet Image">
+                                    <a href="/paper/<%= paper._id %>" class="action-tile action-tile-results"
+                                        title="View Evaluation Results & Upload Sheet Image">
                                         <div class="tile-top">
                                             <div class="tile-icon-box icon-results">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
                                                     <line x1="18" y1="20" x2="18" y2="10"></line>
                                                     <line x1="12" y1="20" x2="12" y2="4"></line>
                                                     <line x1="6" y1="20" x2="6" y2="14"></line>
