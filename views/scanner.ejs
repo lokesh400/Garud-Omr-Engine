@@ -477,6 +477,76 @@
             border-style: dashed;
         }
 
+        
+        .freeze-banner {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            pointer-events: auto;
+            animation: bounce-in 0.25s ease;
+        }
+
+        @keyframes bounce-in {
+            0% { transform: translateX(-50%) translateY(15px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .freeze-banner-content {
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid var(--cyber-emerald);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+            border-radius: var(--radius-full);
+            padding: 10px 22px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #FFFFFF;
+        }
+
+        .freeze-icon {
+            font-size: 1.4rem;
+        }
+
+        .freeze-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+        }
+
+        .freeze-text strong {
+            font-size: 0.88rem;
+            color: #34D399;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .freeze-text span {
+            font-size: 0.78rem;
+            color: #E2E8F0;
+        }
+
+        .btn-retake {
+            background: #1E293B;
+            border: 1px solid #475569;
+            color: #94A3B8;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retake:hover {
+            background: #334155;
+            color: #FFFFFF;
+            border-color: #CBD5E1;
+        }
+
         .flash-screen {
             position: absolute;
             top: 0;
@@ -501,7 +571,7 @@
         <!-- Top Navigation -->
         <div class="scanner-topbar">
             <div>
-                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">Live AI Auto-Scanner & Rectifier</h1>
+                <h1 style="font-size: 1.5rem; margin: 0 0 4px 0;">Live OMR Sheet Scanner</h1>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
                     <%= paper.title %> &bull; <%= paper.numQuestions %> Questions
                 </p>
@@ -515,14 +585,24 @@
                 <div id="flashScreen" class="flash-screen"></div>
                 <div id="scanLaser" class="scan-laser"></div>
 
-                <!-- Live HUD -->
+                <!-- Live HUD without AI SCANNER or searching corners text -->
                 <div class="hud-top-bar">
                     <div id="hudChip" class="hud-chip">
                         <div id="statusDot" class="status-dot"></div>
-                        <span id="hudStatus">AI SCANNER ACTIVE: POINT AT SHEET</span>
+                        <span id="hudStatus">Align paper in view</span>
+                        <div class="lock-meter" id="lockMeter"><div class="lock-meter-fill" id="lockMeterFill"></div></div>
                     </div>
-                    <div id="tiltBadge" class="hud-tilt-badge">
-                        ðŸ“ TILT: 0.0Â° &bull; LEVEL
+                </div>
+
+                <!-- Frozen State Banner -->
+                <div id="freezeBanner" class="freeze-banner" style="display: none;">
+                    <div class="freeze-banner-content">
+                        <span class="freeze-icon">📸</span>
+                        <div class="freeze-text">
+                            <strong>CORNERS LOCKED</strong>
+                            <span>Click screen to compute score</span>
+                        </div>
+                        <button type="button" class="btn-retake" onclick="event.stopPropagation(); unfreezeScene();">↻ Retake</button>
                     </div>
                 </div>
 
@@ -532,15 +612,14 @@
 
             <!-- Bottom Toolbar -->
             <div class="scanner-bottom-bar">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <label class="toggle-chip">
-                        <input type="checkbox" id="autoSnapToggle" checked>
-                        <span>Auto-Snap on Steady Lock</span>
-                    </label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color: #94A3B8; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
+                        💡 Auto-freezes on corners • Click screen to compute
+                    </span>
                 </div>
                 <div>
                     <button type="button" class="btn-capture-auto" id="captureBtn" onclick="triggerManualCapture()">
-                        ⚡ Snap & Level Sheet
+                        ⚡ Click Photo & Compute
                     </button>
                 </div>
             </div>
@@ -665,9 +744,13 @@
         let smoothedCorners = null;
         let lastRawCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 35; // ~1.2s steady hold before auto-snap
+        const LOCK_REQUIRED_FRAMES = 18; // ~0.6s steady hold to freeze
+        let isFrozen = false;
+        let frozenCorners = null;
+
         const lockMeter = document.getElementById('lockMeter');
         const lockMeterFill = document.getElementById('lockMeterFill');
+        const freezeBanner = document.getElementById('freezeBanner');
 
         // Fast analysis downscale canvas
         const fastCanvas = document.createElement('canvas');
@@ -677,8 +760,7 @@
         const TARGET_W = 1000;
         const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
 
-        // Measured Standard Ratios
-        // Measured Exact Ratios from Rendered A4 Sheet
+        // Measured Standard Ratios from Rendered A4 Sheet
         const U_START = 0.061846;
         const V_START = 0.256331;
         const U_BUBBLE_STEP = 0.028042;
@@ -695,6 +777,8 @@
 
         async function initCamera() {
             isCaptured = false;
+            isFrozen = false;
+            frozenCorners = null;
             smoothedCorners = null;
             lastRawCorners = null;
             lockStreak = 0;
@@ -704,7 +788,11 @@
             }
             document.getElementById('viewfinderSection').style.display = 'block';
             document.getElementById('resultsSection').style.display = 'none';
+            if (freezeBanner) freezeBanner.style.display = 'none';
             scanLaser.style.display = 'block';
+            hudStatus.textContent = 'Align paper in view';
+            captureBtn.classList.remove('locked');
+            captureBtn.innerHTML = '⚡ Click Photo & Compute';
 
             // Reuse existing active stream if available
             if (cameraStream && cameraStream.active) {
@@ -765,8 +853,6 @@
         // Robust 4-corner ordering [TL, TR, BR, BL]
         function orderCorners(pts) {
             if (!pts || pts.length !== 4) return pts;
-            // TL has min(x + y), BR has max(x + y)
-            // TR has max(x - y), BL has min(x - y)
             let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
             let minSum = pts[0].x + pts[0].y, maxSum = minSum;
             let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
@@ -786,7 +872,6 @@
                 return [tl, tr, br, bl];
             }
 
-            // Fallback: order by angle from centroid
             const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
             const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
             const sorted = [...pts].map(p => ({
@@ -844,7 +929,7 @@
 
         // Live Frame Detection Loop
         function renderLoop() {
-            if (isCaptured) return;
+            if (isCaptured || isFrozen) return;
 
             if (video.readyState >= 2) {
                 const W = previewCanvas.width;
@@ -861,14 +946,12 @@
                 const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
 
                 if (detectedRaw) {
-                    // Scale back up to full preview coordinates
                     const scale = W / fastW;
                     const currentCorners = detectedRaw.map(pt => ({
                         x: pt.x * scale,
                         y: pt.y * scale
                     }));
 
-                    // Stability check: measure jitter between consecutive frames
                     let isSteady = false;
                     if (lastRawCorners) {
                         const maxDelta = Math.max(...currentCorners.map((pt, i) =>
@@ -885,10 +968,9 @@
                     if (isSteady) {
                         lockStreak++;
                     } else {
-                        lockStreak = Math.max(0, lockStreak - 5);
+                        lockStreak = Math.max(0, lockStreak - 4);
                     }
 
-                    // Smooth corners with Exponential Moving Average (EMA)
                     if (!smoothedCorners) {
                         smoothedCorners = currentCorners;
                     } else {
@@ -898,44 +980,27 @@
                         }));
                     }
 
-                    // Compute Tilt Angle
-                    const dX = smoothedCorners[1].x - smoothedCorners[0].x;
-                    const dY = smoothedCorners[1].y - smoothedCorners[0].y;
-                    const tilt = (Math.atan2(dY, dX) * (180 / Math.PI)).toFixed(1);
-
-                    const isLocked = lockStreak >= LOCK_REQUIRED_FRAMES;
                     const pct = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
 
                     hudChip.classList.add('locked');
-                    statusDot.className = isLocked ? 'status-dot active' : 'status-dot';
-                    statusDot.style.background = isLocked ? 'var(--cyber-emerald)' : '#06B6D4';
-                    statusDot.style.boxShadow = isLocked ? '0 0 12px var(--cyber-emerald)' : '0 0 10px #06B6D4';
-
-                    if (isLocked) {
-                        hudStatus.textContent = '✓ TARGET LOCKED • AUTO-SNAPPING';
-                    } else if (isSteady) {
-                        hudStatus.textContent = `SHEET DETECTED • HOLD STEADY (${pct}%)`;
-                    } else {
-                        hudStatus.textContent = `ALIGNING SHEET • HOLD STEADY (${pct}%)`;
-                    }
+                    statusDot.className = 'status-dot';
+                    statusDot.style.background = '#06B6D4';
+                    statusDot.style.boxShadow = '0 0 10px #06B6D4';
+                    hudStatus.textContent = `Corners detected • Hold steady (${pct}%)`;
 
                     if (lockMeter) {
                         lockMeter.classList.add('active');
                         if (lockMeterFill) lockMeterFill.style.width = pct + '%';
                     }
 
-                    tiltBadge.className = 'hud-tilt-badge level';
-                    tiltBadge.textContent = '📐 TILT: ' + (tilt > 0 ? '+' + tilt : tilt) + '° • LEVEL';
-
                     captureBtn.classList.add('locked');
-                    captureBtn.innerHTML = isLocked ? '⚡ Snapping...' : '⚡ Snap & Level Sheet (Ready)';
+                    captureBtn.innerHTML = '⚡ Click Screen or Here to Compute';
 
-                    // Draw Glowing Cybernetic Polygonal Overlay
-                    drawCyberOverlay(previewCtx, smoothedCorners, isLocked, pct);
+                    drawCyberOverlay(previewCtx, smoothedCorners, false, pct);
 
-                    // Auto-snap if held steady
-                    if (autoSnapToggle.checked && isLocked) {
-                        snapAndWarpSheet();
+                    // Once corners are held steady: FREEZE the scene!
+                    if (lockStreak >= LOCK_REQUIRED_FRAMES) {
+                        freezeScene();
                         return;
                     }
                 } else {
@@ -947,11 +1012,9 @@
                     statusDot.className = 'status-dot';
                     statusDot.style.background = '#F59E0B';
                     statusDot.style.boxShadow = '0 0 10px #F59E0B';
-                    hudStatus.textContent = 'AI SCANNER: ALIGN OMR SHEET IN FRAME';
-                    tiltBadge.className = 'hud-tilt-badge';
-                    tiltBadge.textContent = '📐 SEARCHING CORNERS';
+                    hudStatus.textContent = 'Align paper in view';
                     captureBtn.classList.remove('locked');
-                    captureBtn.innerHTML = '⚡ Snap & Level Sheet';
+                    captureBtn.innerHTML = '⚡ Click Photo & Compute';
 
                     if (lockMeter) {
                         lockMeter.classList.remove('active');
@@ -967,6 +1030,71 @@
             }
 
             animationFrameId = requestAnimationFrame(renderLoop);
+        }
+
+        // Freeze the scene when corners are recognized
+        function freezeScene() {
+            if (isFrozen || isCaptured || !smoothedCorners) return;
+            isFrozen = true;
+            frozenCorners = smoothedCorners.map(p => ({ x: p.x, y: p.y }));
+
+            // Freeze video playback
+            try { video.pause(); } catch (e) {}
+
+            // Stop laser beam
+            scanLaser.style.display = 'none';
+
+            // Draw glowing green locked overlay on the frozen preview
+            drawCyberOverlay(previewCtx, frozenCorners, true, 100);
+
+            // Update HUD
+            hudChip.classList.add('locked');
+            statusDot.className = 'status-dot active';
+            statusDot.style.background = 'var(--cyber-emerald)';
+            statusDot.style.boxShadow = '0 0 14px var(--cyber-emerald)';
+            hudStatus.textContent = '✓ CORNERS LOCKED • CLICK SCREEN TO COMPUTE';
+
+            if (lockMeter) lockMeter.classList.add('active');
+            if (lockMeterFill) lockMeterFill.style.width = '100%';
+
+            // Show freeze banner on screen
+            const freezeBanner = document.getElementById('freezeBanner');
+            if (freezeBanner) freezeBanner.style.display = 'block';
+
+            captureBtn.classList.add('locked');
+            captureBtn.innerHTML = '⚡ Click Screen or Here to Compute';
+        }
+
+        // Unfreeze scene and resume live camera
+        function unfreezeScene() {
+            if (isCaptured) return;
+            isFrozen = false;
+            frozenCorners = null;
+            smoothedCorners = null;
+            lastRawCorners = null;
+            lockStreak = 0;
+
+            const freezeBanner = document.getElementById('freezeBanner');
+            if (freezeBanner) freezeBanner.style.display = 'none';
+
+            scanLaser.style.display = 'block';
+            hudChip.classList.remove('locked');
+            statusDot.className = 'status-dot';
+            statusDot.style.background = '#F59E0B';
+            statusDot.style.boxShadow = '0 0 10px #F59E0B';
+            hudStatus.textContent = 'Align paper in view';
+            captureBtn.classList.remove('locked');
+            captureBtn.innerHTML = '⚡ Click Photo & Compute';
+
+            if (lockMeter) {
+                lockMeter.classList.remove('active');
+                if (lockMeterFill) lockMeterFill.style.width = '0%';
+            }
+
+            try { video.play(); } catch (e) {}
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(renderLoop);
+            }
         }
 
         // High-Precision Solid Corner Detector:
@@ -1011,7 +1139,6 @@
             const candidates = [];
             const queue = new Int32Array(total);
 
-            // Step by 2 for sub-millisecond execution
             for (let py = 4; py < sh - 4; py += 2) {
                 for (let px = 4; px < sw - 4; px += 2) {
                     const startP = py * sw + px;
@@ -1058,7 +1185,7 @@
                         const blobR = Math.max(bw, bh) / 2;
 
                         // ISOLATION RING CHECK:
-                        // Completely rejects question bubbles, which have other bubbles/text 3-4mm away.
+                        // Rejects question bubbles, which have other bubbles/text 3-4mm away.
                         const rIn = Math.round(blobR * 1.4);
                         const rOut = Math.max(rIn + 3, Math.round(blobR * 2.6));
                         let darkPixels = 0, totalRing = 0;
@@ -1079,12 +1206,10 @@
 
                         const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
                         if (ringDarkRatio > 0.08) {
-                            // Non-isolated: rejected (question bubble, roll number, or text)
                             continue;
                         }
 
                         // INWARD WHITE PAPER MARGIN CHECK:
-                        // Genuine corner markers sit in white paper margins pointing inward
                         const dirX = Math.sign((sw / 2) - bx);
                         const dirY = Math.sign((sh / 2) - by);
                         let whiteInwardCount = 0;
@@ -1098,7 +1223,6 @@
                         }
 
                         if (whiteInwardCount < testDists.length) {
-                            // Inward path blocked: rejected
                             continue;
                         }
 
@@ -1121,10 +1245,7 @@
 
             if (candidates.length < 4) return null;
 
-            // Sort candidates by score (best isolated solid markers first)
             candidates.sort((a, b) => b.score - a.score);
-
-            // Limit to top 8 candidates for combination search
             const topCandidates = candidates.slice(0, 8);
             const n = topCandidates.length;
 
@@ -1133,7 +1254,6 @@
             function evaluateQuadCandidate(ordered) {
                 const [pTL, pTR, pBR, pBL] = ordered;
 
-                // 1. Strict Clockwise Convexity
                 const pts = [pTL, pTR, pBR, pBL];
                 for (let i = 0; i < 4; i++) {
                     const a = pts[i];
@@ -1143,7 +1263,6 @@
                     if (cross <= 0) return null;
                 }
 
-                // 2. Parallelism and proportional opposite sides
                 const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
                 const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
                 const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
@@ -1153,18 +1272,15 @@
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
                 if (wRatio < 0.68 || hRatio < 0.68) return null;
 
-                // 3. A4 Aspect Ratio Check (Corner marker aspect ratio is ~1.46)
                 const avgW = (wTop + wBot) / 2;
                 const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
                 if (aspect < 1.15 || aspect > 1.80) return null;
 
-                // 4. Diagonal Check
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
                 if (Math.min(d1, d2) / Math.max(d1, d2) < 0.72) return null;
 
-                // 5. Area Check (at least 10% of camera frame)
                 const quadArea = 0.5 * Math.abs(
                     (pTL.x * pTR.y - pTL.y * pTR.x) +
                     (pTR.x * pBR.y - pTR.y * pBR.x) +
@@ -1173,7 +1289,6 @@
                 );
                 if (quadArea < sw * sh * 0.10) return null;
 
-                // 6. Corner area consistency (the 4 markers have similar printed sizes)
                 const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
                 const minC = Math.min(...counts);
                 const maxC = Math.max(...counts);
@@ -1185,7 +1300,6 @@
                 return { ordered, score };
             }
 
-            // Test 4-candidate combinations
             for (let i = 0; i < n; i++) {
                 for (let j = i + 1; j < n; j++) {
                     for (let k = j + 1; k < n; k++) {
@@ -1252,7 +1366,7 @@
             ctx.lineTo(gx, gy + gh - cornerLen);
             ctx.stroke();
 
-            // Center Guidance Text
+            // Center Helper Text
             ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
             ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
             ctx.textAlign = 'center';
@@ -1287,20 +1401,17 @@
             const cornerLabels = ['TL', 'TR', 'BR', 'BL'];
 
             pts.forEach((pt, i) => {
-                // Outer ring
                 ctx.lineWidth = 2.5;
                 ctx.strokeStyle = '#FFFFFF';
                 ctx.beginPath();
                 ctx.arc(pt.x, pt.y, 16, 0, 2 * Math.PI);
                 ctx.stroke();
 
-                // Target center dot
                 ctx.beginPath();
                 ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
                 ctx.fillStyle = primaryColor;
                 ctx.fill();
 
-                // Crosshairs
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = primaryColor;
                 ctx.beginPath();
@@ -1314,7 +1425,6 @@
                 ctx.lineTo(pt.x + 22, pt.y);
                 ctx.stroke();
 
-                // Corner Tag Badge
                 ctx.font = 'bold 11px "JetBrains Mono", monospace';
                 const tag = cornerLabels[i];
                 const tagW = ctx.measureText(tag).width + 8;
@@ -1335,13 +1445,31 @@
             ctx.restore();
         }
 
+        // Tap screen to compute photo
         function handleTapToCapture() {
             triggerManualCapture();
         }
 
         function triggerManualCapture() {
             if (isCaptured) return;
-            snapAndWarpSheet();
+
+            // If already frozen or corners locked, compute immediately!
+            if (isFrozen && frozenCorners) {
+                snapAndWarpSheet(frozenCorners);
+                return;
+            }
+
+            // If corners currently detected, freeze and compute!
+            if (smoothedCorners) {
+                snapAndWarpSheet(smoothedCorners);
+                return;
+            }
+
+            // If no corners detected yet:
+            hudStatus.textContent = 'Please align 4 corner dots first';
+            setTimeout(() => {
+                if (!isFrozen && !isCaptured) hudStatus.textContent = 'Align paper in view';
+            }, 1500);
         }
 
         function playShutter() {
@@ -1361,9 +1489,10 @@
             } catch (e) { }
         }
 
-        // Warps the perspective into a perfectly flat, upright, leveled A4 sheet
-        function snapAndWarpSheet() {
+        // Warps the perspective into a perfectly flat, upright, leveled A4 sheet and computes results
+        function snapAndWarpSheet(passedCorners) {
             isCaptured = true;
+            isFrozen = false;
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
@@ -1376,7 +1505,7 @@
             const W = previewCanvas.width;
             const H = previewCanvas.height;
 
-            const corners = orderCorners(smoothedCorners || [
+            const corners = orderCorners(passedCorners || frozenCorners || smoothedCorners || [
                 { x: W * 0.10, y: H * 0.06 },
                 { x: W * 0.90, y: H * 0.06 },
                 { x: W * 0.90, y: H * 0.94 },
