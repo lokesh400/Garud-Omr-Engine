@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -97,7 +97,7 @@
             letter-spacing: 0.5px;
         }
 
-        
+
         .lock-meter {
             width: 75px;
             height: 7px;
@@ -106,7 +106,7 @@
             overflow: hidden;
             display: none;
             margin-left: 6px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .lock-meter.active {
@@ -477,7 +477,7 @@
             border-style: dashed;
         }
 
-        
+
         .freeze-banner {
             position: absolute;
             bottom: 24px;
@@ -489,8 +489,15 @@
         }
 
         @keyframes bounce-in {
-            0% { transform: translateX(-50%) translateY(15px); opacity: 0; }
-            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            0% {
+                transform: translateX(-50%) translateY(15px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
         }
 
         .freeze-banner-content {
@@ -590,7 +597,9 @@
                     <div id="hudChip" class="hud-chip">
                         <div id="statusDot" class="status-dot"></div>
                         <span id="hudStatus">Align paper in view</span>
-                        <div class="lock-meter" id="lockMeter"><div class="lock-meter-fill" id="lockMeterFill"></div></div>
+                        <div class="lock-meter" id="lockMeter">
+                            <div class="lock-meter-fill" id="lockMeterFill"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -602,7 +611,8 @@
                             <strong>CORNERS LOCKED</strong>
                             <span>Click screen to compute score</span>
                         </div>
-                        <button type="button" class="btn-retake" onclick="event.stopPropagation(); unfreezeScene();">↻ Retake</button>
+                        <button type="button" class="btn-retake" onclick="event.stopPropagation(); unfreezeScene();">↻
+                            Retake</button>
                     </div>
                 </div>
 
@@ -1039,7 +1049,7 @@
             frozenCorners = smoothedCorners.map(p => ({ x: p.x, y: p.y }));
 
             // Freeze video playback
-            try { video.pause(); } catch (e) {}
+            try { video.pause(); } catch (e) { }
 
             // Stop laser beam
             scanLaser.style.display = 'none';
@@ -1091,7 +1101,7 @@
                 if (lockMeterFill) lockMeterFill.style.width = '0%';
             }
 
-            try { video.play(); } catch (e) {}
+            try { video.play(); } catch (e) { }
             if (!animationFrameId) {
                 animationFrameId = requestAnimationFrame(renderLoop);
             }
@@ -1572,8 +1582,9 @@
         }
 
         // Evaluate bubbles on the flat, leveled A4 sheet
-                // High-Precision Adaptive Bubble & Roll Number Evaluator
-        // Uses clean gutter paper baseline, multi-offset core sampling, and relative contrast
+        // High-Precision Robust Bubble & Roll Number Evaluator
+        // Uses clean gutter paper baseline, median-based core sampling (immune to printed letters and circle borders),
+        // and fillScore dominance to eliminate false positives on unfilled bubbles.
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
@@ -1599,51 +1610,80 @@
                 return count > 0 ? (sum / count) : 255;
             }
 
-            // Multi-offset bubble core sampler:
-            // Tests nominal center and small +/-2px offsets to capture off-center shading and slight warp shifts
-            function sampleBubbleCore(nominalX, nominalY, paperVal) {
+            // High-Precision Interior Bubble Sampler
+            // Analyzes the inner core (radius 4.2px, safely inside the ~9px bubble border)
+            // Uses the median pixel darkness and dark pixel ratio across small jitter offsets.
+            // In an UNFILLED bubble, thin printed glyphs (A/B/C/D or 0-9) cover <25% of the interior,
+            // so median darkness is near 0.
+            // In a genuine FILLED bubble (pencil, blue/black pen), the shading covers >50% of the core,
+            // producing significant median darkness and high dark pixel coverage.
+            function sampleBubbleInterior(nominalX, nominalY, paperVal) {
                 const offsets = [
-                    [0, 0], [-2, 0], [2, 0], [0, -2], [0, 2]
+                    [0, 0], [-1.5, 0], [1.5, 0], [0, -1.5], [0, 1.5]
                 ];
-                let bestDarkness = -1;
-                let bestMean = 255;
-                let bestDarkRatio = 0;
-                const coreR = 5.2; // Inner core radius, safely inside the 9px outer circle border
+                const coreR = 4.2;
                 const coreR2 = coreR * coreR;
                 const ir = Math.ceil(coreR);
+
+                let bestStat = null;
 
                 for (let k = 0; k < offsets.length; k++) {
                     const cx = nominalX + offsets[k][0];
                     const cy = nominalY + offsets[k][1];
-                    let sum = 0, count = 0, darkCount = 0;
+                    const pixels = [];
 
                     for (let dy = -ir; dy <= ir; dy++) {
                         for (let dx = -ir; dx <= ir; dx++) {
                             if (dx * dx + dy * dy <= coreR2) {
-                                const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
-                                sum += g;
-                                count++;
-                                if (g < (paperVal - 18)) darkCount++;
+                                pixels.push(getGray(Math.round(cx + dx), Math.round(cy + dy)));
                             }
                         }
                     }
 
-                    const mean = count > 0 ? (sum / count) : 255;
-                    const darkness = Math.max(0, paperVal - mean);
-                    const darkRatio = count > 0 ? (darkCount / count) : 0;
+                    if (pixels.length === 0) continue;
 
-                    if (darkness > bestDarkness) {
-                        bestDarkness = darkness;
-                        bestMean = mean;
-                        bestDarkRatio = darkRatio;
+                    pixels.sort((a, b) => a - b);
+                    const count = pixels.length;
+                    const mean = pixels.reduce((a, b) => a + b, 0) / count;
+                    const median = pixels[Math.floor(count / 2)];
+                    const darkness = Math.max(0, paperVal - mean);
+                    const medDarkness = Math.max(0, paperVal - median);
+                    const darkPixels = pixels.filter(v => v < (paperVal - 22)).length;
+                    const darkRatio = darkPixels / count;
+                    const fillScore = medDarkness * 0.7 + (darkRatio * 100) * 0.3;
+
+                    if (!bestStat || fillScore > bestStat.fillScore) {
+                        bestStat = {
+                            mean,
+                            median,
+                            darkness,
+                            medDarkness,
+                            darkRatio,
+                            fillScore
+                        };
                     }
                 }
 
-                return {
-                    darkness: bestDarkness,
-                    mean: bestMean,
-                    darkRatio: bestDarkRatio
+                return bestStat || {
+                    mean: paperVal,
+                    median: paperVal,
+                    darkness: 0,
+                    medDarkness: 0,
+                    darkRatio: 0,
+                    fillScore: 0
                 };
+            }
+
+            // Universal bubble filled classifier:
+            // Eliminates printed letters/digits while reliably detecting pencil, blue pen, black pen, or gel pen
+            function isBubbleFilled(s) {
+                // Rule 1: Solid median darkness + significant dark pixel coverage (pencil or pen)
+                if (s.medDarkness >= 22 && s.darkRatio >= 0.40) return true;
+                // Rule 2: High dark pixel coverage with good average darkness (faint or textured pencil marks)
+                if (s.darkRatio >= 0.52 && s.darkness >= 35) return true;
+                // Rule 3: Heavy dark pen fill
+                if (s.medDarkness >= 45) return true;
+                return false;
             }
 
             // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
@@ -1663,27 +1703,23 @@
                 let colStats = [];
                 for (let d = 0; d < 10; d++) {
                     const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
-                    const bubbleSample = sampleBubbleCore(colX, rowY, rollPaperVal);
+                    const bubbleSample = sampleBubbleInterior(colX, rowY, rollPaperVal);
 
                     colStats.push({
                         digit: d,
-                        darkness: bubbleSample.darkness,
-                        darkRatio: bubbleSample.darkRatio,
+                        ...bubbleSample,
                         x: colX,
                         y: rowY
                     });
                 }
 
-                colStats.sort((a, b) => b.darkness - a.darkness);
+                colStats.sort((a, b) => b.fillScore - a.fillScore);
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
-                const unfilledBase = (colStats[4].darkness + colStats[5].darkness + colStats[6].darkness) / 3;
-                const top1Contrast = top1.darkness - unfilledBase;
-
                 let isColFilled = false;
-                if ((top1.darkness >= 16 && top1Contrast >= 10) || top1.darkness >= 35) {
-                    if (top1.darkness - top2.darkness >= 10 || top1Contrast >= 16) {
+                if (isBubbleFilled(top1)) {
+                    if (!isBubbleFilled(top2) || (top1.fillScore - top2.fillScore >= 25)) {
                         isColFilled = true;
                     }
                 }
@@ -1749,7 +1785,7 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO BORDER OVERLAP & ADAPTIVE CONTRAST)
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO BORDER OVERLAP & LETTERS)
             const bubbleRadius = 9.0;
             let score = 0;
             let correctCount = 0;
@@ -1778,39 +1814,18 @@
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
-                    const sample = sampleBubbleCore(bubbleX, rowY, paperVal);
+                    const sample = sampleBubbleInterior(bubbleX, rowY, paperVal);
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
-                        darkness: sample.darkness,
-                        darkRatio: sample.darkRatio,
+                        ...sample,
                         x: bubbleX,
                         y: rowY
                     });
                 }
 
-                // Sort options from darkest to lightest
-                const sortedOptions = [...bubbleStats].sort((a, b) => b.darkness - a.darkness);
-                const top1 = sortedOptions[0];
-                const top2 = sortedOptions[1];
-                const top3 = sortedOptions[2];
-                const top4 = sortedOptions[3];
-
-                // Baseline of unfilled options for this exact row
-                const unfilledBase = Math.max(0, (top3.darkness + top4.darkness) / 2);
-
-                function isOptionFilled(s) {
-                    const contrast = s.darkness - unfilledBase;
-                    // 1. Clear contrast above unfilled options of this row + minimum darkness
-                    if (s.darkness >= 15 && contrast >= 10) return true;
-                    // 2. High dark pixel ratio (pencil or pen core) + modest darkness
-                    if (s.darkness >= 14 && s.darkRatio >= 0.25 && contrast >= 8) return true;
-                    // 3. Strong absolute darkness
-                    if (s.darkness >= 35) return true;
-                    return false;
-                }
-
-                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                // Filter filled candidates using robust metric
+                const filledCandidates = bubbleStats.filter(b => isBubbleFilled(b));
                 let filledBubbles = [];
 
                 if (filledCandidates.length === 0) {
@@ -1818,8 +1833,13 @@
                 } else if (filledCandidates.length === 1) {
                     filledBubbles = filledCandidates;
                 } else {
-                    // Check if top1 is dominant (e.g. pencil smudge on top2 vs clear dark stroke on top1)
-                    if (top1.darkness - top2.darkness >= 22 && top1.darkness >= 38) {
+                    // Sort multiple candidates by fillScore descending
+                    const sortedCandidates = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                    const top1 = sortedCandidates[0];
+                    const top2 = sortedCandidates[1];
+
+                    // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
+                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 50) {
                         filledBubbles = [top1];
                     } else {
                         filledBubbles = filledCandidates;
@@ -1931,7 +1951,7 @@
                     '<td>' + markedCellHtml + '</td>' +
                     '<td>' + (correctAns ? '<span style="font-weight:700; color:#38BDF8;">' + correctAns + '</span>' : '<span style="color:#64748B;">None</span>') + '</td>' +
                     '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
-                '</tr>';
+                    '</tr>';
             }
 
             // Safe UI Scoreboard Updates
