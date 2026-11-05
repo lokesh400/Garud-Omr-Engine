@@ -1538,8 +1538,13 @@
             // Perspective Transform Matrix H (dst -> src)
             const H_mat = getPerspectiveTransform(dstRectCorners, corners);
 
-            // Read source frame pixels
-            const srcImgData = previewCtx.getImageData(0, 0, W, H);
+            // Read clean source frame pixels directly from video (immune to cyber HUD overlays)
+            const cleanCanvas = document.createElement('canvas');
+            cleanCanvas.width = W;
+            cleanCanvas.height = H;
+            const cleanCtx = cleanCanvas.getContext('2d');
+            cleanCtx.drawImage(video, 0, 0, W, H);
+            const srcImgData = cleanCtx.getImageData(0, 0, W, H);
             const src32 = new Uint32Array(srcImgData.data.buffer);
 
             // Create target rectified image
@@ -1582,9 +1587,10 @@
         }
 
         // Evaluate bubbles on the flat, leveled A4 sheet
-        // High-Precision Robust Bubble & Roll Number Evaluator
-        // Uses clean gutter paper baseline, median-based core sampling (immune to printed letters and circle borders),
-        // and fillScore dominance to eliminate false positives on unfilled bubbles.
+        // High-Precision Annular Moat & Interior OMR Evaluator
+        // Distinguishes printed letters/digits from authentic student shading by sampling
+        // both the annular moat (4.0 <= r <= 7.2px, where unfilled bubbles are pure white paper)
+        // and full interior (r <= 7.2px), with adaptive row-level baseline contrast.
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
@@ -1610,80 +1616,69 @@
                 return count > 0 ? (sum / count) : 255;
             }
 
-            // High-Precision Interior Bubble Sampler
-            // Analyzes the inner core (radius 4.2px, safely inside the ~9px bubble border)
-            // Uses the median pixel darkness and dark pixel ratio across small jitter offsets.
-            // In an UNFILLED bubble, thin printed glyphs (A/B/C/D or 0-9) cover <25% of the interior,
-            // so median darkness is near 0.
-            // In a genuine FILLED bubble (pencil, blue/black pen), the shading covers >50% of the core,
-            // producing significant median darkness and high dark pixel coverage.
-            function sampleBubbleInterior(nominalX, nominalY, paperVal) {
+            // Annular Moat & Interior Bubble Sampler
+            // Evaluates:
+            // 1) midDarkness: annular ring (4.0 <= r <= 7.2px) between center letter and outer border
+            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 24).
+            //    In filled bubbles, shading covers this moat (midDarkness >= 45).
+            // 2) fullDarkness: interior disk (r <= 7.2px)
+            function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
                 const offsets = [
                     [0, 0], [-1.5, 0], [1.5, 0], [0, -1.5], [0, 1.5]
                 ];
-                const coreR = 4.2;
-                const coreR2 = coreR * coreR;
-                const ir = Math.ceil(coreR);
-
                 let bestStat = null;
 
                 for (let k = 0; k < offsets.length; k++) {
                     const cx = nominalX + offsets[k][0];
                     const cy = nominalY + offsets[k][1];
-                    const pixels = [];
+                    let midSum = 0, midCount = 0, darkMidCount = 0;
+                    let fullSum = 0, fullCount = 0;
 
-                    for (let dy = -ir; dy <= ir; dy++) {
-                        for (let dx = -ir; dx <= ir; dx++) {
-                            if (dx * dx + dy * dy <= coreR2) {
-                                pixels.push(getGray(Math.round(cx + dx), Math.round(cy + dy)));
+                    for (let dy = -8; dy <= 8; dy++) {
+                        for (let dx = -8; dx <= 8; dx++) {
+                            const d2 = dx * dx + dy * dy;
+                            const d = Math.sqrt(d2);
+                            if (d > 7.4) continue;
+
+                            const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            fullSum += g;
+                            fullCount++;
+
+                            if (d >= 4.0 && d <= 7.2) {
+                                midSum += g;
+                                midCount++;
+                                if (g < (paperVal - 22)) darkMidCount++;
                             }
                         }
                     }
 
-                    if (pixels.length === 0) continue;
+                    if (midCount === 0 || fullCount === 0) continue;
 
-                    pixels.sort((a, b) => a - b);
-                    const count = pixels.length;
-                    const mean = pixels.reduce((a, b) => a + b, 0) / count;
-                    const median = pixels[Math.floor(count / 2)];
-                    const darkness = Math.max(0, paperVal - mean);
-                    const medDarkness = Math.max(0, paperVal - median);
-                    const darkPixels = pixels.filter(v => v < (paperVal - 22)).length;
-                    const darkRatio = darkPixels / count;
-                    const fillScore = medDarkness * 0.7 + (darkRatio * 100) * 0.3;
+                    const midMean = midSum / midCount;
+                    const fullMean = fullSum / fullCount;
+                    const midDarkness = Math.max(0, paperVal - midMean);
+                    const fullDarkness = Math.max(0, paperVal - fullMean);
+                    const midDarkRatio = darkMidCount / midCount;
+
+                    // Combined fill score: weights the clean moat around the center letter
+                    const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
 
                     if (!bestStat || fillScore > bestStat.fillScore) {
                         bestStat = {
-                            mean,
-                            median,
-                            darkness,
-                            medDarkness,
-                            darkRatio,
+                            midDarkness,
+                            fullDarkness,
+                            midDarkRatio,
                             fillScore
                         };
                     }
                 }
 
                 return bestStat || {
-                    mean: paperVal,
-                    median: paperVal,
-                    darkness: 0,
-                    medDarkness: 0,
-                    darkRatio: 0,
+                    midDarkness: 0,
+                    fullDarkness: 0,
+                    midDarkRatio: 0,
                     fillScore: 0
                 };
-            }
-
-            // Universal bubble filled classifier:
-            // Eliminates printed letters/digits while reliably detecting pencil, blue pen, black pen, or gel pen
-            function isBubbleFilled(s) {
-                // Rule 1: Solid median darkness + significant dark pixel coverage (pencil or pen)
-                if (s.medDarkness >= 22 && s.darkRatio >= 0.40) return true;
-                // Rule 2: High dark pixel coverage with good average darkness (faint or textured pencil marks)
-                if (s.darkRatio >= 0.52 && s.darkness >= 35) return true;
-                // Rule 3: Heavy dark pen fill
-                if (s.medDarkness >= 45) return true;
-                return false;
             }
 
             // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
@@ -1703,7 +1698,7 @@
                 let colStats = [];
                 for (let d = 0; d < 10; d++) {
                     const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
-                    const bubbleSample = sampleBubbleInterior(colX, rowY, rollPaperVal);
+                    const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
 
                     colStats.push({
                         digit: d,
@@ -1713,13 +1708,18 @@
                     });
                 }
 
+                // Sort ascending to get row baseline from lightest bubbles
+                const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
+                const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+
                 colStats.sort((a, b) => b.fillScore - a.fillScore);
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
+                const top1Contrast = top1.fillScore - colBase;
                 let isColFilled = false;
-                if (isBubbleFilled(top1)) {
-                    if (!isBubbleFilled(top2) || (top1.fillScore - top2.fillScore >= 25)) {
+                if ((top1.midDarkness >= 38 && top1Contrast >= 20) || (top1.midDarkness >= 55)) {
+                    if (top1.fillScore - top2.fillScore >= 18 || top1Contrast >= 25) {
                         isColFilled = true;
                     }
                 }
@@ -1785,7 +1785,7 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO BORDER OVERLAP & LETTERS)
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO PRINTED LETTERS & BORDERS)
             const bubbleRadius = 9.0;
             let score = 0;
             let correctCount = 0;
@@ -1804,7 +1804,7 @@
                 const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
                 const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
 
-                // Sample clean paper baseline in the column gutter (16px to right of Option D, zero bubble overlap!)
+                // Sample clean paper baseline in the column gutter (16px to right of Option D)
                 const optD_X = colX + 3 * U_BUBBLE_STEP * markerW;
                 const gutterSampleX = Math.min(W - 14, optD_X + 16);
                 const paperVal1 = sampleDisk(gutterSampleX, rowY, 3.5);
@@ -1814,7 +1814,7 @@
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
-                    const sample = sampleBubbleInterior(bubbleX, rowY, paperVal);
+                    const sample = sampleBubbleFeatures(bubbleX, rowY, paperVal);
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
@@ -1824,8 +1824,23 @@
                     });
                 }
 
-                // Filter filled candidates using robust metric
-                const filledCandidates = bubbleStats.filter(b => isBubbleFilled(b));
+                // Sort ascending to get row baseline from the 2 lightest options
+                const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
+                const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+
+                function isOptionFilled(s) {
+                    const contrast = s.fillScore - rowBase;
+                    // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
+                    if (s.midDarkness >= 40 && contrast >= 18) return true;
+                    // Rule 2: Faint HB pencil fill with clear relative contrast
+                    if (s.midDarkness >= 32 && contrast >= 15 && s.midDarkRatio >= 0.35) return true;
+                    // Rule 3: Heavy dark pen fill
+                    if (s.midDarkness >= 55) return true;
+                    return false;
+                }
+
+                // Filter filled candidates using annular metric
+                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
                 let filledBubbles = [];
 
                 if (filledCandidates.length === 0) {
@@ -1839,7 +1854,7 @@
                     const top2 = sortedCandidates[1];
 
                     // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
-                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 50) {
+                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 55) {
                         filledBubbles = [top1];
                     } else {
                         filledBubbles = filledCandidates;
