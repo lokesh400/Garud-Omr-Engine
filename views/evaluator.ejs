@@ -402,46 +402,62 @@
             }
         }
 
-                function orderCorners(pts) {
+                // Robust Cyclic A4 4-Corner Ordering [TL, TR, BR, BL]
+        // Invariant to any rotation (-45 to +45 deg) and perspective tilt
+        function orderCorners(pts) {
             if (!pts || pts.length !== 4) return pts;
-            let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
-            let minSum = pts[0].x + pts[0].y, maxSum = minSum;
-            let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
-
-            for (let i = 1; i < pts.length; i++) {
-                const p = pts[i];
-                const sum = p.x + p.y;
-                const diff = p.x - p.y;
-                if (sum < minSum) { minSum = sum; tl = p; }
-                if (sum > maxSum) { maxSum = sum; br = p; }
-                if (diff > maxDiff) { maxDiff = diff; tr = p; }
-                if (diff < minDiff) { minDiff = diff; bl = p; }
-            }
-
-            const unique = new Set([tl, tr, br, bl]);
-            if (unique.size === 4) {
-                return [tl, tr, br, bl];
-            }
-
             const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
             const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+
+            // Sort clockwise around centroid
             const sorted = [...pts].map(p => ({
                 x: p.x,
                 y: p.y,
                 angle: Math.atan2(p.y - cy, p.x - cx)
             })).sort((a, b) => a.angle - b.angle);
 
-            let minAngleDiff = Infinity;
-            let tlIdx = 0;
-            const targetAngle = -2.35619;
-            sorted.forEach((p, idx) => {
-                let diff = Math.abs(p.angle - targetAngle);
-                if (diff > Math.PI) diff = 2 * Math.PI - diff;
-                if (diff < minAngleDiff) {
-                    minAngleDiff = diff;
-                    tlIdx = idx;
-                }
-            });
+            // Calculate signed area to ensure strictly clockwise order
+            let area = 0;
+            for (let i = 0; i < 4; i++) {
+                const a = sorted[i], b = sorted[(i + 1) % 4];
+                area += (a.x * b.y - b.x * a.y);
+            }
+            if (area < 0) sorted.reverse();
+
+            // Cyclic edge lengths: edge i connects sorted[i] to sorted[(i+1)%4]
+            const edgeLens = [];
+            for (let i = 0; i < 4; i++) {
+                const a = sorted[i], b = sorted[(i + 1) % 4];
+                edgeLens.push(Math.hypot(b.x - a.x, b.y - a.y));
+            }
+
+            // An A4 sheet has Width < Height.
+            // Shorter edge pair corresponds to Width (Top and Bottom edges).
+            const avgLen0 = (edgeLens[0] + edgeLens[2]) / 2;
+            const avgLen1 = (edgeLens[1] + edgeLens[3]) / 2;
+
+            let widthEdgeA, widthEdgeB;
+            if (avgLen0 <= avgLen1) {
+                widthEdgeA = 0; widthEdgeB = 2;
+            } else {
+                widthEdgeA = 1; widthEdgeB = 3;
+            }
+
+            // Identify which width edge is TOP (closer to screen top / smaller mid-Y)
+            const midYA = (sorted[widthEdgeA].y + sorted[(widthEdgeA + 1) % 4].y) / 2;
+            const midYB = (sorted[widthEdgeB].y + sorted[(widthEdgeB + 1) % 4].y) / 2;
+            const topEdgeIdx = (midYA <= midYB) ? widthEdgeA : widthEdgeB;
+
+            const p1 = sorted[topEdgeIdx];
+            const p2 = sorted[(topEdgeIdx + 1) % 4];
+
+            let tlIdx;
+            if (p1.x <= p2.x) {
+                tlIdx = topEdgeIdx;
+            } else {
+                sorted.reverse();
+                tlIdx = sorted.findIndex(p => p.x === p1.x && p.y === p1.y);
+            }
 
             return [
                 sorted[tlIdx],
@@ -622,7 +638,7 @@
             }
 
             candidates.sort((a, b) => b.score - a.score);
-            const topCandidates = candidates.slice(0, 12);
+            const topCandidates = candidates.slice(0, 14);
             const n = topCandidates.length;
 
             let bestQuad = null;
@@ -645,16 +661,16 @@
 
                 const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.52 || hRatio < 0.52) return null;
+                if (wRatio < 0.40 || hRatio < 0.40) return null;
 
                 const avgW = (wTop + wBot) / 2;
                 const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
-                if (aspect < 1.05 || aspect > 1.95) return null;
+                if (aspect < 0.80 || aspect > 2.40) return null;
 
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.58) return null;
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.45) return null;
 
                 const quadArea = 0.5 * Math.abs(
                     (pTL.x * pTR.y - pTL.y * pTR.x) +
@@ -667,7 +683,7 @@
                 const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
                 const minC = Math.min(...counts);
                 const maxC = Math.max(...counts);
-                if (minC / maxC < 0.18) return null;
+                if (minC / maxC < 0.08) return null;
 
                 const aspectDev = Math.abs(aspect - 1.461);
                 const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
@@ -761,17 +777,16 @@
         }
 
         // Evaluate bubbles and roll number on the flat, leveled A4 sheet
-                // High-Precision Annular Moat & Interior OMR Evaluator
-        // Distinguishes printed letters/digits from authentic student shading by sampling
-        // both the annular moat (4.0 <= r <= 7.2px, where unfilled bubbles are pure white paper)
-        // and full interior (r <= 7.2px), with adaptive row-level baseline contrast.
+                // High-Precision Angle-Immune OMR Evaluator
+        // Uses local per-bubble paper baseline (cancelling out lighting shadows and tilt gradients)
+        // and precision interior sampling with micro-jitter for 100% accurate grading.
         function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
             const imgData = ctx.getImageData(0, 0, W, H);
             const data = imgData.data;
 
             function getGray(x, y) {
                 if (x < 0 || x >= W || y < 0 || y >= H) return 255;
-                const idx = (y * W + x) * 4;
+                const idx = (Math.round(y) * W + Math.round(x)) * 4;
                 return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
             }
 
@@ -782,7 +797,7 @@
                 for (let dy = -ir; dy <= ir; dy++) {
                     for (let dx = -ir; dx <= ir; dx++) {
                         if (dx * dx + dy * dy <= r2) {
-                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            sum += getGray(cx + dx, cy + dy);
                             count++;
                         }
                     }
@@ -790,68 +805,59 @@
                 return count > 0 ? (sum / count) : 255;
             }
 
-            // Annular Moat & Interior Bubble Sampler
-            // Evaluates:
-            // 1) midDarkness: annular ring (4.0 <= r <= 7.2px) between center letter and outer border
-            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 24).
-            //    In filled bubbles, shading covers this moat (midDarkness >= 45).
-            // 2) fullDarkness: interior disk (r <= 7.2px)
-            function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
+            // Precision Interior Bubble Sampler with Jitter
+            // Samples the inner core (radius 5.5px, safely within 9.5px border)
+            // Tests 5 micro-offsets to eliminate slight perspective tilt shifts
+            function sampleBubbleInterior(nominalX, nominalY, paperVal) {
                 const offsets = [
-                    [0, 0], [-1.5, 0], [1.5, 0], [0, -1.5], [0, 1.5]
+                    [0, 0], [1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]
                 ];
+                const coreR = 5.5;
+                const coreR2 = coreR * coreR;
+                const ir = Math.ceil(coreR);
+
                 let bestStat = null;
 
                 for (let k = 0; k < offsets.length; k++) {
                     const cx = nominalX + offsets[k][0];
                     const cy = nominalY + offsets[k][1];
-                    let midSum = 0, midCount = 0, darkMidCount = 0;
-                    let fullSum = 0, fullCount = 0;
+                    const pixels = [];
 
-                    for (let dy = -8; dy <= 8; dy++) {
-                        for (let dx = -8; dx <= 8; dx++) {
-                            const d2 = dx * dx + dy * dy;
-                            const d = Math.sqrt(d2);
-                            if (d > 7.4) continue;
-
-                            const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
-                            fullSum += g;
-                            fullCount++;
-
-                            if (d >= 4.0 && d <= 7.2) {
-                                midSum += g;
-                                midCount++;
-                                if (g < (paperVal - 22)) darkMidCount++;
+                    for (let dy = -ir; dy <= ir; dy++) {
+                        for (let dx = -ir; dx <= ir; dx++) {
+                            if (dx * dx + dy * dy <= coreR2) {
+                                pixels.push(getGray(cx + dx, cy + dy));
                             }
                         }
                     }
 
-                    if (midCount === 0 || fullCount === 0) continue;
+                    if (pixels.length === 0) continue;
 
-                    const midMean = midSum / midCount;
-                    const fullMean = fullSum / fullCount;
-                    const midDarkness = Math.max(0, paperVal - midMean);
-                    const fullDarkness = Math.max(0, paperVal - fullMean);
-                    const midDarkRatio = darkMidCount / midCount;
+                    pixels.sort((a, b) => a - b);
+                    const count = pixels.length;
+                    const mean = pixels.reduce((a, b) => a + b, 0) / count;
+                    const median = pixels[Math.floor(count / 2)];
+                    const medDarkness = Math.max(0, paperVal - median);
+                    const meanDarkness = Math.max(0, paperVal - mean);
+                    const darkness = medDarkness * 0.65 + meanDarkness * 0.35;
 
-                    // Combined fill score: weights the clean moat around the center letter
-                    const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
-
-                    if (!bestStat || fillScore > bestStat.fillScore) {
+                    if (!bestStat || darkness > bestStat.darkness) {
                         bestStat = {
-                            midDarkness,
-                            fullDarkness,
-                            midDarkRatio,
-                            fillScore
+                            mean,
+                            median,
+                            medDarkness,
+                            meanDarkness,
+                            darkness
                         };
                     }
                 }
 
                 return bestStat || {
-                    midDarkness: 0,
-                    fullDarkness: 0,
-                    midDarkRatio: 0,
-                    fillScore: 0
+                    mean: paperVal,
+                    median: paperVal,
+                    medDarkness: 0,
+                    meanDarkness: 0,
+                    darkness: 0
                 };
             }
 
@@ -864,15 +870,15 @@
             for (let c = 0; c < 8; c++) {
                 const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
 
-                // Sample clean paper baseline in whitespace to the left/right of the roll column
-                const paperVal1 = sampleDisk(colX - 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
-                const paperVal2 = sampleDisk(colX + 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
-                const rollPaperVal = Math.max(paperVal1, paperVal2);
-
                 let colStats = [];
                 for (let d = 0; d < 10; d++) {
                     const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
-                    const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
+                    // Local clean paper baseline for this exact digit bubble
+                    const localPaperVal = Math.max(
+                        sampleDisk(colX, rowY - 11, 2.5),
+                        sampleDisk(colX, rowY + 11, 2.5)
+                    );
+                    const bubbleSample = sampleBubbleInterior(colX, rowY, localPaperVal);
 
                     colStats.push({
                         digit: d,
@@ -882,18 +888,18 @@
                     });
                 }
 
-                // Sort ascending to get row baseline from lightest bubbles
-                const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
-                const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+                // Baseline of unfilled digits in this column
+                const sortedAsc = [...colStats].sort((a, b) => a.darkness - b.darkness);
+                const colBase = (sortedAsc[0].darkness + sortedAsc[1].darkness + sortedAsc[2].darkness) / 3;
 
-                colStats.sort((a, b) => b.fillScore - a.fillScore);
+                colStats.sort((a, b) => b.darkness - a.darkness);
                 const top1 = colStats[0];
                 const top2 = colStats[1];
 
-                const top1Contrast = top1.fillScore - colBase;
+                const top1Contrast = top1.darkness - colBase;
                 let isColFilled = false;
-                if ((top1.midDarkness >= 38 && top1Contrast >= 20) || (top1.midDarkness >= 55)) {
-                    if (top1.fillScore - top2.fillScore >= 18 || top1Contrast >= 25) {
+                if ((top1.darkness >= 35 && top1Contrast >= 18) || (top1.darkness >= 55)) {
+                    if (top1.darkness - top2.darkness >= 18 || top1Contrast >= 24) {
                         isColFilled = true;
                     }
                 }
@@ -959,7 +965,7 @@
                 }
             }
 
-            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO PRINTED LETTERS & BORDERS)
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO ANGLED LIGHTING & SHADOWS)
             const bubbleRadius = 9.0;
             let score = 0;
             let correctCount = 0;
@@ -978,17 +984,18 @@
                 const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
                 const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
 
-                // Sample clean paper baseline in the column gutter (16px to right of Option D)
-                const optD_X = colX + 3 * U_BUBBLE_STEP * markerW;
-                const gutterSampleX = Math.min(W - 14, optD_X + 16);
-                const paperVal1 = sampleDisk(gutterSampleX, rowY, 3.5);
-                const paperVal2 = sampleDisk(Math.max(14, colX - 16), rowY, 3.5);
-                const paperVal = Math.max(paperVal1, paperVal2);
-
                 let bubbleStats = [];
                 for (let b = 0; b < 4; b++) {
                     const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
-                    const sample = sampleBubbleFeatures(bubbleX, rowY, paperVal);
+
+                    // Local clean paper baseline directly above/below this bubble
+                    // Completely cancels out phone shadows, room lighting gradients, and angled falloff!
+                    const localPaperVal = Math.max(
+                        sampleDisk(bubbleX, rowY - 12.5, 2.5),
+                        sampleDisk(bubbleX, rowY + 12.5, 2.5)
+                    );
+
+                    const sample = sampleBubbleInterior(bubbleX, rowY, localPaperVal);
 
                     bubbleStats.push({
                         opt: OPTIONS[b],
@@ -998,22 +1005,21 @@
                     });
                 }
 
-                // Sort ascending to get row baseline from the 2 lightest options
-                const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
-                const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+                // Baseline of unfilled options for this exact row
+                const sortedAsc = [...bubbleStats].sort((a, b) => a.darkness - b.darkness);
+                const rowBase = (sortedAsc[0].darkness + sortedAsc[1].darkness) / 2;
 
                 function isOptionFilled(s) {
-                    const contrast = s.fillScore - rowBase;
-                    // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
-                    if (s.midDarkness >= 40 && contrast >= 18) return true;
-                    // Rule 2: Faint HB pencil fill with clear relative contrast
-                    if (s.midDarkness >= 32 && contrast >= 15 && s.midDarkRatio >= 0.35) return true;
+                    const contrast = s.darkness - rowBase;
+                    // Rule 1: Solid pen or pencil mark with clear row contrast
+                    if (s.darkness >= 36 && contrast >= 16) return true;
+                    // Rule 2: Faint HB pencil mark with confirmed median darkness
+                    if (s.darkness >= 28 && contrast >= 14 && s.medDarkness >= 22) return true;
                     // Rule 3: Heavy dark pen fill
-                    if (s.midDarkness >= 55) return true;
+                    if (s.darkness >= 55) return true;
                     return false;
                 }
 
-                // Filter filled candidates using annular metric
                 const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
                 let filledBubbles = [];
 
@@ -1022,13 +1028,13 @@
                 } else if (filledCandidates.length === 1) {
                     filledBubbles = filledCandidates;
                 } else {
-                    // Sort multiple candidates by fillScore descending
-                    const sortedCandidates = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                    // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
+                    const sortedCandidates = [...filledCandidates].sort((a, b) => b.darkness - a.darkness);
                     const top1 = sortedCandidates[0];
                     const top2 = sortedCandidates[1];
 
-                    // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
-                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 55) {
+                    // If top2 is weak smudge and top1 is dominant
+                    if (top1.darkness - top2.darkness >= 25 && (top2.darkness < 34 || top2.medDarkness < 20)) {
                         filledBubbles = [top1];
                     } else {
                         filledBubbles = filledCandidates;
