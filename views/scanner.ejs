@@ -2263,7 +2263,12 @@
                         rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
                     }
 
-                    const imageData = canvas.toDataURL('image/jpeg', 0.85);
+                    let imageData = null;
+                    try {
+                        imageData = canvas.toDataURL('image/jpeg', 0.78);
+                    } catch (e) {
+                        imageData = canvas.toDataURL();
+                    }
 
                     window.lastEvaluationData = {
                         rollNumber: rollNo,
@@ -2321,21 +2326,28 @@
                 pill.style.color = '#0284C7';
             }
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 22000);
+
             try {
-                const res = await fetch('/api/paper/<%= paper._id %>/save-result', {
+                const paperId = encodeURIComponent('<%= paper._id %>');
+                const res = await fetch('/api/paper/' + paperId + '/save-result', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(window.lastEvaluationData)
+                    body: JSON.stringify(window.lastEvaluationData),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
                 const data = await res.json();
 
                 if (data.success) {
                     if (pill) {
-                        pill.textContent = '✓ Saved to Cloudinary (' + (data.cloudinaryAccount || 'Cloud') + ')';
+                        pill.textContent = '✓ Saved (' + (data.cloudinaryAccount || 'Cloud') + ')';
                         pill.style.background = '#DCFCE7';
                         pill.style.color = '#15803D';
                     }
-                    updateSaveButtonsState(true, '✓ Saved! Launching Camera...');
+                    updateSaveButtonsState(true, '✓ Saved! Scanning Next...');
 
                     // Clear stored data and reset state
                     window.lastEvaluationData = null;
@@ -2344,17 +2356,29 @@
                     // Immediately resume live camera and scan next sheet
                     setTimeout(() => {
                         restartScanner();
-                    }, 400);
+                        updateSaveButtonsState(false, '💾 Save &amp; Scan Next');
+                    }, 500);
                 } else {
                     alert('Error saving evaluation: ' + (data.error || 'Failed to save'));
                     isSavingSubmission = false;
                     updateSaveButtonsState(false, '💾 Save &amp; Scan Next');
+                    if (pill) {
+                        pill.textContent = '⚠️ Save Failed';
+                        pill.style.background = '#FEE2E2';
+                        pill.style.color = '#DC2626';
+                    }
                 }
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.error('Save error:', err);
-                alert('Failed to upload to Cloudinary: ' + err.message);
+                alert('Save status: ' + (err.name === 'AbortError' ? 'Upload took too long. Please retry.' : err.message));
                 isSavingSubmission = false;
                 updateSaveButtonsState(false, '💾 Save &amp; Scan Next');
+                if (pill) {
+                    pill.textContent = '⚠️ Upload Error';
+                    pill.style.background = '#FEE2E2';
+                    pill.style.color = '#DC2626';
+                }
             }
         }
 

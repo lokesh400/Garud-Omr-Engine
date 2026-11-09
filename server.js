@@ -338,8 +338,13 @@ function computeSectionWise(breakdown, totalQuestions, customSections = null) {
 // Save Evaluated Result to Cloudinary & MongoDB (submissions collection)
 app.post('/api/paper/:id/save-result', async (req, res) => {
     try {
-        const paper = await Paper.findById(req.params.id);
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
         if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        if (!req.body) {
+            return res.status(400).json({ error: 'Missing request body' });
+        }
 
         const {
             rollnumber,
@@ -362,11 +367,28 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
         const studentRoll = (rollnumber || rollNumber || 'STUDENT-' + Date.now().toString().slice(-4)).toString().trim();
         const totalQ = Number(totalQuestions) || paper.numQuestions || 50;
 
+        console.log(`[Save Result] Processing OMR submission for roll: "${studentRoll}" on paper: "${paper._id}"`);
+
         // Upload checked OMR image with green/red marks to Cloudinary (using 5-account rotation)
-        const uploadResult = await uploadOmrSheet(imageData, {
-            rollNumber: studentRoll,
-            paperId: req.params.id
-        });
+        let uploadResult = null;
+        try {
+            uploadResult = await uploadOmrSheet(imageData, {
+                rollNumber: studentRoll,
+                paperId: String(paper._id)
+            });
+            console.log(`[Cloudinary] Successfully uploaded OMR copy for ${studentRoll} to account: ${uploadResult.account}`);
+        } catch (cloudErr) {
+            console.warn(`[Cloudinary Warning] Upload to Cloudinary pool failed (${cloudErr.message}). Saving copy locally as fallback.`);
+            const filename = `omr_${Date.now()}_${studentRoll.replace(/[^\w-]/g, '_')}.jpg`;
+            const localFilePath = path.join(uploadDir, filename);
+            const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+            fs.writeFileSync(localFilePath, Buffer.from(base64Data, 'base64'));
+            uploadResult = {
+                url: '/uploads/' + filename,
+                publicId: 'local_' + filename,
+                account: 'local_storage'
+            };
+        }
 
         // Compute section wise marks & aggregate using custom paper sections if defined
         const secCalc = computeSectionWise(breakdown, totalQ, paper.sections);

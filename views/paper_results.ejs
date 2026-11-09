@@ -615,7 +615,7 @@
                                         <span style="font-size: 0.72rem;"><%= new Date(scannedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
                                     </td>
                                     <td style="text-align: right; white-space: nowrap;">
-                                        <button type="button" class="btn-view-omr" onclick="openOmrModal(<%= JSON.stringify(r).replace(/"/g, '&quot;') %>)">
+                                        <button type="button" class="btn-view-omr" onclick="openOmrModalById('<%= r._id %>')">
                                             <span>🖼️ View OMR</span>
                                         </button>
                                         <button type="button" class="btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete from database and Cloudinary">
@@ -718,6 +718,21 @@
     <script>
         let currentModalSubmission = null;
         const answerKey = <%- typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}' %>;
+        const allSubmissionsData = <%- JSON.stringify(results || []) %>;
+        const submissionsMap = {};
+        allSubmissionsData.forEach(s => {
+            if (s && s._id) submissionsMap[String(s._id)] = s;
+        });
+
+        function openOmrModalById(id) {
+            const data = submissionsMap[String(id)];
+            if (!data) {
+                console.error('Submission not found for ID:', id);
+                alert('Could not load OMR copy details.');
+                return;
+            }
+            openOmrModal(data);
+        }
 
         // Modal functions
         function openOmrModal(data) {

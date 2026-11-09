@@ -1,3 +1,6 @@
+const dns = require('dns');
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -50,17 +53,23 @@ async function uploadOmrSheet(imageSource, metadata = {}) {
         secure: true
       });
 
+      const safePaperId = String(metadata.paperId || 'general').replace(/[^\w-]/g, '_');
+      const safeRoll = String(metadata.rollNumber || 'UNKNOWN').replace(/[^\w-]/g, '_');
+
       const uploadOptions = {
         folder: 'garud_omr_sheets',
         resource_type: 'image',
-        tags: ['omr_evaluation', metadata.paperId || 'general'],
-        context: {
-          rollNumber: metadata.rollNumber || 'UNKNOWN',
-          paperId: metadata.paperId || ''
-        }
+        tags: ['omr_evaluation', safePaperId],
+        context: `rollNumber=${safeRoll}|paperId=${safePaperId}`,
+        timeout: 10000
       };
 
-      const result = await cloudinary.uploader.upload(imageSource, uploadOptions);
+      const uploadPromise = cloudinary.uploader.upload(imageSource, uploadOptions);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout after 10s on account ${acc.cloud_name}`)), 10000)
+      );
+
+      const result = await Promise.race([uploadPromise, timeoutPromise]);
 
       return {
         url: result.secure_url,

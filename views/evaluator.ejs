@@ -1390,7 +1390,7 @@
 
                     const imageData = canvas.toDataURL('image/jpeg', 0.85);
 
-                    fetch('/api/paper/<%= paper._id %>/save-result', {
+                    fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/save-result', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
