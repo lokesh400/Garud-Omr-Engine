@@ -624,7 +624,7 @@
             <div class="scanner-bottom-bar">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="color: #94A3B8; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;">
-                        💡 Auto-freezes on corners • Click screen to compute
+                        💡 Auto-captures photo when corners align • Or tap screen
                     </span>
                 </div>
                 <div>
@@ -754,7 +754,7 @@
         let smoothedCorners = null;
         let lastRawCorners = null;
         let lockStreak = 0;
-        const LOCK_REQUIRED_FRAMES = 12; // ~0.4s steady hold to freeze
+        const LOCK_REQUIRED_FRAMES = 8; // ~0.25s steady hold to auto-capture
         let isFrozen = false;
         let frozenCorners = null;
 
@@ -967,7 +967,7 @@
                         const maxDelta = Math.max(...currentCorners.map((pt, i) =>
                             Math.hypot(pt.x - lastRawCorners[i].x, pt.y - lastRawCorners[i].y)
                         ));
-                        if (maxDelta < 14.0) {
+                        if (maxDelta < 16.0) {
                             isSteady = true;
                         }
                     } else {
@@ -985,8 +985,8 @@
                         smoothedCorners = currentCorners;
                     } else {
                         smoothedCorners = smoothedCorners.map((pt, i) => ({
-                            x: pt.x * 0.75 + currentCorners[i].x * 0.25,
-                            y: pt.y * 0.75 + currentCorners[i].y * 0.25
+                            x: pt.x * 0.70 + currentCorners[i].x * 0.30,
+                            y: pt.y * 0.70 + currentCorners[i].y * 0.30
                         }));
                     }
 
@@ -994,9 +994,9 @@
 
                     hudChip.classList.add('locked');
                     statusDot.className = 'status-dot';
-                    statusDot.style.background = '#06B6D4';
-                    statusDot.style.boxShadow = '0 0 10px #06B6D4';
-                    hudStatus.textContent = `Corners detected • Hold steady (${pct}%)`;
+                    statusDot.style.background = '#10B981';
+                    statusDot.style.boxShadow = '0 0 10px #10B981';
+                    hudStatus.textContent = `Corners detected • Auto-capturing (${pct}%)`;
 
                     if (lockMeter) {
                         lockMeter.classList.add('active');
@@ -1004,13 +1004,14 @@
                     }
 
                     captureBtn.classList.add('locked');
-                    captureBtn.innerHTML = '⚡ Click Screen or Here to Compute';
+                    captureBtn.innerHTML = '⚡ Auto-Capturing...';
 
-                    drawCyberOverlay(previewCtx, smoothedCorners, false, pct);
+                    drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES, pct);
 
-                    // Once corners are held steady: FREEZE the scene!
+                    // AUTOMATIC CAPTURE WITHOUT TAPPING:
+                    // Once 4 corners are recognized and steady for required frames, auto-click photo & compute!
                     if (lockStreak >= LOCK_REQUIRED_FRAMES) {
-                        freezeScene();
+                        snapAndWarpSheet(smoothedCorners);
                         return;
                     }
                 } else {
@@ -1144,7 +1145,7 @@
                 const v = wB * wF * diff * diff;
                 if (v > maxVar) { maxVar = v; thresh = i + 1; }
             }
-            thresh = Math.max(40, Math.min(thresh, 175));
+            thresh = Math.max(65, Math.min(thresh, 160));
 
             // 3. Connected Component Analysis across the frame
             const visited = new Uint8Array(total);
@@ -1244,7 +1245,7 @@
                         }
 
                         const distFromCenter = Math.hypot(bx - sw / 2, by - sh / 2);
-                        const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.0) - (ringDarkRatio * 10.0);
+                        const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.5) - (ringDarkRatio * 10.0);
 
                         candidates.push({
                             x: bx,
@@ -1263,7 +1264,7 @@
             if (candidates.length < 4) return null;
 
             candidates.sort((a, b) => b.score - a.score);
-            const topCandidates = candidates.slice(0, 8);
+            const topCandidates = candidates.slice(0, 10);
             const n = topCandidates.length;
 
             let bestQuad = null;
@@ -1287,16 +1288,16 @@
 
                 const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.65 || hRatio < 0.65) return null;
+                if (wRatio < 0.60 || hRatio < 0.60) return null;
 
                 const avgW = (wTop + wBot) / 2;
                 const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
-                if (aspect < 1.15 || aspect > 1.80) return null;
+                if (aspect < 1.10 || aspect > 1.90) return null;
 
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.70) return null;
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.65) return null;
 
                 const quadArea = 0.5 * Math.abs(
                     (pTL.x * pTR.y - pTL.y * pTR.x) +
@@ -1309,10 +1310,10 @@
                 const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
                 const minC = Math.min(...counts);
                 const maxC = Math.max(...counts);
-                if (minC / maxC < 0.25) return null;
+                if (minC / maxC < 0.22) return null;
 
                 const aspectDev = Math.abs(aspect - 1.461);
-                const score = quadArea * (1.0 - aspectDev * 0.5) * wRatio * hRatio;
+                const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
 
                 return { ordered, score };
             }
