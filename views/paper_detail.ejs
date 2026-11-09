@@ -89,6 +89,52 @@
         }
 
         /* Full Space Answer Key Matrix Grid */
+        .section-quick-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .section-quick-tab {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .section-quick-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .section-divider-banner {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            color: #FFFFFF;
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 0 2px 0;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            border: 1px solid #334155;
+            scroll-margin-top: 80px;
+        }
+
         .omr-grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
@@ -405,10 +451,13 @@
 </head>
 <body>
     <% 
+        const totalQ = paper.total_questions || paper.numQuestions || 50;
         let keyCount = 0;
-        if (paper.answerKey) {
+        if (Array.isArray(paper.answer_key) && paper.answer_key.length > 0) {
+            paper.answer_key.forEach(k => { if(k) keyCount++; });
+        } else if (paper.answerKey) {
             if (typeof paper.answerKey.get === 'function') {
-                for(let i = 1; i <= paper.numQuestions; i++) {
+                for(let i = 1; i <= totalQ; i++) {
                     if(paper.answerKey.get(String(i))) keyCount++;
                 }
             } else {
@@ -420,30 +469,72 @@
     <div class="full-screen-container">
         <!-- Slim Sticky Top Bar -->
         <header class="slim-top-bar">
-            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;">
                 <a href="/" class="btn-back" title="Back to Dashboard">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     <span>Dashboard</span>
                 </a>
                 <h1 class="page-title"><%= paper.title %></h1>
+                <% if (paper.subject) { %>
+                    <span style="background: #E0E7FF; color: var(--primary); padding: 3px 9px; border-radius: var(--radius-full); font-size: 0.74rem; font-weight: 800;">
+                        <%= paper.subject %>
+                    </span>
+                <% } %>
+                <% if (paper._id) { %>
+                    <span style="background: #0F172A; color: #38BDF8; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                        #<%= paper._id %>
+                    </span>
+                <% } %>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
                 <a href="/paper/<%= paper._id %>/results" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.78rem; text-decoration: none; border-radius: var(--radius-full);" title="View Paper Results & Checked OMR Copies">
                     📊 Results
                 </a>
                 <div class="header-pill">
-                    <span id="headerCounter"><%= keyCount %>/<%= paper.numQuestions %></span>
+                    <span id="headerCounter"><%= keyCount %>/<%= totalQ %></span>
                 </div>
             </div>
         </header>
 
+        <!-- Section Navigation Quick Jump Pills (if sections exist) -->
+        <% if (paper.sections && paper.sections.length > 0) { %>
+            <div class="section-quick-tabs">
+                <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; align-self: center; margin-right: 4px;">Sections:</span>
+                <% paper.sections.forEach(s => { %>
+                    <a href="#sec_<%= s.from_question %>" class="section-quick-tab">
+                        📚 <%= s.name %> <span style="font-family:'JetBrains Mono',monospace; font-size:0.74rem; opacity:0.8;">(Q<%= s.from_question %>-Q<%= s.to_question %>)</span>
+                    </a>
+                <% }) %>
+            </div>
+        <% } %>
+
         <!-- Form wrapping the Answer Key Matrix -->
         <form action="/paper/<%= paper._id %>/answerkey" method="POST" id="answerKeyForm">
             <div class="omr-grid-container" id="answerGrid">
-                <% for(let i=1; i<=paper.numQuestions; i++) { %>
+                <% for(let i=1; i<=totalQ; i++) { %>
+                    <% 
+                        const secHeader = (paper.sections && paper.sections.length > 0) 
+                            ? paper.sections.find(s => s.from_question === i) 
+                            : null;
+                    %>
+                    <% if (secHeader) { %>
+                        <div class="section-divider-banner" id="sec_<%= secHeader.from_question %>">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.1rem;">📚</span>
+                                <strong style="font-size:0.95rem;"><%= secHeader.name %></strong>
+                                <span style="opacity:0.8; font-size:0.8rem; font-family:'JetBrains Mono',monospace;">(Q<%= secHeader.from_question %> - Q<%= secHeader.to_question %>)</span>
+                            </div>
+                            <div style="font-size:0.8rem; font-family:'JetBrains Mono',monospace; opacity:0.85;">
+                                <%= secHeader.max_marks || ((secHeader.to_question - secHeader.from_question + 1) * 4) %> Max Marks
+                            </div>
+                        </div>
+                    <% } %>
+
                     <% 
                         let currentVal = "";
-                        if (paper.answerKey) {
+                        if (Array.isArray(paper.answer_key) && paper.answer_key.length >= i) {
+                            currentVal = paper.answer_key[i - 1] || "";
+                        } else if (paper.answerKey) {
                             if (typeof paper.answerKey.get === 'function') {
                                 currentVal = paper.answerKey.get(String(i)) || "";
                             } else {
@@ -478,7 +569,7 @@
         <!-- Floating Action Dock (Clear All with confirmation & Save Key with confirmation) -->
         <div class="floating-action-bar">
             <div class="floating-counter">
-                <span id="floatingCounter"><%= keyCount %></span> / <%= paper.numQuestions %> Keyed
+                <span id="floatingCounter"><%= keyCount %></span> / <%= totalQ %> Keyed
             </div>
             <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers with confirmation">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -492,7 +583,7 @@
     </div>
 
     <script>
-        const totalQuestions = <%= paper.numQuestions %>;
+        const totalQuestions = <%= totalQ %>;
 
         function selectAnswer(qNum, opt) {
             const input = document.getElementById('input_q' + qNum);

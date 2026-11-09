@@ -336,13 +336,23 @@
             <% if (papers && papers.length> 0) { %>
                 <div class="paper-list">
                     <% papers.forEach(paper=> { %>
-                        <% const hasKey=paper.answerKey && (paper.answerKey.size> 0 ||
-                            Object.keys(paper.answerKey).length > 0); %>
+                        <% 
+                            const hasKey = (Array.isArray(paper.answer_key) && paper.answer_key.some(k => k)) || (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0));
+                            const totalQ = paper.total_questions || paper.numQuestions || 50;
+                        %>
                             <div class="paper-card">
                                 <div class="paper-card-top">
-                                    <h3 class="paper-card-title">
-                                        <%= paper.title %>
-                                    </h3>
+                                    <div>
+                                        <h3 class="paper-card-title">
+                                            <%= paper.title %>
+                                        </h3>
+                                        <% if (paper.subject) { %>
+                                            <span style="display:inline-block; margin-top:2px; font-size:0.75rem; font-weight:700; color:var(--text-muted);">
+                                                Subject: <strong style="color:var(--text-main);"><%= paper.subject %></strong>
+                                                <% if (paper._id) { %> &bull; <span style="font-family:'JetBrains Mono',monospace;">#<%= paper._id %></span><% } %>
+                                            </span>
+                                        <% } %>
+                                    </div>
                                     <div class="paper-badges">
                                         <span class="badge-count">
                                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -351,8 +361,13 @@
                                                 <circle cx="12" cy="12" r="10"></circle>
                                                 <polyline points="12 6 12 12 16 14"></polyline>
                                             </svg>
-                                            <%= paper.numQuestions %> Questions
+                                            <%= totalQ %> Questions
                                         </span>
+                                        <% if (paper.sections && paper.sections.length > 0) { %>
+                                            <span class="badge-count" style="background: #EEF2F6; color: #334155;">
+                                                📚 <%= paper.sections.length %> Sections
+                                            </span>
+                                        <% } %>
                                         <% if (hasKey) { %>
                                             <span class="badge-status badge-ready">
                                                 ✓ Key Configured

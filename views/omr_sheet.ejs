@@ -245,6 +245,9 @@
         <div class="omr-header">
             <div class="student-info">
                 <h2><%= paper.title %></h2>
+                <p style="margin: 2px 0 6px 0; font-size: 11px; font-weight: 700; color: #333;">
+                    Subject: <%= paper.subject || 'General' %> <%= paper._id ? `• Code: ${paper._id}` : '' %>
+                </p>
                 <p>Name: _______________________________</p>
                 <p>Date: _______________________________</p>
                 <p>Signature: ___________________________</p>

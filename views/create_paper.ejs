@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Assessment Paper - Garud OMR</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         .page-header-nav {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 2.25rem;
+            margin-bottom: 2rem;
         }
         .breadcrumb-wrap {
             display: flex;
@@ -35,13 +35,13 @@
             transform: translateX(-2px);
         }
         .form-card {
-            max-width: 640px;
+            max-width: 780px;
             margin: 0 auto;
             background: var(--surface);
             border-radius: var(--radius-xl);
             border: 1px solid rgba(226, 232, 240, 0.85);
             box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
-            padding: 2.75rem 2.85rem;
+            padding: 2.5rem 2.75rem;
             position: relative;
             overflow: hidden;
         }
@@ -59,8 +59,8 @@
             text-align: center;
         }
         .form-icon-circle {
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             margin: 0 auto 1.25rem;
             background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(6, 182, 212, 0.12) 100%);
             border-radius: 18px;
@@ -82,6 +82,16 @@
             font-size: 0.95rem;
             margin: 0;
             line-height: 1.5;
+        }
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr 1fr;
+            gap: 16px;
         }
         .preset-badge-group {
             display: flex;
@@ -113,6 +123,111 @@
             border-color: var(--primary);
             box-shadow: 0 4px 12px var(--primary-glow);
         }
+
+        /* Section Builder Styles */
+        .section-builder-box {
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            border-radius: var(--radius-lg);
+            padding: 1.35rem 1.45rem;
+            margin: 1.75rem 0;
+        }
+        .section-builder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .section-builder-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-item-row {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 34px;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+        }
+        .section-item-row:hover {
+            border-color: #CBD5E1;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+        .sec-field-label {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .sec-input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            outline: none;
+            transition: var(--transition);
+        }
+        .sec-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+        .sec-input-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            text-align: center;
+        }
+        .btn-remove-sec {
+            background: #FEE2E2;
+            color: #DC2626;
+            border: 1px solid #FCA5A5;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 18px;
+        }
+        .btn-remove-sec:hover {
+            background: #EF4444;
+            color: #FFFFFF;
+            transform: scale(1.08);
+        }
+        .section-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            background: #E0E7FF;
+            color: var(--primary);
+            border-radius: var(--radius-full);
+            font-size: 0.78rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         .preview-info-box {
             background: linear-gradient(135deg, rgba(79, 70, 229, 0.04) 0%, rgba(6, 182, 212, 0.04) 100%);
             border: 1px solid rgba(79, 70, 229, 0.15);
@@ -132,11 +247,25 @@
         }
 
         /* Mobile Responsiveness */
-        @media (max-width: 640px) {
-            .page-header-nav {
-                flex-direction: row;
-                align-items: center;
-                margin-bottom: 1.5rem;
+        @media (max-width: 768px) {
+            .form-row-2, .form-row-3 {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .section-item-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .sec-col-name {
+                grid-column: span 2;
+            }
+            .sec-col-btn {
+                grid-column: span 2;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .btn-remove-sec {
+                margin-top: 4px;
             }
             .form-card {
                 padding: 1.75rem 1.25rem;
@@ -144,30 +273,6 @@
             }
             .form-card-header h2 {
                 font-size: 1.45rem;
-            }
-            .form-icon-circle {
-                width: 50px;
-                height: 50px;
-                border-radius: 14px;
-                margin-bottom: 1rem;
-            }
-            .preview-info-box {
-                padding: 12px 14px;
-                font-size: 0.85rem;
-                margin: 1.25rem 0;
-            }
-            .preset-tag {
-                padding: 5px 12px;
-                font-size: 0.78rem;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .breadcrumb-wrap span:last-child {
-                display: none;
-            }
-            .breadcrumb-wrap span:nth-last-child(2) {
-                display: none;
             }
         }
     </style>
@@ -194,47 +299,118 @@
                     </svg>
                 </div>
                 <h2>Create Assessment Paper</h2>
-                <p>Configure paper details and question count to generate standardized printable OMR answer sheets.</p>
+                <p>Configure paper code, question count, and custom section ranges to generate printable OMR sheets and evaluation keys.</p>
             </div>
 
-            <form action="/paper/new" method="POST" id="createPaperForm">
-                <div class="form-group">
-                    <label for="title">Paper / Exam Title</label>
-                    <input 
-                        type="text" 
-                        id="title" 
-                        name="title" 
-                        class="form-control" 
-                        required 
-                        placeholder="e.g. Physics Midterm Examination 2026"
-                        autofocus
-                    >
+            <form action="/paper/new" method="POST" id="createPaperForm" onsubmit="prepareSectionsPayload()">
+                <!-- Row 1: Title & Subject -->
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="title">Paper / Exam Title *</label>
+                        <input 
+                            type="text" 
+                            id="title" 
+                            name="title" 
+                            class="form-control" 
+                            required 
+                            placeholder="e.g. Mathematics Term 1"
+                            autofocus
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject *</label>
+                        <input 
+                            type="text" 
+                            id="subject" 
+                            name="subject" 
+                            class="form-control" 
+                            required 
+                            placeholder="e.g. Mathematics"
+                            value="Mathematics"
+                        >
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="numQuestions">Total Questions (1 - 200)</label>
-                    <input 
-                        type="number" 
-                        id="numQuestions" 
-                        name="numQuestions" 
-                        class="form-control" 
-                        required 
-                        min="1" 
-                        max="200" 
-                        value="50"
-                        style="font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700;"
-                    >
-                    
-                    <div style="margin-top: 14px;">
-                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Presets:</span>
-                        <div class="preset-badge-group">
-                            <span class="preset-tag" data-val="20">20 Qs (Quiz)</span>
-                            <span class="preset-tag active" data-val="50">50 Qs (Standard)</span>
-                            <span class="preset-tag" data-val="100">100 Qs (Midterm)</span>
-                            <span class="preset-tag" data-val="180">180 Qs (NEET)</span>
-                            <span class="preset-tag" data-val="200">200 Qs (Max)</span>
+                <!-- Row 2: Paper Code ID, Total Questions, Max Marks -->
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="paper_id">Paper Code / ID (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="paper_id" 
+                            name="paper_id" 
+                            class="form-control" 
+                            placeholder="e.g. MATH_101_FALL_2026"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 700;"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="numQuestions">Total Questions *</label>
+                        <input 
+                            type="number" 
+                            id="numQuestions" 
+                            name="numQuestions" 
+                            class="form-control" 
+                            required 
+                            min="1" 
+                            max="200" 
+                            value="180"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800;"
+                            onchange="onTotalQuestionsChanged()"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="max_marks">Max Marks</label>
+                        <input 
+                            type="number" 
+                            id="max_marks" 
+                            name="max_marks" 
+                            class="form-control" 
+                            value="180"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800;"
+                        >
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div style="margin: -6px 0 16px 0;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Presets:</span>
+                    <div class="preset-badge-group">
+                        <span class="preset-tag" data-val="20">20 Qs (Quiz)</span>
+                        <span class="preset-tag" data-val="50">50 Qs (Standard)</span>
+                        <span class="preset-tag" data-val="100">100 Qs (Midterm)</span>
+                        <span class="preset-tag active" data-val="180">180 Qs (NEET)</span>
+                        <span class="preset-tag" data-val="200">200 Qs (Max)</span>
+                    </div>
+                </div>
+
+                <!-- Multiple Sections Configuration Builder -->
+                <div class="section-builder-box">
+                    <div class="section-builder-header">
+                        <div>
+                            <div class="section-builder-title">
+                                <span>📚 Paper Sections & Question Ranges</span>
+                                <span class="section-status-badge" id="sectionStatusBadge">4 Sections</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                                Create multiple sections and select question range (From Q to To Q) for each section.
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="resetToStandardSections()" title="Generate balanced section ranges based on total questions">
+                                ⚡ Auto Divide
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="addSectionRow('', 1, 10, 40)" title="Add another section">
+                                ＋ Add Section
+                            </button>
                         </div>
                     </div>
+
+                    <!-- Dynamic Section Rows Container -->
+                    <div id="sectionRowsContainer"></div>
+
+                    <!-- Hidden serialized JSON input -->
+                    <input type="hidden" name="sections" id="sectionsInput" value="[]">
                 </div>
 
                 <div class="preview-info-box">
@@ -244,7 +420,7 @@
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
                     <div>
-                        Standard 4-Corner OMR markers with options <strong>A, B, C, D</strong> will be automatically laid out for high-speed evaluation.
+                        Standard 4-Corner OMR markers with options <strong>A, B, C, D</strong> will be automatically generated. Questions will be grouped section-wise during evaluation.
                     </div>
                 </div>
 
@@ -256,28 +432,143 @@
     </div>
 
     <script>
-        // Preset selector functionality
         const numInput = document.getElementById('numQuestions');
+        const maxMarksInput = document.getElementById('max_marks');
         const tags = document.querySelectorAll('.preset-tag');
+        const sectionContainer = document.getElementById('sectionRowsContainer');
+        const sectionsInput = document.getElementById('sectionsInput');
+        const sectionStatusBadge = document.getElementById('sectionStatusBadge');
 
+        // Presets Click
         tags.forEach(tag => {
             tag.addEventListener('click', () => {
-                const val = tag.getAttribute('data-val');
+                const val = parseInt(tag.getAttribute('data-val'), 10);
                 numInput.value = val;
+                maxMarksInput.value = val; // Default 1 mark or editable
                 tags.forEach(t => t.classList.remove('active'));
                 tag.classList.add('active');
+                resetToStandardSections();
             });
         });
 
-        numInput.addEventListener('input', () => {
+        function onTotalQuestionsChanged() {
+            const val = parseInt(numInput.value, 10) || 50;
+            maxMarksInput.value = val;
             tags.forEach(tag => {
-                if (tag.getAttribute('data-val') === numInput.value) {
+                if (parseInt(tag.getAttribute('data-val'), 10) === val) {
                     tag.classList.add('active');
                 } else {
                     tag.classList.remove('active');
                 }
             });
-        });
+            resetToStandardSections();
+        }
+
+        // Add Section Row to DOM
+        function addSectionRow(name = '', fromQ = 1, toQ = 10, marks = null) {
+            const row = document.createElement('div');
+            row.className = 'section-item-row';
+            const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+            const secMarks = (marks !== null) ? marks : (count * 4);
+
+            row.innerHTML = `
+                <div class="sec-col-name">
+                    <label class="sec-field-label">Section Name</label>
+                    <input type="text" class="sec-input sec-name-input" value="${name}" placeholder="e.g. Physics / Section A" oninput="updateSectionsJSON()">
+                </div>
+                <div>
+                    <label class="sec-field-label">From Q #</label>
+                    <input type="number" min="1" max="200" class="sec-input sec-input-mono sec-from-input" value="${fromQ}" oninput="onRangeChange(this)">
+                </div>
+                <div>
+                    <label class="sec-field-label">To Q #</label>
+                    <input type="number" min="1" max="200" class="sec-input sec-input-mono sec-to-input" value="${toQ}" oninput="onRangeChange(this)">
+                </div>
+                <div>
+                    <label class="sec-field-label">Max Marks</label>
+                    <input type="number" min="0" class="sec-input sec-input-mono sec-marks-input" value="${secMarks}" oninput="updateSectionsJSON()">
+                </div>
+                <div class="sec-col-btn">
+                    <button type="button" class="btn-remove-sec" onclick="removeSectionRow(this)" title="Remove section">&times;</button>
+                </div>
+            `;
+
+            sectionContainer.appendChild(row);
+            updateSectionsJSON();
+        }
+
+        function removeSectionRow(btn) {
+            const row = btn.closest('.section-item-row');
+            if (row) row.remove();
+            updateSectionsJSON();
+        }
+
+        function onRangeChange(input) {
+            const row = input.closest('.section-item-row');
+            if (row) {
+                const fromQ = parseInt(row.querySelector('.sec-from-input').value, 10) || 1;
+                const toQ = parseInt(row.querySelector('.sec-to-input').value, 10) || fromQ;
+                const marksInput = row.querySelector('.sec-marks-input');
+                if (marksInput) {
+                    const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+                    marksInput.value = count * 4;
+                }
+            }
+            updateSectionsJSON();
+        }
+
+        // Collect and sync sections JSON payload
+        function updateSectionsJSON() {
+            const rows = sectionContainer.querySelectorAll('.section-item-row');
+            const list = [];
+            rows.forEach((r, idx) => {
+                const name = r.querySelector('.sec-name-input').value.trim() || `Section ${idx + 1}`;
+                const fromQ = parseInt(r.querySelector('.sec-from-input').value, 10) || 1;
+                const toQ = parseInt(r.querySelector('.sec-to-input').value, 10) || fromQ;
+                const marks = parseInt(r.querySelector('.sec-marks-input').value, 10) || ((toQ - fromQ + 1) * 4);
+                list.push({
+                    name: name,
+                    from_question: fromQ,
+                    to_question: toQ,
+                    max_marks: marks
+                });
+            });
+
+            sectionsInput.value = JSON.stringify(list);
+            sectionStatusBadge.textContent = `${list.length} Section${list.length !== 1 ? 's' : ''}`;
+        }
+
+        function prepareSectionsPayload() {
+            updateSectionsJSON();
+        }
+
+        // Auto divide total questions into sections
+        function resetToStandardSections() {
+            sectionContainer.innerHTML = '';
+            const totalQ = parseInt(numInput.value, 10) || 180;
+
+            if (totalQ === 180) {
+                addSectionRow('Physics', 1, 45, 180);
+                addSectionRow('Chemistry', 46, 90, 180);
+                addSectionRow('Mathematics / Botany', 91, 135, 180);
+                addSectionRow('General / Zoology', 136, 180, 180);
+            } else if (totalQ <= 30) {
+                addSectionRow('Section A (General)', 1, totalQ, totalQ * 4);
+            } else if (totalQ <= 60) {
+                const half = Math.ceil(totalQ / 2);
+                addSectionRow('Section A', 1, half, half * 4);
+                addSectionRow('Section B', half + 1, totalQ, (totalQ - half) * 4);
+            } else {
+                const qPerSec = Math.ceil(totalQ / 4);
+                addSectionRow('Section 1 (Physics)', 1, qPerSec, qPerSec * 4);
+                addSectionRow('Section 2 (Chemistry)', qPerSec + 1, qPerSec * 2, qPerSec * 4);
+                addSectionRow('Section 3 (Mathematics)', (qPerSec * 2) + 1, qPerSec * 3, qPerSec * 4);
+                addSectionRow('Section 4 (General)', (qPerSec * 3) + 1, totalQ, (totalQ - (qPerSec * 3)) * 4);
+            }
+        }
+
+        // Initialize with default 180 questions configuration
+        resetToStandardSections();
     </script>
 </body>
 </html>

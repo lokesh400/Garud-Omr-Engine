@@ -125,7 +125,7 @@ paperSchema.virtual('sections_string')
   });
 
 // Pre-validate hook
-paperSchema.pre('validate', function(next) {
+paperSchema.pre('validate', function() {
   if (typeof this.sections === 'string') {
     try {
       this.sections = JSON.parse(this.sections);
@@ -139,7 +139,6 @@ paperSchema.pre('validate', function(next) {
   if (!this.max_marks && this.total_questions) {
     this.max_marks = this.total_questions * 4;
   }
-  next();
 });
 
 module.exports = mongoose.model('Paper', paperSchema);
