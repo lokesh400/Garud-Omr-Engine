@@ -1193,12 +1193,16 @@
 
                     // Solid Square Corner Marker Criteria
                     if (bw >= 5 && bh >= 5 && bw <= 45 && bh <= 45 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.45 && count >= 14 && count <= 900) {
-                        const bx = (minX + maxX) / 2;
-                        const by = (minY + maxY) / 2;
+                        const bx = sumX / count;
+                        const by = sumY / count;
                         const blobR = Math.max(bw, bh) / 2;
 
-                        // Isolation ring check:
-                        // Rejects question bubbles, which have other bubbles/text 3-4mm away.
+                        // INWARD ISOLATION CHECK:
+                        // Only samples the quadrant facing INWARD toward the center of the paper.
+                        // Completely immune to dark/wooden desks outside the paper boundary!
+                        // Rejects question bubbles, which have other bubbles/text on all sides.
+                        const dirX = Math.sign((sw / 2) - bx);
+                        const dirY = Math.sign((sh / 2) - by);
                         const rIn = Math.round(blobR * 1.3);
                         const rOut = Math.max(rIn + 3, Math.round(blobR * 2.5));
                         let darkPixels = 0, totalRing = 0;
@@ -1207,31 +1211,32 @@
                             for (let dx = -rOut; dx <= rOut; dx += 2) {
                                 const d2 = dx * dx + dy * dy;
                                 if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                    const gx = Math.round(bx + dx);
-                                    const gy = Math.round(by + dy);
-                                    if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
-                                        totalRing++;
-                                        if (gray[gy * sw + gx] < thresh) darkPixels++;
+                                    // Inward check: vector points toward paper center
+                                    if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
+                                        const gx = Math.round(bx + dx);
+                                        const gy = Math.round(by + dy);
+                                        if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                            totalRing++;
+                                            if (gray[gy * sw + gx] < thresh) darkPixels++;
+                                        }
                                     }
                                 }
                             }
                         }
 
                         const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
-                        if (ringDarkRatio > 0.18) {
+                        if (ringDarkRatio > 0.20) {
                             continue;
                         }
 
                         // Inward white paper margin check
-                        const dirX = Math.sign((sw / 2) - bx);
-                        const dirY = Math.sign((sh / 2) - by);
                         let whiteInwardCount = 0;
                         const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
                         for (let d of testDists) {
                             const ix = Math.round(bx + dirX * d);
                             const iy = Math.round(by + dirY * d);
                             if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
-                                if (gray[iy * sw + ix] >= thresh) whiteInwardCount++;
+                                if (gray[iy * sw + ix] >= (thresh - 15)) whiteInwardCount++;
                             }
                         }
 
@@ -1283,16 +1288,16 @@
 
                 const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.58 || hRatio < 0.58) return null;
+                if (wRatio < 0.50 || hRatio < 0.50) return null;
 
                 const avgW = (wTop + wBot) / 2;
                 const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
-                if (aspect < 1.10 || aspect > 1.90) return null;
+                if (aspect < 1.00 || aspect > 2.10) return null;
 
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.65) return null;
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.55) return null;
 
                 const quadArea = 0.5 * Math.abs(
                     (pTL.x * pTR.y - pTL.y * pTR.x) +
@@ -1300,15 +1305,15 @@
                     (pBR.x * pBL.y - pBR.y * pBL.x) +
                     (pBL.x * pTL.y - pBL.y * pTL.x)
                 );
-                if (quadArea < sw * sh * 0.10) return null;
+                if (quadArea < sw * sh * 0.08) return null;
 
                 const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
                 const minC = Math.min(...counts);
                 const maxC = Math.max(...counts);
-                if (minC / maxC < 0.20) return null;
+                if (minC / maxC < 0.12) return null;
 
                 const aspectDev = Math.abs(aspect - 1.461);
-                const score = quadArea * (1.0 - aspectDev * 0.5) * wRatio * hRatio;
+                const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
 
                 return { ordered, score };
             }
@@ -1538,9 +1543,6 @@
                 { x: 0, y: TARGET_H }
             ];
 
-            // Perspective Transform Matrix H (dst -> src)
-            const H_mat = getPerspectiveTransform(dstRectCorners, corners);
-
             // Read clean source frame pixels directly from video (immune to cyber HUD overlays)
             const cleanCanvas = document.createElement('canvas');
             cleanCanvas.width = W;
@@ -1548,7 +1550,109 @@
             const cleanCtx = cleanCanvas.getContext('2d');
             cleanCtx.drawImage(video, 0, 0, W, H);
             const srcImgData = cleanCtx.getImageData(0, 0, W, H);
+            const srcData = srcImgData.data;
             const src32 = new Uint32Array(srcImgData.data.buffer);
+
+            // Flood-fill Centroid Refinement on Full-Resolution Image:
+            // Starts inside the solid black square marker and flood-fills only the connected black ink.
+            // Completely bounded by the white paper margin surrounding the marker - CANNOT cross onto the desk!
+            // Yields mathematical sub-pixel centroid (<0.1px) for flawless perspective leveling at any angle.
+            function refineCornerSubpixel(pt) {
+                const searchR = Math.max(12, Math.min(22, Math.round(Math.min(W, H) * 0.018)));
+                const minX = Math.max(0, Math.round(pt.x - searchR));
+                const maxX = Math.min(W - 1, Math.round(pt.x + searchR));
+                const minY = Math.max(0, Math.round(pt.y - searchR));
+                const maxY = Math.min(H - 1, Math.round(pt.y + searchR));
+
+                // 1. Locate darkest pixel inside the solid square marker near pt
+                let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
+                for (let y = minY; y <= maxY; y++) {
+                    const rowIdx = y * W;
+                    for (let x = minX; x <= maxX; x++) {
+                        const idx = (rowIdx + x) * 4;
+                        const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
+                        if (lum < minLum) {
+                            minLum = lum;
+                            seedX = x;
+                            seedY = y;
+                        }
+                    }
+                }
+
+                if (minLum > 140) return pt;
+
+                // 2. Flood-fill from seed within the square marker only (bounded by white paper margin)
+                const markerThresh = minLum + 45;
+                const maxR = Math.max(18, searchR * 1.6);
+                const maxR2 = maxR * maxR;
+                const winDim = Math.round(maxR * 2) + 3;
+                const visited = new Uint8Array(winDim * winDim);
+                const ox = seedX - Math.round(maxR) - 1;
+                const oy = seedY - Math.round(maxR) - 1;
+
+                const qX = new Int32Array(4096);
+                const qY = new Int32Array(4096);
+                let qHead = 0, qTail = 0;
+
+                const startLx = seedX - ox;
+                const startLy = seedY - oy;
+                visited[startLy * winDim + startLx] = 1;
+                qX[qTail] = seedX;
+                qY[qTail] = seedY;
+                qTail++;
+
+                let sumX = 0, sumY = 0, count = 0;
+
+                while (qHead < qTail && count < 3500) {
+                    const cx = qX[qHead];
+                    const cy = qY[qHead];
+                    qHead++;
+
+                    sumX += cx;
+                    sumY += cy;
+                    count++;
+
+                    const neighbors = [
+                        [cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]
+                    ];
+                    for (let k = 0; k < 4; k++) {
+                        const nx = neighbors[k][0];
+                        const ny = neighbors[k][1];
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+
+                        const dx = nx - seedX;
+                        const dy = ny - seedY;
+                        if (dx * dx + dy * dy > maxR2) continue;
+
+                        const lx = nx - ox;
+                        const ly = ny - oy;
+                        if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
+                        const vIdx = ly * winDim + lx;
+                        if (visited[vIdx]) continue;
+                        visited[vIdx] = 1;
+
+                        const pIdx = (ny * W + nx) * 4;
+                        const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
+                        if (lum < markerThresh) {
+                            if (qTail < 4090) {
+                                qX[qTail] = nx;
+                                qY[qTail] = ny;
+                                qTail++;
+                            }
+                        }
+                    }
+                }
+
+                if (count >= 16) {
+                    return { x: sumX / count, y: sumY / count };
+                }
+                return pt;
+            }
+
+            const refinedCorners = corners.map(p => refineCornerSubpixel(p));
+
+            // Perspective Transform Matrix H (dst -> src) computed from sub-pixel refined corners
+            const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
 
             // Create target rectified image
             const dstImgData = resultCtx.createImageData(TARGET_W, TARGET_H);
@@ -1621,13 +1725,13 @@
 
             // Annular Moat & Interior Bubble Sampler
             // Evaluates:
-            // 1) midDarkness: annular ring (4.0 <= r <= 7.2px) between center letter and outer border
-            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 24).
-            //    In filled bubbles, shading covers this moat (midDarkness >= 45).
-            // 2) fullDarkness: interior disk (r <= 7.2px)
+            // 1) midDarkness: protected annular moat (2.5 <= r <= 5.8px) between center letter and outer circular border
+            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 15, midDarkRatio <= 0.05).
+            //    In filled bubbles, student shading covers this moat (midDarkness >= 35, midDarkRatio >= 0.40).
+            // 2) fullDarkness: interior disk (r <= 5.8px)
             function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
                 const offsets = [
-                    [0, 0], [-1.5, 0], [1.5, 0], [0, -1.5], [0, 1.5]
+                    [0, 0], [-1.0, 0], [1.0, 0], [0, -1.0], [0, 1.0]
                 ];
                 let bestStat = null;
 
@@ -1637,17 +1741,17 @@
                     let midSum = 0, midCount = 0, darkMidCount = 0;
                     let fullSum = 0, fullCount = 0;
 
-                    for (let dy = -8; dy <= 8; dy++) {
-                        for (let dx = -8; dx <= 8; dx++) {
+                    for (let dy = -6; dy <= 6; dy++) {
+                        for (let dx = -6; dx <= 6; dx++) {
                             const d2 = dx * dx + dy * dy;
                             const d = Math.sqrt(d2);
-                            if (d > 7.4) continue;
+                            if (d > 5.8) continue; // Protected: never reaches printed outer circular ring (r >= 6.5)
 
                             const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
                             fullSum += g;
                             fullCount++;
 
-                            if (d >= 4.0 && d <= 7.2) {
+                            if (d >= 2.5 && d <= 5.8) {
                                 midSum += g;
                                 midCount++;
                                 if (g < (paperVal - 22)) darkMidCount++;
@@ -1664,7 +1768,7 @@
                     const midDarkRatio = darkMidCount / midCount;
 
                     // Combined fill score: weights the clean moat around the center letter
-                    const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
+                    const fillScore = midDarkness * 0.70 + fullDarkness * 0.30;
 
                     if (!bestStat || fillScore > bestStat.fillScore) {
                         bestStat = {
@@ -1721,8 +1825,8 @@
 
                 const top1Contrast = top1.fillScore - colBase;
                 let isColFilled = false;
-                if ((top1.midDarkness >= 38 && top1Contrast >= 20) || (top1.midDarkness >= 55)) {
-                    if (top1.fillScore - top2.fillScore >= 18 || top1Contrast >= 25) {
+                if (top1.midDarkness >= 32 && top1Contrast >= 18) {
+                    if (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 24) {
                         isColFilled = true;
                     }
                 }
@@ -1834,11 +1938,13 @@
                 function isOptionFilled(s) {
                     const contrast = s.fillScore - rowBase;
                     // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
-                    if (s.midDarkness >= 40 && contrast >= 18) return true;
+                    if (s.midDarkness >= 36 && contrast >= 16) return true;
                     // Rule 2: Faint HB pencil fill with clear relative contrast
-                    if (s.midDarkness >= 32 && contrast >= 15 && s.midDarkRatio >= 0.35) return true;
-                    // Rule 3: Heavy dark pen fill
-                    if (s.midDarkness >= 55) return true;
+                    if (s.midDarkness >= 26 && contrast >= 14 && s.midDarkRatio >= 0.28) return true;
+                    // Rule 3: Heavy dark pen fill with confirmed contrast
+                    if (s.fillScore >= 48 && contrast >= 16) return true;
+                    // Rule 4: Deliberate multiple marking where student shaded multiple bubbles
+                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.50 && s.fullDarkness >= 45) return true;
                     return false;
                 }
 
