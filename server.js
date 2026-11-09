@@ -1,5 +1,5 @@
-const dns = require('dns');
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+// const dns = require('dns');
+// dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -48,14 +48,24 @@ const upload = multer({ storage });
 
 // Helper to convert answer key to object
 function getAnswerKeyJson(paper) {
-    if (!paper || !paper.answerKey) return '{}';
+    if (!paper) return '{}';
+    const obj = {};
+    if (Array.isArray(paper.answer_key) && paper.answer_key.length > 0) {
+        paper.answer_key.forEach((val, idx) => {
+            if (val) obj[String(idx + 1)] = val;
+        });
+        return JSON.stringify(obj);
+    }
     if (paper.answerKey instanceof Map) {
         return JSON.stringify(Object.fromEntries(paper.answerKey));
     }
-    if (typeof paper.answerKey.toObject === 'function') {
-        return JSON.stringify(paper.answerKey.toObject());
+    if (typeof paper.answerKey === 'object' && paper.answerKey !== null) {
+        if (typeof paper.answerKey.toObject === 'function') {
+            return JSON.stringify(paper.answerKey.toObject());
+        }
+        return JSON.stringify(paper.answerKey);
     }
-    return JSON.stringify(paper.answerKey);
+    return '{}';
 }
 
 // Routes
@@ -73,12 +83,63 @@ app.get('/paper/new', (req, res) => {
 });
 
 app.post('/paper/new', async (req, res) => {
-    const { title, numQuestions } = req.body;
     try {
-        const newPaper = new Paper({ title, numQuestions });
+        const {
+            paper_id,
+            id,
+            title,
+            subject,
+            total_questions,
+            numQuestions,
+            max_marks,
+            sections,
+            answer_key
+        } = req.body;
+
+        const totalQ = Number(total_questions || numQuestions) || 50;
+        const maxM = Number(max_marks) || (totalQ * 4);
+
+        let parsedSections = [];
+        if (typeof sections === 'string' && sections.trim() !== '') {
+            try {
+                parsedSections = JSON.parse(sections);
+            } catch (e) {
+                console.warn('Invalid sections JSON:', e.message);
+            }
+        } else if (Array.isArray(sections)) {
+            parsedSections = sections;
+        }
+
+        let parsedAnswerKey = [];
+        if (typeof answer_key === 'string' && answer_key.trim() !== '') {
+            try {
+                parsedAnswerKey = JSON.parse(answer_key);
+            } catch (e) {
+                console.warn('Invalid answer_key JSON:', e.message);
+            }
+        } else if (Array.isArray(answer_key)) {
+            parsedAnswerKey = answer_key;
+        }
+
+        const paperData = {
+            title: title ? title.trim() : 'Untitled Paper',
+            subject: subject ? subject.trim() : 'General',
+            total_questions: totalQ,
+            max_marks: maxM,
+            sections: parsedSections,
+            answer_key: parsedAnswerKey
+        };
+
+        const customId = (paper_id || id || '').trim();
+        if (customId) {
+            paperData._id = customId;
+        }
+
+        const newPaper = new Paper(paperData);
         await newPaper.save();
         res.redirect(`/paper/${newPaper._id}`);
     } catch (error) {
+        console.error('Error creating paper:', error);
         res.status(500).send('Error creating paper: ' + error.message);
     }
 });
@@ -108,19 +169,47 @@ app.post('/paper/:id/answerkey', async (req, res) => {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
 
-        const answerKey = {};
-        for (let i = 1; i <= paper.numQuestions; i++) {
-            if (req.body[`q${i}`]) {
-                answerKey[`${i}`] = req.body[`q${i}`];
+        const totalQ = paper.total_questions || paper.numQuestions || 50;
+        const answerKeyArr = new Array(totalQ).fill(null);
+
+        for (let i = 1; i <= totalQ; i++) {
+            const val = req.body[`q${i}`];
+            if (val && typeof val === 'string' && val.trim() !== '') {
+                answerKeyArr[i - 1] = val.trim().toUpperCase();
+            } else {
+                answerKeyArr[i - 1] = null;
             }
         }
 
-        paper.answerKey = answerKey;
+        paper.answer_key = answerKeyArr;
         await paper.save();
         res.redirect(`/paper/${paper._id}`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error saving answer key: ' + error.message);
+    }
+});
+
+// Update or configure sections for a paper
+app.post('/paper/:id/sections', async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id);
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        let parsedSections = [];
+        const raw = req.body.sections;
+        if (typeof raw === 'string') {
+            parsedSections = JSON.parse(raw);
+        } else if (Array.isArray(raw)) {
+            parsedSections = raw;
+        }
+
+        paper.sections = parsedSections;
+        await paper.save();
+
+        res.json({ success: true, sections: paper.sections });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -155,9 +244,22 @@ app.post('/paper/:id/check', upload.single('omrSheet'), async (req, res) => {
 });
 
 // Helper to compute section-wise marks and total aggregate marks
-function computeSectionWise(breakdown, totalQuestions) {
+function computeSectionWise(breakdown, totalQuestions, customSections = null) {
     let sectionDefs = [];
-    if (totalQuestions <= 30) {
+    if (Array.isArray(customSections) && customSections.length > 0) {
+        sectionDefs = customSections.map(s => {
+            const start = Number(s.from_question);
+            const end = Number(s.to_question);
+            const countInSec = (end >= start) ? (end - start + 1) : 1;
+            const maxM = Number(s.max_marks) || (countInSec * 4);
+            return {
+                name: s.name,
+                start: start,
+                end: end,
+                maxMarks: maxM
+            };
+        });
+    } else if (totalQuestions <= 30) {
         sectionDefs = [{ name: 'Section A (General)', start: 1, end: totalQuestions }];
     } else if (totalQuestions <= 60) {
         const half = Math.ceil(totalQuestions / 2);
@@ -209,7 +311,7 @@ function computeSectionWise(breakdown, totalQuestions) {
         }
 
         const marks = (correct * 4) - (wrong * 1) - (multiple * 1);
-        const maxMarks = countInSec * 4;
+        const maxMarks = sec.maxMarks || (countInSec * 4);
 
         totalAggregateMarks += marks;
         totalMaxMarks += maxMarks;
@@ -266,8 +368,8 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
             paperId: req.params.id
         });
 
-        // Compute section wise marks & aggregate
-        const secCalc = computeSectionWise(breakdown, totalQ);
+        // Compute section wise marks & aggregate using custom paper sections if defined
+        const secCalc = computeSectionWise(breakdown, totalQ, paper.sections);
         const percentage = totalQ > 0 ? Math.round((Number(score || 0) / totalQ) * 100) : 0;
 
         // Build 180 (or totalQ) responses array: ["A", "B", null, "C", ...]
