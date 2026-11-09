@@ -427,8 +427,13 @@
                 </a>
                 <h1 class="page-title"><%= paper.title %></h1>
             </div>
-            <div class="header-pill">
-                <span id="headerCounter"><%= keyCount %>/<%= paper.numQuestions %></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="/paper/<%= paper._id %>/results" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.78rem; text-decoration: none; border-radius: var(--radius-full);" title="View Paper Results & Checked OMR Copies">
+                    📊 Results
+                </a>
+                <div class="header-pill">
+                    <span id="headerCounter"><%= keyCount %>/<%= paper.numQuestions %></span>
+                </div>
             </div>
         </header>
 

@@ -680,11 +680,16 @@
 
         <!-- High-Tech Cropped & Leveled Results Section -->
         <div id="resultsSection">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0; flex-wrap: wrap; gap: 10px;">
                 <h2 style="margin: 0; font-size: 1.4rem;">Leveled Document & Evaluation</h2>
-                <button class="btn btn-primary" onclick="restartScanner()">
-                    📷 Scan Next Sheet
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <a href="/paper/<%= paper._id %>/results" class="btn btn-secondary btn-sm" target="_blank" title="View class results and evaluated OMR copies">
+                        📊 Class Results
+                    </a>
+                    <button class="btn btn-primary btn-sm" onclick="restartScanner()">
+                        📷 Scan Next Sheet
+                    </button>
+                </div>
             </div>
 
             <div class="results-grid">
@@ -1944,6 +1949,7 @@
             let blankCount = 0;
             let evaluatedKeyCount = 0;
             let rowsHtml = '';
+            const scannerBreakdown = [];
 
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
@@ -2040,6 +2046,13 @@
                 } else {
                     blankCount++;
                 }
+
+                scannerBreakdown.push({
+                    q: q,
+                    marked: detectedAnswer || '',
+                    correctKey: correctAns || '',
+                    verdict: verdict
+                });
 
                 // Draw Overlay Rings on the Leveled Cropped Sheet
                 for (let b = 0; b < 4; b++) {
@@ -2139,6 +2152,45 @@
 
             const tbl = document.getElementById('tableBody');
             if (tbl) tbl.innerHTML = rowsHtml;
+
+            // Auto-archive evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
+            try {
+                const canvas = document.getElementById('canvasResult');
+                if (canvas) {
+                    let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
+                    if (!rollNo || rollNo.length === 0) {
+                        rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+                    }
+
+                    const imageData = canvas.toDataURL('image/jpeg', 0.85);
+
+                    fetch('/api/paper/<%= paper._id %>/save-result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rollNumber: rollNo,
+                            score: score,
+                            totalQuestions: totalPaperQuestions,
+                            correctCount: correctCount,
+                            wrongCount: wrongCount,
+                            multipleCount: multipleCount,
+                            blankCount: blankCount,
+                            breakdown: scannerBreakdown,
+                            imageData: imageData
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        const pill = document.getElementById('rollStatusPill');
+                        if (pill && data.success) {
+                            pill.textContent = '✓ Saved to Cloudinary (' + (data.cloudinaryAccount || 'Cloud') + ')';
+                        }
+                    })
+                    .catch(e => console.warn('Cloudinary archive error:', e));
+                }
+            } catch (err) {
+                console.warn('Canvas export error:', err);
+            }
         }
 
         function restartScanner() {

@@ -341,8 +341,9 @@
                     <%= paper.title %> &bull; <%= paper.numQuestions %> Total Questions
                 </p>
             </div>
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <span id="evalStatus" class="status-pill">Analyzing & Leveling...</span>
+                <a href="/paper/<%= paper._id %>/results" class="btn btn-primary btn-sm" title="View all student results and checked copies">📊 View Results</a>
                 <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-sm">&larr; Back to Paper</a>
             </div>
         </div>
@@ -1171,6 +1172,7 @@
             let blankCount = 0;
             let evaluatedKeyCount = 0;
             let rowsHtml = '';
+            const questionBreakdown = [];
 
             for (let q = 1; q <= totalPaperQuestions; q++) {
                 const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
@@ -1267,6 +1269,13 @@
                 } else {
                     blankCount++;
                 }
+
+                questionBreakdown.push({
+                    q: q,
+                    marked: detectedAnswer || '',
+                    correctKey: correctAns || '',
+                    verdict: verdict
+                });
 
                 // Draw Overlay Rings on the Leveled Cropped Sheet
                 for (let b = 0; b < 4; b++) {
@@ -1366,6 +1375,50 @@
 
             const tbl = document.getElementById('tableBody');
             if (tbl) tbl.innerHTML = rowsHtml;
+
+            // Auto-archive evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
+            try {
+                const canvas = document.getElementById('canvasOutput');
+                if (canvas) {
+                    const statusPill = document.getElementById('evalStatus');
+                    if (statusPill) statusPill.textContent = '☁️ Archiving to Cloudinary...';
+
+                    let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
+                    if (!rollNo || rollNo.length === 0) {
+                        rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+                    }
+
+                    const imageData = canvas.toDataURL('image/jpeg', 0.85);
+
+                    fetch('/api/paper/<%= paper._id %>/save-result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rollNumber: rollNo,
+                            score: score,
+                            totalQuestions: totalPaperQuestions,
+                            correctCount: correctCount,
+                            wrongCount: wrongCount,
+                            multipleCount: multipleCount,
+                            blankCount: blankCount,
+                            breakdown: questionBreakdown,
+                            imageData: imageData
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (statusPill && data.success) {
+                            statusPill.innerHTML = '✓ Uploaded to Cloudinary &bull; <a href="/paper/<%= paper._id %>/results" style="color:inherit; font-weight:800; text-decoration:underline;">View Results</a>';
+                        }
+                    })
+                    .catch(e => {
+                        console.warn('Cloudinary archive error:', e);
+                        if (statusPill) statusPill.textContent = 'Evaluation Complete';
+                    });
+                }
+            } catch (err) {
+                console.warn('Canvas export error:', err);
+            }
         }
 
         </script>
