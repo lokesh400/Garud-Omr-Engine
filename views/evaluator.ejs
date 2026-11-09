@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -479,6 +479,7 @@
         }
 
         function autoDetectCorners(ctx, W, H) {
+            // Work on downscaled canvas for fast and robust analysis
             const procW = 500;
             const procH = Math.max(1, Math.round(H * (procW / W)));
             const procCanvas = document.createElement('canvas');
@@ -513,14 +514,14 @@
                 const v = wB * wF * diff * diff;
                 if (v > maxVar) { maxVar = v; thresh = i + 1; }
             }
-            thresh = Math.max(45, Math.min(thresh, 160));
+            thresh = Math.max(40, Math.min(thresh, 175));
 
             const visited = new Uint8Array(total);
             const candidates = [];
             const queue = new Int32Array(total);
 
-            for (let py = 3; py < procH - 3; py += 2) {
-                for (let px = 3; px < procW - 3; px += 2) {
+            for (let py = 4; py < procH - 4; py += 2) {
+                for (let px = 4; px < procW - 4; px += 2) {
                     const startP = py * procW + px;
                     if (visited[startP] || gray[startP] >= thresh) continue;
 
@@ -558,38 +559,38 @@
                     const aspect = bw / bh;
                     const density = count / (bw * bh);
 
-                    if (bw >= 4 && bh >= 4 && bw <= 50 && bh <= 50 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.45 && count >= 12 && count <= 1200) {
+                    if (bw >= 5 && bh >= 5 && bw <= 45 && bh <= 45 && aspect >= 0.60 && aspect <= 1.65 && density >= 0.50 && count >= 16 && count <= 1200) {
                         const bx = (minX + maxX) / 2;
                         const by = (minY + maxY) / 2;
                         const blobR = Math.max(bw, bh) / 2;
 
-                        const dirX = Math.sign((procW / 2) - bx);
-                        const dirY = Math.sign((procH / 2) - by);
-                        const rIn = Math.round(blobR * 1.3);
-                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.5));
+                        // Isolation ring check
+                        const rIn = Math.round(blobR * 1.4);
+                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.6));
                         let darkPixels = 0, totalRing = 0;
 
                         for (let dy = -rOut; dy <= rOut; dy += 2) {
                             for (let dx = -rOut; dx <= rOut; dx += 2) {
                                 const d2 = dx * dx + dy * dy;
                                 if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                    if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
-                                        const gx = Math.round(bx + dx);
-                                        const gy = Math.round(by + dy);
-                                        if (gx >= 0 && gx < procW && gy >= 0 && gy < procH) {
-                                            totalRing++;
-                                            if (gray[gy * procW + gx] < thresh) darkPixels++;
-                                        }
+                                    const gx = Math.round(bx + dx);
+                                    const gy = Math.round(by + dy);
+                                    if (gx >= 0 && gx < procW && gy >= 0 && gy < procH) {
+                                        totalRing++;
+                                        if (gray[gy * procW + gx] < thresh) darkPixels++;
                                     }
                                 }
                             }
                         }
 
                         const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
-                        if (ringDarkRatio > 0.12) continue;
+                        if (ringDarkRatio > 0.08) continue;
 
+                        // Inward white path check
+                        const dirX = Math.sign((procW / 2) - bx);
+                        const dirY = Math.sign((procH / 2) - by);
                         let whiteInwardCount = 0;
-                        const testDists = [Math.round(blobR * 1.2), Math.round(blobR * 1.7), Math.round(blobR * 2.3)];
+                        const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
                         for (let d of testDists) {
                             const ix = Math.round(bx + dirX * d);
                             const iy = Math.round(by + dirY * d);
@@ -597,21 +598,24 @@
                                 if (gray[iy * procW + ix] >= thresh) whiteInwardCount++;
                             }
                         }
-                        if (whiteInwardCount < 2) continue;
+                        if (whiteInwardCount < testDists.length) continue;
 
                         const distFromCenter = Math.hypot(bx - procW / 2, by - procH / 2);
-                        const score = (density * 3.0) + (distFromCenter / (procW * 0.5) * 2.0) - (ringDarkRatio * 8.0);
+                        const score = (density * 3.0) + (distFromCenter / (procW * 0.5) * 2.0) - (ringDarkRatio * 10.0);
 
                         candidates.push({
-                            x: (bx / procW) * W,
-                            y: (by / procH) * H,
-                            score,
-                            count
+                            x: bx,
+                            y: by,
+                            bw,
+                            bh,
+                            count,
+                            score
                         });
                     }
                 }
             }
 
+            // Fallback default corners if detection fails
             const defaultCorners = [
                 { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
                 { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
@@ -619,18 +623,16 @@
                 { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
             ];
 
-            if (candidates.length < 4) {
-                return defaultCorners;
-            }
+            if (candidates.length < 4) return defaultCorners;
 
             candidates.sort((a, b) => b.score - a.score);
-            const topCandidates = candidates.slice(0, 12);
+            const topCandidates = candidates.slice(0, 8);
             const n = topCandidates.length;
-
             let bestQuad = null;
 
-            function evalQuad(ordered) {
+            function evaluateQuadCandidate(ordered) {
                 const [pTL, pTR, pBR, pBL] = ordered;
+
                 const pts = [pTL, pTR, pBR, pBL];
                 for (let i = 0; i < 4; i++) {
                     const a = pts[i];
@@ -647,16 +649,16 @@
 
                 const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.50 || hRatio < 0.50) return null;
+                if (wRatio < 0.68 || hRatio < 0.68) return null;
 
                 const avgW = (wTop + wBot) / 2;
                 const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
-                if (aspect < 1.05 || aspect > 2.05) return null;
+                if (aspect < 1.15 || aspect > 1.80) return null;
 
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.55) return null;
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.72) return null;
 
                 const quadArea = 0.5 * Math.abs(
                     (pTL.x * pTR.y - pTL.y * pTR.x) +
@@ -664,15 +666,11 @@
                     (pBR.x * pBL.y - pBR.y * pBL.x) +
                     (pBL.x * pTL.y - pBL.y * pTL.x)
                 );
-                if (quadArea < W * H * 0.10) return null;
-
-                const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
-                const minC = Math.min(...counts);
-                const maxC = Math.max(...counts);
-                if (minC / maxC < 0.12) return null;
+                if (quadArea < procW * procH * 0.10) return null;
 
                 const aspectDev = Math.abs(aspect - 1.461);
-                const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
+                const score = quadArea * (1.0 - aspectDev * 0.5) * wRatio * hRatio;
+
                 return { ordered, score };
             }
 
@@ -683,7 +681,7 @@
                             const quad4 = [topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]];
                             const ordered = orderCorners(quad4);
                             if (!ordered) continue;
-                            const res = evalQuad(ordered);
+                            const res = evaluateQuadCandidate(ordered);
                             if (res && (!bestQuad || res.score > bestQuad.score)) {
                                 bestQuad = res;
                             }
@@ -692,11 +690,15 @@
                 }
             }
 
-            if (!bestQuad) {
-                return defaultCorners;
-            }
+            if (!bestQuad) return defaultCorners;
 
-            return bestQuad.ordered;
+            // Scale coordinates back to original image dimensions (W, H)
+            const scaleX = W / procW;
+            const scaleY = H / procH;
+            return bestQuad.ordered.map(p => ({
+                x: Math.round(p.x * scaleX),
+                y: Math.round(p.y * scaleY)
+            }));
         }
 
         function warpAndEvaluate(corners, W, H) {
