@@ -20,7 +20,7 @@
         }
 
         .scanner-container {
-            max-width: 1100px;
+            max-width: 1140px;
             margin: 0 auto;
         }
 
@@ -29,15 +29,22 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.25rem;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem 1.85rem;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
         }
 
         .viewfinder-card {
             background: #090D16;
-            border-radius: var(--radius-lg);
+            border-radius: var(--radius-xl);
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
             border: 1px solid #1E293B;
             position: relative;
         }
@@ -320,79 +327,115 @@
         }
 
         .score-hero {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
             color: white;
             border-radius: var(--radius-lg);
             padding: 1.75rem;
             text-align: center;
-            margin-bottom: 1.25rem;
-            box-shadow: var(--shadow-glow);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 20px 35px -10px rgba(30, 27, 75, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-hero::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%);
+            pointer-events: none;
         }
 
         .stat-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .stat-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         .stat-box {
             background: #F8FAFC;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 0.85rem;
+            border-radius: var(--radius-md);
+            padding: 0.95rem 0.5rem;
             text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .stat-box .num {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 800;
             font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.1;
         }
 
         .stat-box .lbl {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            font-weight: 600;
-            margin-top: 2px;
+            font-weight: 700;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
         }
 
         .breakdown-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
         }
 
         .breakdown-table th,
         .breakdown-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-bottom: 1px solid #F1F5F9;
             text-align: center;
         }
 
         .breakdown-table th {
             background: #F8FAFC;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .breakdown-table tr:hover td {
+            background: #F8FAFC;
         }
 
         .badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 3px 11px;
             border-radius: var(--radius-full);
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 700;
         }
 
         .badge-correct {
             background: var(--success-light);
             color: #065F46;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .badge-wrong {
             background: var(--danger-light);
             color: #991B1B;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .badge-blank {
@@ -673,17 +716,16 @@
                     </div>
 
                     <div class="score-hero">
-                        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">
+                        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.85; font-weight: 700;">
                             Score Achieved</div>
                         <div class="score-val" id="scoreValue"
-                            style="font-size: 3.25rem; font-weight: 800; margin: 0.25rem 0; font-family: 'Plus Jakarta Sans', sans-serif;">
+                            style="font-size: 3.5rem; font-weight: 800; margin: 0.25rem 0; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em;">
                             0 / 0</div>
-                        <div id="scorePercentage" style="font-size: 1.15rem; font-weight: 600;">0% Accuracy</div>
+                        <div id="scorePercentage" style="font-size: 1.2rem; font-weight: 700; color: #38BDF8;">0% Accuracy</div>
                     </div>
 
-                    <div class="card" style="padding: 1.25rem;">
-                        <div class="stat-grid"
-                            style="grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); gap: 8px;">
+                    <div class="card" style="padding: 1.5rem;">
+                        <div class="stat-grid">
                             <div class="stat-box">
                                 <div class="num" id="statCorrect" style="color: #10B981;">0</div>
                                 <div class="lbl">Correct</div>
@@ -701,14 +743,14 @@
                                 <div class="lbl">Attempted</div>
                             </div>
                             <div class="stat-box">
-                                <div class="num" id="statBlank" style="color: #6B7280;">0</div>
+                                <div class="num" id="statBlank" style="color: #64748B;">0</div>
                                 <div class="lbl">Unmarked</div>
                             </div>
                         </div>
 
-                        <h4 style="margin: 1.25rem 0 0.5rem 0; font-size: 0.95rem;">Question Breakdown</h4>
+                        <h4 style="margin: 1.5rem 0 0.65rem 0; font-size: 1rem; font-weight: 800;">Question Breakdown</h4>
                         <div
-                            style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
                             <table class="breakdown-table">
                                 <thead>
                                     <tr>
