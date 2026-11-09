@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -41,6 +41,15 @@
         }
         
         /* A4 Fixed Size */
+        .sheet-viewport {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 24px;
+        }
+
         .omr-container {
             width: 210mm;
             height: 297mm;
@@ -49,11 +58,32 @@
             box-sizing: border-box;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             padding: 12mm;
+            flex-shrink: 0;
+        }
+
+        @media screen and (max-width: 840px) {
+            body {
+                padding: 14px 8px;
+            }
+            .print-btn {
+                width: 100%;
+                max-width: 340px;
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            .sheet-viewport {
+                justify-content: flex-start;
+            }
         }
 
         @media print {
             body { 
                 background: white; 
+                padding: 0;
+            }
+            .sheet-viewport {
+                display: block;
+                overflow: visible;
                 padding: 0;
             }
             .omr-container {
@@ -204,7 +234,8 @@
 <body>
     <button class="print-btn no-print" onclick="window.print()">&#128424;&#65039; Print Blank OMR Sheet</button>
 
-    <div class="omr-container">
+    <div class="sheet-viewport">
+        <div class="omr-container">
         <!-- 4 Corner Markers -->
         <div class="corner-marker top-left"></div>
         <div class="corner-marker top-right"></div>
@@ -269,6 +300,7 @@
                 </div>
             <% } %>
         </div>
+    </div>
     </div>
 </body>
 </html>

@@ -638,3 +638,97 @@ header.app-header:hover {
   color: #94A3B8;
   border: 2px dashed #CBD5E1;
 }
+
+/* Responsive Global Utility Overrides */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.65rem;
+  }
+  h2 {
+    font-size: 1.3rem;
+  }
+  h3 {
+    font-size: 1.1rem;
+  }
+  
+  header.app-header {
+    padding: 1rem 1.15rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  header.app-header .brand-logo-wrap {
+    justify-content: flex-start;
+  }
+  header.app-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .card {
+    padding: 1.35rem 1.15rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.35rem;
+  }
+  
+  .card-header-styled {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.15rem;
+  }
+  
+  .form-control {
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+    padding: 0.75rem 1rem;
+  }
+  
+  .dropzone {
+    padding: 1.85rem 1rem;
+    border-radius: var(--radius-md);
+  }
+  
+  .dropzone-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.35rem;
+    margin-bottom: 0.85rem;
+  }
+  
+  .btn-lg {
+    padding: 0.8rem 1.35rem;
+    font-size: 0.98rem;
+  }
+  
+  .roll-boxes-wrap {
+    gap: 4px;
+  }
+  
+  .roll-digit-box {
+    width: 32px;
+    height: 42px;
+    font-size: 1.15rem;
+  }
+  
+  .data-table-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .data-table th, .data-table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .roll-boxes-wrap {
+    gap: 3px;
+  }
+  .roll-digit-box {
+    width: 28px;
+    height: 38px;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+}

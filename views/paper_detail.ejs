@@ -2,132 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= paper.title %> • Assessment Workspace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title><%= paper.title %> • Answer Key</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
-        .page-header-split {
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .full-screen-container {
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 12px 14px 110px 14px;
+            box-sizing: border-box;
+        }
+
+        /* Slim Sticky Top Navigation */
+        .slim-top-bar {
+            position: sticky;
+            top: 10px;
+            z-index: 50;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 2.25rem;
-            background: var(--surface-glass);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.85);
-            border-radius: var(--radius-xl);
-            padding: 1.75rem 2rem;
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-        }
-        .header-meta-group h1 {
-            font-size: 1.85rem;
-            margin: 0 0 0.5rem 0;
-            color: var(--text-main);
-            letter-spacing: -0.025em;
-            font-weight: 800;
-        }
-        .header-breadcrumbs {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        .header-breadcrumbs a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 700;
-            transition: var(--transition);
-        }
-        .header-breadcrumbs a:hover {
-            color: var(--primary-hover);
-        }
-        .header-tags {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .layout-grid {
-            display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: 2rem;
-            align-items: start;
-        }
-        @media (max-width: 960px) {
-            .layout-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        /* Answer Key Studio Styling */
-        .key-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: var(--radius-lg);
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
             gap: 12px;
-            margin-bottom: 1.35rem;
-            padding-bottom: 1.15rem;
-            border-bottom: 1px solid var(--border-color);
         }
-        .key-progress-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .key-progress-bar {
-            width: 160px;
-            height: 7px;
-            background: #E2E8F0;
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #F1F5F9;
+            color: var(--text-main);
+            text-decoration: none;
             border-radius: var(--radius-full);
-            overflow: hidden;
-        }
-        .key-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), #10B981);
-            border-radius: var(--radius-full);
-            transition: width 0.3s ease;
-        }
-        .quick-fill-btn {
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 5px 12px;
             font-size: 0.82rem;
             font-weight: 700;
-            color: var(--text-muted);
-            cursor: pointer;
+            border: 1px solid var(--border-color);
             transition: var(--transition);
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            flex-shrink: 0;
         }
-        .quick-fill-btn:hover {
-            border-color: var(--danger);
-            color: var(--danger);
-            background: var(--danger-light);
+
+        .btn-back:hover {
+            background: #E2E8F0;
+            transform: translateX(-2px);
         }
-        .omr-key-grid {
+
+        .page-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+            letter-spacing: -0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(79, 70, 229, 0.08);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        /* Full Space Answer Key Matrix Grid */
+        .omr-grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
             gap: 12px;
-            max-height: 520px;
-            overflow-y: auto;
-            padding: 12px;
-            background: #F8FAFC;
-            border-radius: var(--radius-lg);
-            border: 1px solid #E2E8F0;
-            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
         }
+
         .omr-key-row {
             display: flex;
             align-items: center;
@@ -135,35 +104,42 @@
             background: #FFFFFF;
             border: 1.5px solid #E2E8F0;
             border-radius: var(--radius-md);
-            padding: 8px 14px;
+            padding: 10px 14px;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
         }
+
         .omr-key-row:hover {
             border-color: #CBD5E1;
             transform: translateY(-1.5px);
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
         }
+
         .omr-key-row.has-val {
             border-color: rgba(79, 70, 229, 0.45);
             background: linear-gradient(90deg, #F5F3FF 0%, #FFFFFF 100%);
             box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
         }
+
         .omr-q-badge {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+
         .omr-q-num {
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 800;
             font-size: 0.95rem;
             color: #334155;
-            min-width: 38px;
+            min-width: 36px;
         }
+
         .omr-key-row.has-val .omr-q-num {
             color: var(--primary);
         }
+
         .omr-selected-val {
             display: inline-flex;
             align-items: center;
@@ -178,25 +154,28 @@
             font-family: 'JetBrains Mono', monospace;
             transition: all 0.2s ease;
         }
+
         .omr-key-row.has-val .omr-selected-val {
             background: #EEF2FF;
             color: var(--primary);
             border: 1px solid rgba(79, 70, 229, 0.3);
         }
+
         .omr-bubbles-wrap {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+
         .omr-bubble {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 2px solid #CBD5E1;
             background: #FFFFFF;
             color: #334155;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.88rem;
+            font-size: 0.92rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -206,304 +185,305 @@
             outline: none;
             padding: 0;
             position: relative;
+            touch-action: manipulation;
         }
+
         .omr-bubble:hover {
             border-color: var(--primary);
             color: var(--primary);
-            transform: scale(1.1);
+            transform: scale(1.08);
             box-shadow: 0 2px 10px rgba(79, 70, 229, 0.25);
         }
+
         .omr-bubble.selected {
-            background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+            background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
             border-color: #3730A3;
             color: #FFFFFF;
-            transform: scale(1.08);
+            transform: scale(1.06);
             box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
         }
+
         .omr-bubble:active {
             transform: scale(0.92);
         }
 
-        /* Live Camera Scanner Hero Card */
-        .camera-card {
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #4338CA 100%);
-            border-radius: var(--radius-xl);
-            padding: 1.85rem;
-            color: #FFFFFF;
-            box-shadow: 0 20px 35px -10px rgba(30, 27, 75, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-            margin-bottom: 1.85rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .camera-card::after {
-            content: '';
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .camera-card h3 {
-            color: #FFFFFF;
-            margin: 0 0 0.5rem 0;
-            font-size: 1.3rem;
+        /* Floating Action Bar (FAB Dock) */
+        .floating-action-bar {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 800;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 10px 18px;
+            border-radius: var(--radius-full);
+            box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+            z-index: 100;
+            width: auto;
+            max-width: calc(100% - 24px);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .camera-card p {
-            color: #C7D2FE;
-            font-size: 0.92rem;
-            margin: 0 0 1.25rem 0;
-            line-height: 1.55;
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-        .btn-camera-launch {
-            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
-            color: #FFFFFF;
+
+        .floating-counter {
+            color: #94A3B8;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
-            box-shadow: 0 6px 18px rgba(6, 182, 212, 0.35);
-            width: 100%;
-            text-align: center;
-            font-size: 1rem;
-            padding: 0.85rem;
-            border-radius: var(--radius-md);
-            text-decoration: none;
+            padding: 0 6px;
+            white-space: nowrap;
+        }
+
+        .floating-counter span {
+            color: #38BDF8;
+        }
+
+        .btn-floating-clear {
+            background: rgba(239, 68, 68, 0.16);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            color: #FCA5A5;
+            padding: 9px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: var(--transition);
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .btn-camera-launch:hover {
-            background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.45);
+
+        .btn-floating-clear:hover {
+            background: rgba(239, 68, 68, 0.35);
             color: #FFFFFF;
+            border-color: #EF4444;
+            transform: translateY(-1px);
         }
-        .dropzone-box {
-            border: 2px dashed #CBD5E1;
-            border-radius: var(--radius-lg);
-            padding: 2.25rem 1.5rem;
-            text-align: center;
-            background: #F8FAFC;
+
+        .btn-floating-save {
+            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #FFFFFF;
+            padding: 10px 22px;
+            border-radius: var(--radius-full);
+            font-size: 0.92rem;
+            font-weight: 800;
             cursor: pointer;
-            transition: all 0.22s ease;
-            position: relative;
-            margin-bottom: 1.35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px -2px rgba(79, 70, 229, 0.5);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .dropzone-box:hover, .dropzone-box.dragover {
-            border-color: var(--primary);
-            background: #EEF2FF;
+
+        .btn-floating-save:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px -3px var(--primary-glow);
+            box-shadow: 0 10px 25px -2px rgba(6, 182, 212, 0.6);
         }
-        .dropzone-thumb-preview {
-            max-width: 180px;
-            max-height: 120px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-top: 12px;
-            display: none;
-            box-shadow: var(--shadow-md);
+
+        /* Mobile Phone Optimization: Use ENTIRE Space */
+        @media (max-width: 640px) {
+            .full-screen-container {
+                padding: 8px 6px 95px 6px;
+            }
+
+            .slim-top-bar {
+                top: 6px;
+                padding: 8px 10px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+            }
+
+            .page-title {
+                font-size: 0.95rem;
+                max-width: 140px;
+            }
+
+            .btn-back span {
+                display: none;
+            }
+
+            .btn-back {
+                padding: 6px 8px;
+            }
+
+            .header-pill {
+                padding: 3px 8px;
+                font-size: 0.75rem;
+            }
+
+            .omr-grid-container {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .omr-key-row {
+                padding: 8px 10px;
+                border-radius: 10px;
+            }
+
+            .omr-bubble {
+                width: 36px;
+                height: 36px;
+                font-size: 0.88rem;
+            }
+
+            .omr-bubbles-wrap {
+                gap: 6px;
+            }
+
+            .floating-action-bar {
+                bottom: 12px;
+                padding: 8px 12px;
+                gap: 8px;
+                width: calc(100% - 16px);
+                justify-content: space-between;
+                box-sizing: border-box;
+            }
+
+            .floating-counter {
+                display: none;
+            }
+
+            .btn-floating-clear {
+                padding: 10px 12px;
+                font-size: 0.8rem;
+                flex: 1;
+                justify-content: center;
+            }
+
+            .btn-floating-save {
+                padding: 10px 16px;
+                font-size: 0.88rem;
+                flex: 1.4;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .omr-bubble {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
+            .omr-bubbles-wrap {
+                gap: 4px;
+            }
+            .omr-q-num {
+                min-width: 28px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Large Screen Optimizations */
+        @media (min-width: 1200px) {
+            .omr-grid-container {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 14px;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .omr-grid-container {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 14px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Top Navigation & Details -->
-        <div class="page-header-split">
-            <div class="header-meta-group">
-                <div class="header-breadcrumbs">
-                    <a href="/">← Dashboard</a>
-                    <span>/</span>
-                    <span><%= paper.title %></span>
-                </div>
-                <h1><%= paper.title %></h1>
-                <div class="header-tags">
-                    <span class="pill pill-primary">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        <%= paper.numQuestions %> Questions
-                    </span>
+    <% 
+        let keyCount = 0;
+        if (paper.answerKey) {
+            if (typeof paper.answerKey.get === 'function') {
+                for(let i = 1; i <= paper.numQuestions; i++) {
+                    if(paper.answerKey.get(String(i))) keyCount++;
+                }
+            } else {
+                Object.keys(paper.answerKey).forEach(k => { if(paper.answerKey[k]) keyCount++; });
+            }
+        }
+    %>
+
+    <div class="full-screen-container">
+        <!-- Slim Sticky Top Bar -->
+        <header class="slim-top-bar">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                <a href="/" class="btn-back" title="Back to Dashboard">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span>Dashboard</span>
+                </a>
+                <h1 class="page-title"><%= paper.title %></h1>
+            </div>
+            <div class="header-pill">
+                <span id="headerCounter"><%= keyCount %>/<%= paper.numQuestions %></span>
+            </div>
+        </header>
+
+        <!-- Form wrapping the Answer Key Matrix -->
+        <form action="/paper/<%= paper._id %>/answerkey" method="POST" id="answerKeyForm">
+            <div class="omr-grid-container" id="answerGrid">
+                <% for(let i=1; i<=paper.numQuestions; i++) { %>
                     <% 
-                        let keyCount = 0;
+                        let currentVal = "";
                         if (paper.answerKey) {
                             if (typeof paper.answerKey.get === 'function') {
-                                for(let i = 1; i <= paper.numQuestions; i++) {
-                                    if(paper.answerKey.get(String(i))) keyCount++;
-                                }
+                                currentVal = paper.answerKey.get(String(i)) || "";
                             } else {
-                                Object.keys(paper.answerKey).forEach(k => { if(paper.answerKey[k]) keyCount++; });
+                                currentVal = paper.answerKey[String(i)] || "";
                             }
                         }
                     %>
-                    <% if (keyCount > 0) { %>
-                        <span class="pill pill-success">✓ Answer Key Configured (<%= keyCount %>/<%= paper.numQuestions %>)</span>
-                    <% } else { %>
-                        <span class="pill pill-warning">● Answer Key Pending</span>
-                    <% } %>
-                </div>
+                    <div class="omr-key-row <%= currentVal ? 'has-val' : '' %>" id="row_q<%= i %>">
+                        <div class="omr-q-badge">
+                            <span class="omr-q-num">Q<%= i %></span>
+                            <span class="omr-selected-val" id="badge_val_q<%= i %>"><%= currentVal || '-' %></span>
+                        </div>
+                        <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
+                            <% ['A','B','C','D'].forEach(opt => { %>
+                                <button type="button" 
+                                        class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>" 
+                                        id="btn_q<%= i %>_<%= opt %>"
+                                        data-q="<%= i %>" 
+                                        data-opt="<%= opt %>"
+                                        onclick="selectAnswer('<%= i %>', '<%= opt %>')"
+                                        title="Select <%= opt %> for Question <%= i %>">
+                                    <%= opt %>
+                                </button>
+                            <% }) %>
+                        </div>
+                        <input type="hidden" name="q<%= i %>" id="input_q<%= i %>" value="<%= currentVal %>">
+                    </div>
+                <% } %>
             </div>
+        </form>
 
-            <div class="header-actions">
-                <a href="/paper/<%= paper._id %>/omr" target="_blank" class="btn btn-secondary">
-                    🖨️ Print OMR Sheet
-                </a>
-                <a href="/" class="btn btn-secondary">
-                    Dashboard
-                </a>
+        <!-- Floating Action Dock (Clear All with confirmation & Save Key with confirmation) -->
+        <div class="floating-action-bar">
+            <div class="floating-counter">
+                <span id="floatingCounter"><%= keyCount %></span> / <%= paper.numQuestions %> Keyed
             </div>
+            <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers with confirmation">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Clear All
+            </button>
+            <button type="button" class="btn-floating-save" onclick="confirmAndSaveKey()" title="Save answer key with confirmation">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                Save Answer Key
+            </button>
         </div>
-
-        <!-- Main Workspace -->
-        <main class="layout-grid">
-            <!-- Left: Answer Key Configuration -->
-            <div class="card">
-                <div class="card-header-styled">
-                    <div>
-                        <h2 style="margin: 0 0 4px 0; font-size: 1.3rem;">Answer Key Matrix Studio</h2>
-                        <span style="font-size: 0.88rem; color: var(--text-muted);">Define official answer keys for automated evaluation</span>
-                    </div>
-                </div>
-
-                <div class="key-toolbar">
-                    <div class="key-progress-wrap">
-                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);" id="progressLabel">
-                            <%= keyCount %> / <%= paper.numQuestions %> configured
-                        </span>
-                        <div class="key-progress-bar">
-                            <div class="key-progress-fill" id="progressFill" style="width: <%= Math.round((keyCount / paper.numQuestions) * 100) %>%;"></div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 6px;">
-                        <button type="button" class="quick-fill-btn" onclick="clearAllAnswers()">Clear All</button>
-                    </div>
-                </div>
-
-                <form action="/paper/<%= paper._id %>/answerkey" method="POST" id="answerKeyForm">
-                    <div class="omr-key-grid" id="answerGrid">
-                        <% for(let i=1; i<=paper.numQuestions; i++) { %>
-                            <% 
-                                let currentVal = "";
-                                if (paper.answerKey) {
-                                    if (typeof paper.answerKey.get === 'function') {
-                                        currentVal = paper.answerKey.get(String(i)) || "";
-                                    } else {
-                                        currentVal = paper.answerKey[String(i)] || "";
-                                    }
-                                }
-                            %>
-                            <div class="omr-key-row <%= currentVal ? 'has-val' : '' %>" id="row_q<%= i %>">
-                                <div class="omr-q-badge">
-                                    <span class="omr-q-num">Q<%= i %></span>
-                                    <span class="omr-selected-val" id="badge_val_q<%= i %>"><%= currentVal || '-' %></span>
-                                </div>
-                                <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
-                                    <% ['A','B','C','D'].forEach(opt => { %>
-                                        <button type="button" 
-                                                class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>" 
-                                                id="btn_q<%= i %>_<%= opt %>"
-                                                data-q="<%= i %>" 
-                                                data-opt="<%= opt %>"
-                                                onclick="selectAnswer('<%= i %>', '<%= opt %>')"
-                                                title="Select <%= opt %> for Question <%= i %>">
-                                            <%= opt %>
-                                        </button>
-                                    <% }) %>
-                                </div>
-                                <input type="hidden" name="q<%= i %>" id="input_q<%= i %>" value="<%= currentVal %>">
-                            </div>
-                        <% } %>
-                    </div>
-
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 1.25rem;">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                <polyline points="7 3 7 8 15 8"></polyline>
-                            </svg>
-                            Save Answer Key
-                        </button>
-                        <% if (keyCount > 0) { %>
-                            <span style="color: var(--success); font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Saved & Active
-                            </span>
-                        <% } %>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Right: Evaluation Methods -->
-            <div>
-                <!-- Method 1: Live Camera Scanner -->
-                <div class="camera-card">
-                    <h3>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                        Live AI Camera Scanner
-                    </h3>
-                    <p>
-                        Point your camera at the printed OMR sheet. The engine automatically locks the 4 corners, levels the sheet at any angle, and grades results hands-free.
-                    </p>
-                    <a href="/paper/<%= paper._id %>/scan" class="btn-camera-launch">
-                        ⚡ Launch Live AI Scanner →
-                    </a>
-                </div>
-
-                <!-- Method 2: Image File Upload -->
-                <div class="card">
-                    <div class="card-header-styled">
-                        <div>
-                            <h2 style="margin: 0 0 4px 0; font-size: 1.25rem;">Upload Sheet Image</h2>
-                            <span style="font-size: 0.85rem; color: var(--text-muted);">Grade scanned photos or gallery images</span>
-                        </div>
-                    </div>
-
-                    <form action="/paper/<%= paper._id %>/check" method="POST" enctype="multipart/form-data" id="uploadForm">
-                        <div class="dropzone-box" id="dropzoneBox" onclick="document.getElementById('omrFileInput').click()">
-                            <div class="dropzone-icon">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                                </svg>
-                            </div>
-                            <div style="font-weight: 700; font-size: 0.98rem; margin-bottom: 4px;" id="dropzoneText">
-                                Choose or Drag & Drop OMR Image
-                            </div>
-                            <div style="font-size: 0.82rem; color: var(--text-muted);">
-                                Supports JPG, JPEG, PNG high-resolution sheets
-                            </div>
-                            <img id="thumbPreview" class="dropzone-thumb-preview" alt="OMR Sheet Preview">
-                            <input type="file" id="omrFileInput" name="omrSheet" accept="image/*" required style="display:none;" onchange="handleFileSelected(this)">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.85rem;">
-                            ⚡ Upload & Evaluate Sheet
-                        </button>
-                    </form>
-
-                    <div style="margin-top: 1.35rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.82rem; color: var(--text-muted); line-height: 1.55;">
-                        <strong style="color: var(--text-main);">Tips for 100% precision:</strong>
-                        <ul style="margin: 6px 0 0 0; padding-left: 20px;">
-                            <li>Ensure all 4 solid corner marker squares are inside frame.</li>
-                            <li>The engine handles angles up to 45° with sub-pixel rectification.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </main>
     </div>
 
     <script>
@@ -516,7 +496,6 @@
             if (!input) return;
 
             if (input.value === opt) {
-                // Clicking currently selected bubble toggles it off (unmarks)
                 input.value = '';
                 if (badge) badge.textContent = '-';
                 if (row) row.classList.remove('has-val');
@@ -525,7 +504,6 @@
                     if (btn) btn.classList.remove('selected');
                 });
             } else {
-                // Select option
                 input.value = opt;
                 if (badge) badge.textContent = opt;
                 if (row) row.classList.add('has-val');
@@ -547,15 +525,14 @@
             inputs.forEach(inp => {
                 if (inp.value) count++;
             });
-            const pct = Math.round((count / totalQuestions) * 100);
-            const fill = document.getElementById('progressFill');
-            const label = document.getElementById('progressLabel');
-            if (fill) fill.style.width = pct + '%';
-            if (label) label.textContent = count + ' / ' + totalQuestions + ' configured';
+            const headerCounter = document.getElementById('headerCounter');
+            const floatingCounter = document.getElementById('floatingCounter');
+            if (headerCounter) headerCounter.textContent = count + '/' + totalQuestions;
+            if (floatingCounter) floatingCounter.textContent = count;
         }
 
-        function clearAllAnswers() {
-            if (confirm("Are you sure you want to clear all selected answers?")) {
+        function confirmAndClearAll() {
+            if (confirm("Are you sure you want to clear all marked answers?")) {
                 const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
                 inputs.forEach(inp => {
                     inp.value = "";
@@ -570,46 +547,17 @@
             }
         }
 
-        // File Drag & Drop Handling
-        const dropzone = document.getElementById('dropzoneBox');
-        const fileInput = document.getElementById('omrFileInput');
-        const dropText = document.getElementById('dropzoneText');
-        const thumbPreview = document.getElementById('thumbPreview');
+        function confirmAndSaveKey() {
+            const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
+            let filled = 0;
+            inputs.forEach(inp => { if (inp.value) filled++; });
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzone.classList.add('dragover');
-            });
-        });
+            const msg = filled === 0
+                ? "No questions have been marked. Do you want to save an empty answer key?"
+                : `Save answer key with ${filled} of ${totalQuestions} questions configured?`;
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzone.classList.remove('dragover');
-            });
-        });
-
-        dropzone.addEventListener('drop', (e) => {
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                handleFileSelected(fileInput);
-            }
-        });
-
-        function handleFileSelected(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                dropText.innerHTML = '<span style="color:var(--primary); font-weight:700;">' + file.name + '</span> (' + (file.size / 1024).toFixed(1) + ' KB)';
-                
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    thumbPreview.src = e.target.result;
-                    thumbPreview.style.display = 'inline-block';
-                };
-                reader.readAsDataURL(file);
+            if (confirm(msg)) {
+                document.getElementById('answerKeyForm').submit();
             }
         }
     </script>
