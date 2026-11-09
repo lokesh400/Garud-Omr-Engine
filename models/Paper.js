@@ -18,7 +18,7 @@ const sectionSchema = new mongoose.Schema({
   },
   max_marks: {
     type: Number,
-    default: function() {
+    default: function () {
       if (this.from_question && this.to_question) {
         return (this.to_question - this.from_question + 1) * 4;
       }
@@ -50,7 +50,7 @@ const paperSchema = new mongoose.Schema({
   },
   max_marks: {
     type: Number,
-    default: function() {
+    default: function () {
       return (this.total_questions || 50) * 4;
     }
   },
@@ -76,15 +76,15 @@ const paperSchema = new mongoose.Schema({
 
 // Backward-compatibility Virtuals
 paperSchema.virtual('numQuestions')
-  .get(function() {
+  .get(function () {
     return this.total_questions;
   })
-  .set(function(val) {
+  .set(function (val) {
     this.total_questions = Number(val);
   });
 
 paperSchema.virtual('answerKey')
-  .get(function() {
+  .get(function () {
     const map = new Map();
     if (Array.isArray(this.answer_key)) {
       this.answer_key.forEach((ans, idx) => {
@@ -93,7 +93,7 @@ paperSchema.virtual('answerKey')
     }
     return map;
   })
-  .set(function(val) {
+  .set(function (val) {
     if (Array.isArray(val)) {
       this.answer_key = val;
     } else if (val && typeof val === 'object') {
@@ -109,10 +109,10 @@ paperSchema.virtual('answerKey')
 
 // Sections string representation virtual
 paperSchema.virtual('sections_string')
-  .get(function() {
+  .get(function () {
     return JSON.stringify(this.sections || []);
   })
-  .set(function(val) {
+  .set(function (val) {
     if (typeof val === 'string') {
       try {
         this.sections = JSON.parse(val);
@@ -125,7 +125,7 @@ paperSchema.virtual('sections_string')
   });
 
 // Pre-validate hook
-paperSchema.pre('validate', function() {
+paperSchema.pre('validate', function () {
   if (typeof this.sections === 'string') {
     try {
       this.sections = JSON.parse(this.sections);

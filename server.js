@@ -394,7 +394,7 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
 
         const newSubmission = new Submission({
             rollnumber: studentRoll,
-            paper_id: paper._id,
+            paper_id: String(paper._id),
             submitted_at: new Date(),
             responses: responsesArray,
             cloudinary_image_url: uploadResult.url,
@@ -403,14 +403,10 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
             score: Number(score || 0),
             totalQuestions: totalQ,
             percentage,
-            aggregateMarks: secCalc.aggregateMarks,
-            maxMarks: secCalc.maxMarks,
+            maxMarks: paper.max_marks || (totalQ * 4),
             correctCount: Number(correctCount || 0),
             wrongCount: Number(wrongCount || 0),
-            multipleCount: Number(multipleCount || 0),
-            blankCount: Number(blankCount || 0),
-            sectionWise: secCalc.sectionWise,
-            breakdown: Array.isArray(breakdown) ? breakdown : []
+            blankCount: Number(blankCount || 0)
         });
 
         await newSubmission.save();
@@ -477,16 +473,83 @@ app.get('/paper/:id/results', async (req, res) => {
 
         const results = await Submission.find({
             $or: [
+                { paper_id: String(paper._id) },
                 { paper_id: paper._id },
                 { paperId: paper._id }
             ]
-        }).sort({ aggregateMarks: -1, score: -1, submitted_at: -1, scannedAt: -1 });
+        }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
+
+        // Build keyLookup from paper
+        const keyLookup = {};
+        if (Array.isArray(paper.answer_key)) {
+            paper.answer_key.forEach((ans, i) => {
+                if (ans) keyLookup[i + 1] = ans;
+            });
+        } else if (paper.answerKey) {
+            for (let i = 1; i <= (paper.total_questions || paper.numQuestions || 50); i++) {
+                const k = (paper.answerKey instanceof Map) ? paper.answerKey.get(String(i)) : paper.answerKey[String(i)];
+                if (k) keyLookup[i] = k;
+            }
+        }
+
+        // Determine sections
+        let sectionsDef = [];
+        if (Array.isArray(paper.sections) && paper.sections.length > 0) {
+            sectionsDef = paper.sections;
+        } else {
+            const totalQ = paper.total_questions || paper.numQuestions || 50;
+            const qPerSec = Math.ceil(totalQ / 4);
+            sectionsDef = [
+                { name: 'Physics', from_question: 1, to_question: qPerSec, max_marks: qPerSec * 4 },
+                { name: 'Chemistry', from_question: qPerSec + 1, to_question: qPerSec * 2, max_marks: qPerSec * 4 },
+                { name: 'Botany / Math', from_question: (qPerSec * 2) + 1, to_question: qPerSec * 3, max_marks: qPerSec * 4 },
+                { name: 'Zoology / Aptitude', from_question: (qPerSec * 3) + 1, to_question: totalQ, max_marks: (totalQ - (qPerSec * 3)) * 4 }
+            ];
+        }
+
+        // Dynamically compute sectionWise for each submission without bloating database storage
+        results.forEach(r => {
+            if (!r.sectionWise || r.sectionWise.length === 0) {
+                const resps = Array.isArray(r.responses) ? r.responses : [];
+                r.sectionWise = sectionsDef.map(s => {
+                    let secCorrect = 0;
+                    let secWrong = 0;
+                    let secBlank = 0;
+                    const fromQ = Number(s.from_question);
+                    const toQ = Number(s.to_question);
+                    const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
+
+                    for (let q = fromQ; q <= toQ; q++) {
+                        const marked = (resps[q - 1] || '').trim().toUpperCase();
+                        const key = (keyLookup[q] || '').trim().toUpperCase();
+                        if (!marked) {
+                            secBlank++;
+                        } else if (key && marked === key) {
+                            secCorrect++;
+                        } else {
+                            secWrong++;
+                        }
+                    }
+
+                    const secMarks = (secCorrect * 4) - secWrong;
+                    return {
+                        sectionName: s.name,
+                        range: `Q${fromQ}-Q${toQ}`,
+                        correct: secCorrect,
+                        wrong: secWrong,
+                        blank: secBlank,
+                        marks: Math.max(0, secMarks),
+                        maxMarks: s.max_marks || (countInSec * 4)
+                    };
+                });
+            }
+        });
 
         // Calculate Aggregate Stats
         let highestAggregate = 0;
         let totalAgg = 0;
         let totalPct = 0;
-        const maxMarks = (paper.numQuestions || 50) * 4;
+        const maxMarks = paper.max_marks || (paper.numQuestions || 50) * 4;
 
         // Section averages
         const secSums = {};
