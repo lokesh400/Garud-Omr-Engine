@@ -260,6 +260,7 @@
     </style>
 </head>
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'new_paper' }) %>
     <div class="container">
         <div class="page-header-nav">
             <div class="breadcrumb-wrap">
@@ -544,5 +545,6 @@
 
         resetToStandardSections();
     </script>
+    <%- include('partials/sidebar_end') %>
 </body>
 </html>

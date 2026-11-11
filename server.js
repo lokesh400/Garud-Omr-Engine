@@ -16,6 +16,18 @@ const Submission = require('./models/Submission');
 const Result = Submission;
 const User = require('./models/User');
 const { uploadOmrSheet, deleteOmrSheet } = require('./utils/cloudinaryPool');
+const {
+    parseBulkStudentsInput,
+    annotateExistingUsers,
+    generateStudentPassword,
+    extractFirst3
+} = require('./utils/bulkStudents');
+
+// In-memory uploader for CSV/XLSX bulk student spreadsheets (5 MB max)
+const bulkSpreadsheetUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
@@ -424,13 +436,215 @@ app.post('/account/password', requireAuth, async (req, res) => {
 app.get('/users', requireAdmin, async (req, res) => {
     try {
         const users = await User.find().sort({ role: 1, createdAt: -1 });
+        const bulkReport = (req.session && req.session.bulkImportReport) ? req.session.bulkImportReport : null;
+        if (req.session && req.session.bulkImportReport) {
+            delete req.session.bulkImportReport;
+        }
         res.render('users', {
             users,
             error: req.query.error || null,
-            message: req.query.message || null
+            message: req.query.message || null,
+            bulkReport
         });
     } catch (err) {
         res.status(500).send('Error loading users: ' + err.message);
+    }
+});
+
+// Download sample CSV template for bulk student import
+app.get('/users/bulk-template', requireAdmin, (req, res) => {
+    const csv = [
+        'roll_number,name,fathers_name,mothers_name',
+        '01234567,Aarav Sharma,Rajesh Sharma,Sunita Sharma',
+        '01234568,Priya Verma,Vikram Verma,Meena Verma'
+    ].join('\r\n') + '\r\n';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="students_bulk_template.csv"');
+    res.send(csv);
+});
+
+function handleBulkUploadMiddleware(req, res, next) {
+    bulkSpreadsheetUpload.single('studentFile')(req, res, (err) => {
+        if (err) {
+            const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Uploaded file exceeds the 5 MB limit.' : (err.message || 'Upload failed.');
+            if (isApiRequest(req) || (req.originalUrl && req.originalUrl.startsWith('/users/bulk/parse'))) {
+                return res.status(400).json({ error: msg });
+            }
+            return res.redirect('/users?error=' + encodeURIComponent(msg));
+        }
+        next();
+    });
+}
+
+// Preview & validate uploaded spreadsheet or pasted rows before creating accounts
+app.post('/users/bulk/parse', requireAdmin, handleBulkUploadMiddleware, async (req, res) => {
+    try {
+        const rawText = req.body ? req.body.rawText : '';
+        const parsedRows = await parseBulkStudentsInput({ file: req.file || null, rawText });
+        const annotated = await annotateExistingUsers(parsedRows, User);
+
+        const readyCount = annotated.filter(r => r.status === 'ready').length;
+        const existsCount = annotated.filter(r => r.status === 'exists' || r.status === 'duplicate_in_file').length;
+        const invalidCount = annotated.filter(r => r.status === 'invalid').length;
+
+        res.json({
+            success: true,
+            rows: annotated,
+            summary: {
+                total: annotated.length,
+                readyCount,
+                existsCount,
+                invalidCount
+            }
+        });
+    } catch (err) {
+        res.status(400).json({ error: err.message || 'Could not parse spreadsheet.' });
+    }
+});
+
+// Bulk create student accounts (only name and rollnumber stored in DB; password derived from name + father + mother)
+app.post('/users/bulk', requireAdmin, handleBulkUploadMiddleware, async (req, res) => {
+    try {
+        let candidateRows = [];
+
+        if (req.body && Array.isArray(req.body.students)) {
+            const seen = new Set();
+            candidateRows = req.body.students.map((item, idx) => {
+                const rollnumber = String((item && item.rollnumber) || '').trim();
+                const name = String((item && item.name) || '').trim();
+                const fatherName = String((item && item.fatherName) || '').trim();
+                const motherName = String((item && item.motherName) || '').trim();
+                const username = rollnumber.toLowerCase().replace(/\s+/g, '');
+                const generatedPassword = generateStudentPassword(name, fatherName, motherName);
+
+                let status = 'ready';
+                let reason = '';
+                if (!rollnumber) {
+                    status = 'invalid';
+                    reason = 'Roll number is required';
+                } else if (!/^[a-z0-9._-]{2,40}$/.test(username)) {
+                    status = 'invalid';
+                    reason = 'Roll number must be 2-40 characters (letters, digits, ., _, -)';
+                } else if (!name || extractFirst3(name).length === 0) {
+                    status = 'invalid';
+                    reason = 'Student name must contain letters';
+                } else if (!fatherName || extractFirst3(fatherName).length === 0) {
+                    status = 'invalid';
+                    reason = "Father's name must contain letters";
+                } else if (!motherName || extractFirst3(motherName).length === 0) {
+                    status = 'invalid';
+                    reason = "Mother's name must contain letters";
+                } else if (seen.has(username)) {
+                    status = 'duplicate_in_file';
+                    reason = 'Duplicate roll number in upload';
+                } else {
+                    seen.add(username);
+                }
+
+                return {
+                    rowNumber: Number(item && item.rowNumber) || (idx + 1),
+                    rollnumber,
+                    username,
+                    name,
+                    generatedPassword,
+                    status,
+                    reason
+                };
+            });
+        } else {
+            const rawText = req.body ? req.body.rawText : '';
+            candidateRows = await parseBulkStudentsInput({ file: req.file || null, rawText });
+        }
+
+        const annotated = await annotateExistingUsers(candidateRows, User);
+
+        const created = [];
+        const skipped = [];
+        const failed = [];
+        const readyToCreate = [];
+
+        annotated.forEach(row => {
+            if (row.status === 'ready') {
+                readyToCreate.push(row);
+            } else if (row.status === 'exists' || row.status === 'duplicate_in_file') {
+                skipped.push({
+                    rowNumber: row.rowNumber,
+                    rollnumber: row.rollnumber,
+                    name: row.name,
+                    reason: row.reason
+                });
+            } else {
+                failed.push({
+                    rowNumber: row.rowNumber,
+                    rollnumber: row.rollnumber,
+                    name: row.name,
+                    reason: row.reason || 'Invalid row'
+                });
+            }
+        });
+
+        // Register validated students in small batches (storing only username, fullName, role, rollnumber + password hash)
+        const BATCH_SIZE = 4;
+        for (let i = 0; i < readyToCreate.length; i += BATCH_SIZE) {
+            const batch = readyToCreate.slice(i, i + BATCH_SIZE);
+            await Promise.all(batch.map(async row => {
+                try {
+                    const userDoc = new User({
+                        username: row.username,
+                        fullName: row.name,
+                        role: 'student',
+                        rollnumber: row.rollnumber
+                    });
+                    await User.register(userDoc, row.generatedPassword);
+                    created.push({
+                        _id: String(userDoc._id),
+                        rowNumber: row.rowNumber,
+                        rollnumber: userDoc.rollnumber,
+                        name: userDoc.fullName,
+                        username: userDoc.username
+                    });
+                } catch (regErr) {
+                    if (regErr && (regErr.name === 'UserExistsError' || regErr.code === 11000)) {
+                        skipped.push({
+                            rowNumber: row.rowNumber,
+                            rollnumber: row.rollnumber,
+                            name: row.name,
+                            reason: 'Account already exists (skipped)'
+                        });
+                    } else {
+                        failed.push({
+                            rowNumber: row.rowNumber,
+                            rollnumber: row.rollnumber,
+                            name: row.name,
+                            reason: (regErr && regErr.message) || 'Failed to create account'
+                        });
+                    }
+                }
+            }));
+        }
+
+        const summary = {
+            total: annotated.length,
+            createdCount: created.length,
+            skippedCount: skipped.length,
+            failedCount: failed.length
+        };
+
+        if (isApiRequest(req)) {
+            return res.json({ success: true, summary, created, skipped, failed });
+        }
+
+        if (req.session) {
+            req.session.bulkImportReport = { summary, skipped: skipped.slice(0, 50), failed: failed.slice(0, 50) };
+        }
+        return res.redirect('/users?message=' + encodeURIComponent(
+            `Bulk import finished: ${summary.createdCount} created, ${summary.skippedCount} skipped, ${summary.failedCount} failed.`
+        ));
+    } catch (err) {
+        if (isApiRequest(req)) {
+            return res.status(400).json({ error: err.message || 'Bulk upload failed.' });
+        }
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Bulk upload failed.'));
     }
 });
 

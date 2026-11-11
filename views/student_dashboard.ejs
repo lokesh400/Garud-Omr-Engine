@@ -26,7 +26,7 @@
 
         .exam-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.25rem;
         }
 
@@ -256,41 +256,23 @@
 </head>
 
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'student' }) %>
     <div class="student-container">
         <header class="app-header">
-            <div class="brand-logo-wrap">
-                <div class="brand-icon" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="3" width="16" height="18" rx="2"></rect>
-                        <line x1="8" y1="8" x2="16" y2="8"></line>
-                        <circle cx="9" cy="13" r="1"></circle>
-                        <circle cx="15" cy="13" r="1"></circle>
-                        <circle cx="9" cy="17" r="1"></circle>
-                        <circle cx="15" cy="17" r="1"></circle>
-                    </svg>
-                </div>
-                <div>
-                    <h1 style="font-size: 1.15rem; margin: 0;">My OMR Results</h1>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
-                        <span style="font-size: 0.82rem; color: var(--text-muted);">
-                            <%= currentUser.fullName || currentUser.username %>
-                        </span>
-                        <% if (targetRoll) { %>
-                            <span class="roll-pill">Roll: <%= targetRoll %></span>
-                        <% } %>
-                    </div>
+            <div>
+                <h1 style="font-size: 1.25rem; margin: 0 0 3px 0;">My OMR Results</h1>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        <%= currentUser.fullName || currentUser.username %>
+                    </span>
+                    <% if (targetRoll) { %>
+                        <span class="roll-pill">Roll: <%= targetRoll %></span>
+                    <% } %>
                 </div>
             </div>
-
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <% if (currentUser && currentUser.role === 'admin') { %>
-                    <a href="/" class="btn btn-secondary btn-sm">&larr; Admin Dashboard</a>
-                <% } %>
-                <a href="/account" class="btn btn-secondary btn-sm">Account</a>
-                <form action="/logout" method="POST" style="margin: 0;">
-                    <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
-                </form>
-            </div>
+            <% if (results && results.length > 0) { %>
+                <span class="pill pill-primary"><%= results.length %> Exam<%= results.length !== 1 ? 's' : '' %></span>
+            <% } %>
         </header>
 
         <% if (currentUser && currentUser.role === 'admin') { %>
@@ -748,6 +730,7 @@
             currentModalItem = null;
         }
     </script>
+    <%- include('partials/sidebar_end') %>
 </body>
 
 </html>

@@ -58,15 +58,18 @@
 </head>
 
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'account' }) %>
     <div class="account-container">
         <header class="app-header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="<%= currentUser && currentUser.role === 'admin' ? '/' : '/student' %>" class="btn btn-secondary btn-sm">&larr; Back</a>
-                <h1 style="font-size: 1.2rem; margin: 0;">Account Settings</h1>
+            <div>
+                <h1 style="font-size: 1.25rem; margin: 0 0 2px 0;">Account Settings</h1>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Profile details and password management</p>
             </div>
-            <form action="/logout" method="POST" style="margin: 0;">
-                <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
-            </form>
+            <% if (currentUser) { %>
+                <span class="pill <%= currentUser.role === 'admin' ? 'pill-primary' : 'pill-success' %>">
+                    <%= currentUser.role === 'admin' ? 'Admin' : ('Roll: ' + (currentUser.rollnumber || currentUser.username)) %>
+                </span>
+            <% } %>
         </header>
 
         <% if (typeof error !== 'undefined' && error) { %>
@@ -143,6 +146,7 @@
             </form>
         </div>
     </div>
+    <%- include('partials/sidebar_end') %>
 </body>
 
 </html>

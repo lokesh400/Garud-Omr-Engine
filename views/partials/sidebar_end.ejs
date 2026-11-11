@@ -1,0 +1,120 @@
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const sidebar = document.getElementById('appSidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const mainCol = document.getElementById('appMainCol');
+    const menuBtn = document.getElementById('mobileMenuBtn');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
+    if (!sidebar || !backdrop || !mainCol || !menuBtn) return;
+
+    const desktopMq = window.matchMedia('(min-width: 960px)');
+
+    function syncSidebarState() {
+        if (desktopMq.matches) {
+            sidebar.classList.remove('is-open');
+            backdrop.classList.remove('is-visible');
+            sidebar.removeAttribute('role');
+            sidebar.removeAttribute('aria-modal');
+            sidebar.inert = false;
+            mainCol.inert = false;
+            menuBtn.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            return;
+        }
+
+        const isOpen = sidebar.classList.contains('is-open');
+        sidebar.setAttribute('role', 'dialog');
+        if (isOpen) {
+            sidebar.setAttribute('aria-modal', 'true');
+            sidebar.inert = false;
+            mainCol.inert = true;
+            menuBtn.setAttribute('aria-expanded', 'true');
+        } else {
+            sidebar.removeAttribute('aria-modal');
+            sidebar.inert = true;
+            mainCol.inert = false;
+            menuBtn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function openDrawer() {
+        if (desktopMq.matches) return;
+        sidebar.classList.add('is-open');
+        backdrop.classList.add('is-visible');
+        document.body.style.overflow = 'hidden';
+        syncSidebarState();
+        if (closeBtn) {
+            closeBtn.focus({ preventScroll: true });
+        }
+    }
+
+    function closeDrawer(restoreFocus) {
+        if (!sidebar.classList.contains('is-open')) return;
+        sidebar.classList.remove('is-open');
+        backdrop.classList.remove('is-visible');
+        document.body.style.overflow = '';
+        syncSidebarState();
+        if (restoreFocus !== false && !desktopMq.matches) {
+            menuBtn.focus({ preventScroll: true });
+        }
+    }
+
+    menuBtn.addEventListener('click', openDrawer);
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+            closeDrawer(true);
+        });
+    }
+    backdrop.addEventListener('click', function () {
+        closeDrawer(true);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && sidebar.classList.contains('is-open')) {
+            closeDrawer(true);
+        }
+    });
+
+    // Swipe left inside drawer on mobile to dismiss
+    let touchStartX = null;
+    let touchStartY = null;
+    sidebar.addEventListener('touchstart', function (event) {
+        if (desktopMq.matches || !event.touches || event.touches.length !== 1) return;
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+    }, { passive: true });
+
+    sidebar.addEventListener('touchend', function (event) {
+        if (touchStartX === null || !event.changedTouches || event.changedTouches.length !== 1) return;
+        const dx = event.changedTouches[0].clientX - touchStartX;
+        const dy = event.changedTouches[0].clientY - touchStartY;
+        touchStartX = null;
+        touchStartY = null;
+        if (dx < -55 && Math.abs(dy) < 55) {
+            closeDrawer(true);
+        }
+    }, { passive: true });
+
+    // Close drawer cleanly when selecting a nav link
+    sidebar.querySelectorAll('a.sidebar-link').forEach(function (link) {
+        link.addEventListener('click', function () {
+            if (!desktopMq.matches) {
+                closeDrawer(false);
+            }
+        });
+    });
+
+    if (typeof desktopMq.addEventListener === 'function') {
+        desktopMq.addEventListener('change', syncSidebarState);
+    } else if (typeof desktopMq.addListener === 'function') {
+        desktopMq.addListener(syncSidebarState);
+    }
+
+    syncSidebarState();
+})();
+</script>
+

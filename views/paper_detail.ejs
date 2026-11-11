@@ -348,13 +348,18 @@
         }
 
         /* Mobile Optimization */
+        @media (max-width: 959px) {
+            .slim-top-bar {
+                position: static;
+            }
+        }
+
         @media (max-width: 640px) {
             .full-screen-container {
-                padding: 8px 8px 92px 8px;
+                padding: 10px 10px 92px 10px;
             }
 
             .slim-top-bar {
-                top: 6px;
                 padding: 8px 10px;
                 margin-bottom: 10px;
             }
@@ -418,22 +423,23 @@
             .omr-q-num { min-width: 28px; font-size: 0.85rem; }
         }
 
-        @media (min-width: 1200px) {
+        @media (min-width: 641px) {
             .omr-grid-container {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
                 gap: 12px;
             }
         }
 
-        @media (min-width: 1440px) {
-            .omr-grid-container {
-                grid-template-columns: repeat(5, 1fr);
-                gap: 12px;
+        @media (min-width: 960px) {
+            .floating-action-bar {
+                left: calc(50% + (var(--sidebar-width) / 2));
+                max-width: calc(100% - var(--sidebar-width) - 32px);
             }
         }
     </style>
 </head>
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'paper_key', paper: paper }) %>
     <%
         const totalQ = paper.total_questions || paper.numQuestions || 50;
         const encodedId = encodeURIComponent(paper._id);
@@ -454,12 +460,6 @@
     <div class="full-screen-container">
         <header class="slim-top-bar">
             <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;">
-                <a href="/" class="btn-back" title="Back to Dashboard">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
                 <h1 class="page-title"><%= paper.title %></h1>
                 <% if (paper.subject) { %>
                     <span class="subject-chip"><%= paper.subject %></span>
@@ -646,5 +646,6 @@
             }
         }
     </script>
+    <%- include('partials/sidebar_end') %>
 </body>
 </html>

@@ -29,7 +29,7 @@
             gap: 1.5rem;
             align-items: start;
         }
-        @media (max-width: 960px) {
+        @media (max-width: 1180px) {
             .eval-layout { grid-template-columns: 1fr; }
         }
         .canvas-card {
@@ -263,6 +263,7 @@
     </style>
 </head>
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'evaluator', paper: paper }) %>
     <div class="container eval-container">
         <div class="eval-header-split">
             <div>
@@ -273,7 +274,7 @@
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
-                <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">&larr; Back to Paper</a>
+                <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">Answer Key</a>
                 <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" class="btn btn-primary btn-sm" title="View all student results and checked copies">View Results</a>
             </div>
         </div>
@@ -1353,5 +1354,6 @@
         }
 
         </script>
+    <%- include('partials/sidebar_end') %>
 </body>
 </html>

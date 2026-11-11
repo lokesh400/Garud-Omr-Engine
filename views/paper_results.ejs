@@ -387,10 +387,13 @@
         }
 
         /* Responsive */
-        @media (max-width: 960px) {
+        @media (max-width: 1180px) {
             .results-stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+        }
+
+        @media (max-width: 960px) {
             .omr-modal-body {
                 grid-template-columns: 1fr;
             }
@@ -438,10 +441,10 @@
 </head>
 
 <body>
+    <%- include('partials/sidebar_start', { activeNav: 'paper_results', paper: paper }) %>
     <div class="results-container">
         <header class="results-topbar">
             <div class="results-topbar-left">
-                <a href="/" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
                 <div>
                     <h1 style="font-size: 1.25rem; margin: 0 0 2px 0; font-weight: 700;">
                         <%= paper.title %>
@@ -1162,6 +1165,7 @@
             URL.revokeObjectURL(url);
         }
     </script>
+    <%- include('partials/sidebar_end') %>
 </body>
 
 </html>
