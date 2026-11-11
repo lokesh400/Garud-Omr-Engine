@@ -950,6 +950,13 @@
 
             leveledCtx.putImageData(dstImgData, 0, 0);
 
+            // Capture CLEAN rectified sheet BEFORE painting checking circles so answer key updates stay recheckable
+            try {
+                window.cleanLeveledImageData = leveledCanvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                window.cleanLeveledImageData = leveledCanvas.toDataURL();
+            }
+
             // Grade bubbles on the leveled cropped sheet
             evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
 
@@ -1376,19 +1383,17 @@
             const tbl = document.getElementById('tableBody');
             if (tbl) tbl.innerHTML = rowsHtml;
 
-            // Auto-archive evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
+            // Auto-archive CLEAN evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
             try {
-                const canvas = document.getElementById('canvasOutput');
-                if (canvas) {
-                    const statusPill = document.getElementById('evalStatus');
+                const statusPill = document.getElementById('evalStatus');
+                let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
+                if (!rollNo || rollNo.length === 0) {
+                    rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+                }
+
+                const imageData = window.cleanLeveledImageData || (typeof leveledCanvas !== 'undefined' ? leveledCanvas.toDataURL('image/jpeg', 0.78) : null);
+                if (imageData) {
                     if (statusPill) statusPill.textContent = '☁️ Archiving to Cloudinary...';
-
-                    let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
-                    if (!rollNo || rollNo.length === 0) {
-                        rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
-                    }
-
-                    const imageData = canvas.toDataURL('image/jpeg', 0.85);
 
                     fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/save-result', {
                         method: 'POST',
@@ -1408,7 +1413,7 @@
                     .then(res => res.json())
                     .then(data => {
                         if (statusPill && data.success) {
-                            statusPill.innerHTML = '✓ Uploaded to Cloudinary &bull; <a href="/paper/<%= paper._id %>/results" style="color:inherit; font-weight:800; text-decoration:underline;">View Results</a>';
+                            statusPill.innerHTML = '✓ Uploaded to Cloudinary &bull; <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" style="color:inherit; font-weight:800; text-decoration:underline;">View Results</a>';
                         }
                     })
                     .catch(e => {

@@ -68,6 +68,113 @@ function getAnswerKeyJson(paper) {
     return '{}';
 }
 
+// Helper to build 1-based answer key lookup map
+function buildKeyLookup(paper) {
+    const keyLookup = {};
+    if (!paper) return keyLookup;
+    const totalQ = paper.total_questions || paper.numQuestions || 50;
+    if (Array.isArray(paper.answer_key) && paper.answer_key.length > 0) {
+        paper.answer_key.forEach((ans, i) => {
+            if (ans && typeof ans === 'string' && ans.trim() !== '') {
+                keyLookup[i + 1] = ans.trim().toUpperCase();
+            }
+        });
+    } else if (paper.answerKey) {
+        for (let i = 1; i <= totalQ; i++) {
+            const k = (typeof paper.answerKey.get === 'function')
+                ? paper.answerKey.get(String(i))
+                : paper.answerKey[String(i)];
+            if (k && typeof k === 'string' && k.trim() !== '') {
+                keyLookup[i] = k.trim().toUpperCase();
+            }
+        }
+    }
+    return keyLookup;
+}
+
+// Re-evaluate a student's saved responses array against a keyLookup
+function evaluateResponsesAgainstKey(responses, keyLookup, totalQ) {
+    const resps = Array.isArray(responses) ? responses : [];
+    let score = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let blankCount = 0;
+    let evaluatedKeyCount = 0;
+
+    for (let q = 1; q <= totalQ; q++) {
+        const raw = resps[q - 1];
+        const marked = raw ? String(raw).trim().toUpperCase() : '';
+        const key = keyLookup[q] ? String(keyLookup[q]).trim().toUpperCase() : '';
+
+        if (key) evaluatedKeyCount++;
+
+        if (!marked) {
+            blankCount++;
+        } else if (marked.includes(',')) {
+            // Multiple bubbles shaded -> treated as wrong/invalid
+            wrongCount++;
+        } else if (key && marked === key) {
+            score++;
+            correctCount++;
+        } else if (key) {
+            wrongCount++;
+        }
+    }
+
+    const denom = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalQ;
+    const percentage = denom > 0 ? Math.round((score / denom) * 100) : 0;
+
+    return { score, correctCount, wrongCount, blankCount, percentage };
+}
+
+// Recalculate and persist scores for all existing submissions of a paper
+async function regradePaperSubmissions(paper) {
+    if (!paper) return 0;
+    const paperIdStr = String(paper._id);
+    const submissions = await Submission.find({
+        $or: [
+            { paper_id: paperIdStr },
+            { paper_id: paper._id },
+            { paperId: paper._id }
+        ]
+    });
+
+    if (!submissions || submissions.length === 0) return 0;
+
+    const keyLookup = buildKeyLookup(paper);
+    const defaultTotalQ = paper.total_questions || paper.numQuestions || 50;
+    const paperMaxMarks = paper.max_marks || (defaultTotalQ * 4);
+
+    const bulkOps = submissions.map(sub => {
+        const totalQ = sub.totalQuestions || defaultTotalQ;
+        const graded = evaluateResponsesAgainstKey(sub.responses, keyLookup, totalQ);
+
+        return {
+            updateOne: {
+                filter: { _id: sub._id },
+                update: {
+                    $set: {
+                        score: graded.score,
+                        totalQuestions: totalQ,
+                        percentage: graded.percentage,
+                        maxMarks: paperMaxMarks,
+                        correctCount: graded.correctCount,
+                        wrongCount: graded.wrongCount,
+                        blankCount: graded.blankCount
+                    }
+                }
+            }
+        };
+    });
+
+    if (bulkOps.length > 0) {
+        await Submission.bulkWrite(bulkOps);
+    }
+
+    console.log(`[Recheck] Regraded ${submissions.length} submission(s) for paper "${paperIdStr}"`);
+    return submissions.length;
+}
+
 // Routes
 app.get('/', async (req, res) => {
     try {
@@ -166,7 +273,8 @@ app.get('/paper/:id/omr', async (req, res) => {
 
 app.post('/paper/:id/answerkey', async (req, res) => {
     try {
-        const paper = await Paper.findById(req.params.id);
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
         if (!paper) return res.status(404).send('Paper not found');
 
         const totalQ = paper.total_questions || paper.numQuestions || 50;
@@ -183,10 +291,29 @@ app.post('/paper/:id/answerkey', async (req, res) => {
 
         paper.answer_key = answerKeyArr;
         await paper.save();
-        res.redirect(`/paper/${paper._id}`);
+
+        // Automatically recheck all previously scanned OMR submissions against the updated key
+        await regradePaperSubmissions(paper);
+
+        res.redirect(`/paper/${encodeURIComponent(paper._id)}`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error saving answer key: ' + error.message);
+    }
+});
+
+// Explicit API endpoint to recheck/regrade all OMR submissions for a paper against its current answer key
+app.post('/api/paper/:id/recheck', async (req, res) => {
+    try {
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        const recheckedCount = await regradePaperSubmissions(paper);
+        res.json({ success: true, recheckedCount });
+    } catch (error) {
+        console.error('Error rechecking submissions:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -369,7 +496,7 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
 
         console.log(`[Save Result] Processing OMR submission for roll: "${studentRoll}" on paper: "${paper._id}"`);
 
-        // Upload checked OMR image with green/red marks to Cloudinary (using 5-account rotation)
+        // Upload clean leveled OMR image to Cloudinary (using 5-account rotation)
         let uploadResult = null;
         try {
             uploadResult = await uploadOmrSheet(imageData, {
@@ -389,10 +516,6 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
                 account: 'local_storage'
             };
         }
-
-        // Compute section wise marks & aggregate using custom paper sections if defined
-        const secCalc = computeSectionWise(breakdown, totalQ, paper.sections);
-        const percentage = totalQ > 0 ? Math.round((Number(score || 0) / totalQ) * 100) : 0;
 
         // Build 180 (or totalQ) responses array: ["A", "B", null, "C", ...]
         let responsesArray = [];
@@ -414,6 +537,16 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
             });
         }
 
+        const graded = responsesArray.length > 0
+            ? evaluateResponsesAgainstKey(responsesArray, buildKeyLookup(paper), totalQ)
+            : {
+                score: Number(score || 0),
+                correctCount: Number(correctCount || 0),
+                wrongCount: Number(wrongCount || 0),
+                blankCount: Number(blankCount || 0),
+                percentage: totalQ > 0 ? Math.round((Number(score || 0) / totalQ) * 100) : 0
+            };
+
         const newSubmission = new Submission({
             rollnumber: studentRoll,
             paper_id: String(paper._id),
@@ -422,13 +555,13 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
             cloudinary_image_url: uploadResult.url,
             cloudinary_public_id: uploadResult.publicId,
             cloudinary_account: uploadResult.account,
-            score: Number(score || 0),
+            score: graded.score,
             totalQuestions: totalQ,
-            percentage,
+            percentage: graded.percentage,
             maxMarks: paper.max_marks || (totalQ * 4),
-            correctCount: Number(correctCount || 0),
-            wrongCount: Number(wrongCount || 0),
-            blankCount: Number(blankCount || 0)
+            correctCount: graded.correctCount,
+            wrongCount: graded.wrongCount,
+            blankCount: graded.blankCount
         });
 
         await newSubmission.save();
@@ -490,10 +623,11 @@ app.delete('/api/submission/:id', async (req, res) => {
 // View All Results & Evaluated OMR Copies for Paper
 app.get('/paper/:id/results', async (req, res) => {
     try {
-        const paper = await Paper.findById(req.params.id);
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
         if (!paper) return res.status(404).send('Paper not found');
 
-        const results = await Submission.find({
+        const docs = await Submission.find({
             $or: [
                 { paper_id: String(paper._id) },
                 { paper_id: paper._id },
@@ -501,18 +635,8 @@ app.get('/paper/:id/results', async (req, res) => {
             ]
         }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
 
-        // Build keyLookup from paper
-        const keyLookup = {};
-        if (Array.isArray(paper.answer_key)) {
-            paper.answer_key.forEach((ans, i) => {
-                if (ans) keyLookup[i + 1] = ans;
-            });
-        } else if (paper.answerKey) {
-            for (let i = 1; i <= (paper.total_questions || paper.numQuestions || 50); i++) {
-                const k = (paper.answerKey instanceof Map) ? paper.answerKey.get(String(i)) : paper.answerKey[String(i)];
-                if (k) keyLookup[i] = k;
-            }
-        }
+        // Build keyLookup from current official answer key
+        const keyLookup = buildKeyLookup(paper);
 
         // Determine sections
         let sectionsDef = [];
@@ -529,42 +653,64 @@ app.get('/paper/:id/results', async (req, res) => {
             ];
         }
 
-        // Dynamically compute sectionWise for each submission without bloating database storage
-        results.forEach(r => {
-            if (!r.sectionWise || r.sectionWise.length === 0) {
-                const resps = Array.isArray(r.responses) ? r.responses : [];
-                r.sectionWise = sectionsDef.map(s => {
-                    let secCorrect = 0;
-                    let secWrong = 0;
-                    let secBlank = 0;
-                    const fromQ = Number(s.from_question);
-                    const toQ = Number(s.to_question);
-                    const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
+        const defaultTotalQ = paper.total_questions || paper.numQuestions || 50;
 
-                    for (let q = fromQ; q <= toQ; q++) {
-                        const marked = (resps[q - 1] || '').trim().toUpperCase();
-                        const key = (keyLookup[q] || '').trim().toUpperCase();
-                        if (!marked) {
-                            secBlank++;
-                        } else if (key && marked === key) {
-                            secCorrect++;
-                        } else {
-                            secWrong++;
-                        }
-                    }
-
-                    const secMarks = (secCorrect * 4) - secWrong;
-                    return {
-                        sectionName: s.name,
-                        range: `Q${fromQ}-Q${toQ}`,
-                        correct: secCorrect,
-                        wrong: secWrong,
-                        blank: secBlank,
-                        marks: Math.max(0, secMarks),
-                        maxMarks: s.max_marks || (countInSec * 4)
-                    };
-                });
+        // Recompute scores & sectionWise dynamically from saved responses against the current answer key
+        const results = docs.map(doc => {
+            const totalQ = doc.totalQuestions || defaultTotalQ;
+            if (Array.isArray(doc.responses) && doc.responses.length > 0) {
+                const graded = evaluateResponsesAgainstKey(doc.responses, keyLookup, totalQ);
+                doc.score = graded.score;
+                doc.correctCount = graded.correctCount;
+                doc.wrongCount = graded.wrongCount;
+                doc.blankCount = graded.blankCount;
+                doc.percentage = graded.percentage;
             }
+
+            const resps = Array.isArray(doc.responses) ? doc.responses : [];
+            const sectionWise = sectionsDef.map(s => {
+                let secCorrect = 0;
+                let secWrong = 0;
+                let secBlank = 0;
+                const fromQ = Number(s.from_question);
+                const toQ = Number(s.to_question);
+                const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
+
+                for (let q = fromQ; q <= toQ; q++) {
+                    const marked = resps[q - 1] ? String(resps[q - 1]).trim().toUpperCase() : '';
+                    const key = keyLookup[q] ? String(keyLookup[q]).trim().toUpperCase() : '';
+                    if (!marked) {
+                        secBlank++;
+                    } else if (marked.includes(',')) {
+                        secWrong++;
+                    } else if (key && marked === key) {
+                        secCorrect++;
+                    } else if (key) {
+                        secWrong++;
+                    }
+                }
+
+                const secMarks = (secCorrect * 4) - secWrong;
+                return {
+                    sectionName: s.name,
+                    range: `Q${fromQ}-Q${toQ}`,
+                    correct: secCorrect,
+                    wrong: secWrong,
+                    blank: secBlank,
+                    marks: Math.max(0, secMarks),
+                    maxMarks: s.max_marks || (countInSec * 4)
+                };
+            });
+
+            const obj = doc.toObject({ virtuals: true });
+            obj.sectionWise = sectionWise;
+            return obj;
+        });
+
+        // Re-sort by live score descending so leaderboard rank matches current answer key
+        results.sort((a, b) => {
+            if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+            return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
         });
 
         // Calculate Aggregate Stats

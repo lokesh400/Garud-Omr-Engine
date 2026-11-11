@@ -478,10 +478,13 @@
             </div>
 
             <div class="results-topbar-actions">
-                <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-sm" title="Configure Question Answer Key">
+                <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm" title="Configure or Update Question Answer Key">
                     📝 Answer Key
                 </a>
-                <a href="/paper/<%= paper._id %>/scan" class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
+                <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn" onclick="recheckAllSubmissions()" title="Recalculate all OMR scores against latest Answer Key">
+                    🔄 Recheck All
+                </button>
+                <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan" class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
                     📷 Live Scanner
                 </a>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Results as CSV">
@@ -668,12 +671,26 @@
             </div>
 
             <div class="omr-modal-body">
-                <!-- Left: Checked OMR Sheet Image from Cloudinary -->
+                <!-- Left: Checked OMR Sheet Image from Cloudinary + Live Dynamic Overlay -->
                 <div>
                     <div class="omr-preview-frame">
-                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet">
+                        <div style="position: relative; width: 100%; line-height: 0;">
+                            <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet">
+                            <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
+                                 style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
+                        </div>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px; text-align:center;" id="modalCloudInfo">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                        <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm" onclick="toggleCheckingOverlay()" style="font-size:0.78rem; padding:4px 10px;">
+                            👁️ Live Marks: ON
+                        </button>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:0.74rem; font-weight:700; color:var(--text-muted);">
+                            <span><span style="color:#10B981;">●</span> Correct</span>
+                            <span><span style="color:#EF4444;">●</span> Wrong / Multi</span>
+                            <span><span style="color:#10B981;">◌</span> True Key</span>
+                        </div>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;" id="modalCloudInfo">
                         ☁️ Stored securely on Cloudinary Multi-Account Pool
                     </div>
                 </div>
@@ -717,12 +734,168 @@
 
     <script>
         let currentModalSubmission = null;
+        let currentModalList = [];
+        let showCheckingOverlay = true;
         const answerKey = <%- typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}' %>;
         const allSubmissionsData = <%- JSON.stringify(results || []) %>;
         const submissionsMap = {};
         allSubmissionsData.forEach(s => {
             if (s && s._id) submissionsMap[String(s._id)] = s;
         });
+
+        // Standardized Rectified OMR Sheet Geometry (must match scanner.ejs & evaluator.ejs)
+        const OMR_GEOMETRY = {
+            TARGET_W: 1000,
+            TARGET_H: 1461,
+            U_START: 0.061846,
+            V_START: 0.256331,
+            U_BUBBLE_STEP: 0.028042,
+            V_ROW_STEP: 0.018233,
+            U_COL_STEP: 0.201332,
+            QUESTIONS_PER_COL: 40,
+            OPTIONS: ['A', 'B', 'C', 'D'],
+            BUBBLE_R: 9.0,
+            U_ROLL_START: 0.619879,
+            V_ROLL_START: 0.058644,
+            U_ROLL_COL_STEP: 0.026640,
+            V_ROLL_ROW_STEP: 0.018233,
+            ROLL_R: 8.5
+        };
+
+        function toggleCheckingOverlay() {
+            showCheckingOverlay = !showCheckingOverlay;
+            const btn = document.getElementById('toggleOverlayBtn');
+            if (btn) {
+                btn.textContent = showCheckingOverlay ? '👁️ Live Marks: ON' : '👁️ Live Marks: OFF (Clean)';
+            }
+            if (currentModalSubmission) {
+                renderOmrOverlay(currentModalSubmission, currentModalList);
+            }
+        }
+
+        function renderOmrOverlay(data, list) {
+            const svg = document.getElementById('modalOmrOverlay');
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            if (!showCheckingOverlay) {
+                svg.style.display = 'none';
+                return;
+            }
+            svg.style.display = 'block';
+
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const G = OMR_GEOMETRY;
+
+            function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
+                const c = document.createElementNS(SVG_NS, 'circle');
+                c.setAttribute('cx', cx.toFixed(1));
+                c.setAttribute('cy', cy.toFixed(1));
+                c.setAttribute('r', String(r));
+                c.setAttribute('fill', fill);
+                c.setAttribute('stroke', stroke);
+                c.setAttribute('stroke-width', String(strokeWidth));
+                if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
+                svg.appendChild(c);
+            }
+
+            // 1. Highlight detected roll number digits in cyan if valid 8-char pattern
+            const rollStr = String(data.rollnumber || data.rollNumber || '');
+            if (/^[0-9-]{8}$/.test(rollStr)) {
+                for (let c = 0; c < 8; c++) {
+                    const ch = rollStr[c];
+                    if (ch >= '0' && ch <= '9') {
+                        const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
+                        const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
+                        addCircle(cx, cy, G.ROLL_R, 'rgba(6, 182, 212, 0.40)', '#06B6D4', 2);
+                    }
+                }
+            }
+
+            // 2. Highlight evaluated question bubbles dynamically against current answer key
+            list.forEach(b => {
+                const q = Number(b.q);
+                if (!q || q < 1) return;
+
+                const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
+                const row = (q - 1) % G.QUESTIONS_PER_COL;
+                const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
+                const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
+
+                const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
+
+                for (let bi = 0; bi < 4; bi++) {
+                    const opt = G.OPTIONS[bi];
+                    const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
+                    const isMarked = markedOpts.includes(opt);
+
+                    if (b.verdict === 'multiple' && isMarked) {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(239, 68, 68, 0.55)', '#EF4444', 2);
+                        const sz = Math.round(G.BUBBLE_R * 0.5);
+                        const l1 = document.createElementNS(SVG_NS, 'line');
+                        l1.setAttribute('x1', (bx - sz).toFixed(1));
+                        l1.setAttribute('y1', (rowY - sz).toFixed(1));
+                        l1.setAttribute('x2', (bx + sz).toFixed(1));
+                        l1.setAttribute('y2', (rowY + sz).toFixed(1));
+                        l1.setAttribute('stroke', '#FFFFFF');
+                        l1.setAttribute('stroke-width', '2');
+                        svg.appendChild(l1);
+
+                        const l2 = document.createElementNS(SVG_NS, 'line');
+                        l2.setAttribute('x1', (bx + sz).toFixed(1));
+                        l2.setAttribute('y1', (rowY - sz).toFixed(1));
+                        l2.setAttribute('x2', (bx - sz).toFixed(1));
+                        l2.setAttribute('y2', (rowY + sz).toFixed(1));
+                        l2.setAttribute('stroke', '#FFFFFF');
+                        l2.setAttribute('stroke-width', '2');
+                        svg.appendChild(l2);
+                    } else if (isMarked) {
+                        if (b.verdict === 'correct') {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(16, 185, 129, 0.50)', '#10B981', 2);
+                        } else if (b.verdict === 'wrong') {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(239, 68, 68, 0.50)', '#EF4444', 2);
+                        } else {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(6, 182, 212, 0.45)', '#06B6D4', 2);
+                        }
+                    } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple')) {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#10B981', 2, '3,3');
+                    } else {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
+                    }
+                }
+            });
+        }
+
+        async function recheckAllSubmissions() {
+            const btn = document.getElementById('recheckAllBtn');
+            const origText = btn ? btn.innerHTML : '🔄 Recheck All';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Rechecking...';
+            }
+            try {
+                const res = await fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/recheck', {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Recheck failed: ' + (data.error || 'Unknown error'));
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = origText;
+                    }
+                }
+            } catch (err) {
+                alert('Recheck request failed: ' + err.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                }
+            }
+        }
 
         function openOmrModalById(id) {
             const data = submissionsMap[String(id)];
@@ -753,9 +926,10 @@
             img.src = imgUrl;
             document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
 
-            if (data.cloudinary_account || data.cloudinaryAccount) {
-                document.getElementById('modalCloudInfo').textContent = `☁️ Stored securely on Cloudinary (${data.cloudinary_account || data.cloudinaryAccount})`;
-            }
+            const accName = data.cloudinary_account || data.cloudinaryAccount;
+            document.getElementById('modalCloudInfo').textContent = accName
+                ? `☁️ Stored securely on Cloudinary (${accName}) • Live Checking Overlay Active`
+                : '☁️ Stored securely on Cloudinary Multi-Account Pool';
 
             // Populate Sections
             const secContainer = document.getElementById('modalSectionContainer');
@@ -788,22 +962,34 @@
             if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
                 list = data.breakdown;
             } else if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
-                // Synthesize from responses array
-                list = data.responses.map((resp, i) => {
+                // Synthesize from responses array against current answerKey
+                const qTotal = Math.max(data.responses.length, data.totalQuestions || 0);
+                for (let i = 0; i < qTotal; i++) {
                     const qNum = i + 1;
+                    const resp = data.responses[i];
                     const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
                     let verdict = 'blank';
-                    if (resp && resp.trim() !== '') {
-                        verdict = (correctKey !== '-' && resp.toUpperCase() === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                    if (resp && String(resp).trim() !== '') {
+                        const cleaned = String(resp).trim().toUpperCase();
+                        if (cleaned.includes(',')) {
+                            verdict = 'multiple';
+                        } else if (correctKey !== '-') {
+                            verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                        } else {
+                            verdict = 'marked';
+                        }
                     }
-                    return {
+                    list.push({
                         q: qNum,
                         marked: resp || '',
                         correctKey: correctKey,
                         verdict: verdict
-                    };
-                });
+                    });
+                }
             }
+
+            currentModalList = list;
+            renderOmrOverlay(data, list);
 
             if (list.length > 0) {
                 list.forEach(b => {
@@ -825,6 +1011,9 @@
                         vColor = '#DC2626';
                         vText = '❌ Multiple';
                         qMarks = '<span style="color:#DC2626; font-weight:800;">-1</span>';
+                    } else if (b.verdict === 'marked') {
+                        vColor = '#06B6D4';
+                        vText = 'Recorded';
                     }
 
                     tr.innerHTML = `

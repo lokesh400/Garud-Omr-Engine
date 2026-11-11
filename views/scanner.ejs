@@ -1830,6 +1830,13 @@
 
             resultCtx.putImageData(dstImgData, 0, 0);
 
+            // Capture CLEAN rectified sheet BEFORE painting checking circles so answer key updates stay recheckable
+            try {
+                window.cleanLeveledImageData = resultCanvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                window.cleanLeveledImageData = resultCanvas.toDataURL();
+            }
+
             // Pause video to conserve battery/CPU, keep stream alive
             video.pause();
 
@@ -2263,11 +2270,13 @@
                         rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
                     }
 
-                    let imageData = null;
-                    try {
-                        imageData = canvas.toDataURL('image/jpeg', 0.78);
-                    } catch (e) {
-                        imageData = canvas.toDataURL();
+                    let imageData = window.cleanLeveledImageData || null;
+                    if (!imageData) {
+                        try {
+                            imageData = canvas.toDataURL('image/jpeg', 0.78);
+                        } catch (e) {
+                            imageData = canvas.toDataURL();
+                        }
                     }
 
                     window.lastEvaluationData = {
@@ -2351,6 +2360,7 @@
 
                     // Clear stored data and reset state
                     window.lastEvaluationData = null;
+                    window.cleanLeveledImageData = null;
                     isSavingSubmission = false;
 
                     // Immediately resume live camera and scan next sheet
@@ -2385,6 +2395,7 @@
         // Discard current evaluation without saving and return to camera
         function rescanSheet() {
             window.lastEvaluationData = null;
+            window.cleanLeveledImageData = null;
             isSavingSubmission = false;
             restartScanner();
         }
