@@ -4,313 +4,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garud OMR • Intelligent Evaluation Suite</title>
+    <title>Garud OMR • Assessment Dashboard</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
-        rel="stylesheet">
     <style>
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 2px 0 0 0;
+        }
+
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
             flex-wrap: wrap;
             gap: 12px;
         }
 
         .section-title {
-            font-size: 1.45rem;
-            font-weight: 800;
+            font-size: 1.25rem;
+            font-weight: 700;
             color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 10px;
             margin: 0;
-            letter-spacing: -0.02em;
+        }
+
+        .count-badge {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
         }
 
         .paper-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-            gap: 1.65rem;
+            gap: 1.25rem;
         }
 
         .paper-card {
             background: var(--surface);
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            border-radius: var(--radius-xl);
-            padding: 1.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
-            transition: all 0.26s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .paper-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), #06B6D4);
-            opacity: 0.85;
-            transition: opacity 0.25s ease, height 0.25s ease;
+            gap: 1.25rem;
+            box-shadow: var(--shadow-xs);
+            transition: border-color 150ms ease, box-shadow 150ms ease;
         }
 
         .paper-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 18px 30px -8px rgba(79, 70, 229, 0.12), 0 8px 12px -4px rgba(15, 23, 42, 0.04);
-            border-color: #CBD5E1;
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
         }
 
-        .paper-card:hover::before {
-            opacity: 1;
-            height: 5px;
-        }
-
-        .paper-card-top {
-            margin-bottom: 1.35rem;
+        .paper-card-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 0.5rem;
         }
 
         .paper-card-title {
-            font-size: 1.25rem;
-            font-weight: 800;
+            font-size: 1.1rem;
+            font-weight: 700;
             color: var(--text-main);
-            margin: 0 0 0.55rem 0;
+            margin: 0;
             line-height: 1.35;
-            letter-spacing: -0.02em;
         }
 
-        .paper-badges {
+        .paper-meta-line {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-bottom: 0.85rem;
             display: flex;
-            gap: 8px;
+            align-items: center;
             flex-wrap: wrap;
-            margin-top: 0.6rem;
-        }
-
-        .badge-count {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(99, 102, 241, 0.12) 100%);
-            color: var(--primary);
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 4px 11px;
-            border-radius: var(--radius-full);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid rgba(79, 70, 229, 0.16);
-        }
-
-        .badge-status {
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 4px 11px;
-            border-radius: var(--radius-full);
-            display: inline-flex;
-            align-items: center;
             gap: 6px;
         }
 
-        .badge-ready {
+        .paper-id-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-body);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .paper-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .spec-chip {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-body);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-chip {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .status-ready {
             background: var(--success-light);
-            color: #065F46;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success-hover);
+            border: 1px solid var(--success-border);
         }
 
-        .badge-pending {
-            background: #FEF3C7;
-            color: #92400E;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+        .status-pending {
+            background: var(--warning-light);
+            color: var(--warning-hover);
+            border: 1px solid var(--warning-border);
         }
 
-        .paper-tiles-grid {
+        .status-dot-sm {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .paper-actions-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 1.35rem;
-            padding-top: 1.25rem;
+            gap: 8px;
+            padding-top: 1rem;
             border-top: 1px solid #F1F5F9;
         }
 
-        .action-tile {
-            display: flex;
-            flex-direction: column;
-            padding: 11px 13px;
-            background: #F8FAFC;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            text-decoration: none;
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .action-tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 14px -2px rgba(15, 23, 42, 0.07);
-        }
-
-        .action-tile-key:hover {
-            background: #EEF2FF;
-            border-color: #A5B4FC;
-        }
-
-        .action-tile-scan {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(79, 70, 229, 0.09) 100%);
-            border-color: rgba(6, 182, 212, 0.35);
-        }
-
-        .action-tile-scan:hover {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(79, 70, 229, 0.18) 100%);
-            border-color: var(--accent-cyan);
-            box-shadow: 0 6px 18px rgba(6, 182, 212, 0.25);
-        }
-
-        .action-tile-omr:hover {
-            background: #ECFDF5;
-            border-color: #86EFAC;
-        }
-
-        .action-tile-results:hover {
-            background: #FAF5FF;
-            border-color: #D8B4FE;
-        }
-
-        .tile-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 7px;
-        }
-
-        .tile-icon-box {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
+        .paper-actions-grid .btn {
+            width: 100%;
             justify-content: center;
-            transition: transform 0.2s ease;
+            padding: 0.55rem 0.75rem;
+            font-size: 0.825rem;
         }
 
-        .action-tile:hover .tile-icon-box {
-            transform: scale(1.08);
-        }
-
-        .icon-key {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .icon-scan {
-            background: rgba(6, 182, 212, 0.2);
-            color: #0891B2;
-        }
-
-        .icon-omr {
-            background: var(--success-light);
-            color: var(--success);
-        }
-
-        .icon-results {
-            background: #F3E8FF;
-            color: var(--secondary);
-        }
-
-        .tile-arrow {
-            color: var(--text-subtle);
-            font-size: 0.9rem;
-            font-weight: 700;
-            transition: transform 0.2s ease, color 0.2s ease;
-        }
-
-        .action-tile:hover .tile-arrow {
-            transform: translateX(3px);
-            color: var(--text-main);
-        }
-
-        .tile-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--text-main);
-            line-height: 1.25;
-            margin-bottom: 2px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .tile-sub {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        /* Mobile & Tablet Responsiveness */
         @media (max-width: 640px) {
-            .section-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-                margin-bottom: 1.25rem;
-            }
-
-            .section-header .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
             .paper-list {
                 grid-template-columns: 1fr;
-                gap: 1.15rem;
+                gap: 1rem;
             }
-
             .paper-card {
-                padding: 1.25rem;
-                border-radius: var(--radius-lg);
-            }
-
-            .paper-card-title {
-                font-size: 1.15rem;
-            }
-
-            .paper-tiles-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-
-            .action-tile {
-                padding: 9px 10px;
-            }
-
-            .tile-icon-box {
-                width: 30px;
-                height: 30px;
-            }
-
-            .tile-title {
-                font-size: 0.82rem;
-            }
-
-            .tile-sub {
-                font-size: 0.68rem;
+                padding: 1.15rem;
             }
         }
 
         @media (max-width: 360px) {
-            .paper-tiles-grid {
+            .paper-actions-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        /* Large Laptop & Desktop */
         @media (min-width: 1200px) {
             .paper-list {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 1.85rem;
+            }
+        }
+
+        .header-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 640px) {
+            .header-actions-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
+            }
+            .header-actions-group form {
+                margin: 0;
+            }
+            .header-actions-group .btn-primary-full {
+                grid-column: 1 / -1;
             }
         }
     </style>
@@ -318,174 +223,160 @@
 
 <body>
     <div class="container">
+        <header class="app-header">
+            <div class="brand-logo-wrap">
+                <div class="brand-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                        <line x1="8" y1="8" x2="16" y2="8"></line>
+                        <circle cx="9" cy="13" r="1"></circle>
+                        <circle cx="15" cy="13" r="1"></circle>
+                        <circle cx="9" cy="17" r="1"></circle>
+                        <circle cx="15" cy="17" r="1"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Garud OMR</h1>
+                    <p class="brand-subtitle">Exam Papers, Answer Keys &amp; Optical Grading</p>
+                </div>
+            </div>
+            <div class="header-actions-group">
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                    <a href="/users" class="btn btn-secondary">Users</a>
+                    <a href="/student" class="btn btn-secondary">Student View</a>
+                    <a href="/account" class="btn btn-secondary" title="Account settings (<%= currentUser.username %>)">Account</a>
+                <% } %>
+                <a href="/paper/new" class="btn btn-primary btn-primary-full">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Paper
+                </a>
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                    <form action="/logout" method="POST" style="margin: 0;">
+                        <button type="submit" class="btn btn-secondary">Sign Out</button>
+                    </form>
+                <% } %>
+            </div>
+        </header>
 
         <main>
             <div class="section-header">
                 <h2 class="section-title">
                     <span>Assessment Papers</span>
-                    <span
-                        style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600; background: #F1F5F9; padding: 2px 10px; border-radius: var(--radius-full);">
-                        <%= papers ? papers.length : 0 %> Total
-                    </span>
+                    <span class="count-badge"><%= papers ? papers.length : 0 %> Total</span>
                 </h2>
-                <% if (papers && papers.length> 0) { %>
-                    <a href="/paper/new" class="btn btn-secondary btn-sm">+ Add Paper</a>
-                    <% } %>
             </div>
 
-            <% if (papers && papers.length> 0) { %>
+            <% if (papers && papers.length > 0) { %>
                 <div class="paper-list">
-                    <% papers.forEach(paper=> { %>
-                        <% 
+                    <% papers.forEach(paper => { %>
+                        <%
                             const hasKey = (Array.isArray(paper.answer_key) && paper.answer_key.some(k => k)) || (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0));
                             const totalQ = paper.total_questions || paper.numQuestions || 50;
+                            const encodedId = encodeURIComponent(paper._id);
                         %>
-                            <div class="paper-card">
-                                <div class="paper-card-top">
-                                    <div>
-                                        <h3 class="paper-card-title">
-                                            <%= paper.title %>
-                                        </h3>
-                                        <% if (paper.subject) { %>
-                                            <span style="display:inline-block; margin-top:2px; font-size:0.75rem; font-weight:700; color:var(--text-muted);">
-                                                Subject: <strong style="color:var(--text-main);"><%= paper.subject %></strong>
-                                                <% if (paper._id) { %> &bull; <span style="font-family:'JetBrains Mono',monospace;">#<%= paper._id %></span><% } %>
-                                            </span>
-                                        <% } %>
-                                    </div>
-                                    <div class="paper-badges">
-                                        <span class="badge-count">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
-                                                stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <polyline points="12 6 12 12 16 14"></polyline>
-                                            </svg>
-                                            <%= totalQ %> Questions
+                        <article class="paper-card">
+                            <div>
+                                <div class="paper-card-top-row">
+                                    <h3 class="paper-card-title"><%= paper.title %></h3>
+                                    <% if (hasKey) { %>
+                                        <span class="status-chip status-ready">
+                                            <span class="status-dot-sm"></span>
+                                            Key Ready
                                         </span>
-                                        <% if (paper.sections && paper.sections.length > 0) { %>
-                                            <span class="badge-count" style="background: #EEF2F6; color: #334155;">
-                                                📚 <%= paper.sections.length %> Sections
-                                            </span>
-                                        <% } %>
-                                        <% if (hasKey) { %>
-                                            <span class="badge-status badge-ready">
-                                                ✓ Key Configured
-                                            </span>
-                                            <% } else { %>
-                                                <span class="badge-status badge-pending">
-                                                    ● Key Pending
-                                                </span>
-                                                <% } %>
-                                    </div>
+                                    <% } else { %>
+                                        <span class="status-chip status-pending">
+                                            <span class="status-dot-sm"></span>
+                                            Key Pending
+                                        </span>
+                                    <% } %>
                                 </div>
 
-                                <div class="paper-tiles-grid">
-                                    <!-- Tile 1: Answer Key -->
-                                    <a href="/paper/<%= paper._id %>" class="action-tile action-tile-key"
-                                        title="Configure Question Answer Key">
-                                        <div class="tile-top">
-                                            <div class="tile-icon-box icon-key">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
-                                                    stroke-linejoin="round">
-                                                    <path
-                                                        d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-2 2 1.5 1.5-3 3a5.5 5.5 0 1 0 7.78 7.78l3-3 1.5 1.5 2-2-1.5-1.5 1.5-1.5 2-2z">
-                                                    </path>
-                                                    <circle cx="7.5" cy="16.5" r="1.5"></circle>
-                                                </svg>
-                                            </div>
-                                            <span class="tile-arrow">→</span>
-                                        </div>
-                                        <div class="tile-title">Answer Key</div>
-                                        <div class="tile-sub">
-                                            <%= hasKey ? '✓ Configured' : 'Configure Key' %>
-                                        </div>
-                                    </a>
+                                <div class="paper-meta-line">
+                                    <% if (paper.subject) { %>
+                                        <span><%= paper.subject %></span>
+                                    <% } %>
+                                    <% if (paper.subject && paper._id) { %>
+                                        <span>&middot;</span>
+                                    <% } %>
+                                    <% if (paper._id) { %>
+                                        <span class="paper-id-code"><%= paper._id %></span>
+                                    <% } %>
+                                </div>
 
-                                    <!-- Tile 2: Scan Paper (Live 4-Corner Camera) -->
-                                    <a href="/paper/<%= paper._id %>/scan" class="action-tile action-tile-scan"
-                                        title="Launch Live 4-Corner AI Scanner">
-                                        <div class="tile-top">
-                                            <div class="tile-icon-box icon-scan">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
-                                                    stroke-linejoin="round">
-                                                    <path
-                                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
-                                                    </path>
-                                                    <circle cx="12" cy="13" r="4"></circle>
-                                                </svg>
-                                            </div>
-                                            <span class="tile-arrow">⚡</span>
-                                        </div>
-                                        <div class="tile-title" style="color: #0E7490;">Scan Paper</div>
-                                        <div class="tile-sub">Live 4-Corner AI</div>
-                                    </a>
-
-                                    <!-- Tile 3: Generate OMR -->
-                                    <a href="/paper/<%= paper._id %>/omr" target="_blank"
-                                        class="action-tile action-tile-omr" title="Generate & Print Blank A4 OMR Sheet">
-                                        <div class="tile-top">
-                                            <div class="tile-icon-box icon-omr">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
-                                                    stroke-linejoin="round">
-                                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                                    <path
-                                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
-                                                    </path>
-                                                    <rect x="6" y="14" width="12" height="8"></rect>
-                                                </svg>
-                                            </div>
-                                            <span class="tile-arrow">↗</span>
-                                        </div>
-                                        <div class="tile-title">Generate OMR</div>
-                                        <div class="tile-sub">Printable A4 Sheet</div>
-                                    </a>
-
-                                    <!-- Tile 4: Results & Evaluated OMR Copies -->
-                                    <a href="/paper/<%= paper._id %>/results" class="action-tile action-tile-results"
-                                        title="View Evaluation Results, Section Marks & Checked OMR Copies">
-                                        <div class="tile-top">
-                                            <div class="tile-icon-box icon-results">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                    stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
-                                                    stroke-linejoin="round">
-                                                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                                                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                                                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                                                </svg>
-                                            </div>
-                                            <span class="tile-arrow">→</span>
-                                        </div>
-                                        <div class="tile-title">Results</div>
-                                        <div class="tile-sub">Upload & Report</div>
-                                    </a>
+                                <div class="paper-specs">
+                                    <span class="spec-chip"><%= totalQ %> Questions</span>
+                                    <% if (paper.sections && paper.sections.length > 0) { %>
+                                        <span class="spec-chip"><%= paper.sections.length %> Sections</span>
+                                    <% } %>
+                                    <% if (paper.max_marks) { %>
+                                        <span class="spec-chip"><%= paper.max_marks %> Max Marks</span>
+                                    <% } %>
                                 </div>
                             </div>
-                            <% }) %>
+
+                            <div class="paper-actions-grid">
+                                <a href="/paper/<%= encodedId %>" class="btn btn-secondary" title="Configure Question Answer Key">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                                    </svg>
+                                    Answer Key
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/omr" target="_blank" class="btn btn-secondary" title="Open Printable A4 OMR Sheet">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                    Print OMR
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary" title="View Results and Checked OMR Copies">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                    Results
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/scan" class="btn btn-primary" title="Scan OMR Sheet with Camera">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    Scan Paper
+                                </a>
+                            </div>
+                        </article>
+                    <% }) %>
                 </div>
-                <% } else { %>
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem; font-weight: 800;">No Assessment Papers
-                            Yet</h3>
-                        <p
-                            style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.75rem; font-size: 0.95rem;">
-                            Create your first paper to generate custom printable OMR answer sheets and begin automatic
-                            evaluation with sub-pixel precision.
-                        </p>
-                        <a href="/paper/new" class="btn btn-primary btn-lg">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Create Your First Paper
-                        </a>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
                     </div>
-                    <% } %>
+                    <h3 style="margin-bottom: 0.4rem;">No assessment papers yet</h3>
+                    <p style="color: var(--text-muted); max-width: 420px; margin: 0 auto 1.5rem; font-size: 0.92rem;">
+                        Create your first exam paper to generate printable A4 OMR sheets, configure the answer key, and evaluate student responses.
+                    </p>
+                    <a href="/paper/new" class="btn btn-primary btn-lg">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create Your First Paper
+                    </a>
+                </div>
+            <% } %>
         </main>
     </div>
 </body>

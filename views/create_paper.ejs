@@ -3,85 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Assessment Paper - Garud OMR</title>
+    <title>Create Assessment Paper • Garud OMR</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         .page-header-nav {
+            max-width: 780px;
+            margin: 0 auto 1.25rem auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 2rem;
+            gap: 12px;
         }
         .breadcrumb-wrap {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
+            gap: 8px;
+            font-size: 0.875rem;
             color: var(--text-muted);
-            font-weight: 500;
         }
         .breadcrumb-wrap a {
             color: var(--primary);
             text-decoration: none;
-            font-weight: 700;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            transition: var(--transition);
         }
         .breadcrumb-wrap a:hover {
-            color: var(--primary-hover);
-            transform: translateX(-2px);
+            text-decoration: underline;
         }
         .form-card {
             max-width: 780px;
             margin: 0 auto;
             background: var(--surface);
-            border-radius: var(--radius-xl);
-            border: 1px solid rgba(226, 232, 240, 0.85);
-            box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
-            padding: 2.5rem 2.75rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .form-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, var(--primary), #06B6D4);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem 2.25rem;
         }
         .form-card-header {
-            margin-bottom: 2rem;
-            text-align: center;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding-bottom: 1.35rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        .form-icon-circle {
-            width: 58px;
-            height: 58px;
-            margin: 0 auto 1.25rem;
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(6, 182, 212, 0.12) 100%);
-            border-radius: 18px;
+        .form-icon-box {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--primary);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
-            border: 1px solid rgba(79, 70, 229, 0.15);
+            flex-shrink: 0;
         }
         .form-card-header h2 {
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.025em;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0 0 4px 0;
         }
         .form-card-header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: 0.875rem;
             margin: 0;
-            line-height: 1.5;
+            line-height: 1.45;
         }
         .form-row-2 {
             display: grid;
@@ -93,44 +82,48 @@
             grid-template-columns: 1.3fr 1fr 1fr;
             gap: 16px;
         }
+        .preset-group-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
         .preset-badge-group {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 10px;
         }
         .preset-tag {
-            background: #F8FAFC;
+            background: #FFFFFF;
             color: var(--text-body);
-            border: 1px solid var(--border-color);
-            padding: 6px 14px;
-            border-radius: var(--radius-full);
-            font-size: 0.82rem;
-            font-weight: 700;
+            border: 1px solid var(--border-hover);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            user-select: none;
         }
         .preset-tag:hover {
             border-color: var(--primary);
             background: var(--primary-light);
             color: var(--primary);
-            transform: translateY(-1px);
         }
         .preset-tag.active {
-            background: linear-gradient(135deg, var(--primary) 0%, #4338CA 100%);
+            background: var(--primary);
             color: #FFFFFF;
             border-color: var(--primary);
-            box-shadow: 0 4px 12px var(--primary-glow);
         }
 
         /* Section Builder Styles */
         .section-builder-box {
-            background: #F8FAFC;
-            border: 1.5px solid #E2E8F0;
-            border-radius: var(--radius-lg);
-            padding: 1.35rem 1.45rem;
-            margin: 1.75rem 0;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.15rem 1.25rem;
+            margin: 1.5rem 0;
         }
         .section-builder-header {
             display: flex;
@@ -138,119 +131,112 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .section-builder-title {
-            font-size: 1rem;
-            font-weight: 800;
+            font-size: 0.95rem;
+            font-weight: 700;
             color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .section-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 9px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
         .section-item-row {
             background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            border-radius: var(--radius-md);
-            padding: 10px 14px;
-            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin-bottom: 8px;
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr 34px;
             gap: 10px;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            transition: all 0.2s ease;
         }
-        .section-item-row:hover {
-            border-color: #CBD5E1;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        .section-item-row:last-child {
+            margin-bottom: 0;
         }
         .sec-field-label {
             font-size: 0.72rem;
-            font-weight: 800;
+            font-weight: 600;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
             margin-bottom: 4px;
             display: block;
         }
         .sec-input {
             width: 100%;
-            padding: 7px 10px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.88rem;
+            padding: 6px 9px;
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-xs);
+            font-size: 0.875rem;
             font-family: inherit;
-            box-sizing: border-box;
-            outline: none;
-            transition: var(--transition);
+            color: var(--text-main);
+            background: #FFFFFF;
         }
         .sec-input:focus {
+            outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
         .sec-input-mono {
             font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
+            font-weight: 600;
             text-align: center;
         }
         .btn-remove-sec {
-            background: #FEE2E2;
-            color: #DC2626;
-            border: 1px solid #FCA5A5;
+            background: #FFFFFF;
+            color: var(--text-muted);
+            border: 1px solid var(--border-hover);
             width: 32px;
             height: 32px;
-            border-radius: 50%;
+            border-radius: var(--radius-xs);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            font-weight: 800;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
             margin-top: 18px;
+            transition: var(--transition);
         }
         .btn-remove-sec:hover {
-            background: #EF4444;
-            color: #FFFFFF;
-            transform: scale(1.08);
-        }
-        .section-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            background: #E0E7FF;
-            color: var(--primary);
-            border-radius: var(--radius-full);
-            font-size: 0.78rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: var(--danger-border);
         }
 
         .preview-info-box {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.04) 0%, rgba(6, 182, 212, 0.04) 100%);
-            border: 1px solid rgba(79, 70, 229, 0.15);
-            border-left: 4px solid var(--primary);
-            border-radius: var(--radius-md);
-            padding: 14px 18px;
-            margin: 1.75rem 0;
-            font-size: 0.9rem;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin: 1.25rem 0;
+            font-size: 0.85rem;
             color: var(--text-body);
             display: flex;
-            align-items: center;
-            gap: 14px;
-            line-height: 1.5;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.45;
         }
         .preview-info-box strong {
             color: var(--text-main);
         }
 
-        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .form-row-2, .form-row-3 {
                 grid-template-columns: 1fr;
-                gap: 12px;
+                gap: 0;
             }
             .section-item-row {
                 grid-template-columns: 1fr 1fr;
@@ -265,167 +251,159 @@
                 justify-content: flex-end;
             }
             .btn-remove-sec {
-                margin-top: 4px;
+                margin-top: 2px;
             }
             .form-card {
-                padding: 1.75rem 1.25rem;
-                border-radius: var(--radius-lg);
-            }
-            .form-card-header h2 {
-                font-size: 1.45rem;
+                padding: 1.35rem 1.15rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Page Header Nav -->
         <div class="page-header-nav">
             <div class="breadcrumb-wrap">
-                <a href="/">← Dashboard</a>
+                <a href="/">&larr; Dashboard</a>
                 <span>/</span>
-                <span style="font-weight: 700; color: var(--text-main);">Create Paper</span>
+                <span style="font-weight: 600; color: var(--text-main);">Create Paper</span>
             </div>
             <a href="/" class="btn btn-secondary btn-sm">Cancel</a>
         </div>
 
-        <!-- Create Paper Card -->
         <div class="form-card">
             <div class="form-card-header">
-                <div class="form-icon-circle">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <div class="form-icon-box" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                 </div>
-                <h2>Create Assessment Paper</h2>
-                <p>Configure paper code, question count, and custom section ranges to generate printable OMR sheets and evaluation keys.</p>
+                <div>
+                    <h2>Create Assessment Paper</h2>
+                    <p>Configure the exam details, total questions, and section ranges to generate printable OMR sheets and answer keys.</p>
+                </div>
             </div>
 
             <form action="/paper/new" method="POST" id="createPaperForm" onsubmit="prepareSectionsPayload()">
-                <!-- Row 1: Title & Subject -->
                 <div class="form-row-2">
                     <div class="form-group">
-                        <label for="title">Paper / Exam Title *</label>
-                        <input 
-                            type="text" 
-                            id="title" 
-                            name="title" 
-                            class="form-control" 
-                            required 
+                        <label for="title">Paper Title <span aria-hidden="true">*</span></label>
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            class="form-control"
+                            required
                             placeholder="e.g. Mathematics Term 1"
                             autofocus
                         >
                     </div>
                     <div class="form-group">
-                        <label for="subject">Subject *</label>
-                        <input 
-                            type="text" 
-                            id="subject" 
-                            name="subject" 
-                            class="form-control" 
-                            required 
+                        <label for="subject">Subject <span aria-hidden="true">*</span></label>
+                        <input
+                            type="text"
+                            id="subject"
+                            name="subject"
+                            class="form-control"
+                            required
                             placeholder="e.g. Mathematics"
                             value="Mathematics"
                         >
                     </div>
                 </div>
 
-                <!-- Row 2: Paper Code ID, Total Questions, Max Marks -->
                 <div class="form-row-3">
                     <div class="form-group">
-                        <label for="paper_id">Paper Code / ID (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="paper_id" 
-                            name="paper_id" 
-                            class="form-control" 
-                            placeholder="e.g. MATH_101_FALL_2026"
-                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 700;"
+                        <label for="paper_id">Paper Code (Optional)</label>
+                        <input
+                            type="text"
+                            id="paper_id"
+                            name="paper_id"
+                            class="form-control"
+                            placeholder="e.g. MATH_101_2026"
+                            autocorrect="off"
+                            autocapitalize="none"
+                            spellcheck="false"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 600;"
                         >
                     </div>
                     <div class="form-group">
-                        <label for="numQuestions">Total Questions *</label>
-                        <input 
-                            type="number" 
-                            id="numQuestions" 
-                            name="numQuestions" 
-                            class="form-control" 
-                            required 
-                            min="1" 
-                            max="200" 
+                        <label for="numQuestions">Total Questions <span aria-hidden="true">*</span></label>
+                        <input
+                            type="number"
+                            id="numQuestions"
+                            name="numQuestions"
+                            class="form-control"
+                            required
+                            min="1"
+                            max="200"
                             value="180"
-                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800;"
+                            style="font-family: 'JetBrains Mono', monospace; font-weight: 600;"
                             onchange="onTotalQuestionsChanged()"
                         >
                     </div>
                     <div class="form-group">
                         <label for="max_marks">Max Marks</label>
-                        <input 
-                            type="number" 
-                            id="max_marks" 
-                            name="max_marks" 
-                            class="form-control" 
+                        <input
+                            type="number"
+                            id="max_marks"
+                            name="max_marks"
+                            class="form-control"
                             value="180"
-                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 800;"
+                            style="font-family: 'JetBrains Mono', monospace; font-weight: 600;"
                         >
                     </div>
                 </div>
 
-                <!-- Quick Presets -->
-                <div style="margin: -6px 0 16px 0;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Presets:</span>
+                <div class="form-group">
+                    <span class="preset-group-label">Question Count Presets</span>
                     <div class="preset-badge-group">
-                        <span class="preset-tag" data-val="20">20 Qs (Quiz)</span>
-                        <span class="preset-tag" data-val="50">50 Qs (Standard)</span>
-                        <span class="preset-tag" data-val="100">100 Qs (Midterm)</span>
-                        <span class="preset-tag active" data-val="180">180 Qs (NEET)</span>
-                        <span class="preset-tag" data-val="200">200 Qs (Max)</span>
+                        <button type="button" class="preset-tag" data-val="20">20 Qs (Quiz)</button>
+                        <button type="button" class="preset-tag" data-val="50">50 Qs (Standard)</button>
+                        <button type="button" class="preset-tag" data-val="100">100 Qs (Midterm)</button>
+                        <button type="button" class="preset-tag active" data-val="180">180 Qs (NEET)</button>
+                        <button type="button" class="preset-tag" data-val="200">200 Qs (Max)</button>
                     </div>
                 </div>
 
-                <!-- Multiple Sections Configuration Builder -->
                 <div class="section-builder-box">
                     <div class="section-builder-header">
                         <div>
                             <div class="section-builder-title">
-                                <span>📚 Paper Sections & Question Ranges</span>
+                                <span>Sections &amp; Question Ranges</span>
                                 <span class="section-status-badge" id="sectionStatusBadge">4 Sections</span>
                             </div>
-                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                                Create multiple sections and select question range (From Q to To Q) for each section.
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                                Define sections by question range (From Q to To Q) and maximum marks.
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="resetToStandardSections()" title="Generate balanced section ranges based on total questions">
-                                ⚡ Auto Divide
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="resetToStandardSections()" title="Auto-divide total questions across balanced sections">
+                                Auto Divide
                             </button>
                             <button type="button" class="btn btn-primary btn-sm" onclick="addSectionRow('', 1, 10, 40)" title="Add another section">
-                                ＋ Add Section
+                                + Add Section
                             </button>
                         </div>
                     </div>
 
-                    <!-- Dynamic Section Rows Container -->
                     <div id="sectionRowsContainer"></div>
-
-                    <!-- Hidden serialized JSON input -->
                     <input type="hidden" name="sections" id="sectionsInput" value="[]">
                 </div>
 
                 <div class="preview-info-box">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0; margin-top: 2px;" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
                     <div>
-                        Standard 4-Corner OMR markers with options <strong>A, B, C, D</strong> will be automatically generated. Questions will be grouped section-wise during evaluation.
+                        Standard 4-corner A4 OMR markers with options <strong>A, B, C, D</strong> will be automatically prepared. Questions are grouped section-wise in result reports.
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; font-size: 1.05rem; margin-top: 0.75rem;">
-                    Generate Paper & Configure Keys →
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 0.5rem;">
+                    Generate Paper &amp; Configure Answer Key &rarr;
                 </button>
             </form>
         </div>
@@ -439,12 +417,11 @@
         const sectionsInput = document.getElementById('sectionsInput');
         const sectionStatusBadge = document.getElementById('sectionStatusBadge');
 
-        // Presets Click
         tags.forEach(tag => {
             tag.addEventListener('click', () => {
                 const val = parseInt(tag.getAttribute('data-val'), 10);
                 numInput.value = val;
-                maxMarksInput.value = val; // Default 1 mark or editable
+                maxMarksInput.value = val;
                 tags.forEach(t => t.classList.remove('active'));
                 tag.classList.add('active');
                 resetToStandardSections();
@@ -464,17 +441,17 @@
             resetToStandardSections();
         }
 
-        // Add Section Row to DOM
         function addSectionRow(name = '', fromQ = 1, toQ = 10, marks = null) {
             const row = document.createElement('div');
             row.className = 'section-item-row';
             const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
             const secMarks = (marks !== null) ? marks : (count * 4);
+            const escapedName = String(name).replace(/"/g, '&quot;');
 
             row.innerHTML = `
                 <div class="sec-col-name">
                     <label class="sec-field-label">Section Name</label>
-                    <input type="text" class="sec-input sec-name-input" value="${name}" placeholder="e.g. Physics / Section A" oninput="updateSectionsJSON()">
+                    <input type="text" class="sec-input sec-name-input" value="${escapedName}" placeholder="e.g. Physics / Section A" oninput="updateSectionsJSON()">
                 </div>
                 <div>
                     <label class="sec-field-label">From Q #</label>
@@ -489,7 +466,7 @@
                     <input type="number" min="0" class="sec-input sec-input-mono sec-marks-input" value="${secMarks}" oninput="updateSectionsJSON()">
                 </div>
                 <div class="sec-col-btn">
-                    <button type="button" class="btn-remove-sec" onclick="removeSectionRow(this)" title="Remove section">&times;</button>
+                    <button type="button" class="btn-remove-sec" onclick="removeSectionRow(this)" title="Remove section" aria-label="Remove section">&times;</button>
                 </div>
             `;
 
@@ -517,7 +494,6 @@
             updateSectionsJSON();
         }
 
-        // Collect and sync sections JSON payload
         function updateSectionsJSON() {
             const rows = sectionContainer.querySelectorAll('.section-item-row');
             const list = [];
@@ -542,7 +518,6 @@
             updateSectionsJSON();
         }
 
-        // Auto divide total questions into sections
         function resetToStandardSections() {
             sectionContainer.innerHTML = '';
             const totalQ = parseInt(numInput.value, 10) || 180;
@@ -567,7 +542,6 @@
             }
         }
 
-        // Initialize with default 180 questions configuration
         resetToStandardSections();
     </script>
 </body>

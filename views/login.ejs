@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .auth-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+        }
+
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 2px 0;
+        }
+
+        .auth-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .alert-banner {
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 0.95rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            border: 1px solid transparent;
+        }
+
+        .alert-error {
+            background: var(--danger-light);
+            color: var(--danger-hover);
+            border-color: var(--danger-border);
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border-color: var(--success-border);
+        }
+
+        .password-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+        }
+
+        .password-label-row label {
+            margin-bottom: 0;
+        }
+
+        .btn-toggle-pw {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            padding: 2px 8px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-body);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+        }
+
+        .btn-toggle-pw:hover {
+            background: var(--surface-subtle);
+            border-color: var(--border-hover);
+            color: var(--text-main);
+        }
+
+        .visually-hidden {
+            position: absolute;
+            clip-path: inset(50%);
+            overflow: hidden;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            border: 0;
+            white-space: nowrap;
+        }
+
+        .auth-footer-note {
+            margin-top: 1.35rem;
+            padding-top: 1.15rem;
+            border-top: 1px solid #F1F5F9;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 1.5rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="auth-shell">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="brand-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                        <line x1="8" y1="8" x2="16" y2="8"></line>
+                        <circle cx="9" cy="13" r="1"></circle>
+                        <circle cx="15" cy="13" r="1"></circle>
+                        <circle cx="9" cy="17" r="1"></circle>
+                        <circle cx="15" cy="17" r="1"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="auth-title">Garud OMR</h1>
+                    <p class="auth-subtitle">Sign in to access exams or view results</p>
+                </div>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert-banner alert-error" role="alert" id="loginAlert">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <% if (typeof message !== 'undefined' && message) { %>
+                <div class="alert-banner alert-success" role="status" id="loginNotice">
+                    <%= message %>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST" id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="form-control"
+                           value="<%= typeof username !== 'undefined' && username ? username : '' %>"
+                           placeholder="Enter username or student ID"
+                           autocomplete="username"
+                           autocorrect="off"
+                           autocapitalize="none"
+                           spellcheck="false"
+                           enterkeyhint="next"
+                           required
+                           autofocus>
+                </div>
+
+                <div class="form-group">
+                    <div class="password-label-row">
+                        <label for="password">Password</label>
+                        <button type="button"
+                                id="togglePasswordBtn"
+                                class="btn-toggle-pw"
+                                aria-pressed="false"
+                                aria-label="Show password"
+                                aria-describedby="togglePwWarning">
+                            Show
+                        </button>
+                    </div>
+                    <span id="togglePwWarning" class="visually-hidden">Warning: showing password reveals characters on screen.</span>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="form-control"
+                           placeholder="Enter your password"
+                           autocomplete="current-password"
+                           enterkeyhint="done"
+                           required>
+                </div>
+
+                <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 0.25rem;">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer-note">
+                Accounts are provisioned by your exam administrator.
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const pwInput = document.getElementById('password');
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginSubmitBtn');
+
+        if (pwInput && toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = pwInput.type === 'password';
+                pwInput.type = isHidden ? 'text' : 'password';
+                toggleBtn.setAttribute('aria-pressed', String(isHidden));
+                toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                toggleBtn.textContent = isHidden ? 'Hide' : 'Show';
+            });
+        }
+
+        if (loginForm && loginBtn) {
+            loginForm.addEventListener('submit', () => {
+                if (loginForm.checkValidity()) {
+                    loginBtn.disabled = true;
+                    loginBtn.textContent = 'Signing in...';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
+

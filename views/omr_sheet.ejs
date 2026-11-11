@@ -12,7 +12,7 @@
         }
 
         body { 
-            background: #e2e8f0; 
+            background: #F6F8FA; 
             margin: 0;
             padding: 20px;
             display: flex;
@@ -23,21 +23,20 @@
 
         .print-btn { 
             margin-bottom: 20px; 
-            padding: 12px 24px; 
-            font-size: 15px; 
-            font-weight: 700;
+            padding: 10px 22px; 
+            font-size: 14px; 
+            font-weight: 600;
             cursor: pointer;
-            background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
-            color: white;
-            border: none;
+            background: #2563EB;
+            color: #FFFFFF;
+            border: 1px solid #2563EB;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
-            transition: all 0.2s ease;
-            font-family: inherit;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+            font-family: 'Inter', Arial, sans-serif;
         }
         .print-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+            background: #1D4ED8;
+            border-color: #1D4ED8;
         }
         
         /* A4 Fixed Size */
@@ -232,7 +231,7 @@
     </style>
 </head>
 <body>
-    <button class="print-btn no-print" onclick="window.print()">&#128424;&#65039; Print Blank OMR Sheet</button>
+    <button class="print-btn no-print" onclick="window.print()">Print Blank OMR Sheet</button>
 
     <div class="sheet-viewport">
         <div class="omr-container">

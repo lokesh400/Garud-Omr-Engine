@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Restricted • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .forbidden-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+        .forbidden-card {
+            max-width: 440px;
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="forbidden-shell">
+        <div class="forbidden-card">
+            <span class="pill pill-danger" style="margin-bottom: 1rem;">403 &middot; Access Restricted</span>
+            <h1 style="font-size: 1.35rem; margin-bottom: 0.5rem;">Admin Permission Required</h1>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                You are signed in as a Student. Exam creation, scanning, and class records are restricted to administrators.
+            </p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <a href="/student" class="btn btn-primary">Go to My Results</a>
+                <form action="/logout" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary">Sign Out</button>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
+

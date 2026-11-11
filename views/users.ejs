@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .users-container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 1.75rem 1.5rem 4rem 1.5rem;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .users-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alert-banner {
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            border: 1px solid transparent;
+        }
+
+        .alert-error {
+            background: var(--danger-light);
+            color: var(--danger-hover);
+            border-color: var(--danger-border);
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border-color: var(--success-border);
+        }
+
+        fieldset.role-fieldset {
+            border: 0;
+            padding: 0;
+            margin: 0 0 1.25rem 0;
+        }
+
+        fieldset.role-fieldset legend {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.45rem;
+            padding: 0;
+        }
+
+        .role-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .role-option-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            background: #FFFFFF;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-body);
+            transition: var(--transition);
+        }
+
+        .role-option-label:has(input:checked) {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary-active);
+        }
+
+        .role-option-label input {
+            margin: 0;
+            accent-color: var(--primary);
+        }
+
+        .hint-text {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+            line-height: 1.35;
+        }
+
+        .password-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.4rem;
+        }
+
+        .password-label-row label {
+            margin-bottom: 0;
+        }
+
+        .btn-toggle-pw {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-body);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-toggle-pw:hover {
+            background: var(--surface-subtle);
+            border-color: var(--border-hover);
+        }
+
+        .visually-hidden {
+            position: absolute;
+            clip-path: inset(50%);
+            overflow: hidden;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            border: 0;
+            white-space: nowrap;
+        }
+
+        .table-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 220px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 7px 12px 7px 32px;
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            background: #FFFFFF;
+            color: var(--text-main);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 9px;
+            border-radius: var(--radius-full);
+            font-size: 0.74rem;
+            font-weight: 600;
+        }
+
+        .role-badge-admin {
+            background: var(--primary-light);
+            color: var(--primary-active);
+            border: 1px solid var(--primary-border);
+        }
+
+        .role-badge-student {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border: 1px solid var(--success-border);
+        }
+
+        .roll-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            padding: 2px 7px;
+            border-radius: var(--radius-xs);
+            color: var(--text-main);
+        }
+
+        dialog.user-dialog {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            width: min(440px, calc(100vw - 24px));
+            background: #FFFFFF;
+            box-shadow: var(--shadow-2xl);
+            margin: auto;
+            overflow: hidden;
+        }
+
+        dialog.user-dialog[open] {
+            display: block;
+        }
+
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: var(--surface-subtle);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dialog-body {
+            padding: 1.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="users-container">
+        <header class="app-header">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <a href="/" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
+                <div>
+                    <h1 style="font-size: 1.2rem; margin: 0 0 2px 0;">User Management</h1>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Create and manage Admin &amp; Student login accounts</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <a href="/account" class="btn btn-secondary btn-sm">Account</a>
+                <form action="/logout" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+                </form>
+            </div>
+        </header>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert-banner alert-error" role="alert"><%= error %></div>
+        <% } %>
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert-banner alert-success" role="status"><%= message %></div>
+        <% } %>
+
+        <div class="users-grid">
+            <!-- Create Account Form Card -->
+            <div class="card">
+                <div class="card-header-styled">
+                    <h2 style="font-size: 1.1rem; margin: 0;">Create Account</h2>
+                </div>
+                <form action="/users" method="POST" id="createUserForm">
+                    <fieldset class="role-fieldset">
+                        <legend>Account Role</legend>
+                        <div class="role-options">
+                            <label class="role-option-label">
+                                <input type="radio" name="role" value="student" checked onchange="toggleRollField()">
+                                <span>Student</span>
+                            </label>
+                            <label class="role-option-label">
+                                <input type="radio" name="role" value="admin" onchange="toggleRollField()">
+                                <span>Admin / Teacher</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-group">
+                        <label for="newFullName">Full Name</label>
+                        <input type="text"
+                               id="newFullName"
+                               name="fullName"
+                               class="form-control"
+                               placeholder="e.g. Aarav Sharma"
+                               autocomplete="name">
+                    </div>
+
+                    <div class="form-group" id="rollNumberGroup">
+                        <label for="newRollnumber">Student Roll Number <span style="color: var(--danger);">*</span></label>
+                        <input type="text"
+                               id="newRollnumber"
+                               name="rollnumber"
+                               class="form-control"
+                               placeholder="e.g. 01234567"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               required>
+                        <span class="hint-text">Must match the roll number marked on the OMR sheet so the student sees their results.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newUsername">Login Username <span style="color: var(--danger);">*</span></label>
+                        <input type="text"
+                               id="newUsername"
+                               name="username"
+                               class="form-control"
+                               placeholder="e.g. 01234567 or aarav.sharma"
+                               autocomplete="off"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               required>
+                        <span class="hint-text">Lowercase letters, numbers, dots, underscores, or hyphens.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="password-label-row">
+                            <label for="newPassword">Initial Password <span style="color: var(--danger);">*</span></label>
+                            <button type="button"
+                                    id="toggleCreatePw"
+                                    class="btn-toggle-pw"
+                                    aria-pressed="false"
+                                    aria-label="Show password">
+                                Show
+                            </button>
+                        </div>
+                        <input type="password"
+                               id="newPassword"
+                               name="password"
+                               class="form-control"
+                               placeholder="Minimum 6 characters"
+                               autocomplete="new-password"
+                               minlength="6"
+                               required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Create User Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- Users Directory Card -->
+            <div class="card">
+                <div class="table-header-row">
+                    <div>
+                        <h2 style="font-size: 1.1rem; margin: 0 0 2px 0;">Registered Accounts (<%= users ? users.length : 0 %>)</h2>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Admins manage papers and scans; Students view only their own checked copies.</span>
+                    </div>
+                    <search class="search-box">
+                        <span class="search-icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
+                        <input type="search" id="userSearchInput" placeholder="Search users or roll..." aria-label="Search accounts" oninput="filterUsersTable()">
+                    </search>
+                </div>
+
+                <% if (users && users.length > 0) { %>
+                    <div class="data-table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Roll Number</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% users.forEach(u => { %>
+                                    <%
+                                        const isSelf = currentUser && String(currentUser._id) === String(u._id);
+                                        const searchStr = `${u.username} ${u.fullName || ''} ${u.rollnumber || ''} ${u.role}`.toLowerCase();
+                                    %>
+                                    <tr class="user-row" data-search="<%= searchStr %>">
+                                        <td>
+                                            <div style="font-weight: 600; color: var(--text-main);">
+                                                <%= u.fullName || u.username %>
+                                                <% if (isSelf) { %>
+                                                    <span style="font-size: 0.72rem; color: var(--primary); font-weight: 600; margin-left: 4px;">(You)</span>
+                                                <% } %>
+                                            </div>
+                                            <div style="font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">@<%= u.username %></div>
+                                        </td>
+                                        <td>
+                                            <% if (u.role === 'admin') { %>
+                                                <span class="role-badge role-badge-admin">Admin</span>
+                                            <% } else { %>
+                                                <span class="role-badge role-badge-student">Student</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (u.role === 'student' && u.rollnumber) { %>
+                                                <span class="roll-code"><%= u.rollnumber %></span>
+                                            <% } else if (u.role === 'student') { %>
+                                                <span style="color: var(--text-muted); font-size: 0.8rem;">Not set</span>
+                                            <% } else { %>
+                                                <span style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
+                                            <% } %>
+                                        </td>
+                                        <td style="text-align: right; white-space: nowrap;">
+                                            <button type="button"
+                                                    class="btn btn-secondary btn-sm"
+                                                    onclick="openResetPasswordModal('<%= u._id %>', '<%= u.username %>')">
+                                                Reset Password
+                                            </button>
+                                            <% if (!isSelf) { %>
+                                                <form action="/users/<%= encodeURIComponent(u._id) %>/delete"
+                                                      method="POST"
+                                                      style="display: inline; margin-left: 4px;"
+                                                      onsubmit="return confirm('Delete account @<%= u.username %>? This action cannot be undone.');">
+                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                                </form>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <p style="color: var(--text-muted); margin: 0;">No users found.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Native Dialog -->
+    <dialog id="resetPwDialog" class="user-dialog" closedby="any" aria-labelledby="resetPwTitle">
+        <div class="dialog-header">
+            <h3 id="resetPwTitle" style="margin: 0; font-size: 1rem;">Reset Password</h3>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeResetModal()" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="dialog-body">
+            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Set a new password for <strong id="resetUsernameLabel" style="color: var(--text-main);"></strong>.
+            </p>
+            <form id="resetPwForm" method="POST" action="">
+                <div class="form-group">
+                    <label for="resetPasswordInput">New Password</label>
+                    <input type="password"
+                           id="resetPasswordInput"
+                           name="password"
+                           class="form-control"
+                           placeholder="Minimum 6 characters"
+                           autocomplete="new-password"
+                           minlength="6"
+                           required>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeResetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <script>
+        function toggleRollField() {
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+            const isStudent = !selectedRole || selectedRole.value === 'student';
+            const group = document.getElementById('rollNumberGroup');
+            const input = document.getElementById('newRollnumber');
+            if (group && input) {
+                group.style.display = isStudent ? 'block' : 'none';
+                input.required = isStudent;
+                if (!isStudent) input.value = '';
+            }
+        }
+
+        // Sync default username suggestion when typing Roll Number for students if username wasn't manually edited
+        const rollInput = document.getElementById('newRollnumber');
+        const userInput = document.getElementById('newUsername');
+        let usernameEdited = false;
+        if (userInput) {
+            userInput.addEventListener('input', () => {
+                usernameEdited = userInput.value.trim().length > 0;
+            });
+        }
+        if (rollInput && userInput) {
+            rollInput.addEventListener('input', () => {
+                if (!usernameEdited) {
+                    userInput.value = rollInput.value.trim().toLowerCase();
+                }
+            });
+        }
+
+        const createPwInput = document.getElementById('newPassword');
+        const toggleCreatePw = document.getElementById('toggleCreatePw');
+        if (createPwInput && toggleCreatePw) {
+            toggleCreatePw.addEventListener('click', () => {
+                const isHidden = createPwInput.type === 'password';
+                createPwInput.type = isHidden ? 'text' : 'password';
+                toggleCreatePw.setAttribute('aria-pressed', String(isHidden));
+                toggleCreatePw.textContent = isHidden ? 'Hide' : 'Show';
+            });
+        }
+
+        function filterUsersTable() {
+            const q = document.getElementById('userSearchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.user-row').forEach(row => {
+                const hay = row.getAttribute('data-search') || '';
+                row.style.display = hay.includes(q) ? '' : 'none';
+            });
+        }
+
+        const resetDialog = document.getElementById('resetPwDialog');
+        function openResetPasswordModal(userId, username) {
+            const form = document.getElementById('resetPwForm');
+            const label = document.getElementById('resetUsernameLabel');
+            const pw = document.getElementById('resetPasswordInput');
+            if (form) form.action = '/users/' + encodeURIComponent(userId) + '/password';
+            if (label) label.textContent = '@' + username;
+            if (pw) pw.value = '';
+            if (resetDialog && typeof resetDialog.showModal === 'function') {
+                resetDialog.showModal();
+            }
+        }
+        function closeResetModal() {
+            if (resetDialog && resetDialog.open) resetDialog.close();
+        }
+        if (resetDialog && !('closedBy' in HTMLDialogElement.prototype)) {
+            const outside = (e, d) => {
+                const r = d.getBoundingClientRect();
+                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            let downOutside = false;
+            resetDialog.addEventListener('pointerdown', e => { downOutside = outside(e, resetDialog); });
+            resetDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, resetDialog)) resetDialog.close(); });
+        }
+    </script>
+</body>
+
+</html>
+

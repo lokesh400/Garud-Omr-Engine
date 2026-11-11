@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My OMR Results • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .student-container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 1.5rem 1.25rem 4rem 1.25rem;
+        }
+
+        .roll-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--primary-light);
+            color: var(--primary-active);
+            border: 1px solid var(--primary-border);
+            padding: 3px 10px;
+            border-radius: var(--radius-xs);
+        }
+
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .exam-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem;
+            box-shadow: var(--shadow-xs);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .exam-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 3px 0;
+        }
+
+        .exam-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .agg-summary {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .agg-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .agg-score {
+            font-size: 1.35rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary-active);
+        }
+
+        .sec-stack-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sec-stack-item {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            padding: 7px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .sec-stack-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-body);
+        }
+
+        .sec-stack-marks {
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+        }
+
+        .sec-stack-max {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* Modal Styles (shared pattern with paper_results.ejs) */
+        dialog.omr-modal-dialog {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            width: min(1040px, calc(100vw - 24px));
+            max-height: 92vh;
+            background: #FFFFFF;
+            color: var(--text-body);
+            box-shadow: var(--shadow-2xl);
+            margin: auto;
+            overflow: hidden;
+        }
+
+        dialog.omr-modal-dialog[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .omr-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 1rem 1.35rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--surface-subtle);
+            flex-shrink: 0;
+        }
+
+        .omr-modal-body {
+            padding: 1.35rem;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 1.35rem;
+            align-items: start;
+            overflow-y: auto;
+        }
+
+        .omr-preview-frame {
+            background: var(--surface-subtle);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .omr-preview-frame img {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-xs);
+            display: block;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+        }
+
+        .sec-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .sec-title {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-main);
+        }
+
+        .sec-range {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .sec-marks {
+            width: 100%;
+            padding-top: 6px;
+            border-top: 1px solid #F1F5F9;
+        }
+
+        .sec-marks-val {
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--primary);
+        }
+
+        .btn-modal-close {
+            background: #FFFFFF;
+            border: 1px solid var(--border-hover);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-modal-close:hover {
+            background: var(--surface-subtle-hover);
+            color: var(--text-main);
+        }
+
+        @media (max-width: 960px) {
+            .omr-modal-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .exam-grid {
+                grid-template-columns: 1fr;
+            }
+            .student-container {
+                padding: 1rem 0.75rem 3rem 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="student-container">
+        <header class="app-header">
+            <div class="brand-logo-wrap">
+                <div class="brand-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                        <line x1="8" y1="8" x2="16" y2="8"></line>
+                        <circle cx="9" cy="13" r="1"></circle>
+                        <circle cx="15" cy="13" r="1"></circle>
+                        <circle cx="9" cy="17" r="1"></circle>
+                        <circle cx="15" cy="17" r="1"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <h1 style="font-size: 1.15rem; margin: 0;">My OMR Results</h1>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px;">
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">
+                            <%= currentUser.fullName || currentUser.username %>
+                        </span>
+                        <% if (targetRoll) { %>
+                            <span class="roll-pill">Roll: <%= targetRoll %></span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <% if (currentUser && currentUser.role === 'admin') { %>
+                    <a href="/" class="btn btn-secondary btn-sm">&larr; Admin Dashboard</a>
+                <% } %>
+                <a href="/account" class="btn btn-secondary btn-sm">Account</a>
+                <form action="/logout" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+                </form>
+            </div>
+        </header>
+
+        <% if (currentUser && currentUser.role === 'admin') { %>
+            <div class="card" style="padding: 1rem 1.25rem;">
+                <search>
+                    <form action="/student" method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label for="lookupRoll" style="font-weight: 600; font-size: 0.875rem; color: var(--text-main);">Preview Student Roll Number:</label>
+                        <input type="text"
+                               id="lookupRoll"
+                               name="roll"
+                               class="form-control"
+                               value="<%= targetRoll || '' %>"
+                               placeholder="e.g. 01234567"
+                               autocorrect="off"
+                               autocapitalize="none"
+                               spellcheck="false"
+                               style="max-width: 240px;">
+                        <button type="submit" class="btn btn-primary btn-sm">Lookup Student</button>
+                    </form>
+                </search>
+            </div>
+        <% } %>
+
+        <% if (results && results.length > 0) { %>
+            <div class="exam-grid">
+                <% results.forEach(item => { %>
+                    <%
+                        const scannedDate = new Date(item.submitted_at || item.scannedAt || Date.now());
+                        const agg = item.aggregateMarks !== undefined ? item.aggregateMarks : (item.score * 4);
+                        const maxM = item.maxMarks || ((item.totalQuestions || 50) * 4);
+                    %>
+                    <article class="exam-card">
+                        <div>
+                            <div class="exam-header">
+                                <div>
+                                    <h2 class="exam-title"><%= item.paperTitle %></h2>
+                                    <div class="exam-meta">
+                                        <%= item.paperSubject || 'General' %> &middot; <%= scannedDate.toLocaleDateString() %>
+                                    </div>
+                                </div>
+                                <span class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
+                                    <%= item.percentage %>% Accuracy
+                                </span>
+                            </div>
+
+                            <div class="agg-summary" style="margin: 1rem 0;">
+                                <div>
+                                    <div class="agg-label">Total Aggregate Marks</div>
+                                    <div class="agg-score"><%= agg %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= maxM %></span></div>
+                                </div>
+                                <div style="text-align: right; font-size: 0.8rem;">
+                                    <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
+                                        <%= item.score %> / <%= item.totalQuestions %> Qs
+                                    </div>
+                                    <div style="color: var(--text-muted); margin-top: 2px;">
+                                        <span style="color: var(--success-hover); font-weight: 600;"><%= item.correctCount %>C</span> &middot;
+                                        <span style="color: var(--danger); font-weight: 600;"><%= item.wrongCount %>W</span> &middot;
+                                        <span><%= item.blankCount %>B</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <% if (item.sectionWise && item.sectionWise.length > 0) { %>
+                                <div class="sec-stack-list">
+                                    <% item.sectionWise.forEach(s => { %>
+                                        <div class="sec-stack-item">
+                                            <div class="sec-stack-name"><%= s.sectionName %></div>
+                                            <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %></span></div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                style="width: 100%;"
+                                onclick="openStudentOmrModal('<%= item._id %>')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            View Checked OMR Photo
+                        </button>
+                    </article>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <div class="empty-state-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <h3 style="margin-bottom: 0.4rem;">No evaluated OMR sheets found</h3>
+                <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto; font-size: 0.9rem;">
+                    <% if (targetRoll) { %>
+                        No OMR submissions have been uploaded yet for roll number <strong><%= targetRoll %></strong>.
+                    <% } else { %>
+                        No roll number is assigned to this account. Contact your exam administrator.
+                    <% } %>
+                </p>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Live Checked OMR Dialog -->
+    <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalPaperTitle">
+        <div class="omr-modal-header">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="roll-pill" id="modalRollNo">ROLL NO</span>
+                <span style="font-weight: 700; font-size: 0.98rem; color: var(--text-main);" id="modalPaperTitle">Exam Paper</span>
+                <span class="pill pill-success" id="modalAggregateText">Marks: 0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm">Full Photo &#8599;</a>
+                <button type="button" class="btn-modal-close" onclick="closeStudentOmrModal()" aria-label="Close modal">&times;</button>
+            </div>
+        </div>
+
+        <div class="omr-modal-body">
+            <div>
+                <div class="omr-preview-frame">
+                    <div style="position: relative; width: 100%; line-height: 0;">
+                        <img id="modalOmrImg" src="" alt="Checked OMR Sheet">
+                        <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
+                             style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                    <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm" onclick="toggleCheckingOverlay()">
+                        Live Marks: ON
+                    </button>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.76rem; font-weight:600; color:var(--text-muted);">
+                        <span><span style="color:#16A34A;">&#9679;</span> Correct</span>
+                        <span><span style="color:#DC2626;">&#9679;</span> Wrong / Multi</span>
+                        <span><span style="color:#16A34A;">&#9676;</span> True Key</span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="agg-summary" style="margin-bottom: 1.15rem;">
+                    <div>
+                        <div class="agg-label">Total Aggregate Marks</div>
+                        <div class="agg-score" id="modalGrandAggregate">0 / 0</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="agg-label">Accuracy</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);" id="modalAccuracyText">0%</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 0 0 8px 0; font-size: 0.92rem;">Section-Wise Performance</h3>
+                <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.15rem;"></div>
+
+                <h3 style="margin: 1rem 0 8px 0; font-size: 0.92rem;">Question Breakdown</h3>
+                <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
+                        <thead>
+                            <tr style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
+                                <th style="padding: 8px; font-weight: 600;">#</th>
+                                <th style="padding: 8px; font-weight: 600;">Response</th>
+                                <th style="padding: 8px; font-weight: 600;">Key</th>
+                                <th style="padding: 8px; font-weight: 600;">Marks</th>
+                                <th style="padding: 8px; font-weight: 600;">Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalBreakdownBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        const studentSubmissions = <%- JSON.stringify(results || []) %>;
+        const submissionsById = {};
+        studentSubmissions.forEach(s => {
+            if (s && s._id) submissionsById[String(s._id)] = s;
+        });
+
+        let currentModalItem = null;
+        let currentModalList = [];
+        let showCheckingOverlay = true;
+
+        const omrModalDialog = document.getElementById('omrModal');
+        if (omrModalDialog && !('closedBy' in HTMLDialogElement.prototype)) {
+            const outside = (e, d) => {
+                const r = d.getBoundingClientRect();
+                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            let downOutside = false;
+            omrModalDialog.addEventListener('pointerdown', e => { downOutside = outside(e, omrModalDialog); });
+            omrModalDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, omrModalDialog)) omrModalDialog.close(); });
+        }
+
+        const OMR_GEOMETRY = {
+            TARGET_W: 1000,
+            TARGET_H: 1461,
+            U_START: 0.061846,
+            V_START: 0.256331,
+            U_BUBBLE_STEP: 0.028042,
+            V_ROW_STEP: 0.018233,
+            U_COL_STEP: 0.201332,
+            QUESTIONS_PER_COL: 40,
+            OPTIONS: ['A', 'B', 'C', 'D'],
+            BUBBLE_R: 9.0,
+            U_ROLL_START: 0.619879,
+            V_ROLL_START: 0.058644,
+            U_ROLL_COL_STEP: 0.026640,
+            V_ROLL_ROW_STEP: 0.018233,
+            ROLL_R: 8.5
+        };
+
+        function toggleCheckingOverlay() {
+            showCheckingOverlay = !showCheckingOverlay;
+            const btn = document.getElementById('toggleOverlayBtn');
+            if (btn) btn.textContent = showCheckingOverlay ? 'Live Marks: ON' : 'Live Marks: OFF (Clean)';
+            if (currentModalItem) renderOmrOverlay(currentModalItem, currentModalList);
+        }
+
+        function renderOmrOverlay(data, list) {
+            const svg = document.getElementById('modalOmrOverlay');
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            if (!showCheckingOverlay) {
+                svg.style.display = 'none';
+                return;
+            }
+            svg.style.display = 'block';
+
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const G = OMR_GEOMETRY;
+
+            function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
+                const c = document.createElementNS(SVG_NS, 'circle');
+                c.setAttribute('cx', cx.toFixed(1));
+                c.setAttribute('cy', cy.toFixed(1));
+                c.setAttribute('r', String(r));
+                c.setAttribute('fill', fill);
+                c.setAttribute('stroke', stroke);
+                c.setAttribute('stroke-width', String(strokeWidth));
+                if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
+                svg.appendChild(c);
+            }
+
+            const rollStr = String(data.rollnumber || data.rollNumber || '');
+            if (/^[0-9-]{8}$/.test(rollStr)) {
+                for (let c = 0; c < 8; c++) {
+                    const ch = rollStr[c];
+                    if (ch >= '0' && ch <= '9') {
+                        const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
+                        const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
+                        addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
+                    }
+                }
+            }
+
+            list.forEach(b => {
+                const q = Number(b.q);
+                if (!q || q < 1) return;
+
+                const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
+                const row = (q - 1) % G.QUESTIONS_PER_COL;
+                const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
+                const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
+
+                const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
+
+                for (let bi = 0; bi < 4; bi++) {
+                    const opt = G.OPTIONS[bi];
+                    const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
+                    const isMarked = markedOpts.includes(opt);
+
+                    if (b.verdict === 'multiple' && isMarked) {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
+                        const sz = Math.round(G.BUBBLE_R * 0.5);
+                        const l1 = document.createElementNS(SVG_NS, 'line');
+                        l1.setAttribute('x1', (bx - sz).toFixed(1));
+                        l1.setAttribute('y1', (rowY - sz).toFixed(1));
+                        l1.setAttribute('x2', (bx + sz).toFixed(1));
+                        l1.setAttribute('y2', (rowY + sz).toFixed(1));
+                        l1.setAttribute('stroke', '#FFFFFF');
+                        l1.setAttribute('stroke-width', '2');
+                        svg.appendChild(l1);
+
+                        const l2 = document.createElementNS(SVG_NS, 'line');
+                        l2.setAttribute('x1', (bx + sz).toFixed(1));
+                        l2.setAttribute('y1', (rowY - sz).toFixed(1));
+                        l2.setAttribute('x2', (bx - sz).toFixed(1));
+                        l2.setAttribute('y2', (rowY + sz).toFixed(1));
+                        l2.setAttribute('stroke', '#FFFFFF');
+                        l2.setAttribute('stroke-width', '2');
+                        svg.appendChild(l2);
+                    } else if (isMarked) {
+                        if (b.verdict === 'correct') {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
+                        } else if (b.verdict === 'wrong') {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
+                        } else {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
+                        }
+                    } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple')) {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
+                    } else {
+                        addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
+                    }
+                }
+            });
+        }
+
+        function openStudentOmrModal(id) {
+            const data = submissionsById[String(id)];
+            if (!data) return;
+
+            currentModalItem = data;
+            const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
+            const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
+            const agg = data.aggregateMarks !== undefined ? data.aggregateMarks : (data.score * 4);
+            const maxM = data.maxMarks || ((data.totalQuestions || 50) * 4);
+            const pct = data.percentage !== undefined ? data.percentage : 0;
+
+            document.getElementById('modalRollNo').textContent = 'Roll: ' + roll;
+            document.getElementById('modalPaperTitle').textContent = data.paperTitle || 'Exam Sheet';
+            document.getElementById('modalAggregateText').textContent = `Marks: ${agg} / ${maxM}`;
+            document.getElementById('modalGrandAggregate').textContent = `${agg} / ${maxM}`;
+            document.getElementById('modalAccuracyText').textContent = `${pct}%`;
+
+            document.getElementById('modalOmrImg').src = imgUrl;
+            document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
+
+            const secContainer = document.getElementById('modalSectionContainer');
+            secContainer.innerHTML = '';
+            if (data.sectionWise && data.sectionWise.length > 0) {
+                data.sectionWise.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = 'sec-card';
+
+                    const headWrap = document.createElement('div');
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'sec-title';
+                    titleEl.textContent = s.sectionName || '';
+
+                    const rangeEl = document.createElement('div');
+                    rangeEl.className = 'sec-range';
+                    rangeEl.textContent = `${s.range || ''} · ${s.correct || 0}C · ${s.wrong || 0}W · ${s.blank || 0}B`;
+
+                    headWrap.appendChild(titleEl);
+                    headWrap.appendChild(rangeEl);
+
+                    const marksWrap = document.createElement('div');
+                    marksWrap.className = 'sec-marks';
+                    const marksVal = document.createElement('div');
+                    marksVal.className = 'sec-marks-val';
+                    marksVal.textContent = `${s.marks} `;
+                    const maxSpan = document.createElement('span');
+                    maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
+                    maxSpan.textContent = `/ ${s.maxMarks}`;
+                    marksVal.appendChild(maxSpan);
+                    marksWrap.appendChild(marksVal);
+
+                    row.appendChild(headWrap);
+                    row.appendChild(marksWrap);
+                    secContainer.appendChild(row);
+                });
+            }
+
+            const keyObj = data.answerKeyLookup || {};
+            const resps = Array.isArray(data.responses) ? data.responses : [];
+            const qTotal = Math.max(resps.length, data.totalQuestions || 0);
+            const list = [];
+
+            for (let i = 0; i < qTotal; i++) {
+                const qNum = i + 1;
+                const resp = resps[i];
+                const correctKey = keyObj[qNum] || keyObj[String(qNum)] || '-';
+                let verdict = 'blank';
+                if (resp && String(resp).trim() !== '') {
+                    const cleaned = String(resp).trim().toUpperCase();
+                    if (cleaned.includes(',')) {
+                        verdict = 'multiple';
+                    } else if (correctKey !== '-') {
+                        verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                    } else {
+                        verdict = 'marked';
+                    }
+                }
+                list.push({ q: qNum, marked: resp || '', correctKey, verdict });
+            }
+
+            currentModalList = list;
+            renderOmrOverlay(data, list);
+
+            const tbody = document.getElementById('modalBreakdownBody');
+            tbody.innerHTML = '';
+            list.forEach(b => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #F1F5F9';
+                let vColor = '#64748B';
+                let vText = 'Blank';
+                let qMarksText = '0';
+                let qMarksColor = '#64748B';
+
+                if (b.verdict === 'correct') {
+                    vColor = '#15803D'; vText = 'Correct'; qMarksText = '+4'; qMarksColor = '#15803D';
+                } else if (b.verdict === 'wrong') {
+                    vColor = '#DC2626'; vText = 'Wrong'; qMarksText = '-1'; qMarksColor = '#DC2626';
+                } else if (b.verdict === 'multiple') {
+                    vColor = '#B91C1C'; vText = 'Multiple'; qMarksText = '-1'; qMarksColor = '#B91C1C';
+                } else if (b.verdict === 'marked') {
+                    vColor = '#1D4ED8'; vText = 'Recorded';
+                }
+
+                const tdQ = document.createElement('td');
+                tdQ.style.cssText = 'padding:7px; font-weight:600; color:#475569;';
+                tdQ.textContent = 'Q' + b.q;
+
+                const tdMarked = document.createElement('td');
+                tdMarked.style.cssText = 'padding:7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
+                tdMarked.textContent = b.marked || '—';
+
+                const tdKey = document.createElement('td');
+                tdKey.style.cssText = 'padding:7px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
+                tdKey.textContent = b.correctKey || '-';
+
+                const tdMarks = document.createElement('td');
+                tdMarks.style.cssText = `padding:7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
+                tdMarks.textContent = qMarksText;
+
+                const tdVerdict = document.createElement('td');
+                tdVerdict.style.cssText = `padding:7px; font-weight:600; font-size:0.78rem; color:${vColor};`;
+                tdVerdict.textContent = vText;
+
+                tr.appendChild(tdQ);
+                tr.appendChild(tdMarked);
+                tr.appendChild(tdKey);
+                tr.appendChild(tdMarks);
+                tr.appendChild(tdVerdict);
+                tbody.appendChild(tr);
+            });
+
+            if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
+                omrModalDialog.showModal();
+            }
+        }
+
+        function closeStudentOmrModal() {
+            if (omrModalDialog && omrModalDialog.open) omrModalDialog.close();
+            currentModalItem = null;
+        }
+    </script>
+</body>
+
+</html>
+

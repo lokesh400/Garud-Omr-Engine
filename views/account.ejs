@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .account-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 4rem 1.25rem;
+        }
+
+        .alert-banner {
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            border: 1px solid transparent;
+        }
+
+        .alert-error {
+            background: var(--danger-light);
+            color: var(--danger-hover);
+            border-color: var(--danger-border);
+        }
+
+        .alert-success {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border-color: var(--success-border);
+        }
+
+        .profile-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1rem;
+        }
+
+        .profile-field-label {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .profile-field-val {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="account-container">
+        <header class="app-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <a href="<%= currentUser && currentUser.role === 'admin' ? '/' : '/student' %>" class="btn btn-secondary btn-sm">&larr; Back</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Account Settings</h1>
+            </div>
+            <form action="/logout" method="POST" style="margin: 0;">
+                <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+            </form>
+        </header>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert-banner alert-error" role="alert"><%= error %></div>
+        <% } %>
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert-banner alert-success" role="status"><%= message %></div>
+        <% } %>
+
+        <div class="card">
+            <div class="card-header-styled">
+                <h2 style="font-size: 1.05rem; margin: 0;">Signed-in Profile</h2>
+                <span class="pill <%= currentUser.role === 'admin' ? 'pill-primary' : 'pill-success' %>">
+                    <%= currentUser.role === 'admin' ? 'Admin' : 'Student' %>
+                </span>
+            </div>
+            <div class="profile-row">
+                <div>
+                    <div class="profile-field-label">Full Name</div>
+                    <div class="profile-field-val"><%= currentUser.fullName || currentUser.username %></div>
+                </div>
+                <div>
+                    <div class="profile-field-label">Username</div>
+                    <div class="profile-field-val" style="font-family: 'JetBrains Mono', monospace;">@<%= currentUser.username %></div>
+                </div>
+                <% if (currentUser.role === 'student') { %>
+                    <div>
+                        <div class="profile-field-label">Roll Number</div>
+                        <div class="profile-field-val" style="font-family: 'JetBrains Mono', monospace;"><%= currentUser.rollnumber || currentUser.username %></div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header-styled">
+                <h2 style="font-size: 1.05rem; margin: 0;">Change Password</h2>
+            </div>
+            <form action="/account/password" method="POST">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password"
+                           id="currentPassword"
+                           name="currentPassword"
+                           class="form-control"
+                           autocomplete="current-password"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password"
+                           id="newPassword"
+                           name="newPassword"
+                           class="form-control"
+                           autocomplete="new-password"
+                           minlength="6"
+                           placeholder="Minimum 6 characters"
+                           required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password"
+                           id="confirmPassword"
+                           name="confirmPassword"
+                           class="form-control"
+                           autocomplete="new-password"
+                           minlength="6"
+                           required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
+

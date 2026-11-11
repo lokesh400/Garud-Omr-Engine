@@ -5,16 +5,23 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const multer = require('multer');
+const session = require('express-session');
+const { MongoStore } = require('connect-mongo');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 const Paper = require('./models/Paper');
 const Submission = require('./models/Submission');
 const Result = Submission;
+const User = require('./models/User');
 const { uploadOmrSheet, deleteOmrSheet } = require('./utils/cloudinaryPool');
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 3000;
+const SESSION_COOKIE_NAME = 'garud.sid';
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, 'public/uploads');
@@ -22,10 +29,49 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Setup mongoose connection
-mongoose.connect(process.env.MONGO_URL)
-    .then(() => {
+// Seed default admin account when no admins exist yet
+async function ensureDefaultAdmin() {
+    try {
+        const adminCount = await User.countDocuments({ role: 'admin' });
+        if (adminCount === 0) {
+            const defaultUsername = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
+            const defaultPassword = process.env.ADMIN_PASSWORD || 'admin123';
+            const existing = await User.findOne({ username: defaultUsername });
+            if (existing) {
+                existing.role = 'admin';
+                await existing.setPassword(defaultPassword);
+                await existing.save();
+                console.log(`[Auth] Promoted existing account "${defaultUsername}" to default Admin.`);
+            } else {
+                await User.register(
+                    new User({
+                        username: defaultUsername,
+                        fullName: 'Administrator',
+                        role: 'admin',
+                        rollnumber: ''
+                    }),
+                    defaultPassword
+                );
+                console.log(`[Auth] Seeded default Admin account "${defaultUsername}".`);
+            }
+        }
+    } catch (err) {
+        console.error('[Auth] Error seeding default admin:', err.message);
+    }
+}
+
+// Setup mongoose connection & MongoDB-backed session store
+const mongoConnectPromise = mongoose.connect(process.env.MONGO_URL);
+const sessionStore = MongoStore.create({
+    clientPromise: mongoConnectPromise.then(m => m.connection.getClient()),
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60
+});
+
+mongoConnectPromise
+    .then(async () => {
         console.log('Connected to MongoDB');
+        await ensureDefaultAdmin();
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
         });
@@ -37,7 +83,102 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(express.json({ limit: '25mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Public stylesheets (needed for login page)
+app.use('/css', express.static(path.join(__dirname, 'public/css')));
+
+// Session & Passport configuration (passport-local + passport-local-mongoose)
+const sessionSecret = process.env.SESSION_SECRET ||
+    crypto.createHash('sha256').update(process.env.MONGO_URL || 'garud-omr-session-secret').digest('hex');
+
+app.use(session({
+    name: SESSION_COOKIE_NAME,
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user || null;
+    next();
+});
+
+// Auth & RBAC Helpers
+function isApiRequest(req) {
+    if (req.originalUrl && req.originalUrl.startsWith('/api/')) return true;
+    const accept = req.headers.accept || '';
+    return Boolean(req.xhr || req.is('application/json') || (accept.includes('application/json') && !accept.includes('text/html')));
+}
+
+function getSafeReturnTo(rawUrl) {
+    if (typeof rawUrl !== 'string') return null;
+    const trimmed = rawUrl.trim();
+    if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.startsWith('/\\')) return null;
+    if (trimmed.startsWith('/login') || trimmed.startsWith('/logout') || trimmed.startsWith('/api/')) return null;
+    return trimmed;
+}
+
+function requireAuth(req, res, next) {
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        return next();
+    }
+    if (isApiRequest(req)) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (req.method === 'GET' && req.session) {
+        const candidate = getSafeReturnTo(req.originalUrl);
+        if (candidate) {
+            req.session.returnTo = candidate;
+        }
+    }
+    return res.redirect('/login');
+}
+
+function requireAdmin(req, res, next) {
+    if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        if (isApiRequest(req)) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        if (req.method === 'GET' && req.session) {
+            const candidate = getSafeReturnTo(req.originalUrl);
+            if (candidate) {
+                req.session.returnTo = candidate;
+            }
+        }
+        return res.redirect('/login');
+    }
+    if (req.user.role !== 'admin') {
+        if (isApiRequest(req)) {
+            return res.status(403).json({ error: 'Administrator access required' });
+        }
+        return res.status(403).render('forbidden');
+    }
+    return next();
+}
+
+// Protect uploaded/fallback OMR copies (students can only read fallback copies tied to their own roll)
+app.use('/uploads', requireAuth, (req, res, next) => {
+    if (req.user.role === 'admin') return next();
+    const roll = String(req.user.rollnumber || req.user.username || '').trim().replace(/[^\w-]/g, '_');
+    const basename = path.basename(req.path || '');
+    if (roll && basename.toLowerCase().includes(roll.toLowerCase())) {
+        return next();
+    }
+    return res.status(403).send('Forbidden');
+}, express.static(uploadDir));
 
 // Multer setup for uploads
 const storage = multer.diskStorage({
@@ -175,8 +316,200 @@ async function regradePaperSubmissions(paper) {
     return submissions.length;
 }
 
-// Routes
-app.get('/', async (req, res) => {
+// Authentication Routes (passport-local + passport-local-mongoose)
+app.get('/login', (req, res) => {
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        return res.redirect(req.user.role === 'admin' ? '/' : '/student');
+    }
+    const msgMap = {
+        signed_out: 'You have been signed out.'
+    };
+    res.render('login', {
+        error: null,
+        message: msgMap[req.query.message] || null,
+        username: ''
+    });
+});
+
+app.post('/login', (req, res, next) => {
+    const returnTo = req.session ? getSafeReturnTo(req.session.returnTo) : null;
+    const rawUsername = String((req.body && req.body.username) || '').trim();
+
+    passport.authenticate('local', (err, user, info) => {
+        if (err) return next(err);
+        if (!user) {
+            return res.status(401).render('login', {
+                error: (info && info.message) || 'Invalid username or password.',
+                message: null,
+                username: rawUsername
+            });
+        }
+        req.logIn(user, (loginErr) => {
+            if (loginErr) return next(loginErr);
+            const dest = user.role === 'admin' ? (returnTo || '/') : '/student';
+            return res.redirect(dest);
+        });
+    })(req, res, next);
+});
+
+// Registration is disabled (accounts are created by Admins in /users)
+app.get('/register', (req, res) => {
+    res.redirect('/login');
+});
+
+app.post('/logout', (req, res, next) => {
+    req.logout((err) => {
+        if (err) return next(err);
+        if (req.session) {
+            req.session.destroy(() => {
+                res.clearCookie(SESSION_COOKIE_NAME);
+                res.redirect('/login?message=signed_out');
+            });
+        } else {
+            res.clearCookie(SESSION_COOKIE_NAME);
+            res.redirect('/login?message=signed_out');
+        }
+    });
+});
+
+app.get('/account', requireAuth, (req, res) => {
+    const msgMap = {
+        password_updated: 'Password updated successfully.'
+    };
+    res.render('account', {
+        error: req.query.error || null,
+        message: msgMap[req.query.message] || null
+    });
+});
+
+app.post('/account/password', requireAuth, async (req, res) => {
+    try {
+        const currentPassword = String((req.body && req.body.currentPassword) || '');
+        const newPassword = String((req.body && req.body.newPassword) || '');
+        const confirmPassword = String((req.body && req.body.confirmPassword) || '');
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).render('account', {
+                error: 'Current password and new password are required.',
+                message: null
+            });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).render('account', {
+                error: 'New password must be at least 6 characters long.',
+                message: null
+            });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).render('account', {
+                error: 'New password and confirmation do not match.',
+                message: null
+            });
+        }
+
+        await req.user.changePassword(currentPassword, newPassword);
+        return res.redirect('/account?message=password_updated');
+    } catch (err) {
+        const errMsg = (err && (err.name === 'IncorrectPasswordError' || err.name === 'IncorrectUsernameError'))
+            ? 'Current password is incorrect.'
+            : (err.message || 'Could not update password.');
+        return res.status(400).render('account', {
+            error: errMsg,
+            message: null
+        });
+    }
+});
+
+// Admin User Management Routes
+app.get('/users', requireAdmin, async (req, res) => {
+    try {
+        const users = await User.find().sort({ role: 1, createdAt: -1 });
+        res.render('users', {
+            users,
+            error: req.query.error || null,
+            message: req.query.message || null
+        });
+    } catch (err) {
+        res.status(500).send('Error loading users: ' + err.message);
+    }
+});
+
+app.post('/users', requireAdmin, async (req, res) => {
+    try {
+        const role = req.body.role === 'admin' ? 'admin' : 'student';
+        const username = String(req.body.username || '').trim().toLowerCase();
+        const fullName = String(req.body.fullName || '').trim();
+        const rollnumber = role === 'student' ? String(req.body.rollnumber || '').trim() : '';
+        const password = String(req.body.password || '');
+
+        if (!username || !/^[a-z0-9._-]{2,40}$/.test(username)) {
+            return res.redirect('/users?error=' + encodeURIComponent('Username must be 2-40 characters using lowercase letters, numbers, dots, underscores, or hyphens.'));
+        }
+        if (role === 'student' && !rollnumber) {
+            return res.redirect('/users?error=' + encodeURIComponent('Student roll number is required for student accounts.'));
+        }
+        if (password.length < 6) {
+            return res.redirect('/users?error=' + encodeURIComponent('Password must be at least 6 characters long.'));
+        }
+
+        const newUser = new User({
+            username,
+            fullName,
+            role,
+            rollnumber
+        });
+        await User.register(newUser, password);
+        return res.redirect('/users?message=' + encodeURIComponent(`Account @${username} (${role}) created successfully.`));
+    } catch (err) {
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not create user.'));
+    }
+});
+
+app.post('/users/:id/password', requireAdmin, async (req, res) => {
+    try {
+        const password = String((req.body && req.body.password) || '');
+        if (password.length < 6) {
+            return res.redirect('/users?error=' + encodeURIComponent('Password must be at least 6 characters long.'));
+        }
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+        await targetUser.setPassword(password);
+        await targetUser.save();
+        return res.redirect('/users?message=' + encodeURIComponent(`Password updated for @${targetUser.username}.`));
+    } catch (err) {
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update password.'));
+    }
+});
+
+app.post('/users/:id/delete', requireAdmin, async (req, res) => {
+    try {
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+        if (String(targetUser._id) === String(req.user._id)) {
+            return res.redirect('/users?error=' + encodeURIComponent('You cannot delete your own signed-in account.'));
+        }
+        if (targetUser.role === 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin' });
+            if (adminCount <= 1) {
+                return res.redirect('/users?error=' + encodeURIComponent('Cannot delete the last remaining Admin account.'));
+            }
+        }
+        await User.findByIdAndDelete(targetUser._id);
+        return res.redirect('/users?message=' + encodeURIComponent(`Account @${targetUser.username} deleted.`));
+    } catch (err) {
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not delete user.'));
+    }
+});
+
+// Dashboard & Paper Routes
+app.get('/', requireAuth, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.redirect('/student');
+    }
     try {
         const papers = await Paper.find().sort({ createdAt: -1 });
         res.render('index', { papers });
@@ -185,11 +518,11 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.get('/paper/new', (req, res) => {
+app.get('/paper/new', requireAdmin, (req, res) => {
     res.render('create_paper');
 });
 
-app.post('/paper/new', async (req, res) => {
+app.post('/paper/new', requireAdmin, async (req, res) => {
     try {
         const {
             paper_id,
@@ -251,7 +584,7 @@ app.post('/paper/new', async (req, res) => {
     }
 });
 
-app.get('/paper/:id', async (req, res) => {
+app.get('/paper/:id', requireAdmin, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
@@ -261,7 +594,7 @@ app.get('/paper/:id', async (req, res) => {
     }
 });
 
-app.get('/paper/:id/omr', async (req, res) => {
+app.get('/paper/:id/omr', requireAdmin, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
@@ -271,7 +604,7 @@ app.get('/paper/:id/omr', async (req, res) => {
     }
 });
 
-app.post('/paper/:id/answerkey', async (req, res) => {
+app.post('/paper/:id/answerkey', requireAdmin, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
@@ -303,7 +636,7 @@ app.post('/paper/:id/answerkey', async (req, res) => {
 });
 
 // Explicit API endpoint to recheck/regrade all OMR submissions for a paper against its current answer key
-app.post('/api/paper/:id/recheck', async (req, res) => {
+app.post('/api/paper/:id/recheck', requireAdmin, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
@@ -318,7 +651,7 @@ app.post('/api/paper/:id/recheck', async (req, res) => {
 });
 
 // Update or configure sections for a paper
-app.post('/paper/:id/sections', async (req, res) => {
+app.post('/paper/:id/sections', requireAdmin, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).json({ error: 'Paper not found' });
@@ -340,7 +673,7 @@ app.post('/paper/:id/sections', async (req, res) => {
     }
 });
 
-app.get('/paper/:id/scan', async (req, res) => {
+app.get('/paper/:id/scan', requireAdmin, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
@@ -350,7 +683,7 @@ app.get('/paper/:id/scan', async (req, res) => {
     }
 });
 
-app.post('/paper/:id/check', upload.single('omrSheet'), async (req, res) => {
+app.post('/paper/:id/check', requireAdmin, upload.single('omrSheet'), async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
@@ -462,8 +795,83 @@ function computeSectionWise(breakdown, totalQuestions, customSections = null) {
     };
 }
 
+// Shared helper to resolve section definitions for a paper
+function getPaperSectionsDef(paper, fallbackTotalQ = 50) {
+    if (paper && Array.isArray(paper.sections) && paper.sections.length > 0) {
+        return paper.sections;
+    }
+    const totalQ = (paper && (paper.total_questions || paper.numQuestions)) || fallbackTotalQ || 50;
+    const qPerSec = Math.ceil(totalQ / 4);
+    return [
+        { name: 'Physics', from_question: 1, to_question: qPerSec, max_marks: qPerSec * 4 },
+        { name: 'Chemistry', from_question: qPerSec + 1, to_question: qPerSec * 2, max_marks: qPerSec * 4 },
+        { name: 'Botany / Math', from_question: (qPerSec * 2) + 1, to_question: qPerSec * 3, max_marks: qPerSec * 4 },
+        { name: 'Zoology / Aptitude', from_question: (qPerSec * 3) + 1, to_question: totalQ, max_marks: (totalQ - (qPerSec * 3)) * 4 }
+    ];
+}
+
+// Shared helper to dynamically evaluate a submission against its paper's current answer key & sections
+function buildGradedSubmissionObj(doc, paper) {
+    const defaultTotalQ = (paper && (paper.total_questions || paper.numQuestions)) || 50;
+    const totalQ = doc.totalQuestions || defaultTotalQ;
+    const keyLookup = paper ? buildKeyLookup(paper) : {};
+    const sectionsDef = getPaperSectionsDef(paper, totalQ);
+
+    if (Array.isArray(doc.responses) && doc.responses.length > 0 && paper) {
+        const graded = evaluateResponsesAgainstKey(doc.responses, keyLookup, totalQ);
+        doc.score = graded.score;
+        doc.correctCount = graded.correctCount;
+        doc.wrongCount = graded.wrongCount;
+        doc.blankCount = graded.blankCount;
+        doc.percentage = graded.percentage;
+    }
+
+    const resps = Array.isArray(doc.responses) ? doc.responses : [];
+    const sectionWise = sectionsDef.map(s => {
+        let secCorrect = 0;
+        let secWrong = 0;
+        let secBlank = 0;
+        const fromQ = Number(s.from_question);
+        const toQ = Number(s.to_question);
+        const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
+
+        for (let q = fromQ; q <= toQ; q++) {
+            const marked = resps[q - 1] ? String(resps[q - 1]).trim().toUpperCase() : '';
+            const key = keyLookup[q] ? String(keyLookup[q]).trim().toUpperCase() : '';
+            if (!marked) {
+                secBlank++;
+            } else if (marked.includes(',')) {
+                secWrong++;
+            } else if (key && marked === key) {
+                secCorrect++;
+            } else if (key) {
+                secWrong++;
+            }
+        }
+
+        const secMarks = (secCorrect * 4) - secWrong;
+        return {
+            sectionName: s.name,
+            range: `Q${fromQ}-Q${toQ}`,
+            correct: secCorrect,
+            wrong: secWrong,
+            blank: secBlank,
+            marks: Math.max(0, secMarks),
+            maxMarks: s.max_marks || (countInSec * 4)
+        };
+    });
+
+    const obj = doc.toObject({ virtuals: true });
+    obj.sectionWise = sectionWise;
+    obj.answerKeyLookup = keyLookup;
+    obj.paperTitle = paper ? paper.title : (doc.paper_id || 'Exam Paper');
+    obj.paperSubject = paper ? (paper.subject || 'General') : 'General';
+    obj.maxMarks = paper ? (paper.max_marks || (totalQ * 4)) : (doc.maxMarks || (totalQ * 4));
+    return obj;
+}
+
 // Save Evaluated Result to Cloudinary & MongoDB (submissions collection)
-app.post('/api/paper/:id/save-result', async (req, res) => {
+app.post('/api/paper/:id/save-result', requireAdmin, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
@@ -586,7 +994,7 @@ app.post('/api/paper/:id/save-result', async (req, res) => {
 });
 
 // Delete Submission and its associated Cloudinary image
-app.delete('/api/submission/:id', async (req, res) => {
+app.delete('/api/submission/:id', requireAdmin, async (req, res) => {
     try {
         const submission = await Submission.findById(req.params.id);
         if (!submission) {
@@ -620,8 +1028,64 @@ app.delete('/api/submission/:id', async (req, res) => {
     }
 });
 
+// Student Results Portal (scoped strictly to the signed-in student's roll number, or Admin lookup)
+app.get('/student', requireAuth, async (req, res) => {
+    try {
+        const targetRoll = req.user.role === 'admin'
+            ? String(req.query.roll || '').trim()
+            : String(req.user.rollnumber || req.user.username || '').trim();
+
+        let results = [];
+        if (targetRoll) {
+            const rollVariants = [...new Set([
+                targetRoll,
+                targetRoll.toUpperCase(),
+                targetRoll.toLowerCase()
+            ].filter(Boolean))];
+
+            const docs = await Submission.find({
+                $or: [
+                    { rollnumber: { $in: rollVariants } },
+                    { rollNumber: { $in: rollVariants } }
+                ]
+            }).sort({ submitted_at: -1, scannedAt: -1 });
+
+            const paperIds = [...new Set(docs.map(d => d.paper_id || d.paperId).filter(Boolean).map(String))];
+            const paperQueryIds = [];
+            paperIds.forEach(pid => {
+                paperQueryIds.push(pid);
+                if (mongoose.Types.ObjectId.isValid(pid) && String(new mongoose.Types.ObjectId(pid)) === pid) {
+                    paperQueryIds.push(new mongoose.Types.ObjectId(pid));
+                }
+            });
+
+            const papers = paperQueryIds.length > 0
+                ? await Paper.find({ _id: { $in: paperQueryIds } })
+                : [];
+            const papersMap = {};
+            papers.forEach(p => {
+                papersMap[String(p._id)] = p;
+            });
+
+            results = docs.map(doc => {
+                const pid = String(doc.paper_id || doc.paperId || '');
+                const paper = papersMap[pid] || null;
+                return buildGradedSubmissionObj(doc, paper);
+            });
+        }
+
+        res.render('student_dashboard', {
+            results,
+            targetRoll
+        });
+    } catch (error) {
+        console.error('Error loading student dashboard:', error);
+        res.status(500).send('Error loading student results: ' + error.message);
+    }
+});
+
 // View All Results & Evaluated OMR Copies for Paper
-app.get('/paper/:id/results', async (req, res) => {
+app.get('/paper/:id/results', requireAdmin, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
@@ -635,77 +1099,8 @@ app.get('/paper/:id/results', async (req, res) => {
             ]
         }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
 
-        // Build keyLookup from current official answer key
-        const keyLookup = buildKeyLookup(paper);
-
-        // Determine sections
-        let sectionsDef = [];
-        if (Array.isArray(paper.sections) && paper.sections.length > 0) {
-            sectionsDef = paper.sections;
-        } else {
-            const totalQ = paper.total_questions || paper.numQuestions || 50;
-            const qPerSec = Math.ceil(totalQ / 4);
-            sectionsDef = [
-                { name: 'Physics', from_question: 1, to_question: qPerSec, max_marks: qPerSec * 4 },
-                { name: 'Chemistry', from_question: qPerSec + 1, to_question: qPerSec * 2, max_marks: qPerSec * 4 },
-                { name: 'Botany / Math', from_question: (qPerSec * 2) + 1, to_question: qPerSec * 3, max_marks: qPerSec * 4 },
-                { name: 'Zoology / Aptitude', from_question: (qPerSec * 3) + 1, to_question: totalQ, max_marks: (totalQ - (qPerSec * 3)) * 4 }
-            ];
-        }
-
-        const defaultTotalQ = paper.total_questions || paper.numQuestions || 50;
-
         // Recompute scores & sectionWise dynamically from saved responses against the current answer key
-        const results = docs.map(doc => {
-            const totalQ = doc.totalQuestions || defaultTotalQ;
-            if (Array.isArray(doc.responses) && doc.responses.length > 0) {
-                const graded = evaluateResponsesAgainstKey(doc.responses, keyLookup, totalQ);
-                doc.score = graded.score;
-                doc.correctCount = graded.correctCount;
-                doc.wrongCount = graded.wrongCount;
-                doc.blankCount = graded.blankCount;
-                doc.percentage = graded.percentage;
-            }
-
-            const resps = Array.isArray(doc.responses) ? doc.responses : [];
-            const sectionWise = sectionsDef.map(s => {
-                let secCorrect = 0;
-                let secWrong = 0;
-                let secBlank = 0;
-                const fromQ = Number(s.from_question);
-                const toQ = Number(s.to_question);
-                const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
-
-                for (let q = fromQ; q <= toQ; q++) {
-                    const marked = resps[q - 1] ? String(resps[q - 1]).trim().toUpperCase() : '';
-                    const key = keyLookup[q] ? String(keyLookup[q]).trim().toUpperCase() : '';
-                    if (!marked) {
-                        secBlank++;
-                    } else if (marked.includes(',')) {
-                        secWrong++;
-                    } else if (key && marked === key) {
-                        secCorrect++;
-                    } else if (key) {
-                        secWrong++;
-                    }
-                }
-
-                const secMarks = (secCorrect * 4) - secWrong;
-                return {
-                    sectionName: s.name,
-                    range: `Q${fromQ}-Q${toQ}`,
-                    correct: secCorrect,
-                    wrong: secWrong,
-                    blank: secBlank,
-                    marks: Math.max(0, secMarks),
-                    maxMarks: s.max_marks || (countInSec * 4)
-                };
-            });
-
-            const obj = doc.toObject({ virtuals: true });
-            obj.sectionWise = sectionWise;
-            return obj;
-        });
+        const results = docs.map(doc => buildGradedSubmissionObj(doc, paper));
 
         // Re-sort by live score descending so leaderboard rank matches current answer key
         results.sort((a, b) => {

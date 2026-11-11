@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title><%= paper.title %> • Answer Key</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background: var(--bg-gradient);
+            background: var(--bg-page);
             min-height: 100vh;
             margin: 0;
             padding: 0;
@@ -18,11 +17,11 @@
             width: 100%;
             max-width: 1360px;
             margin: 0 auto;
-            padding: 12px 14px 110px 14px;
+            padding: 12px 14px 104px 14px;
             box-sizing: border-box;
         }
 
-        /* Slim Sticky Top Navigation */
+        /* Slim Sticky Top Bar */
         .slim-top-bar {
             position: sticky;
             top: 10px;
@@ -30,115 +29,132 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.9);
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 10px 16px;
             margin-bottom: 14px;
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06);
+            box-shadow: var(--shadow-sm);
             gap: 12px;
         }
 
         .btn-back {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             padding: 6px 12px;
-            background: #F1F5F9;
+            background: #FFFFFF;
             color: var(--text-main);
             text-decoration: none;
-            border-radius: var(--radius-full);
+            border-radius: var(--radius-sm);
             font-size: 0.82rem;
-            font-weight: 700;
-            border: 1px solid var(--border-color);
+            font-weight: 600;
+            border: 1px solid var(--border-hover);
             transition: var(--transition);
             flex-shrink: 0;
         }
 
         .btn-back:hover {
-            background: #E2E8F0;
-            transform: translateX(-2px);
+            background: var(--surface-subtle);
+            border-color: #94A3B8;
         }
 
         .page-title {
-            font-size: 1.15rem;
-            font-weight: 800;
+            font-size: 1.05rem;
+            font-weight: 700;
             color: var(--text-main);
             margin: 0;
-            letter-spacing: -0.02em;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .subject-chip {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+            padding: 2px 8px;
+            border-radius: var(--radius-xs);
+            font-size: 0.74rem;
+            font-weight: 600;
+        }
+
+        .code-chip {
+            background: var(--surface-subtle);
+            color: var(--text-body);
+            border: 1px solid var(--border-color);
+            padding: 2px 8px;
+            border-radius: var(--radius-xs);
+            font-size: 0.74rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
         }
 
         .header-pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(79, 70, 229, 0.08);
-            border: 1px solid rgba(79, 70, 229, 0.2);
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
             color: var(--primary);
-            padding: 4px 12px;
-            border-radius: var(--radius-full);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
             flex-shrink: 0;
         }
 
-        /* Full Space Answer Key Matrix Grid */
+        /* Section Navigation */
         .section-quick-tabs {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 14px;
+            align-items: center;
         }
 
         .section-quick-tab {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: var(--radius-full);
             font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-main);
+            font-weight: 600;
+            color: var(--text-body);
             cursor: pointer;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
         .section-quick-tab:hover {
             border-color: var(--primary);
             color: var(--primary);
             background: var(--primary-light);
-            transform: translateY(-1px);
         }
 
         .section-divider-banner {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-            color: #FFFFFF;
+            background: #FFFFFF;
+            color: var(--text-main);
             border-radius: var(--radius-md);
-            padding: 10px 16px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 12px 0 2px 0;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-            border: 1px solid #334155;
+            margin: 10px 0 2px 0;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary);
             scroll-margin-top: 80px;
         }
 
         .omr-grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -148,24 +164,20 @@
             align-items: center;
             justify-content: space-between;
             background: #FFFFFF;
-            border: 1.5px solid #E2E8F0;
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 10px 14px;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 9px 12px;
+            transition: border-color 150ms ease, background-color 150ms ease;
             user-select: none;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
         }
 
         .omr-key-row:hover {
-            border-color: #CBD5E1;
-            transform: translateY(-1.5px);
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+            border-color: var(--border-hover);
         }
 
         .omr-key-row.has-val {
-            border-color: rgba(79, 70, 229, 0.45);
-            background: linear-gradient(90deg, #F5F3FF 0%, #FFFFFF 100%);
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+            border-color: var(--primary-border);
+            background: #F8FAFF;
         }
 
         .omr-q-badge {
@@ -175,15 +187,15 @@
         }
 
         .omr-q-num {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 800;
-            font-size: 0.95rem;
-            color: #334155;
-            min-width: 36px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-body);
+            min-width: 34px;
+            font-variant-numeric: tabular-nums;
         }
 
         .omr-key-row.has-val .omr-q-num {
-            color: var(--primary);
+            color: var(--primary-active);
         }
 
         .omr-selected-val {
@@ -192,169 +204,164 @@
             justify-content: center;
             width: 24px;
             height: 24px;
-            background: #F1F5F9;
-            color: #64748B;
-            border-radius: 7px;
-            font-weight: 800;
-            font-size: 0.82rem;
+            background: var(--surface-subtle);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            font-weight: 700;
+            font-size: 0.8rem;
             font-family: 'JetBrains Mono', monospace;
-            transition: all 0.2s ease;
         }
 
         .omr-key-row.has-val .omr-selected-val {
-            background: #EEF2FF;
+            background: var(--primary-light);
             color: var(--primary);
-            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-color: var(--primary-border);
         }
 
         .omr-bubbles-wrap {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
         }
 
         .omr-bubble {
-            width: 36px;
-            height: 36px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            border: 2px solid #CBD5E1;
+            border: 1.5px solid #CBD5E1;
             background: #FFFFFF;
-            color: #334155;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.92rem;
-            font-weight: 800;
+            color: var(--text-body);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
+            transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, scale 120ms ease-out;
             padding: 0;
-            position: relative;
             touch-action: manipulation;
         }
 
         .omr-bubble:hover {
             border-color: var(--primary);
             color: var(--primary);
-            transform: scale(1.08);
-            box-shadow: 0 2px 10px rgba(79, 70, 229, 0.25);
+            background: var(--primary-light);
         }
 
         .omr-bubble.selected {
-            background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
-            border-color: #3730A3;
+            background: var(--primary);
+            border-color: var(--primary);
             color: #FFFFFF;
-            transform: scale(1.06);
-            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+        }
+
+        .omr-bubble.selected:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            color: #FFFFFF;
         }
 
         .omr-bubble:active {
-            transform: scale(0.92);
+            scale: 0.93;
         }
 
-        /* Floating Action Bar (FAB Dock) */
+        /* Clean Light Floating Action Bar */
         .floating-action-bar {
             position: fixed;
-            bottom: 22px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 10px 18px;
+            gap: 10px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-hover);
+            padding: 8px 14px;
             border-radius: var(--radius-full);
-            box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+            box-shadow: var(--shadow-xl);
             z-index: 100;
             width: auto;
             max-width: calc(100% - 24px);
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
         .floating-counter {
-            color: #94A3B8;
+            color: var(--text-muted);
             font-size: 0.82rem;
             font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            padding: 0 6px;
+            font-weight: 600;
+            padding: 0 8px;
             white-space: nowrap;
         }
 
         .floating-counter span {
-            color: #38BDF8;
+            color: var(--primary);
+            font-weight: 700;
         }
 
         .btn-floating-clear {
-            background: rgba(239, 68, 68, 0.16);
-            border: 1px solid rgba(239, 68, 68, 0.45);
-            color: #FCA5A5;
-            padding: 9px 16px;
+            background: #FFFFFF;
+            border: 1px solid var(--danger-border);
+            color: var(--danger);
+            padding: 8px 14px;
             border-radius: var(--radius-full);
-            font-size: 0.84rem;
-            font-weight: 700;
+            font-size: 0.825rem;
+            font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             white-space: nowrap;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-floating-clear:hover {
-            background: rgba(239, 68, 68, 0.35);
-            color: #FFFFFF;
-            border-color: #EF4444;
-            transform: translateY(-1px);
+            background: var(--danger-light);
+            border-color: #FCA5A5;
         }
 
         .btn-floating-save {
-            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: var(--primary);
+            border: 1px solid var(--primary);
             color: #FFFFFF;
-            padding: 10px 22px;
+            padding: 9px 20px;
             border-radius: var(--radius-full);
-            font-size: 0.92rem;
-            font-weight: 800;
+            font-size: 0.875rem;
+            font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 6px 20px -2px rgba(79, 70, 229, 0.5);
-            transition: all 0.2s ease;
+            gap: 7px;
+            transition: var(--transition), scale 120ms ease-out;
             white-space: nowrap;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-floating-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -2px rgba(6, 182, 212, 0.6);
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
 
-        /* Mobile Phone Optimization: Use ENTIRE Space */
+        .btn-floating-save:active {
+            scale: 0.98;
+        }
+
+        /* Mobile Optimization */
         @media (max-width: 640px) {
             .full-screen-container {
-                padding: 8px 6px 95px 6px;
+                padding: 8px 8px 92px 8px;
             }
 
             .slim-top-bar {
                 top: 6px;
                 padding: 8px 10px;
                 margin-bottom: 10px;
-                border-radius: 12px;
             }
 
             .page-title {
                 font-size: 0.95rem;
-                max-width: 140px;
+                max-width: 145px;
             }
 
             .btn-back span {
@@ -365,11 +372,6 @@
                 padding: 6px 8px;
             }
 
-            .header-pill {
-                padding: 3px 8px;
-                font-size: 0.75rem;
-            }
-
             .omr-grid-container {
                 grid-template-columns: 1fr;
                 gap: 8px;
@@ -377,26 +379,14 @@
 
             .omr-key-row {
                 padding: 8px 10px;
-                border-radius: 10px;
-            }
-
-            .omr-bubble {
-                width: 36px;
-                height: 36px;
-                font-size: 0.88rem;
-            }
-
-            .omr-bubbles-wrap {
-                gap: 6px;
             }
 
             .floating-action-bar {
                 bottom: 12px;
-                padding: 8px 12px;
+                padding: 8px 10px;
                 gap: 8px;
                 width: calc(100% - 16px);
                 justify-content: space-between;
-                box-sizing: border-box;
             }
 
             .floating-counter {
@@ -404,15 +394,15 @@
             }
 
             .btn-floating-clear {
-                padding: 10px 12px;
-                font-size: 0.8rem;
+                padding: 9px 12px;
+                font-size: 0.82rem;
                 flex: 1;
                 justify-content: center;
             }
 
             .btn-floating-save {
-                padding: 10px 16px;
-                font-size: 0.88rem;
+                padding: 9px 14px;
+                font-size: 0.86rem;
                 flex: 1.4;
                 justify-content: center;
             }
@@ -420,38 +410,33 @@
 
         @media (max-width: 360px) {
             .omr-bubble {
-                width: 32px;
-                height: 32px;
+                width: 31px;
+                height: 31px;
                 font-size: 0.8rem;
             }
-            .omr-bubbles-wrap {
-                gap: 4px;
-            }
-            .omr-q-num {
-                min-width: 28px;
-                font-size: 0.85rem;
-            }
+            .omr-bubbles-wrap { gap: 4px; }
+            .omr-q-num { min-width: 28px; font-size: 0.85rem; }
         }
 
-        /* Large Screen Optimizations */
         @media (min-width: 1200px) {
             .omr-grid-container {
                 grid-template-columns: repeat(4, 1fr);
-                gap: 14px;
+                gap: 12px;
             }
         }
 
         @media (min-width: 1440px) {
             .omr-grid-container {
                 grid-template-columns: repeat(5, 1fr);
-                gap: 14px;
+                gap: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <% 
+    <%
         const totalQ = paper.total_questions || paper.numQuestions || 50;
+        const encodedId = encodeURIComponent(paper._id);
         let keyCount = 0;
         if (Array.isArray(paper.answer_key) && paper.answer_key.length > 0) {
             paper.answer_key.forEach(k => { if(k) keyCount++; });
@@ -467,28 +452,30 @@
     %>
 
     <div class="full-screen-container">
-        <!-- Slim Sticky Top Bar -->
         <header class="slim-top-bar">
             <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap;">
                 <a href="/" class="btn-back" title="Back to Dashboard">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
                     <span>Dashboard</span>
                 </a>
                 <h1 class="page-title"><%= paper.title %></h1>
                 <% if (paper.subject) { %>
-                    <span style="background: #E0E7FF; color: var(--primary); padding: 3px 9px; border-radius: var(--radius-full); font-size: 0.74rem; font-weight: 800;">
-                        <%= paper.subject %>
-                    </span>
+                    <span class="subject-chip"><%= paper.subject %></span>
                 <% } %>
                 <% if (paper._id) { %>
-                    <span style="background: #0F172A; color: #38BDF8; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
-                        #<%= paper._id %>
-                    </span>
+                    <span class="code-chip"><%= paper._id %></span>
                 <% } %>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-                <a href="/paper/<%= paper._id %>/results" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.78rem; text-decoration: none; border-radius: var(--radius-full);" title="View Paper Results & Checked OMR Copies">
-                    📊 Results
+                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Results
                 </a>
                 <div class="header-pill">
                     <span id="headerCounter"><%= keyCount %>/<%= totalQ %></span>
@@ -496,41 +483,39 @@
             </div>
         </header>
 
-        <!-- Section Navigation Quick Jump Pills (if sections exist) -->
         <% if (paper.sections && paper.sections.length > 0) { %>
-            <div class="section-quick-tabs">
-                <span style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; align-self: center; margin-right: 4px;">Sections:</span>
+            <nav class="section-quick-tabs" aria-label="Jump to section">
+                <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-muted); margin-right: 2px;">Sections:</span>
                 <% paper.sections.forEach(s => { %>
                     <a href="#sec_<%= s.from_question %>" class="section-quick-tab">
-                        📚 <%= s.name %> <span style="font-family:'JetBrains Mono',monospace; font-size:0.74rem; opacity:0.8;">(Q<%= s.from_question %>-Q<%= s.to_question %>)</span>
+                        <span><%= s.name %></span>
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; color: var(--text-muted);">Q<%= s.from_question %>-Q<%= s.to_question %></span>
                     </a>
                 <% }) %>
-            </div>
+            </nav>
         <% } %>
 
-        <!-- Form wrapping the Answer Key Matrix -->
-        <form action="/paper/<%= paper._id %>/answerkey" method="POST" id="answerKeyForm">
+        <form action="/paper/<%= encodedId %>/answerkey" method="POST" id="answerKeyForm">
             <div class="omr-grid-container" id="answerGrid">
                 <% for(let i=1; i<=totalQ; i++) { %>
-                    <% 
-                        const secHeader = (paper.sections && paper.sections.length > 0) 
-                            ? paper.sections.find(s => s.from_question === i) 
+                    <%
+                        const secHeader = (paper.sections && paper.sections.length > 0)
+                            ? paper.sections.find(s => s.from_question === i)
                             : null;
                     %>
                     <% if (secHeader) { %>
                         <div class="section-divider-banner" id="sec_<%= secHeader.from_question %>">
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="font-size:1.1rem;">📚</span>
-                                <strong style="font-size:0.95rem;"><%= secHeader.name %></strong>
-                                <span style="opacity:0.8; font-size:0.8rem; font-family:'JetBrains Mono',monospace;">(Q<%= secHeader.from_question %> - Q<%= secHeader.to_question %>)</span>
+                                <strong style="font-size:0.92rem; color: var(--text-main);"><%= secHeader.name %></strong>
+                                <span style="color: var(--text-muted); font-size:0.78rem; font-family:'JetBrains Mono',monospace;">(Q<%= secHeader.from_question %> &ndash; Q<%= secHeader.to_question %>)</span>
                             </div>
-                            <div style="font-size:0.8rem; font-family:'JetBrains Mono',monospace; opacity:0.85;">
+                            <div style="font-size:0.78rem; font-family:'JetBrains Mono',monospace; font-weight: 600; color: var(--primary);">
                                 <%= secHeader.max_marks || ((secHeader.to_question - secHeader.from_question + 1) * 4) %> Max Marks
                             </div>
                         </div>
                     <% } %>
 
-                    <% 
+                    <%
                         let currentVal = "";
                         if (Array.isArray(paper.answer_key) && paper.answer_key.length >= i) {
                             currentVal = paper.answer_key[i - 1] || "";
@@ -549,10 +534,10 @@
                         </div>
                         <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
                             <% ['A','B','C','D'].forEach(opt => { %>
-                                <button type="button" 
-                                        class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>" 
+                                <button type="button"
+                                        class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>"
                                         id="btn_q<%= i %>_<%= opt %>"
-                                        data-q="<%= i %>" 
+                                        data-q="<%= i %>"
                                         data-opt="<%= opt %>"
                                         onclick="selectAnswer('<%= i %>', '<%= opt %>')"
                                         title="Select <%= opt %> for Question <%= i %>">
@@ -566,17 +551,23 @@
             </div>
         </form>
 
-        <!-- Floating Action Dock (Clear All with confirmation & Save Key with confirmation) -->
         <div class="floating-action-bar">
             <div class="floating-counter">
                 <span id="floatingCounter"><%= keyCount %></span> / <%= totalQ %> Keyed
             </div>
-            <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers with confirmation">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
                 Clear All
             </button>
-            <button type="button" class="btn-floating-save" onclick="confirmAndSaveKey()" title="Save answer key with confirmation">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <button type="button" class="btn-floating-save" onclick="confirmAndSaveKey()" title="Save answer key">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
                 Save Answer Key
             </button>
         </div>
@@ -630,9 +621,7 @@
         function confirmAndClearAll() {
             if (confirm("Are you sure you want to clear all marked answers?")) {
                 const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
-                inputs.forEach(inp => {
-                    inp.value = "";
-                });
+                inputs.forEach(inp => { inp.value = ""; });
                 const rows = document.querySelectorAll('.omr-key-row');
                 rows.forEach(r => r.classList.remove('has-val'));
                 const badges = document.querySelectorAll('.omr-selected-val');

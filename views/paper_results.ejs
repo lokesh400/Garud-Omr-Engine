@@ -4,14 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= paper.title %> • Results & Evaluated OMR Copies</title>
+    <title><%= paper.title %> • Results &amp; Evaluated OMR Copies</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .results-container {
             max-width: 1360px;
             margin: 0 auto;
-            padding: 1.5rem 1rem 4rem 1rem;
+            padding: 1.5rem 1.25rem 4rem 1.25rem;
         }
 
         /* Top Action Header */
@@ -20,15 +19,13 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1.25rem;
-            margin-bottom: 2rem;
-            background: var(--surface-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: var(--radius-xl);
-            padding: 1.4rem 1.85rem;
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.15rem 1.5rem;
+            box-shadow: var(--shadow-xs);
         }
 
         .results-topbar-left {
@@ -41,7 +38,7 @@
         .results-topbar-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
@@ -49,111 +46,104 @@
         .results-stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1.25rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .res-stat-card {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.35rem 1.5rem;
-            box-shadow: var(--shadow-sm);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .res-stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            border-color: #CBD5E1;
-        }
-
-        .res-stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), #06B6D4);
-        }
-
-        .res-stat-val {
-            font-size: 2rem;
-            font-weight: 800;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--text-main);
-            line-height: 1.1;
-            margin-bottom: 4px;
+            border-radius: var(--radius-md);
+            padding: 1.15rem 1.35rem;
+            box-shadow: var(--shadow-xs);
         }
 
         .res-stat-lbl {
             font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
             color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .res-stat-val {
+            font-size: 1.75rem;
             font-weight: 700;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            color: var(--text-main);
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Section Cards Row */
+        .section-heading-row {
+            font-size: 1rem;
+            margin: 0 0 0.75rem 0;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
         .section-cards-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
         }
 
         .sec-card {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.04) 0%, rgba(6, 182, 212, 0.04) 100%);
-            border: 1px solid rgba(79, 70, 229, 0.18);
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 1rem 1.25rem;
+            padding: 1rem 1.2rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         .sec-title {
-            font-weight: 800;
-            font-size: 0.95rem;
+            font-weight: 600;
+            font-size: 0.92rem;
             color: var(--text-main);
+            line-height: 1.3;
         }
 
         .sec-range {
             font-size: 0.75rem;
             color: var(--text-muted);
             font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
+            font-weight: 500;
+            margin-top: 2px;
         }
 
         .sec-marks {
-            text-align: right;
+            text-align: left;
+            width: 100%;
+            padding-top: 8px;
+            border-top: 1px solid #F1F5F9;
         }
 
         .sec-marks-val {
-            font-weight: 800;
+            font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.15rem;
             color: var(--primary);
+            line-height: 1.2;
         }
 
         /* Results Master Table */
         .results-table-card {
             background: #FFFFFF;
-            border-radius: var(--radius-xl);
+            border-radius: var(--radius-lg);
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-            padding: 1.5rem;
-            overflow: hidden;
+            box-shadow: var(--shadow-xs);
+            padding: 1.35rem;
         }
 
         .table-filter-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.15rem;
             flex-wrap: wrap;
             gap: 12px;
         }
@@ -165,193 +155,174 @@
 
         .search-box input {
             width: 100%;
-            padding: 8px 14px 8px 36px;
-            border: 1.5px solid var(--border-color);
-            border-radius: var(--radius-full);
-            font-size: 0.88rem;
+            padding: 8px 12px 8px 34px;
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
             font-family: 'Inter', sans-serif;
-            outline: none;
+            color: var(--text-main);
+            background: #FFFFFF;
             transition: var(--transition);
         }
 
         .search-box input:focus {
+            outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
         .search-icon {
             position: absolute;
-            left: 12px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 0.85rem;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
         }
 
         .results-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
+            font-variant-numeric: tabular-nums;
         }
 
         .results-table th {
-            background: #F8FAFC;
-            padding: 12px 14px;
+            background: var(--surface-subtle);
+            padding: 10px 12px;
             text-align: left;
-            font-weight: 800;
+            font-weight: 600;
             color: var(--text-muted);
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.04em;
             border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
         }
 
         .results-table td {
-            padding: 14px;
+            padding: 12px;
             border-bottom: 1px solid #F1F5F9;
             vertical-align: middle;
         }
 
-        .results-table tr:hover td {
-            background: #F8FAFC;
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tbody tr:hover td {
+            background: var(--surface-subtle);
         }
 
         .roll-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #0F172A;
-            color: #38BDF8;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 800;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        }
-
-        .sec-pill {
-            display: inline-block;
-            background: #F1F5F9;
-            padding: 2px 7px;
-            border-radius: 6px;
-            font-size: 0.74rem;
+            background: var(--primary-light);
+            color: var(--primary-active);
+            border: 1px solid var(--primary-border);
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
-            color: #334155;
-            margin: 2px;
+            font-size: 0.825rem;
+        }
+
+        .sec-stack-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 155px;
+        }
+
+        .sec-stack-item {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .sec-stack-name {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-body);
+            line-height: 1.25;
+        }
+
+        .sec-stack-marks {
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .sec-stack-max {
+            font-size: 0.74rem;
+            font-weight: 500;
+            color: var(--text-muted);
         }
 
         .aggregate-badge {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: #065F46;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--success-hover);
             background: var(--success-light);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 4px 10px;
-            border-radius: 8px;
+            border: 1px solid var(--success-border);
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
             display: inline-block;
         }
 
-        .btn-view-omr {
-            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
-            color: #FFFFFF;
-            border: none;
-            padding: 7px 14px;
-            border-radius: var(--radius-full);
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-view-omr:hover {
-            transform: translateY(-1.5px);
-            box-shadow: 0 4px 14px rgba(6, 182, 212, 0.45);
-            color: #FFFFFF;
-        }
-
         .btn-delete-sub {
-            background: rgba(239, 68, 68, 0.1);
-            color: #EF4444;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            padding: 7px 11px;
-            border-radius: var(--radius-full);
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-left: 6px;
+            margin-left: 4px;
+            padding: 0.42rem 0.6rem;
         }
 
-        .btn-delete-sub:hover {
-            background: #EF4444;
-            color: #FFFFFF;
-            transform: translateY(-1.5px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
-        }
-
+        /* Clean Light Aggregate Banner in Modal */
         .aggregate-grand-card {
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-            border: 1px solid #334155;
-            border-radius: var(--radius-lg);
-            padding: 1.1rem 1.4rem;
-            color: #FFFFFF;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            color: var(--text-main);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.3);
+            margin-bottom: 1.15rem;
         }
 
         .aggregate-grand-val {
-            font-size: 1.85rem;
-            font-weight: 800;
+            font-size: 1.65rem;
+            font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
-            color: #34D399;
-            line-height: 1;
+            color: var(--primary);
+            line-height: 1.1;
+            margin-top: 2px;
         }
 
-        /* Modal Overlay for Checked OMR Copy */
-        .omr-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 1.5rem;
-            box-sizing: border-box;
-            animation: fadeIn 0.2s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .omr-modal-content {
-            background: #FFFFFF;
-            border-radius: var(--radius-xl);
-            width: 100%;
-            max-width: 1060px;
+        /* Native <dialog> Lightbox Modal */
+        dialog.omr-modal-dialog {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            width: min(1040px, calc(100vw - 24px));
             max-height: 92vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
-            position: relative;
+            background: #FFFFFF;
+            color: var(--text-body);
+            box-shadow: var(--shadow-2xl);
+            margin: auto;
+            overflow: hidden;
+        }
+
+        dialog.omr-modal-dialog[open] {
             display: flex;
             flex-direction: column;
         }
@@ -360,57 +331,59 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.25rem 1.75rem;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 1rem 1.35rem;
             border-bottom: 1px solid var(--border-color);
-            background: #F8FAFC;
-            border-top-left-radius: var(--radius-xl);
-            border-top-right-radius: var(--radius-xl);
+            background: var(--surface-subtle);
+            flex-shrink: 0;
         }
 
         .omr-modal-body {
-            padding: 1.5rem;
+            padding: 1.35rem;
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 1.5rem;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 1.35rem;
             align-items: start;
+            overflow-y: auto;
         }
 
         .omr-preview-frame {
-            background: #090D16;
-            border-radius: var(--radius-lg);
+            background: var(--surface-subtle);
+            border-radius: var(--radius-md);
             padding: 10px;
-            border: 1px solid #1E293B;
+            border: 1px solid var(--border-color);
             text-align: center;
         }
 
         .omr-preview-frame img {
             width: 100%;
             height: auto;
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius-xs);
             display: block;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
             background: #FFFFFF;
         }
 
         .btn-modal-close {
-            background: #E2E8F0;
-            border: none;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            display: flex;
+            background: #FFFFFF;
+            border: 1px solid var(--border-hover);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-xs);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: #475569;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
 
         .btn-modal-close:hover {
-            background: #CBD5E1;
-            color: #0F172A;
+            background: var(--surface-subtle-hover);
+            color: var(--text-main);
         }
 
         /* Responsive */
@@ -425,7 +398,7 @@
 
         @media (max-width: 640px) {
             .results-container {
-                padding: 1rem 0.5rem 3rem 0.5rem;
+                padding: 1rem 0.75rem 3rem 0.75rem;
             }
             .results-topbar {
                 padding: 1rem;
@@ -436,26 +409,29 @@
                 width: 100%;
             }
             .results-topbar-actions .btn {
-                flex: 1;
+                flex: 1 1 calc(50% - 4px);
                 justify-content: center;
-                padding: 0.65rem;
-                font-size: 0.82rem;
             }
             .results-stats-grid {
                 grid-template-columns: 1fr;
-                gap: 0.85rem;
+                gap: 0.75rem;
             }
             .results-table-card {
-                padding: 1rem 0.75rem;
+                padding: 1rem 0.85rem;
             }
-            .omr-modal-overlay {
-                padding: 0.5rem;
+            .search-box {
+                width: 100%;
+                min-width: 0;
+            }
+            dialog.omr-modal-dialog {
+                width: calc(100vw - 16px);
+                max-height: 94vh;
             }
             .omr-modal-header {
-                padding: 1rem;
+                padding: 0.85rem 1rem;
             }
             .omr-modal-body {
-                padding: 1rem 0.75rem;
+                padding: 1rem;
             }
         }
     </style>
@@ -463,63 +439,76 @@
 
 <body>
     <div class="results-container">
-        <!-- Top Header Navigation -->
         <header class="results-topbar">
             <div class="results-topbar-left">
                 <a href="/" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
                 <div>
-                    <h1 style="font-size: 1.45rem; margin: 0 0 2px 0; font-weight: 800; letter-spacing: -0.02em;">
+                    <h1 style="font-size: 1.25rem; margin: 0 0 2px 0; font-weight: 700;">
                         <%= paper.title %>
                     </h1>
-                    <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                        Evaluation Results &bull; <%= paper.numQuestions %> Total Questions &bull; <%= results.length %> Evaluated Copies
+                    <div style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">
+                        Evaluation Results &middot; <%= paper.numQuestions %> Questions &middot; <%= results.length %> Evaluated Copies
                     </div>
                 </div>
             </div>
 
             <div class="results-topbar-actions">
                 <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm" title="Configure or Update Question Answer Key">
-                    📝 Answer Key
+                    Answer Key
                 </a>
-                <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn" onclick="recheckAllSubmissions()" title="Recalculate all OMR scores against latest Answer Key">
-                    🔄 Recheck All
+                <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn" onclick="recheckAllSubmissions()" title="Recalculate all OMR scores against the latest Answer Key">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Recheck All
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Results as CSV">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export CSV
                 </button>
                 <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan" class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
-                    📷 Live Scanner
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Live Scanner
                 </a>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Results as CSV">
-                    📥 Export CSV
-                </button>
             </div>
         </header>
 
         <!-- Stats Overview Cards -->
         <div class="results-stats-grid">
             <div class="res-stat-card">
-                <div class="res-stat-val"><%= results.length %></div>
                 <div class="res-stat-lbl">Sheets Evaluated</div>
+                <div class="res-stat-val"><%= results.length %></div>
             </div>
             <div class="res-stat-card">
-                <div class="res-stat-val" style="color: #10B981;">
-                    <%= stats.highestAggregate %> <span style="font-size: 1rem; color: var(--text-muted);">/ <%= stats.maxMarks %></span>
-                </div>
                 <div class="res-stat-lbl">Highest Aggregate Marks</div>
-            </div>
-            <div class="res-stat-card">
-                <div class="res-stat-val" style="color: #4F46E5;">
-                    <%= stats.averageAggregate %> <span style="font-size: 1rem; color: var(--text-muted);">Avg</span>
+                <div class="res-stat-val" style="color: var(--success-hover);">
+                    <%= stats.highestAggregate %> <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">/ <%= stats.maxMarks %></span>
                 </div>
-                <div class="res-stat-lbl">Class Average Marks</div>
             </div>
             <div class="res-stat-card">
-                <div class="res-stat-val" style="color: #06B6D4;"><%= stats.averageAccuracy %>%</div>
+                <div class="res-stat-lbl">Class Average Marks</div>
+                <div class="res-stat-val" style="color: var(--primary);">
+                    <%= stats.averageAggregate %> <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">avg</span>
+                </div>
+            </div>
+            <div class="res-stat-card">
                 <div class="res-stat-lbl">Average Accuracy</div>
+                <div class="res-stat-val"><%= stats.averageAccuracy %>%</div>
             </div>
         </div>
 
-        <!-- Section-wise Performance Cards (if sections exist) -->
+        <!-- Section-wise Performance Cards -->
         <% if (stats.sectionAverages && stats.sectionAverages.length > 0) { %>
-            <h3 style="font-size: 1.15rem; margin-bottom: 0.85rem; font-weight: 800;">Section-Wise Performance Breakdown</h3>
+            <h3 class="section-heading-row">Section-Wise Average Performance</h3>
             <div class="section-cards-row">
                 <% stats.sectionAverages.forEach(sec => { %>
                     <div class="sec-card">
@@ -528,8 +517,8 @@
                             <div class="sec-range"><%= sec.range %></div>
                         </div>
                         <div class="sec-marks">
-                            <div class="sec-marks-val"><%= sec.avgMarks %> <span style="font-size: 0.8rem; color: var(--text-muted);">/ <%= sec.maxMarks %></span></div>
-                            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">Avg Marks</div>
+                            <div class="sec-marks-val"><%= sec.avgMarks %> <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%= sec.maxMarks %></span></div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Avg Marks</div>
                         </div>
                     </div>
                 <% }) %>
@@ -540,13 +529,18 @@
         <div class="results-table-card">
             <div class="table-filter-bar">
                 <div>
-                    <h2 style="font-size: 1.25rem; margin: 0 0 2px 0; font-weight: 800;">Student Evaluation Ledger</h2>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">Click any student copy to view the live rectified OMR image with verdict markings</span>
+                    <h2 style="font-size: 1.15rem; margin: 0 0 2px 0; font-weight: 700;">Student Results</h2>
+                    <span style="font-size: 0.825rem; color: var(--text-muted);">Select View OMR on any row to inspect the scanned sheet and question breakdown.</span>
                 </div>
-                <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="Search Roll Number..." onkeyup="filterResultsTable()">
-                </div>
+                <search class="search-box">
+                    <span class="search-icon" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input type="search" id="searchInput" aria-label="Search by Roll Number" placeholder="Search Roll Number..." oninput="filterResultsTable()">
+                </search>
             </div>
 
             <% if (results && results.length > 0) { %>
@@ -554,75 +548,82 @@
                     <table class="results-table" id="resultsTable">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">Rank</th>
-                                <th>Student Roll No.</th>
+                                <th style="width: 56px;">Rank</th>
+                                <th>Roll No.</th>
                                 <th>Section-Wise Marks</th>
                                 <th>Aggregate Marks</th>
-                                <th>Score / Total</th>
+                                <th>Questions</th>
                                 <th>Accuracy</th>
-                                <th>Scanned Date</th>
-                                <th style="text-align: right;">Action</th>
+                                <th>Scanned</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% results.forEach((r, idx) => { %>
-                                <% 
+                                <%
                                     const studentRoll = r.rollnumber || r.rollNumber || 'UNKNOWN';
                                     const scannedTime = r.submitted_at || r.scannedAt || new Date();
                                     const aggMarks = (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4);
                                     const maxM = r.maxMarks || (r.totalQuestions * 4);
-                                    const omrUrl = r.cloudinary_image_url || r.omrImageUrl || '';
                                 %>
                                 <tr class="result-row" data-roll="<%= studentRoll.toLowerCase() %>" id="row-<%= r._id %>">
-                                    <td style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
+                                    <td style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
                                         #<%= idx + 1 %>
                                     </td>
                                     <td>
-                                        <span class="roll-badge">
-                                            🎓 <%= studentRoll %>
-                                        </span>
+                                        <span class="roll-badge"><%= studentRoll %></span>
                                     </td>
                                     <td>
                                         <% if (r.sectionWise && r.sectionWise.length > 0) { %>
-                                            <% r.sectionWise.forEach(s => { %>
-                                                <span class="sec-pill" title="<%= s.sectionName %> (<%= s.range %>): <%= s.correct %> Correct, <%= s.wrong %> Wrong, <%= s.blank || 0 %> Blank">
-                                                    <%= s.sectionName.split(' ')[0] %>: <strong><%= s.marks %>/<%= s.maxMarks %></strong>
-                                                </span>
-                                            <% }) %>
+                                            <div class="sec-stack-list">
+                                                <% r.sectionWise.forEach(s => { %>
+                                                    <div class="sec-stack-item" title="<%= s.sectionName %> (<%= s.range %>): <%= s.correct %> Correct, <%= s.wrong %> Wrong, <%= s.blank || 0 %> Blank">
+                                                        <div class="sec-stack-name"><%= s.sectionName %></div>
+                                                        <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %></span></div>
+                                                    </div>
+                                                <% }) %>
+                                            </div>
                                         <% } else { %>
-                                            <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                                            <span style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
                                         <% } %>
                                     </td>
                                     <td>
                                         <span class="aggregate-badge">
-                                            <%= aggMarks %> <span style="font-size: 0.75rem; opacity: 0.75;">/ <%= maxM %></span>
+                                            <%= aggMarks %> <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/ <%= maxM %></span>
                                         </span>
                                     </td>
                                     <td>
-                                        <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+                                        <div style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
                                             <%= r.score %> / <%= r.totalQuestions %>
-                                        </span>
-                                        <div style="font-size: 0.72rem; color: var(--text-muted);">
-                                            <span style="color: #10B981; font-weight: 700;"><%= r.correctCount %>C</span> &bull;
-                                            <span style="color: #EF4444; font-weight: 700;"><%= r.wrongCount %>W</span> &bull;
+                                        </div>
+                                        <div style="font-size: 0.74rem; color: var(--text-muted);">
+                                            <span style="color: var(--success-hover); font-weight: 600;"><%= r.correctCount %>C</span> &middot;
+                                            <span style="color: var(--danger); font-weight: 600;"><%= r.wrongCount %>W</span> &middot;
                                             <span><%= r.blankCount %>B</span>
                                         </div>
                                     </td>
                                     <td>
-                                        <div style="font-weight: 800; font-family: 'JetBrains Mono', monospace; color: <%= r.percentage >= 60 ? '#10B981' : (r.percentage >= 35 ? '#F59E0B' : '#EF4444') %>;">
+                                        <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;">
                                             <%= r.percentage %>%
-                                        </div>
+                                        </span>
                                     </td>
-                                    <td style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">
+                                    <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
                                         <%= new Date(scannedTime).toLocaleDateString() %><br>
-                                        <span style="font-size: 0.72rem;"><%= new Date(scannedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+                                        <span style="font-size: 0.74rem;"><%= new Date(scannedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
                                     </td>
                                     <td style="text-align: right; white-space: nowrap;">
-                                        <button type="button" class="btn-view-omr" onclick="openOmrModalById('<%= r._id %>')">
-                                            <span>🖼️ View OMR</span>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="openOmrModalById('<%= r._id %>')">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                            View OMR
                                         </button>
-                                        <button type="button" class="btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete from database and Cloudinary">
-                                            🗑️
+                                        <button type="button" class="btn btn-danger btn-sm btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete copy from database and Cloudinary" aria-label="Delete submission for <%= studentRoll %>">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
                                         </button>
                                     </td>
                                 </tr>
@@ -632,17 +633,24 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem; font-weight: 800;">No OMR Copies Evaluated Yet</h3>
-                    <p style="color: var(--text-muted); max-width: 460px; margin: 0 auto 1.75rem; font-size: 0.95rem;">
-                        Scan student sheets using the Live 4-Corner AI Camera Scanner or upload sheet photos to instantly grade and store checked OMR copies on Cloudinary.
+                    <div class="empty-state-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </div>
+                    <h3 style="margin-bottom: 0.4rem;">No OMR copies evaluated yet</h3>
+                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem;">
+                        Scan student OMR sheets with the Live Camera Scanner to grade responses against the answer key and archive checked copies.
                     </p>
-                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                        <a href="/paper/<%= paper._id %>/scan" class="btn btn-primary btn-lg">
-                            📷 Launch Live Camera Scanner
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan" class="btn btn-primary btn-lg">
+                            Launch Live Scanner
                         </a>
-                        <a href="/paper/<%= paper._id %>" class="btn btn-secondary btn-lg">
-                            📝 Configure Answer Key
+                        <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-lg">
+                            Configure Answer Key
                         </a>
                     </div>
                 </div>
@@ -650,89 +658,87 @@
         </div>
     </div>
 
-    <!-- Checked OMR Copy Lightbox Modal -->
-    <div id="omrModal" class="omr-modal-overlay" onclick="closeOmrModal(event)">
-        <div class="omr-modal-content" onclick="event.stopPropagation()">
-            <div class="omr-modal-header">
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <span class="roll-badge" id="modalRollNo">🎓 ROLL NO</span>
-                    <span style="font-weight: 800; font-size: 1.05rem;" id="modalScoreText">Score: 0/0</span>
-                    <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
+    <!-- Checked OMR Copy Modal Dialog -->
+    <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalScoreText">
+        <div class="omr-modal-header">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span class="roll-badge" id="modalRollNo">ROLL NO</span>
+                <span style="font-weight: 700; font-size: 0.98rem; color: var(--text-main);" id="modalScoreText">0 / 0 Questions</span>
+                <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm" title="Open full resolution photo in new tab">
+                    Full Photo &#8599;
+                </a>
+                <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
+                    Delete Copy
+                </button>
+                <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()" aria-label="Close modal">&times;</button>
+            </div>
+        </div>
+
+        <div class="omr-modal-body">
+            <!-- Left: Evaluated OMR Sheet Image + Live Dynamic Checking Overlay -->
+            <div>
+                <div class="omr-preview-frame">
+                    <div style="position: relative; width: 100%; line-height: 0;">
+                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet">
+                        <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
+                             style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm" title="Open full resolution image in new tab">
-                        ↗ Full Photo
-                    </a>
-                    <button type="button" class="btn btn-sm" id="modalDeleteBtn" style="background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5; font-weight:700;" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
-                        🗑️ Delete Copy
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                    <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm" onclick="toggleCheckingOverlay()">
+                        Live Marks: ON
                     </button>
-                    <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()">&times;</button>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.76rem; font-weight:600; color:var(--text-muted);">
+                        <span><span style="color:#16A34A;">&#9679;</span> Correct</span>
+                        <span><span style="color:#DC2626;">&#9679;</span> Wrong / Multi</span>
+                        <span><span style="color:#16A34A;">&#9676;</span> True Key</span>
+                    </div>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;" id="modalCloudInfo">
+                    Stored on Cloudinary Multi-Account Pool
                 </div>
             </div>
 
-            <div class="omr-modal-body">
-                <!-- Left: Checked OMR Sheet Image from Cloudinary + Live Dynamic Overlay -->
-                <div>
-                    <div class="omr-preview-frame">
-                        <div style="position: relative; width: 100%; line-height: 0;">
-                            <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet">
-                            <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
-                                 style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
-                        </div>
+            <!-- Right: Section-wise & Question Breakdown -->
+            <div>
+                <div class="aggregate-grand-card">
+                    <div>
+                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Total Aggregate Marks</div>
+                        <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
-                        <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm" onclick="toggleCheckingOverlay()" style="font-size:0.78rem; padding:4px 10px;">
-                            👁️ Live Marks: ON
-                        </button>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:0.74rem; font-weight:700; color:var(--text-muted);">
-                            <span><span style="color:#10B981;">●</span> Correct</span>
-                            <span><span style="color:#EF4444;">●</span> Wrong / Multi</span>
-                            <span><span style="color:#10B981;">◌</span> True Key</span>
-                        </div>
-                    </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;" id="modalCloudInfo">
-                        ☁️ Stored securely on Cloudinary Multi-Account Pool
+                    <div style="text-align:right;">
+                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Accuracy</div>
+                        <div style="font-size:1.3rem; font-weight:700; font-family:'JetBrains Mono',monospace; color: var(--text-main); margin-top:2px;" id="modalAccuracyText">0%</div>
                     </div>
                 </div>
 
-                <!-- Right: Section-wise and Detailed Breakdown -->
-                <div>
-                    <!-- Grand Total Aggregate Marks Banner -->
-                    <div class="aggregate-grand-card">
-                        <div>
-                            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:#94A3B8; font-weight:700;">TOTAL AGGREGATE MARKS</div>
-                            <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:0.72rem; color:#94A3B8; font-weight:700;">ACCURACY</div>
-                            <div style="font-size:1.35rem; font-weight:800; font-family:'JetBrains Mono',monospace;" id="modalAccuracyText">0%</div>
-                        </div>
-                    </div>
+                <h4 style="margin: 0 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">Section-Wise Performance</h4>
+                <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.15rem;"></div>
 
-                    <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; font-weight: 800; color:var(--text-main);">Section-Wise Performance Breakdown</h4>
-                    <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.25rem;"></div>
-
-                    <h4 style="margin: 1.25rem 0 8px 0; font-size: 0.95rem; font-weight: 800; color:var(--text-main);">Question Responses & Verdict Breakdown</h4>
-                    <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center;">
-                            <thead>
-                                <tr style="background: #F8FAFC; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1;">
-                                    <th style="padding: 8px;">#</th>
-                                    <th style="padding: 8px;">Response</th>
-                                    <th style="padding: 8px;">Key</th>
-                                    <th style="padding: 8px;">Marks</th>
-                                    <th style="padding: 8px;">Verdict</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modalBreakdownBody"></tbody>
-                        </table>
-                    </div>
+                <h4 style="margin: 1rem 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">Question Breakdown</h4>
+                <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
+                        <thead>
+                            <tr style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
+                                <th style="padding: 8px; font-weight: 600;">#</th>
+                                <th style="padding: 8px; font-weight: 600;">Response</th>
+                                <th style="padding: 8px; font-weight: 600;">Key</th>
+                                <th style="padding: 8px; font-weight: 600;">Marks</th>
+                                <th style="padding: 8px; font-weight: 600;">Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalBreakdownBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <script>
+        const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
         let currentModalSubmission = null;
         let currentModalList = [];
         let showCheckingOverlay = true;
@@ -742,6 +748,27 @@
         allSubmissionsData.forEach(s => {
             if (s && s._id) submissionsMap[String(s._id)] = s;
         });
+
+        const omrModalDialog = document.getElementById('omrModal');
+        if (omrModalDialog) {
+            omrModalDialog.addEventListener('close', () => {
+                currentModalSubmission = null;
+            });
+            // Progressive enhancement light-dismiss for Safari / browsers without dialog.closedBy
+            if (!('closedBy' in HTMLDialogElement.prototype)) {
+                const outside = (e, dialog) => {
+                    const r = dialog.getBoundingClientRect();
+                    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+                };
+                let pressedOutside = false;
+                omrModalDialog.addEventListener('pointerdown', (e) => {
+                    pressedOutside = outside(e, omrModalDialog);
+                });
+                omrModalDialog.addEventListener('pointerup', (e) => {
+                    if (pressedOutside && outside(e, omrModalDialog)) omrModalDialog.close();
+                });
+            }
+        }
 
         // Standardized Rectified OMR Sheet Geometry (must match scanner.ejs & evaluator.ejs)
         const OMR_GEOMETRY = {
@@ -766,7 +793,7 @@
             showCheckingOverlay = !showCheckingOverlay;
             const btn = document.getElementById('toggleOverlayBtn');
             if (btn) {
-                btn.textContent = showCheckingOverlay ? '👁️ Live Marks: ON' : '👁️ Live Marks: OFF (Clean)';
+                btn.textContent = showCheckingOverlay ? 'Live Marks: ON' : 'Live Marks: OFF (Clean)';
             }
             if (currentModalSubmission) {
                 renderOmrOverlay(currentModalSubmission, currentModalList);
@@ -799,7 +826,7 @@
                 svg.appendChild(c);
             }
 
-            // 1. Highlight detected roll number digits in cyan if valid 8-char pattern
+            // 1. Highlight detected roll number digits
             const rollStr = String(data.rollnumber || data.rollNumber || '');
             if (/^[0-9-]{8}$/.test(rollStr)) {
                 for (let c = 0; c < 8; c++) {
@@ -807,7 +834,7 @@
                     if (ch >= '0' && ch <= '9') {
                         const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
                         const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
-                        addCircle(cx, cy, G.ROLL_R, 'rgba(6, 182, 212, 0.40)', '#06B6D4', 2);
+                        addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
                     }
                 }
             }
@@ -831,7 +858,7 @@
                     const isMarked = markedOpts.includes(opt);
 
                     if (b.verdict === 'multiple' && isMarked) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(239, 68, 68, 0.55)', '#EF4444', 2);
+                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
                         const sz = Math.round(G.BUBBLE_R * 0.5);
                         const l1 = document.createElementNS(SVG_NS, 'line');
                         l1.setAttribute('x1', (bx - sz).toFixed(1));
@@ -852,14 +879,14 @@
                         svg.appendChild(l2);
                     } else if (isMarked) {
                         if (b.verdict === 'correct') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(16, 185, 129, 0.50)', '#10B981', 2);
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
                         } else if (b.verdict === 'wrong') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(239, 68, 68, 0.50)', '#EF4444', 2);
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
                         } else {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(6, 182, 212, 0.45)', '#06B6D4', 2);
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
                         }
                     } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple')) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#10B981', 2, '3,3');
+                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
                     } else {
                         addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
                     }
@@ -869,13 +896,13 @@
 
         async function recheckAllSubmissions() {
             const btn = document.getElementById('recheckAllBtn');
-            const origText = btn ? btn.innerHTML : '🔄 Recheck All';
+            const origHtml = btn ? btn.innerHTML : 'Recheck All';
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '⏳ Rechecking...';
+                btn.textContent = 'Rechecking...';
             }
             try {
-                const res = await fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/recheck', {
+                const res = await fetch('/api/paper/' + encodeURIComponent(PAPER_ID) + '/recheck', {
                     method: 'POST'
                 });
                 const data = await res.json();
@@ -885,14 +912,14 @@
                     alert('Recheck failed: ' + (data.error || 'Unknown error'));
                     if (btn) {
                         btn.disabled = false;
-                        btn.innerHTML = origText;
+                        btn.innerHTML = origHtml;
                     }
                 }
             } catch (err) {
                 alert('Recheck request failed: ' + err.message);
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = origText;
+                    btn.innerHTML = origHtml;
                 }
             }
         }
@@ -907,7 +934,6 @@
             openOmrModal(data);
         }
 
-        // Modal functions
         function openOmrModal(data) {
             currentModalSubmission = data;
             const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
@@ -916,20 +942,20 @@
             const maxM = data.maxMarks || ((data.totalQuestions || 50) * 4);
             const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
 
-            document.getElementById('modalRollNo').textContent = '🎓 ' + roll;
+            document.getElementById('modalRollNo').textContent = roll;
             document.getElementById('modalScoreText').textContent = `${data.score} / ${data.totalQuestions} Questions`;
             document.getElementById('modalAggregateText').textContent = `Marks: ${agg} / ${maxM}`;
             document.getElementById('modalGrandAggregate').textContent = `${agg} / ${maxM}`;
             document.getElementById('modalAccuracyText').textContent = `${pct}%`;
-            
+
             const img = document.getElementById('modalOmrImg');
             img.src = imgUrl;
             document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
 
             const accName = data.cloudinary_account || data.cloudinaryAccount;
             document.getElementById('modalCloudInfo').textContent = accName
-                ? `☁️ Stored securely on Cloudinary (${accName}) • Live Checking Overlay Active`
-                : '☁️ Stored securely on Cloudinary Multi-Account Pool';
+                ? `Stored on Cloudinary (${accName}) • Live Checking Overlay`
+                : 'Stored on Cloudinary Multi-Account Pool';
 
             // Populate Sections
             const secContainer = document.getElementById('modalSectionContainer');
@@ -938,20 +964,44 @@
                 data.sectionWise.forEach(s => {
                     const row = document.createElement('div');
                     row.className = 'sec-card';
-                    row.style.padding = '8px 12px';
-                    row.innerHTML = `
-                        <div>
-                            <div style="font-weight:700; font-size:0.88rem;">${s.sectionName}</div>
-                            <div style="font-size:0.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">${s.range} &bull; ${s.correct}C ${s.wrong}W ${s.blank || 0}B</div>
-                        </div>
-                        <div style="font-weight:800; font-family:'JetBrains Mono',monospace; color:var(--primary); font-size:1.05rem;">
-                            ${s.marks}/${s.maxMarks}
-                        </div>
-                    `;
+                    row.style.padding = '10px 14px';
+                    row.style.gap = '8px';
+
+                    const headWrap = document.createElement('div');
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'sec-title';
+                    titleEl.style.fontSize = '0.88rem';
+                    titleEl.textContent = s.sectionName || '';
+
+                    const rangeEl = document.createElement('div');
+                    rangeEl.className = 'sec-range';
+                    rangeEl.textContent = `${s.range || ''} · ${s.correct || 0}C · ${s.wrong || 0}W · ${s.blank || 0}B`;
+
+                    headWrap.appendChild(titleEl);
+                    headWrap.appendChild(rangeEl);
+
+                    const marksWrap = document.createElement('div');
+                    marksWrap.className = 'sec-marks';
+                    marksWrap.style.paddingTop = '6px';
+
+                    const marksVal = document.createElement('div');
+                    marksVal.className = 'sec-marks-val';
+                    marksVal.style.fontSize = '1.02rem';
+                    marksVal.textContent = `${s.marks} `;
+
+                    const maxSpan = document.createElement('span');
+                    maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
+                    maxSpan.textContent = `/ ${s.maxMarks}`;
+
+                    marksVal.appendChild(maxSpan);
+                    marksWrap.appendChild(marksVal);
+
+                    row.appendChild(headWrap);
+                    row.appendChild(marksWrap);
                     secContainer.appendChild(row);
                 });
             } else {
-                secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">No sections configured</span>';
+                secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
             }
 
             // Populate Breakdown Table
@@ -962,7 +1012,6 @@
             if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
                 list = data.breakdown;
             } else if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
-                // Synthesize from responses array against current answerKey
                 const qTotal = Math.max(data.responses.length, data.totalQuestions || 0);
                 for (let i = 0; i < qTotal; i++) {
                     const qNum = i + 1;
@@ -997,67 +1046,63 @@
                     tr.style.borderBottom = '1px solid #F1F5F9';
                     let vColor = '#64748B';
                     let vText = 'Blank';
-                    let qMarks = '<span style="color:#64748B; font-weight:700;">0</span>';
+                    let qMarks = '<span style="color:#64748B; font-weight:600;">0</span>';
 
                     if (b.verdict === 'correct') {
-                        vColor = '#10B981';
-                        vText = '✓ Correct';
-                        qMarks = '<span style="color:#10B981; font-weight:800;">+4</span>';
+                        vColor = '#15803D';
+                        vText = 'Correct';
+                        qMarks = '<span style="color:#15803D; font-weight:700;">+4</span>';
                     } else if (b.verdict === 'wrong') {
-                        vColor = '#EF4444';
-                        vText = '✗ Wrong';
-                        qMarks = '<span style="color:#EF4444; font-weight:800;">-1</span>';
-                    } else if (b.verdict === 'multiple') {
                         vColor = '#DC2626';
-                        vText = '❌ Multiple';
-                        qMarks = '<span style="color:#DC2626; font-weight:800;">-1</span>';
+                        vText = 'Wrong';
+                        qMarks = '<span style="color:#DC2626; font-weight:700;">-1</span>';
+                    } else if (b.verdict === 'multiple') {
+                        vColor = '#B91C1C';
+                        vText = 'Multiple';
+                        qMarks = '<span style="color:#B91C1C; font-weight:700;">-1</span>';
                     } else if (b.verdict === 'marked') {
-                        vColor = '#06B6D4';
+                        vColor = '#1D4ED8';
                         vText = 'Recorded';
                     }
 
                     tr.innerHTML = `
-                        <td style="padding: 7px; font-weight:700; color:var(--text-muted);">Q${b.q}</td>
-                        <td style="padding: 7px; font-weight:800; font-family:'JetBrains Mono',monospace;">${b.marked || '<span style="color:#CBD5E1;">-</span>'}</td>
-                        <td style="padding: 7px; font-weight:700; color:#38BDF8; font-family:'JetBrains Mono',monospace;">${b.correctKey || '-'}</td>
+                        <td style="padding: 7px; font-weight:600; color:#475569;">Q${b.q}</td>
+                        <td style="padding: 7px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--text-main);">${b.marked || '<span style="color:#CBD5E1;">&mdash;</span>'}</td>
+                        <td style="padding: 7px; font-weight:700; color:#1D4ED8; font-family:'JetBrains Mono',monospace;">${b.correctKey || '-'}</td>
                         <td style="padding: 7px; font-family:'JetBrains Mono',monospace;">${qMarks}</td>
-                        <td style="padding: 7px; font-weight:700; color:${vColor}; font-size:0.78rem;">${vText}</td>
+                        <td style="padding: 7px; font-weight:600; color:${vColor}; font-size:0.78rem;">${vText}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:15px; color:var(--text-muted);">No question response details available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
             }
 
-            document.getElementById('omrModal').style.display = 'flex';
-        }
-
-        function closeOmrModal(e) {
-            if (e.target.id === 'omrModal') {
-                closeOmrModalDirect();
+            if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
+                omrModalDialog.showModal();
             }
         }
 
         function closeOmrModalDirect() {
-            document.getElementById('omrModal').style.display = 'none';
+            if (omrModalDialog && omrModalDialog.open) {
+                omrModalDialog.close();
+            }
             currentModalSubmission = null;
         }
 
-        // Delete Submission from DB and Cloudinary
         async function deleteSubmission(id, rollNumber) {
-            if (!confirm(`Are you sure you want to permanently delete OMR copy for student "${rollNumber}"?\n\nThis will remove the evaluation record from MongoDB and delete the checked image from Cloudinary.`)) {
+            if (!confirm(`Are you sure you want to permanently delete OMR copy for student "${rollNumber}"?\n\nThis will remove the evaluation record from MongoDB and delete the image from Cloudinary.`)) {
                 return;
             }
 
             try {
-                const res = await fetch('/api/submission/' + id, {
+                const res = await fetch('/api/submission/' + encodeURIComponent(id), {
                     method: 'DELETE'
                 });
                 const data = await res.json();
                 if (data.success) {
                     const row = document.getElementById('row-' + id);
                     if (row) row.remove();
-                    alert('Submission and Cloudinary OMR copy successfully deleted.');
                     window.location.reload();
                 } else {
                     alert('Error: ' + (data.error || 'Failed to delete'));
@@ -1075,21 +1120,15 @@
             deleteSubmission(id, roll);
         }
 
-        // Search Filter
         function filterResultsTable() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const rows = document.querySelectorAll('.result-row');
             rows.forEach(row => {
                 const roll = row.getAttribute('data-roll') || '';
-                if (roll.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = roll.includes(query) ? '' : 'none';
             });
         }
 
-        // CSV Export
         function exportResultsToCsv() {
             const rows = Array.from(document.querySelectorAll('.results-table tbody tr'));
             if (rows.length === 0) {
@@ -1102,14 +1141,14 @@
                 const cols = r.querySelectorAll('td');
                 if (cols.length >= 7) {
                     const rank = cols[0].innerText.replace('#', '').trim();
-                    const roll = cols[1].innerText.replace('🎓', '').trim();
+                    const roll = cols[1].innerText.trim();
                     const marks = cols[3].innerText.split('/')[0].trim();
                     const scoreTotal = cols[4].innerText.split('\n')[0].split('/');
                     const score = (scoreTotal[0] || '').trim();
                     const total = (scoreTotal[1] || '').trim();
                     const accuracy = cols[5].innerText.trim();
                     const date = cols[6].innerText.replace('\n', ' ').trim();
-                    
+
                     csv += `"${rank}","${roll}","${score}","${total}","${accuracy}","${marks}","${date}"\n`;
                 }
             });
@@ -1126,4 +1165,3 @@
 </body>
 
 </html>
-
