@@ -234,18 +234,23 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            min-width: 155px;
+            min-width: 220px;
         }
 
         .sec-stack-item {
             background: var(--surface-subtle);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-xs);
-            padding: 6px 10px;
+            padding: 7px 10px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             gap: 2px;
+        }
+
+        .sec-stack-item-total {
+            background: var(--primary-light);
+            border-color: var(--primary-border);
         }
 
         .sec-stack-name {
@@ -267,6 +272,13 @@
             font-size: 0.74rem;
             font-weight: 500;
             color: var(--text-muted);
+        }
+
+        .sec-stack-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.25;
         }
 
         .aggregate-badge {
@@ -296,6 +308,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 1.15rem;
         }
 
@@ -306,6 +320,11 @@
             color: var(--primary);
             line-height: 1.1;
             margin-top: 2px;
+        }
+
+        .sec-card-total {
+            background: var(--primary-light);
+            border-color: var(--primary-border);
         }
 
         /* Native <dialog> Lightbox Modal */
@@ -320,6 +339,15 @@
             box-shadow: var(--shadow-2xl);
             margin: auto;
             overflow: hidden;
+        }
+
+        dialog.omr-modal-dialog:modal {
+            overscroll-behavior: contain;
+        }
+
+        dialog.omr-modal-dialog::backdrop {
+            overflow: hidden;
+            overscroll-behavior: contain;
         }
 
         dialog.omr-modal-dialog[open] {
@@ -467,7 +495,7 @@
                     </svg>
                     Recheck All
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Results as CSV">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Detailed Section-Wise Results CSV">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -533,7 +561,7 @@
             <div class="table-filter-bar">
                 <div>
                     <h2 style="font-size: 1.15rem; margin: 0 0 2px 0; font-weight: 700;">Student Results</h2>
-                    <span style="font-size: 0.825rem; color: var(--text-muted);">Select View OMR on any row to inspect the scanned sheet and question breakdown.</span>
+                    <span style="font-size: 0.825rem; color: var(--text-muted);">Section-wise marks, question attempts, and sum of all sections. Click View OMR to inspect a sheet.</span>
                 </div>
                 <search class="search-box">
                     <span class="search-icon" aria-hidden="true">
@@ -542,20 +570,20 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </span>
-                    <input type="search" id="searchInput" aria-label="Search by Roll Number" placeholder="Search Roll Number..." oninput="filterResultsTable()">
+                    <input type="search" id="searchInput" aria-label="Search by Roll Number or Name" placeholder="Search Roll No. or Name..." oninput="filterResultsTable()">
                 </search>
             </div>
 
             <% if (results && results.length > 0) { %>
-                <div class="data-table-wrap">
+                <div class="data-table-wrap" tabindex="0" role="region" aria-label="Student Results Table">
                     <table class="results-table" id="resultsTable">
                         <thead>
                             <tr>
                                 <th style="width: 56px;">Rank</th>
-                                <th>Roll No.</th>
-                                <th>Section-Wise Marks</th>
-                                <th>Aggregate Marks</th>
-                                <th>Questions</th>
+                                <th>Student / Roll No.</th>
+                                <th>Section-Wise Breakdown</th>
+                                <th>All Sections (Sum)</th>
+                                <th>Questions Summary</th>
                                 <th>Accuracy</th>
                                 <th>Scanned</th>
                                 <th style="text-align: right;">Actions</th>
@@ -565,24 +593,55 @@
                             <% results.forEach((r, idx) => { %>
                                 <%
                                     const studentRoll = r.rollnumber || r.rollNumber || 'UNKNOWN';
+                                    const studentName = r.studentName || '';
                                     const scannedTime = r.submitted_at || r.scannedAt || new Date();
-                                    const aggMarks = (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4);
-                                    const maxM = r.maxMarks || (r.totalQuestions * 4);
+                                    const sumSec = r.allSectionsSummary || {
+                                        totalMarks: r.maxMarks || ((r.totalQuestions || 50) * 4),
+                                        obtainedMarks: (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4),
+                                        totalQuestions: r.totalQuestions || 0,
+                                        attemptedQuestions: Math.max(0, (r.totalQuestions || 0) - (r.blankCount || 0)),
+                                        unattemptedQuestions: r.blankCount || 0,
+                                        correctCount: r.correctCount || 0,
+                                        wrongCount: r.wrongCount || 0
+                                    };
+                                    const searchStr = `${studentRoll} ${studentName}`.toLowerCase();
                                 %>
-                                <tr class="result-row" data-roll="<%= studentRoll.toLowerCase() %>" id="row-<%= r._id %>">
+                                <tr class="result-row" data-roll="<%= studentRoll.toLowerCase() %>" data-search="<%= searchStr %>" id="row-<%= r._id %>">
                                     <td style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
                                         #<%= idx + 1 %>
                                     </td>
                                     <td>
                                         <span class="roll-badge"><%= studentRoll %></span>
+                                        <% if (studentName) { %>
+                                            <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">
+                                                <%= studentName %>
+                                            </div>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <% if (r.sectionWise && r.sectionWise.length > 0) { %>
                                             <div class="sec-stack-list">
                                                 <% r.sectionWise.forEach(s => { %>
-                                                    <div class="sec-stack-item" title="<%= s.sectionName %> (<%= s.range %>): <%= s.correct %> Correct, <%= s.wrong %> Wrong, <%= s.blank || 0 %> Blank">
-                                                        <div class="sec-stack-name"><%= s.sectionName %></div>
-                                                        <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %></span></div>
+                                                    <%
+                                                        const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
+                                                        const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
+                                                        const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
+                                                    %>
+                                                    <div class="sec-stack-item">
+                                                        <div class="sec-stack-name">
+                                                            <%= s.sectionName %>
+                                                            <% if (s.range) { %>
+                                                                <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
+                                                            <% } %>
+                                                        </div>
+                                                        <div class="sec-stack-marks">
+                                                            <%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %> marks</span>
+                                                        </div>
+                                                        <div class="sec-stack-meta">
+                                                            Total: <strong><%= secTotalQ %></strong> &middot;
+                                                            Att: <strong><%= secAtt %></strong> &middot;
+                                                            Unatt: <strong><%= secUnatt %></strong>
+                                                        </div>
                                                     </div>
                                                 <% }) %>
                                             </div>
@@ -592,17 +651,22 @@
                                     </td>
                                     <td>
                                         <span class="aggregate-badge">
-                                            <%= aggMarks %> <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/ <%= maxM %></span>
+                                            <%= sumSec.obtainedMarks %> <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/ <%= sumSec.totalMarks %></span>
                                         </span>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">
+                                            Obtained / Total Marks
+                                        </div>
                                     </td>
                                     <td>
                                         <div style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
-                                            <%= r.score %> / <%= r.totalQuestions %>
+                                            <%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %> <span style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">Att</span>
                                         </div>
-                                        <div style="font-size: 0.74rem; color: var(--text-muted);">
-                                            <span style="color: var(--success-hover); font-weight: 600;"><%= r.correctCount %>C</span> &middot;
-                                            <span style="color: var(--danger); font-weight: 600;"><%= r.wrongCount %>W</span> &middot;
-                                            <span><%= r.blankCount %>B</span>
+                                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+                                            Unattempted: <strong style="color: var(--text-body);"><%= sumSec.unattemptedQuestions %></strong>
+                                        </div>
+                                        <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 1px;">
+                                            <span style="color: var(--success-hover); font-weight: 600;"><%= sumSec.correctCount %>C</span> &middot;
+                                            <span style="color: var(--danger); font-weight: 600;"><%= sumSec.wrongCount %>W</span>
                                         </div>
                                     </td>
                                     <td>
@@ -666,7 +730,8 @@
         <div class="omr-modal-header">
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <span class="roll-badge" id="modalRollNo">ROLL NO</span>
-                <span style="font-weight: 700; font-size: 0.98rem; color: var(--text-main);" id="modalScoreText">0 / 0 Questions</span>
+                <span style="font-size: 0.86rem; font-weight: 600; color: var(--text-main); display: none;" id="modalStudentName"></span>
+                <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-body);" id="modalScoreText">0 / 0 Questions</span>
                 <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -709,8 +774,11 @@
             <div>
                 <div class="aggregate-grand-card">
                     <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Total Aggregate Marks</div>
+                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">All Sections (Sum) Marks</div>
                         <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
+                        <div style="font-size:0.76rem; color:var(--text-body); margin-top:6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
+                            Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                        </div>
                     </div>
                     <div style="text-align:right;">
                         <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Accuracy</div>
@@ -745,8 +813,8 @@
         let currentModalSubmission = null;
         let currentModalList = [];
         let showCheckingOverlay = true;
-        const answerKey = <%- typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}' %>;
-        const allSubmissionsData = <%- JSON.stringify(results || []) %>;
+        const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
+        const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
         const submissionsMap = {};
         allSubmissionsData.forEach(s => {
             if (s && s._id) submissionsMap[String(s._id)] = s;
@@ -937,18 +1005,115 @@
             openOmrModal(data);
         }
 
+        function getSubmissionTotals(data) {
+            if (data && data.allSectionsSummary) {
+                return data.allSectionsSummary;
+            }
+            const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
+            if (secs.length > 0) {
+                return secs.reduce((acc, s) => {
+                    const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                    const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
+                    const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
+                    acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
+                    acc.obtainedMarks += Number(s.marks) || 0;
+                    acc.totalQuestions += totQ;
+                    acc.attemptedQuestions += att;
+                    acc.unattemptedQuestions += unatt;
+                    acc.correctCount += Number(s.correct) || 0;
+                    acc.wrongCount += Number(s.wrong) || 0;
+                    return acc;
+                }, {
+                    totalMarks: 0,
+                    obtainedMarks: 0,
+                    totalQuestions: 0,
+                    attemptedQuestions: 0,
+                    unattemptedQuestions: 0,
+                    correctCount: 0,
+                    wrongCount: 0
+                });
+            }
+            const totQ = Number(data && data.totalQuestions) || 0;
+            const blank = Number(data && data.blankCount) || 0;
+            const correct = Number(data && data.correctCount) || 0;
+            const wrong = Number(data && data.wrongCount) || 0;
+            return {
+                totalMarks: (data && data.maxMarks) || (totQ * 4),
+                obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
+                totalQuestions: totQ,
+                attemptedQuestions: Math.max(0, totQ - blank),
+                unattemptedQuestions: blank,
+                correctCount: correct,
+                wrongCount: wrong
+            };
+        }
+
+        function appendSectionSummaryCard(container, opts) {
+            const row = document.createElement('div');
+            row.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
+            row.style.padding = '10px 14px';
+            row.style.gap = '8px';
+
+            const headWrap = document.createElement('div');
+            const titleEl = document.createElement('div');
+            titleEl.className = 'sec-title';
+            titleEl.style.fontSize = '0.88rem';
+            if (opts.isTotal) titleEl.style.color = 'var(--primary-active)';
+            titleEl.textContent = opts.title;
+
+            const rangeEl = document.createElement('div');
+            rangeEl.className = 'sec-range';
+            rangeEl.textContent = opts.metaText;
+
+            headWrap.appendChild(titleEl);
+            headWrap.appendChild(rangeEl);
+
+            const marksWrap = document.createElement('div');
+            marksWrap.className = 'sec-marks';
+            marksWrap.style.paddingTop = '6px';
+
+            const marksVal = document.createElement('div');
+            marksVal.className = 'sec-marks-val';
+            marksVal.style.fontSize = '1.02rem';
+            marksVal.textContent = `${opts.obtainedMarks} `;
+
+            const maxSpan = document.createElement('span');
+            maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
+            maxSpan.textContent = `/ ${opts.totalMarks} marks`;
+
+            marksVal.appendChild(maxSpan);
+            marksWrap.appendChild(marksVal);
+
+            row.appendChild(headWrap);
+            row.appendChild(marksWrap);
+            container.appendChild(row);
+        }
+
         function openOmrModal(data) {
             currentModalSubmission = data;
             const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
             const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
-            const agg = (data.aggregateMarks !== undefined) ? data.aggregateMarks : (data.score * 4);
-            const maxM = data.maxMarks || ((data.totalQuestions || 50) * 4);
+            const sumSec = getSubmissionTotals(data);
             const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
 
             document.getElementById('modalRollNo').textContent = roll;
-            document.getElementById('modalScoreText').textContent = `${data.score} / ${data.totalQuestions} Questions`;
-            document.getElementById('modalAggregateText').textContent = `Marks: ${agg} / ${maxM}`;
-            document.getElementById('modalGrandAggregate').textContent = `${agg} / ${maxM}`;
+            const nameEl = document.getElementById('modalStudentName');
+            if (nameEl) {
+                if (data.studentName) {
+                    nameEl.textContent = data.studentName;
+                    nameEl.style.display = 'inline';
+                } else {
+                    nameEl.textContent = '';
+                    nameEl.style.display = 'none';
+                }
+            }
+            document.getElementById('modalScoreText').textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
+            document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+            document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+            const allStatsEl = document.getElementById('modalAllSectionsStats');
+            if (allStatsEl) {
+                allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
+            }
             document.getElementById('modalAccuracyText').textContent = `${pct}%`;
 
             const img = document.getElementById('modalOmrImg');
@@ -960,48 +1125,28 @@
                 ? `Stored on Cloudinary (${accName}) • Live Checking Overlay`
                 : 'Stored on Cloudinary Multi-Account Pool';
 
-            // Populate Sections
+            // Populate Sections + Sum of All Sections
             const secContainer = document.getElementById('modalSectionContainer');
             secContainer.innerHTML = '';
             if (data.sectionWise && data.sectionWise.length > 0) {
                 data.sectionWise.forEach(s => {
-                    const row = document.createElement('div');
-                    row.className = 'sec-card';
-                    row.style.padding = '10px 14px';
-                    row.style.gap = '8px';
-
-                    const headWrap = document.createElement('div');
-                    const titleEl = document.createElement('div');
-                    titleEl.className = 'sec-title';
-                    titleEl.style.fontSize = '0.88rem';
-                    titleEl.textContent = s.sectionName || '';
-
-                    const rangeEl = document.createElement('div');
-                    rangeEl.className = 'sec-range';
-                    rangeEl.textContent = `${s.range || ''} · ${s.correct || 0}C · ${s.wrong || 0}W · ${s.blank || 0}B`;
-
-                    headWrap.appendChild(titleEl);
-                    headWrap.appendChild(rangeEl);
-
-                    const marksWrap = document.createElement('div');
-                    marksWrap.className = 'sec-marks';
-                    marksWrap.style.paddingTop = '6px';
-
-                    const marksVal = document.createElement('div');
-                    marksVal.className = 'sec-marks-val';
-                    marksVal.style.fontSize = '1.02rem';
-                    marksVal.textContent = `${s.marks} `;
-
-                    const maxSpan = document.createElement('span');
-                    maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
-                    maxSpan.textContent = `/ ${s.maxMarks}`;
-
-                    marksVal.appendChild(maxSpan);
-                    marksWrap.appendChild(marksVal);
-
-                    row.appendChild(headWrap);
-                    row.appendChild(marksWrap);
-                    secContainer.appendChild(row);
+                    const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                    const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
+                    const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                    appendSectionSummaryCard(secContainer, {
+                        isTotal: false,
+                        title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
+                        metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
+                        obtainedMarks: s.marks || 0,
+                        totalMarks: s.maxMarks || (secTotalQ * 4)
+                    });
+                });
+                appendSectionSummaryCard(secContainer, {
+                    isTotal: true,
+                    title: 'All Sections (Sum)',
+                    metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
+                    obtainedMarks: sumSec.obtainedMarks,
+                    totalMarks: sumSec.totalMarks
                 });
             } else {
                 secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
@@ -1049,32 +1194,51 @@
                     tr.style.borderBottom = '1px solid #F1F5F9';
                     let vColor = '#64748B';
                     let vText = 'Blank';
-                    let qMarks = '<span style="color:#64748B; font-weight:600;">0</span>';
+                    let qMarksText = '0';
+                    let qMarksColor = '#64748B';
 
                     if (b.verdict === 'correct') {
-                        vColor = '#15803D';
-                        vText = 'Correct';
-                        qMarks = '<span style="color:#15803D; font-weight:700;">+4</span>';
+                        vColor = '#15803D'; vText = 'Correct'; qMarksText = '+4'; qMarksColor = '#15803D';
                     } else if (b.verdict === 'wrong') {
-                        vColor = '#DC2626';
-                        vText = 'Wrong';
-                        qMarks = '<span style="color:#DC2626; font-weight:700;">-1</span>';
+                        vColor = '#DC2626'; vText = 'Wrong'; qMarksText = '-1'; qMarksColor = '#DC2626';
                     } else if (b.verdict === 'multiple') {
-                        vColor = '#B91C1C';
-                        vText = 'Multiple';
-                        qMarks = '<span style="color:#B91C1C; font-weight:700;">-1</span>';
+                        vColor = '#B91C1C'; vText = 'Multiple'; qMarksText = '-1'; qMarksColor = '#B91C1C';
                     } else if (b.verdict === 'marked') {
-                        vColor = '#1D4ED8';
-                        vText = 'Recorded';
+                        vColor = '#1D4ED8'; vText = 'Recorded';
                     }
 
-                    tr.innerHTML = `
-                        <td style="padding: 7px; font-weight:600; color:#475569;">Q${b.q}</td>
-                        <td style="padding: 7px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--text-main);">${b.marked || '<span style="color:#CBD5E1;">&mdash;</span>'}</td>
-                        <td style="padding: 7px; font-weight:700; color:#1D4ED8; font-family:'JetBrains Mono',monospace;">${b.correctKey || '-'}</td>
-                        <td style="padding: 7px; font-family:'JetBrains Mono',monospace;">${qMarks}</td>
-                        <td style="padding: 7px; font-weight:600; color:${vColor}; font-size:0.78rem;">${vText}</td>
-                    `;
+                    const tdQ = document.createElement('td');
+                    tdQ.style.cssText = 'padding: 7px; font-weight:600; color:#475569;';
+                    tdQ.textContent = 'Q' + b.q;
+
+                    const tdMarked = document.createElement('td');
+                    tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
+                    if (b.marked) {
+                        tdMarked.textContent = b.marked;
+                    } else {
+                        const dash = document.createElement('span');
+                        dash.style.color = '#CBD5E1';
+                        dash.textContent = '—';
+                        tdMarked.appendChild(dash);
+                    }
+
+                    const tdKey = document.createElement('td');
+                    tdKey.style.cssText = 'padding: 7px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
+                    tdKey.textContent = b.correctKey || '-';
+
+                    const tdMarks = document.createElement('td');
+                    tdMarks.style.cssText = `padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
+                    tdMarks.textContent = qMarksText;
+
+                    const tdVerdict = document.createElement('td');
+                    tdVerdict.style.cssText = `padding: 7px; font-weight:600; font-size:0.78rem; color:${vColor};`;
+                    tdVerdict.textContent = vText;
+
+                    tr.appendChild(tdQ);
+                    tr.appendChild(tdMarked);
+                    tr.appendChild(tdKey);
+                    tr.appendChild(tdMarks);
+                    tr.appendChild(tdVerdict);
                     tbody.appendChild(tr);
                 });
             } else {
@@ -1127,42 +1291,17 @@
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const rows = document.querySelectorAll('.result-row');
             rows.forEach(row => {
-                const roll = row.getAttribute('data-roll') || '';
-                row.style.display = roll.includes(query) ? '' : 'none';
+                const haystack = row.getAttribute('data-search') || row.getAttribute('data-roll') || '';
+                row.style.display = haystack.includes(query) ? '' : 'none';
             });
         }
 
         function exportResultsToCsv() {
-            const rows = Array.from(document.querySelectorAll('.results-table tbody tr'));
-            if (rows.length === 0) {
+            if (!Array.isArray(allSubmissionsData) || allSubmissionsData.length === 0) {
                 alert("No results to export.");
                 return;
             }
-
-            let csv = "Rank,Roll Number,Score,Total Questions,Accuracy %,Marks,Scanned Date\n";
-            rows.forEach(r => {
-                const cols = r.querySelectorAll('td');
-                if (cols.length >= 7) {
-                    const rank = cols[0].innerText.replace('#', '').trim();
-                    const roll = cols[1].innerText.trim();
-                    const marks = cols[3].innerText.split('/')[0].trim();
-                    const scoreTotal = cols[4].innerText.split('\n')[0].split('/');
-                    const score = (scoreTotal[0] || '').trim();
-                    const total = (scoreTotal[1] || '').trim();
-                    const accuracy = cols[5].innerText.trim();
-                    const date = cols[6].innerText.replace('\n', ' ').trim();
-
-                    csv += `"${rank}","${roll}","${score}","${total}","${accuracy}","${marks}","${date}"\n`;
-                }
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `<%= paper.title.replace(/[^a-zA-Z0-9]/g, '_') %>_Results.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            window.location.assign('/paper/' + encodeURIComponent(PAPER_ID) + '/results/export');
         }
     </script>
     <%- include('partials/sidebar_end') %>

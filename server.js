@@ -22,6 +22,7 @@ const {
     generateStudentPassword,
     extractFirst3
 } = require('./utils/bulkStudents');
+const { summarizeSections, buildDetailedResultsCsv } = require('./utils/resultsExport');
 
 // In-memory uploader for CSV/XLSX bulk student spreadsheets (5 MB max)
 const bulkSpreadsheetUpload = multer({
@@ -1021,7 +1022,7 @@ function getPaperSectionsDef(paper, fallbackTotalQ = 50) {
         { name: 'Chemistry', from_question: qPerSec + 1, to_question: qPerSec * 2, max_marks: qPerSec * 4 },
         { name: 'Botany / Math', from_question: (qPerSec * 2) + 1, to_question: qPerSec * 3, max_marks: qPerSec * 4 },
         { name: 'Zoology / Aptitude', from_question: (qPerSec * 3) + 1, to_question: totalQ, max_marks: (totalQ - (qPerSec * 3)) * 4 }
-    ];
+    ].filter(s => s.to_question >= s.from_question);
 }
 
 // Shared helper to dynamically evaluate a submission against its paper's current answer key & sections
@@ -1047,7 +1048,7 @@ function buildGradedSubmissionObj(doc, paper) {
         let secBlank = 0;
         const fromQ = Number(s.from_question);
         const toQ = Number(s.to_question);
-        const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 1;
+        const countInSec = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
 
         for (let q = fromQ; q <= toQ; q++) {
             const marked = resps[q - 1] ? String(resps[q - 1]).trim().toUpperCase() : '';
@@ -1064,12 +1065,16 @@ function buildGradedSubmissionObj(doc, paper) {
         }
 
         const secMarks = (secCorrect * 4) - secWrong;
+        const secAttempted = Math.max(0, countInSec - secBlank);
         return {
             sectionName: s.name,
             range: `Q${fromQ}-Q${toQ}`,
             correct: secCorrect,
             wrong: secWrong,
             blank: secBlank,
+            totalQuestions: countInSec,
+            attempted: secAttempted,
+            unattempted: secBlank,
             marks: Math.max(0, secMarks),
             maxMarks: s.max_marks || (countInSec * 4)
         };
@@ -1081,7 +1086,55 @@ function buildGradedSubmissionObj(doc, paper) {
     obj.paperTitle = paper ? paper.title : (doc.paper_id || 'Exam Paper');
     obj.paperSubject = paper ? (paper.subject || 'General') : 'General';
     obj.maxMarks = paper ? (paper.max_marks || (totalQ * 4)) : (doc.maxMarks || (totalQ * 4));
+    obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
     return obj;
+}
+
+async function buildStudentNameMap(results) {
+    const rollVariants = [];
+    const lowerRolls = new Set();
+    (results || []).forEach(r => {
+        const roll = String((r && (r.rollnumber || r.rollNumber)) || '').trim();
+        if (!roll) return;
+        rollVariants.push(roll, roll.toUpperCase(), roll.toLowerCase());
+        lowerRolls.add(roll.toLowerCase());
+    });
+
+    const uniqueRolls = [...new Set(rollVariants.filter(Boolean))];
+    const studentNameByRoll = {};
+    if (uniqueRolls.length > 0) {
+        const users = await User.find({
+            $or: [
+                { rollnumber: { $in: uniqueRolls } },
+                { username: { $in: [...lowerRolls] } }
+            ]
+        }, 'username rollnumber fullName').lean();
+
+        users.forEach(u => {
+            const name = u.fullName ? String(u.fullName).trim() : '';
+            if (!name) return;
+            if (u.rollnumber) studentNameByRoll[String(u.rollnumber).trim().toLowerCase()] = name;
+            if (u.username) studentNameByRoll[String(u.username).trim().toLowerCase()] = name;
+        });
+    }
+    return studentNameByRoll;
+}
+
+async function getSortedGradedPaperResults(paper) {
+    const docs = await Submission.find({
+        $or: [
+            { paper_id: String(paper._id) },
+            { paper_id: paper._id },
+            { paperId: paper._id }
+        ]
+    }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
+
+    const results = docs.map(doc => buildGradedSubmissionObj(doc, paper));
+    results.sort((a, b) => {
+        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+        return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
+    });
+    return results;
 }
 
 // Save Evaluated Result to Cloudinary & MongoDB (submissions collection)
@@ -1305,34 +1358,31 @@ app.get('/paper/:id/results', requireAdmin, async (req, res) => {
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
         if (!paper) return res.status(404).send('Paper not found');
 
-        const docs = await Submission.find({
-            $or: [
-                { paper_id: String(paper._id) },
-                { paper_id: paper._id },
-                { paperId: paper._id }
-            ]
-        }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
-
-        // Recompute scores & sectionWise dynamically from saved responses against the current answer key
-        const results = docs.map(doc => buildGradedSubmissionObj(doc, paper));
-
-        // Re-sort by live score descending so leaderboard rank matches current answer key
-        results.sort((a, b) => {
-            if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-            return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
+        const results = await getSortedGradedPaperResults(paper);
+        const studentNameByRoll = await buildStudentNameMap(results);
+        results.forEach(r => {
+            const roll = String(r.rollnumber || r.rollNumber || '').trim().toLowerCase();
+            r.studentName = studentNameByRoll[roll] || '';
         });
 
-        // Calculate Aggregate Stats
+        // Calculate Aggregate Stats (aligned with sum of all sections)
         let highestAggregate = 0;
         let totalAgg = 0;
         let totalPct = 0;
-        const maxMarks = paper.max_marks || (paper.numQuestions || 50) * 4;
+        const secDefs = getPaperSectionsDef(paper, paper.numQuestions || 50);
+        const computedSecTotalMarks = secDefs.reduce((acc, s) => {
+            const fromQ = Number(s.from_question);
+            const toQ = Number(s.to_question);
+            const qCount = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+            return acc + (Number(s.max_marks) || (qCount * 4));
+        }, 0);
+        const maxMarks = computedSecTotalMarks || paper.max_marks || (paper.numQuestions || 50) * 4;
 
         // Section averages
         const secSums = {};
 
         results.forEach(r => {
-            const agg = (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4);
+            const agg = r.allSectionsSummary ? r.allSectionsSummary.obtainedMarks : ((r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4));
             if (agg > highestAggregate) highestAggregate = agg;
             totalAgg += agg;
             totalPct += (r.percentage || 0);
@@ -1379,5 +1429,26 @@ app.get('/paper/:id/results', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error loading paper results:', error);
         res.status(500).send('Error loading paper results: ' + error.message);
+    }
+});
+
+// Download Detailed Section-Wise Results CSV (Admin Only)
+app.get('/paper/:id/results/export', requireAdmin, async (req, res) => {
+    try {
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+        if (!paper) return res.status(404).send('Paper not found');
+
+        const results = await getSortedGradedPaperResults(paper);
+        const studentNameByRoll = await buildStudentNameMap(results);
+
+        const csv = buildDetailedResultsCsv({ paper, results, studentNameByRoll });
+        const safeTitle = String(paper.title || 'Paper').replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'Paper';
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_Detailed_Results.csv"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting paper results:', error);
+        res.status(500).send('Error exporting results: ' + error.message);
     }
 });

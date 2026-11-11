@@ -104,6 +104,11 @@
             gap: 2px;
         }
 
+        .sec-stack-item-total {
+            background: var(--primary-light);
+            border-color: var(--primary-border);
+        }
+
         .sec-stack-name {
             font-size: 0.78rem;
             font-weight: 600;
@@ -123,6 +128,13 @@
             color: var(--text-muted);
         }
 
+        .sec-stack-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.3;
+        }
+
         /* Modal Styles (shared pattern with paper_results.ejs) */
         dialog.omr-modal-dialog {
             border: 1px solid var(--border-color);
@@ -135,6 +147,15 @@
             box-shadow: var(--shadow-2xl);
             margin: auto;
             overflow: hidden;
+        }
+
+        dialog.omr-modal-dialog:modal {
+            overscroll-behavior: contain;
+        }
+
+        dialog.omr-modal-dialog::backdrop {
+            overflow: hidden;
+            overscroll-behavior: contain;
         }
 
         dialog.omr-modal-dialog[open] {
@@ -189,6 +210,11 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 8px;
+        }
+
+        .sec-card-total {
+            background: var(--primary-light);
+            border-color: var(--primary-border);
         }
 
         .sec-title {
@@ -303,6 +329,15 @@
                         const scannedDate = new Date(item.submitted_at || item.scannedAt || Date.now());
                         const agg = item.aggregateMarks !== undefined ? item.aggregateMarks : (item.score * 4);
                         const maxM = item.maxMarks || ((item.totalQuestions || 50) * 4);
+                        const sumSec = item.allSectionsSummary || {
+                            totalMarks: maxM,
+                            obtainedMarks: agg,
+                            totalQuestions: item.totalQuestions || 0,
+                            attemptedQuestions: Math.max(0, (item.totalQuestions || 0) - (item.blankCount || 0)),
+                            unattemptedQuestions: item.blankCount || 0,
+                            correctCount: item.correctCount || 0,
+                            wrongCount: item.wrongCount || 0
+                        };
                     %>
                     <article class="exam-card">
                         <div>
@@ -318,19 +353,19 @@
                                 </span>
                             </div>
 
-                            <div class="agg-summary" style="margin: 1rem 0;">
+                            <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
                                 <div>
-                                    <div class="agg-label">Total Aggregate Marks</div>
-                                    <div class="agg-score"><%= agg %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= maxM %></span></div>
+                                    <div class="agg-label">All Sections (Sum) Marks</div>
+                                    <div class="agg-score"><%= sumSec.obtainedMarks %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= sumSec.totalMarks %></span></div>
                                 </div>
                                 <div style="text-align: right; font-size: 0.8rem;">
                                     <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
-                                        <%= item.score %> / <%= item.totalQuestions %> Qs
+                                        <%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %> Att
                                     </div>
                                     <div style="color: var(--text-muted); margin-top: 2px;">
-                                        <span style="color: var(--success-hover); font-weight: 600;"><%= item.correctCount %>C</span> &middot;
-                                        <span style="color: var(--danger); font-weight: 600;"><%= item.wrongCount %>W</span> &middot;
-                                        <span><%= item.blankCount %>B</span>
+                                        Unatt: <strong style="color: var(--text-body);"><%= sumSec.unattemptedQuestions %></strong> &middot;
+                                        <span style="color: var(--success-hover); font-weight: 600;"><%= sumSec.correctCount %>C</span> &middot;
+                                        <span style="color: var(--danger); font-weight: 600;"><%= sumSec.wrongCount %>W</span>
                                     </div>
                                 </div>
                             </div>
@@ -338,11 +373,35 @@
                             <% if (item.sectionWise && item.sectionWise.length > 0) { %>
                                 <div class="sec-stack-list">
                                     <% item.sectionWise.forEach(s => { %>
+                                        <%
+                                            const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
+                                            const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
+                                            const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
+                                        %>
                                         <div class="sec-stack-item">
-                                            <div class="sec-stack-name"><%= s.sectionName %></div>
-                                            <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %></span></div>
+                                            <div class="sec-stack-name">
+                                                <%= s.sectionName %>
+                                                <% if (s.range) { %>
+                                                    <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
+                                                <% } %>
+                                            </div>
+                                            <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %> marks</span></div>
+                                            <div class="sec-stack-meta">
+                                                Total: <strong><%= secTotalQ %></strong> &middot;
+                                                Att: <strong><%= secAtt %></strong> &middot;
+                                                Unatt: <strong><%= secUnatt %></strong>
+                                            </div>
                                         </div>
                                     <% }) %>
+                                    <div class="sec-stack-item sec-stack-item-total">
+                                        <div class="sec-stack-name" style="color: var(--primary-active);">All Sections (Sum)</div>
+                                        <div class="sec-stack-marks"><%= sumSec.obtainedMarks %> <span class="sec-stack-max">/ <%= sumSec.totalMarks %> marks</span></div>
+                                        <div class="sec-stack-meta" style="color: var(--text-body);">
+                                            Total: <strong><%= sumSec.totalQuestions %></strong> &middot;
+                                            Att: <strong><%= sumSec.attemptedQuestions %></strong> &middot;
+                                            Unatt: <strong><%= sumSec.unattemptedQuestions %></strong>
+                                        </div>
+                                    </div>
                                 </div>
                             <% } %>
                         </div>
@@ -418,10 +477,13 @@
             </div>
 
             <div>
-                <div class="agg-summary" style="margin-bottom: 1.15rem;">
+                <div class="agg-summary" style="margin-bottom: 1.15rem; flex-wrap: wrap;">
                     <div>
-                        <div class="agg-label">Total Aggregate Marks</div>
+                        <div class="agg-label">All Sections (Sum) Marks</div>
                         <div class="agg-score" id="modalGrandAggregate">0 / 0</div>
+                        <div style="font-size: 0.76rem; color: var(--text-body); margin-top: 5px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
+                            Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                        </div>
                     </div>
                     <div style="text-align: right;">
                         <div class="agg-label">Accuracy</div>
@@ -452,7 +514,7 @@
     </dialog>
 
     <script>
-        const studentSubmissions = <%- JSON.stringify(results || []) %>;
+        const studentSubmissions = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
         const submissionsById = {};
         studentSubmissions.forEach(s => {
             if (s && s._id) submissionsById[String(s._id)] = s;
@@ -590,6 +652,82 @@
             });
         }
 
+        function getSubmissionTotals(data) {
+            if (data && data.allSectionsSummary) {
+                return data.allSectionsSummary;
+            }
+            const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
+            if (secs.length > 0) {
+                return secs.reduce((acc, s) => {
+                    const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                    const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
+                    const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
+                    acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
+                    acc.obtainedMarks += Number(s.marks) || 0;
+                    acc.totalQuestions += totQ;
+                    acc.attemptedQuestions += att;
+                    acc.unattemptedQuestions += unatt;
+                    acc.correctCount += Number(s.correct) || 0;
+                    acc.wrongCount += Number(s.wrong) || 0;
+                    return acc;
+                }, {
+                    totalMarks: 0,
+                    obtainedMarks: 0,
+                    totalQuestions: 0,
+                    attemptedQuestions: 0,
+                    unattemptedQuestions: 0,
+                    correctCount: 0,
+                    wrongCount: 0
+                });
+            }
+            const totQ = Number(data && data.totalQuestions) || 0;
+            const blank = Number(data && data.blankCount) || 0;
+            const correct = Number(data && data.correctCount) || 0;
+            const wrong = Number(data && data.wrongCount) || 0;
+            return {
+                totalMarks: (data && data.maxMarks) || (totQ * 4),
+                obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
+                totalQuestions: totQ,
+                attemptedQuestions: Math.max(0, totQ - blank),
+                unattemptedQuestions: blank,
+                correctCount: correct,
+                wrongCount: wrong
+            };
+        }
+
+        function appendSectionSummaryCard(container, opts) {
+            const row = document.createElement('div');
+            row.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
+
+            const headWrap = document.createElement('div');
+            const titleEl = document.createElement('div');
+            titleEl.className = 'sec-title';
+            if (opts.isTotal) titleEl.style.color = 'var(--primary-active)';
+            titleEl.textContent = opts.title;
+
+            const rangeEl = document.createElement('div');
+            rangeEl.className = 'sec-range';
+            rangeEl.textContent = opts.metaText;
+
+            headWrap.appendChild(titleEl);
+            headWrap.appendChild(rangeEl);
+
+            const marksWrap = document.createElement('div');
+            marksWrap.className = 'sec-marks';
+            const marksVal = document.createElement('div');
+            marksVal.className = 'sec-marks-val';
+            marksVal.textContent = `${opts.obtainedMarks} `;
+            const maxSpan = document.createElement('span');
+            maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
+            maxSpan.textContent = `/ ${opts.totalMarks} marks`;
+            marksVal.appendChild(maxSpan);
+            marksWrap.appendChild(marksVal);
+
+            row.appendChild(headWrap);
+            row.appendChild(marksWrap);
+            container.appendChild(row);
+        }
+
         function openStudentOmrModal(id) {
             const data = submissionsById[String(id)];
             if (!data) return;
@@ -597,14 +735,17 @@
             currentModalItem = data;
             const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
             const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
-            const agg = data.aggregateMarks !== undefined ? data.aggregateMarks : (data.score * 4);
-            const maxM = data.maxMarks || ((data.totalQuestions || 50) * 4);
+            const sumSec = getSubmissionTotals(data);
             const pct = data.percentage !== undefined ? data.percentage : 0;
 
             document.getElementById('modalRollNo').textContent = 'Roll: ' + roll;
             document.getElementById('modalPaperTitle').textContent = data.paperTitle || 'Exam Sheet';
-            document.getElementById('modalAggregateText').textContent = `Marks: ${agg} / ${maxM}`;
-            document.getElementById('modalGrandAggregate').textContent = `${agg} / ${maxM}`;
+            document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+            document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+            const allStatsEl = document.getElementById('modalAllSectionsStats');
+            if (allStatsEl) {
+                allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
+            }
             document.getElementById('modalAccuracyText').textContent = `${pct}%`;
 
             document.getElementById('modalOmrImg').src = imgUrl;
@@ -614,36 +755,26 @@
             secContainer.innerHTML = '';
             if (data.sectionWise && data.sectionWise.length > 0) {
                 data.sectionWise.forEach(s => {
-                    const row = document.createElement('div');
-                    row.className = 'sec-card';
-
-                    const headWrap = document.createElement('div');
-                    const titleEl = document.createElement('div');
-                    titleEl.className = 'sec-title';
-                    titleEl.textContent = s.sectionName || '';
-
-                    const rangeEl = document.createElement('div');
-                    rangeEl.className = 'sec-range';
-                    rangeEl.textContent = `${s.range || ''} · ${s.correct || 0}C · ${s.wrong || 0}W · ${s.blank || 0}B`;
-
-                    headWrap.appendChild(titleEl);
-                    headWrap.appendChild(rangeEl);
-
-                    const marksWrap = document.createElement('div');
-                    marksWrap.className = 'sec-marks';
-                    const marksVal = document.createElement('div');
-                    marksVal.className = 'sec-marks-val';
-                    marksVal.textContent = `${s.marks} `;
-                    const maxSpan = document.createElement('span');
-                    maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
-                    maxSpan.textContent = `/ ${s.maxMarks}`;
-                    marksVal.appendChild(maxSpan);
-                    marksWrap.appendChild(marksVal);
-
-                    row.appendChild(headWrap);
-                    row.appendChild(marksWrap);
-                    secContainer.appendChild(row);
+                    const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                    const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
+                    const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                    appendSectionSummaryCard(secContainer, {
+                        isTotal: false,
+                        title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
+                        metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
+                        obtainedMarks: s.marks || 0,
+                        totalMarks: s.maxMarks || (secTotalQ * 4)
+                    });
                 });
+                appendSectionSummaryCard(secContainer, {
+                    isTotal: true,
+                    title: 'All Sections (Sum)',
+                    metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
+                    obtainedMarks: sumSec.obtainedMarks,
+                    totalMarks: sumSec.totalMarks
+                });
+            } else {
+                secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
             }
 
             const keyObj = data.answerKeyLookup || {};
