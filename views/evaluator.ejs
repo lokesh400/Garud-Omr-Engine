@@ -507,8 +507,8 @@
         }
 
         function autoDetectCorners(ctx, W, H) {
-            // Downscale preserving aspect ratio so max dimension is 640px (landscape & portrait safe)
-            const fastScale = Math.min(1, 640 / Math.max(W, H));
+            // Downscale preserving aspect ratio so max dimension is 720px (landscape, portrait & distance safe)
+            const fastScale = Math.min(1, 720 / Math.max(W, H));
             const procW = Math.max(1, Math.round(W * fastScale));
             const procH = Math.max(1, Math.round(H * fastScale));
             const procCanvas = document.createElement('canvas');
@@ -523,10 +523,9 @@
 
             const gray = new Uint8Array(total);
             const hist = new Int32Array(256);
-            let pIdx = 0;
-            for (let i = 0; i < data.length; i += 4) {
+            for (let i = 0, p = 0; i < data.length; i += 4) {
                 const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
-                gray[pIdx++] = g;
+                gray[p++] = g;
                 hist[g]++;
             }
 
@@ -543,162 +542,372 @@
                 const v = wB * wF * diff * diff;
                 if (v > maxVar) { maxVar = v; otsuThresh = i + 1; }
             }
-            otsuThresh = Math.max(45, Math.min(otsuThresh, 185));
-
-            // 2D Integral Image for local neighborhood adaptive thresholding
-            const iw = procW + 1;
-            const integral = new Int32Array(iw * (procH + 1));
-            for (let y = 0; y < procH; y++) {
-                let rowSum = 0;
-                const rowBase = y * procW;
-                const iCur = (y + 1) * iw;
-                const iPrev = y * iw;
-                for (let x = 0; x < procW; x++) {
-                    rowSum += gray[rowBase + x];
-                    integral[iCur + x + 1] = integral[iPrev + x + 1] + rowSum;
-                }
-            }
-
-            const rBox = Math.max(8, Math.round(Math.min(procW, procH) * 0.045));
-            const darkMask = new Uint8Array(total);
-            const globalDarkCeil = Math.min(200, Math.max(otsuThresh + 40, 165));
-
-            for (let y = 0; y < procH; y++) {
-                const y0 = Math.max(0, y - rBox), y1 = Math.min(procH - 1, y + rBox);
-                const rOff = y * procW;
-                const iTop = y0 * iw, iBot = (y1 + 1) * iw;
-                const bhBox = y1 - y0 + 1;
-                for (let x = 0; x < procW; x++) {
-                    const x0 = Math.max(0, x - rBox), x1 = Math.min(procW - 1, x + rBox);
-                    const area = (x1 - x0 + 1) * bhBox;
-                    const localSum = integral[iBot + x1 + 1] - integral[iTop + x1 + 1] - integral[iBot + x0] + integral[iTop + x0];
-                    const lm = localSum / area;
-                    const g = gray[rOff + x];
-                    if ((g < lm - Math.max(16, lm * 0.17) && g < globalDarkCeil) || (g < Math.min(otsuThresh - 10, 80) && g < lm - 8)) {
-                        darkMask[rOff + x] = 1;
-                    }
-                }
-            }
+            otsuThresh = Math.max(40, Math.min(otsuThresh, 195));
 
             const minDim = Math.min(procW, procH);
-            const maxSide = Math.max(36, Math.round(minDim * 0.11));
+            const maxSide = Math.max(36, Math.round(minDim * 0.12));
             const maxBlobArea = Math.round(maxSide * maxSide * 0.92);
-
+            const mask = new Uint8Array(total);
             const visited = new Uint8Array(total);
-            const candidates = [];
             const queueLen = maxBlobArea + 516;
             const queue = new Int32Array(queueLen);
 
-            for (let py = 2; py < procH - 2; py++) {
-                const rowOff = py * procW;
-                for (let px = 2; px < procW - 2; px++) {
-                    const startP = rowOff + px;
-                    if (visited[startP] || !darkMask[startP]) continue;
+            function findQuadFromMask() {
+                visited.fill(0);
+                const candidates = [];
 
-                    let count = 0, sumX = 0, sumY = 0, sumLum = 0;
-                    let minX = px, maxX = px, minY = py, maxY = py;
-                    let qHead = 0, qTail = 0;
-                    queue[qTail++] = startP;
-                    visited[startP] = 1;
-                    let overflowed = false;
+                for (let py = 1; py < procH - 1; py++) {
+                    const rowOff = py * procW;
+                    for (let px = 1; px < procW - 1; px++) {
+                        const startP = rowOff + px;
+                        if (visited[startP] || !mask[startP]) continue;
 
-                    while (qHead < qTail) {
-                        if (count > maxBlobArea + 500) { overflowed = true; break; }
-                        const cur = queue[qHead++];
-                        const cy = (cur / procW) | 0;
-                        const cx = cur - cy * procW;
-                        count++;
-                        sumX += cx;
-                        sumY += cy;
-                        sumLum += gray[cur];
-                        if (cx < minX) minX = cx;
-                        if (cx > maxX) maxX = cx;
-                        if (cy < minY) minY = cy;
-                        if (cy > maxY) maxY = cy;
+                        let count = 0, sumX = 0, sumY = 0, sumLum = 0;
+                        let minX = px, maxX = px, minY = py, maxY = py;
+                        let qHead = 0, qTail = 0;
+                        queue[qTail++] = startP;
+                        visited[startP] = 1;
+                        let overflowed = false;
 
-                        if (cx > 0) {
-                            const nb = cur - 1;
-                            if (!visited[nb] && darkMask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                        }
-                        if (cx + 1 < procW) {
-                            const nb = cur + 1;
-                            if (!visited[nb] && darkMask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                        }
-                        if (cy > 0) {
-                            const nb = cur - procW;
-                            if (!visited[nb] && darkMask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                        }
-                        if (cy + 1 < procH) {
-                            const nb = cur + procW;
-                            if (!visited[nb] && darkMask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                        }
-                    }
+                        while (qHead < qTail) {
+                            if (count > maxBlobArea + 500) { overflowed = true; break; }
+                            const cur = queue[qHead++];
+                            const cy = (cur / procW) | 0;
+                            const cx = cur - cy * procW;
+                            count++;
+                            sumX += cx;
+                            sumY += cy;
+                            sumLum += gray[cur];
+                            if (cx < minX) minX = cx;
+                            if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy;
+                            if (cy > maxY) maxY = cy;
 
-                    if (overflowed) continue;
-
-                    const bw = maxX - minX + 1;
-                    const bh = maxY - minY + 1;
-                    const aspect = bw / bh;
-                    const density = count / (bw * bh);
-
-                    if (bw >= 3 && bh >= 3 && bw <= maxSide && bh <= maxSide && aspect >= 0.50 && aspect <= 2.00 && density >= 0.44 && count >= 8 && count <= maxBlobArea) {
-                        const bx = sumX / count;
-                        const by = sumY / count;
-                        const meanBlobLum = sumLum / count;
-
-                        const cGx = Math.round(bx), cGy = Math.round(by);
-                        const centerLum = gray[cGy * procW + cGx];
-                        if (centerLum > meanBlobLum + 48) continue;
-
-                        const blobR = Math.max(bw, bh) / 2;
-                        const rIn = Math.max(2, blobR * 1.35);
-                        const rOut = Math.max(rIn + 3, blobR * 2.75);
-
-                        const dirs = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
-                        let bestQuadContrast = -999, bestQuadDarkRatio = 1.0, cleanQuads = 0;
-
-                        for (let dIdx = 0; dIdx < 4; dIdx++) {
-                            const ddx = dirs[dIdx][0], ddy = dirs[dIdx][1];
-                            let qSum = 0, qDark = 0, qTot = 0;
-                            const step = blobR < 5 ? 1 : 2;
-                            for (let dy = -Math.ceil(rOut); dy <= Math.ceil(rOut); dy += step) {
-                                for (let dx = -Math.ceil(rOut); dx <= Math.ceil(rOut); dx += step) {
-                                    if (dx * ddx < 0 || dy * ddy < 0) continue;
-                                    const dist = Math.hypot(dx, dy);
-                                    if (dist < rIn || dist > rOut) continue;
-                                    const gx = Math.round(bx + dx), gy = Math.round(by + dy);
-                                    if (gx < 0 || gx >= procW || gy < 0 || gy >= procH) continue;
-                                    qTot++;
-                                    const pg = gray[gy * procW + gx];
-                                    qSum += pg;
-                                    if (darkMask[gy * procW + gx]) qDark++;
-                                }
+                            if (cx > 0) {
+                                const nb = cur - 1;
+                                if (!visited[nb] && mask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
                             }
-                            if (qTot >= 4) {
-                                const qMean = qSum / qTot;
-                                const qDarkRatio = qDark / qTot;
-                                const qContrast = qMean - meanBlobLum;
-                                if (qDarkRatio <= 0.22 && qContrast >= 40) cleanQuads++;
-                                if (qContrast - qDarkRatio * 120 > bestQuadContrast - bestQuadDarkRatio * 120) {
-                                    bestQuadContrast = qContrast;
-                                    bestQuadDarkRatio = qDarkRatio;
-                                }
+                            if (cx + 1 < procW) {
+                                const nb = cur + 1;
+                                if (!visited[nb] && mask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
+                            }
+                            if (cy > 0) {
+                                const nb = cur - procW;
+                                if (!visited[nb] && mask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
+                            }
+                            if (cy + 1 < procH) {
+                                const nb = cur + procW;
+                                if (!visited[nb] && mask[nb] && qTail < queueLen - 2) { visited[nb] = 1; queue[qTail++] = nb; }
                             }
                         }
 
-                        if (cleanQuads === 0 || bestQuadContrast < 38 || bestQuadDarkRatio > 0.24) continue;
+                        if (overflowed) continue;
 
-                        const inkDarkness = Math.max(0, 1.0 - meanBlobLum / 160);
-                        const score = (density * 3.5) + (inkDarkness * 2.5) + Math.min(2.5, bestQuadContrast / 50) - (bestQuadDarkRatio * 8.0) - Math.abs(Math.log(aspect)) * 1.5;
+                        const bw = maxX - minX + 1;
+                        const bh = maxY - minY + 1;
+                        const aspect = bw / bh;
+                        const density = count / (bw * bh);
 
-                        candidates.push({
-                            x: bx, y: by, bw, bh, count, density, meanBlobLum, score
-                        });
+                        if (bw >= 3 && bh >= 3 && bw <= maxSide && bh <= maxSide && aspect >= 0.45 && aspect <= 2.25 && density >= 0.42 && count >= 6 && count <= maxBlobArea) {
+                            const bx = sumX / count;
+                            const by = sumY / count;
+                            const meanBlobLum = sumLum / count;
+
+                            const cGx = Math.round(bx), cGy = Math.round(by);
+                            if (gray[cGy * procW + cGx] > meanBlobLum + 52) continue;
+
+                            const blobR = Math.max(bw, bh) / 2;
+                            const rIn = Math.max(2, blobR * 1.3);
+                            const rOut = Math.max(rIn + 3, blobR * 2.65);
+
+                            const dirs = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+                            let bestQuadContrast = -999, bestQuadDarkRatio = 1.0, cleanQuads = 0;
+
+                            for (let dIdx = 0; dIdx < 4; dIdx++) {
+                                const ddx = dirs[dIdx][0], ddy = dirs[dIdx][1];
+                                let qSum = 0, qDark = 0, qTot = 0;
+                                const step = blobR < 5 ? 1 : 2;
+                                const lim = Math.ceil(rOut);
+                                for (let dy = -lim; dy <= lim; dy += step) {
+                                    if (dy * ddy < 0) continue;
+                                    for (let dx = -lim; dx <= lim; dx += step) {
+                                        if (dx * ddx < 0) continue;
+                                        const dist2 = dx * dx + dy * dy;
+                                        if (dist2 < rIn * rIn || dist2 > rOut * rOut) continue;
+                                        const gx = Math.round(bx + dx), gy = Math.round(by + dy);
+                                        if (gx < 0 || gx >= procW || gy < 0 || gy >= procH) continue;
+                                        qTot++;
+                                        const pg = gray[gy * procW + gx];
+                                        qSum += pg;
+                                        if (mask[gy * procW + gx]) qDark++;
+                                    }
+                                }
+                                if (qTot >= 4) {
+                                    const qMean = qSum / qTot;
+                                    const qDarkRatio = qDark / qTot;
+                                    const qContrast = qMean - meanBlobLum;
+                                    if (qDarkRatio <= 0.30 && qContrast >= 28) cleanQuads++;
+                                    if (qContrast - qDarkRatio * 100 > bestQuadContrast - bestQuadDarkRatio * 100) {
+                                        bestQuadContrast = qContrast;
+                                        bestQuadDarkRatio = qDarkRatio;
+                                    }
+                                }
+                            }
+
+                            if (cleanQuads === 0 || bestQuadContrast < 26 || bestQuadDarkRatio > 0.32) continue;
+
+                            const inkDarkness = Math.max(0, 1.0 - meanBlobLum / 185);
+                            const score = (density * 1.2) + (inkDarkness * 1.6) + Math.min(2.5, bestQuadContrast / 45) - (bestQuadDarkRatio * 6.0) - Math.abs(Math.log(aspect)) * 1.0;
+
+                            candidates.push({
+                                x: bx, y: by, bw, bh, side: (bw + bh) * 0.5,
+                                count, density, meanBlobLum, score
+                            });
+                        }
                     }
                 }
+
+                if (candidates.length < 4) return null;
+
+                candidates.sort((a, b) => b.score - a.score);
+                let pool;
+                if (candidates.length <= 140) {
+                    pool = candidates;
+                } else {
+                    const seen = new Set();
+                    pool = [];
+                    const addUnique = (c) => { if (!seen.has(c)) { seen.add(c); pool.push(c); } };
+                    candidates.slice(0, 56).forEach(addUnique);
+                    let minCx = Infinity, maxCx = -Infinity, minCy = Infinity, maxCy = -Infinity;
+                    for (const c of candidates) {
+                        if (c.x < minCx) minCx = c.x; if (c.x > maxCx) maxCx = c.x;
+                        if (c.y < minCy) minCy = c.y; if (c.y > maxCy) maxCy = c.y;
+                    }
+                    const spanX = Math.max(1, maxCx - minCx + 1), spanY = Math.max(1, maxCy - minCy + 1);
+                    const cellCounts = new Uint8Array(16);
+                    for (const c of candidates) {
+                        const gx = Math.min(3, ((c.x - minCx) * 4 / spanX) | 0);
+                        const gy = Math.min(3, ((c.y - minCy) * 4 / spanY) | 0);
+                        const ci = gy * 4 + gx;
+                        if (cellCounts[ci] < 7) { cellCounts[ci]++; addUnique(c); }
+                    }
+                }
+
+                const n = pool.length;
+                let bestQuad = null;
+
+                function checkOrderedQuad(pTL, pTR, pBR, pBL, wTop, hRight, wBot, hLeft) {
+                    const c1 = (pTR.x - pTL.x) * (pBR.y - pTR.y) - (pTR.y - pTL.y) * (pBR.x - pTR.x);
+                    if (c1 <= 0) return null;
+                    const c2 = (pBR.x - pTR.x) * (pBL.y - pBR.y) - (pBR.y - pTR.y) * (pBL.x - pBR.x);
+                    if (c2 <= 0) return null;
+                    const c3 = (pBL.x - pBR.x) * (pTL.y - pBL.y) - (pBL.y - pBR.y) * (pTL.x - pBL.x);
+                    if (c3 <= 0) return null;
+                    const c4 = (pTL.x - pBL.x) * (pTR.y - pTL.y) - (pTL.y - pBL.y) * (pTR.x - pTL.x);
+                    if (c4 <= 0) return null;
+
+                    const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
+                    const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
+                    if (wRatio < 0.55 || hRatio < 0.55) return null;
+
+                    const avgW = (wTop + wBot) * 0.5;
+                    const avgH = (hLeft + hRight) * 0.5;
+                    const aspect = avgH / avgW;
+                    if (aspect < 1.08 || aspect > 1.92) return null;
+
+                    const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
+                    const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
+                    if (Math.min(d1, d2) / Math.max(d1, d2) < 0.60) return null;
+
+                    const quadArea = 0.5 * Math.abs(
+                        (pTL.x * pTR.y - pTL.y * pTR.x) + (pTR.x * pBR.y - pTR.y * pBR.x) +
+                        (pBR.x * pBL.y - pBR.y * pBL.x) + (pBL.x * pTL.y - pBL.y * pTL.x)
+                    );
+                    if (quadArea < procW * procH * 0.05) return null;
+
+                    const minC = Math.min(pTL.count, pTR.count, pBR.count, pBL.count);
+                    const maxC = Math.max(pTL.count, pTR.count, pBR.count, pBL.count);
+                    const sizeUniformity = minC / maxC;
+                    if (sizeUniformity < 0.18) return null;
+
+                    const expSide = avgW * (20 / 713.22);
+                    const avgSide = (pTL.side + pTR.side + pBR.side + pBL.side) * 0.25;
+                    if (avgSide < expSide * 0.42 || avgSide > expSide * 2.4) return null;
+
+                    const qcx = (pTL.x + pTR.x + pBR.x + pBL.x) * 0.25;
+                    const qcy = (pTL.y + pTR.y + pBR.y + pBL.y) * 0.25;
+                    const pts = [pTL, pTR, pBR, pBL];
+
+                    let inwardContrastSum = 0;
+                    for (let i = 0; i < 4; i++) {
+                        const pt = pts[i];
+                        const vx = qcx - pt.x, vy = qcy - pt.y;
+                        const vl = Math.hypot(vx, vy) || 1;
+                        const ux = vx / vl, uy = vy / vl;
+                        let localW = 0;
+                        for (let m = 1.2; m <= 2.4; m += 0.6) {
+                            const sx = Math.round(pt.x + ux * expSide * m);
+                            const sy = Math.round(pt.y + uy * expSide * m);
+                            if (sx >= 0 && sx < procW && sy >= 0 && sy < procH) {
+                                const g = gray[sy * procW + sx];
+                                if (g > localW) localW = g;
+                            }
+                        }
+                        const diff = localW - pt.meanBlobLum;
+                        if (diff < 24) return null;
+                        inwardContrastSum += diff;
+                    }
+
+                    const inwardShift = Math.max(1.5, expSide * 0.55);
+                    let cleanEdgeCount = 0, edgeSum = 0, minEdgeClean = 1.0;
+                    for (let i = 0; i < 4; i++) {
+                        const pA = pts[i], pB = pts[(i + 1) % 4];
+                        const ex = pB.x - pA.x, ey = pB.y - pA.y;
+                        const eLen = Math.hypot(ex, ey) || 1;
+                        let nx = -ey / eLen, ny = ex / eLen;
+                        if (nx * (qcx - (pA.x + pB.x) * 0.5) + ny * (qcy - (pA.y + pB.y) * 0.5) < 0) {
+                            nx = -nx; ny = -ny;
+                        }
+                        const skipFrac = Math.min(0.20, (expSide * 1.4) / eLen);
+                        let cleanPts = 0, totPts = 0;
+                        const minInkEnd = Math.min(pA.meanBlobLum, pB.meanBlobLum);
+                        for (let s = 0; s <= 10; s++) {
+                            const t = skipFrac + (1 - 2 * skipFrac) * (s / 10);
+                            const ix = Math.round(pA.x + ex * t + nx * inwardShift);
+                            const iy = Math.round(pA.y + ey * t + ny * inwardShift);
+                            if (ix >= 0 && ix < procW && iy >= 0 && iy < procH) {
+                                totPts++;
+                                if (!mask[iy * procW + ix] && gray[iy * procW + ix] >= minInkEnd + 20) {
+                                    cleanPts++;
+                                }
+                            }
+                        }
+                        const ratio = totPts > 0 ? (cleanPts / totPts) : 0;
+                        edgeSum += ratio;
+                        if (ratio < minEdgeClean) minEdgeClean = ratio;
+                        if (ratio >= 0.55) cleanEdgeCount++;
+                    }
+                    const avgEdgeClean = edgeSum * 0.25;
+                    if (cleanEdgeCount < 3 || avgEdgeClean < 0.62 || minEdgeClean < 0.20) return null;
+
+                    const topMidY = (pTL.y + pTR.y) * 0.5, botMidY = (pBL.y + pBR.y) * 0.5;
+                    const topMidX = (pTL.x + pTR.x) * 0.5, botMidX = (pBL.x + pBR.x) * 0.5;
+                    const dxTB = Math.abs(botMidX - topMidX), dyTB = Math.abs(botMidY - topMidY);
+                    if (dyTB >= dxTB * 0.65) {
+                        if (topMidY > botMidY) return null;
+                    } else {
+                        const sampleRegionDark = (vMin, vMax) => {
+                            let dk = 0, tot = 0;
+                            for (let sv = vMin; sv <= vMax; sv += 0.04) {
+                                const lx = pTL.x + (pBL.x - pTL.x) * sv, ly = pTL.y + (pBL.y - pTL.y) * sv;
+                                const rx = pTR.x + (pBR.x - pTR.x) * sv, ry = pTR.y + (pBR.y - pTR.y) * sv;
+                                for (let su = 0.55; su <= 0.88; su += 0.04) {
+                                    const sx = Math.round(lx + (rx - lx) * su), sy = Math.round(ly + (ry - ly) * su);
+                                    if (sx >= 0 && sx < procW && sy >= 0 && sy < procH) { tot++; if (mask[sy * procW + sx]) dk++; }
+                                }
+                            }
+                            return tot > 0 ? dk / tot : 0;
+                        };
+                        if (sampleRegionDark(0.06, 0.20) + 0.02 < sampleRegionDark(0.80, 0.94)) return null;
+                    }
+
+                    let intWhite = 0, intDark = 0, intTot = 0, intMinG = 255, intMaxG = 0;
+                    const minCornerInk = Math.min(pTL.meanBlobLum, pTR.meanBlobLum, pBR.meanBlobLum, pBL.meanBlobLum);
+                    for (let r = 1; r <= 9; r++) {
+                        const sv = r / 10;
+                        const lx = pTL.x + (pBL.x - pTL.x) * sv, ly = pTL.y + (pBL.y - pTL.y) * sv;
+                        const rx = pTR.x + (pBR.x - pTR.x) * sv, ry = pTR.y + (pBR.y - pTR.y) * sv;
+                        for (let c = 1; c <= 7; c++) {
+                            const su = c / 8;
+                            const sx = Math.round(lx + (rx - lx) * su), sy = Math.round(ly + (ry - ly) * su);
+                            if (sx >= 0 && sx < procW && sy >= 0 && sy < procH) {
+                                intTot++;
+                                const gv = gray[sy * procW + sx];
+                                if (gv < intMinG) intMinG = gv;
+                                if (gv > intMaxG) intMaxG = gv;
+                                if (mask[sy * procW + sx]) intDark++;
+                                else if (gv >= minCornerInk + 24) intWhite++;
+                            }
+                        }
+                    }
+                    const intWhiteFrac = intTot > 0 ? (intWhite / intTot) : 0;
+                    const intDarkFrac = intTot > 0 ? (intDark / intTot) : 0;
+                    if (intWhiteFrac < 0.50 || intDarkFrac > 0.45 || (intMaxG - intMinG) < 30) return null;
+
+                    const lumMin = Math.min(pTL.meanBlobLum, pTR.meanBlobLum, pBR.meanBlobLum, pBL.meanBlobLum);
+                    const lumMax = Math.max(pTL.meanBlobLum, pTR.meanBlobLum, pBR.meanBlobLum, pBL.meanBlobLum);
+                    const lumConsistency = Math.exp(-(lumMax - lumMin) / 45);
+
+                    const aspectFit = Math.exp(-Math.abs(aspect - 1.461) * 7.0);
+                    const sideMatch = Math.exp(-Math.abs(avgSide - expSide) / (expSide + 1e-5));
+                    const avgDensity = (pTL.density + pTR.density + pBR.density + pBL.density) * 0.25;
+                    const avgContrast = Math.min(1.0, (inwardContrastSum * 0.25) / 60);
+                    const areaFactor = Math.pow(quadArea / (procW * procH), 0.25);
+
+                    const score = areaFactor * aspectFit * wRatio * hRatio * lumConsistency *
+                                  (0.4 + 0.6 * sideMatch) * (0.4 + 0.6 * sizeUniformity) *
+                                  avgDensity * Math.max(0.25, avgContrast) * Math.pow(avgEdgeClean, 1.5);
+                    if (!Number.isFinite(score) || score <= 0) return null;
+                    return { ordered: [pTL, pTR, pBR, pBL], score };
+                }
+
+                const minPaperW = minDim * 0.14;
+                for (let i = 0; i < n; i++) {
+                    const pTL = pool[i];
+                    for (let j = 0; j < n; j++) {
+                        if (i === j) continue;
+                        const pTR = pool[j];
+                        const cMin12 = pTL.count < pTR.count ? pTL.count : pTR.count;
+                        const cMax12 = pTL.count > pTR.count ? pTL.count : pTR.count;
+                        if (cMin12 / cMax12 < 0.20) continue;
+
+                        const vx = pTR.x - pTL.x, vy = pTR.y - pTL.y;
+                        const wTop = Math.hypot(vx, vy);
+                        if (wTop < minPaperW) continue;
+
+                        const expSide12 = wTop * (20 / 713.22);
+                        const avgSide12 = (pTL.side + pTR.side) * 0.5;
+                        if (avgSide12 < expSide12 * 0.38 || avgSide12 > expSide12 * 2.55) continue;
+
+                        const predBRx = pTR.x + (-vy) * 1.461;
+                        const predBRy = pTR.y + (vx) * 1.461;
+                        const searchR = wTop * 0.58;
+
+                        for (let k = 0; k < n; k++) {
+                            if (k === i || k === j) continue;
+                            const pBR = pool[k];
+                            if (Math.abs(pBR.x - predBRx) > searchR || Math.abs(pBR.y - predBRy) > searchR) continue;
+                            if (Math.hypot(pBR.x - predBRx, pBR.y - predBRy) > searchR) continue;
+
+                            const cMin123 = Math.min(cMin12, pBR.count);
+                            const cMax123 = Math.max(cMax12, pBR.count);
+                            if (cMin123 / cMax123 < 0.18) continue;
+
+                            const predBLx = pTL.x + (pBR.x - pTR.x);
+                            const predBLy = pTL.y + (pBR.y - pTR.y);
+                            const searchBL = wTop * 0.48;
+
+                            for (let l = 0; l < n; l++) {
+                                if (l === i || l === j || l === k) continue;
+                                const pBL = pool[l];
+                                if (Math.abs(pBL.x - predBLx) > searchBL || Math.abs(pBL.y - predBLy) > searchBL) continue;
+                                if (Math.hypot(pBL.x - predBLx, pBL.y - predBLy) > searchBL) continue;
+
+                                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
+                                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
+                                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
+                                const res = checkOrderedQuad(pTL, pTR, pBR, pBL, wTop, hRight, wBot, hLeft);
+                                if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                    bestQuad = res;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return bestQuad ? bestQuad.ordered : null;
             }
 
-            // Fallback default corners if detection fails
             const defaultCorners = [
                 { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
                 { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
@@ -706,143 +915,49 @@
                 { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
             ];
 
-            if (candidates.length < 4) return defaultCorners;
+            // PASS 1: Fast Global Otsu
+            for (let p = 0; p < total; p++) mask[p] = gray[p] < otsuThresh ? 1 : 0;
+            let quad = findQuadFromMask();
 
-            candidates.sort((a, b) => b.score - a.score);
-            const chosen = [];
-            const seen = new Set();
-            const pushUnique = (c) => { if (!seen.has(c)) { seen.add(c); chosen.push(c); } };
-            candidates.slice(0, 10).forEach(pushUnique);
-
-            let minCx = Infinity, maxCx = -Infinity, minCy = Infinity, maxCy = -Infinity;
-            for (const c of candidates) {
-                if (c.x < minCx) minCx = c.x; if (c.x > maxCx) maxCx = c.x;
-                if (c.y < minCy) minCy = c.y; if (c.y > maxCy) maxCy = c.y;
-            }
-            const midX = (minCx + maxCx) / 2, midY = (minCy + maxCy) / 2;
-            const buckets = [[], [], [], []];
-            for (const c of candidates) {
-                const bi = (c.x >= midX ? 1 : 0) + (c.y >= midY ? 2 : 0);
-                if (buckets[bi].length < 4) buckets[bi].push(c);
-            }
-            buckets.forEach(b => b.forEach(pushUnique));
-
-            const topCandidates = chosen.slice(0, 20);
-            const n = topCandidates.length;
-            if (n < 4) return defaultCorners;
-
-            let bestQuad = null;
-
-            function evaluateQuadCandidate(ordered) {
-                const [pTL, pTR, pBR, pBL] = ordered;
-                const pts = [pTL, pTR, pBR, pBL];
-                for (let i = 0; i < 4; i++) {
-                    const a = pts[i], b = pts[(i + 1) % 4], c = pts[(i + 2) % 4];
-                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-                    if (cross <= 0) return null;
-                }
-
-                const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
-                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
-                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
-                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
-
-                const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
-                const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.55 || hRatio < 0.55) return null;
-
-                const avgW = (wTop + wBot) / 2;
-                const avgH = (hLeft + hRight) / 2;
-                const aspect = avgH / avgW;
-                if (aspect < 1.05 || aspect > 2.00) return null;
-
-                const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
-                const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.60) return null;
-
-                const quadArea = 0.5 * Math.abs(
-                    (pTL.x * pTR.y - pTL.y * pTR.x) + (pTR.x * pBR.y - pTR.y * pBR.x) +
-                    (pBR.x * pBL.y - pBR.y * pBL.x) + (pBL.x * pTL.y - pBL.y * pTL.x)
-                );
-                if (quadArea < procW * procH * 0.06) return null;
-
-                const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
-                if (Math.min(...counts) / Math.max(...counts) < 0.16) return null;
-
-                const expSide = avgW * (20 / 713.22);
-                const avgSide = (pTL.bw + pTL.bh + pTR.bw + pTR.bh + pBR.bw + pBR.bh + pBL.bw + pBL.bh) / 8;
-                if (avgSide < expSide * 0.45 || avgSide > expSide * 2.2) return null;
-
-                for (let i = 0; i < 4; i++) {
-                    const pA = pts[i], pB = pts[(i + 1) % 4];
-                    const edgeLen = Math.hypot(pB.x - pA.x, pB.y - pA.y);
-                    const skipFrac = Math.min(0.18, (Math.max(pA.bw, pA.bh, pB.bw, pB.bh) * 1.15) / (edgeLen || 1));
-
-                    const getEdgeRefWhite = (tEnd) => {
-                        const cx = Math.round(pA.x + (pB.x - pA.x) * tEnd);
-                        const cy = Math.round(pA.y + (pB.y - pA.y) * tEnd);
-                        let maxG = 0;
-                        for (let dy = -1; dy <= 1; dy++) {
-                            for (let dx = -1; dx <= 1; dx++) {
-                                const nx = cx + dx, ny = cy + dy;
-                                if (nx >= 0 && nx < procW && ny >= 0 && ny < procH) {
-                                    const g = gray[ny * procW + nx];
-                                    if (g > maxG) maxG = g;
-                                }
-                            }
-                        }
-                        return maxG;
-                    };
-                    const whiteA = getEdgeRefWhite(skipFrac);
-                    const whiteB = getEdgeRefWhite(1 - skipFrac);
-                    if (whiteA < pA.meanBlobLum + 32 || whiteB < pB.meanBlobLum + 32) return null;
-
-                    let cleanPts = 0, totalEdgePts = 0;
-                    for (let s = 0; s <= 16; s++) {
-                        const t = skipFrac + (1 - 2 * skipFrac) * (s / 16);
-                        const ix = Math.round(pA.x + (pB.x - pA.x) * t);
-                        const iy = Math.round(pA.y + (pB.y - pA.y) * t);
-                        if (ix >= 0 && ix < procW && iy >= 0 && iy < procH) {
-                            totalEdgePts++;
-                            const expectedPaper = whiteA + (whiteB - whiteA) * ((t - skipFrac) / Math.max(0.01, 1 - 2 * skipFrac));
-                            if (!darkMask[iy * procW + ix] && gray[iy * procW + ix] >= expectedPaper - 36) {
-                                cleanPts++;
-                            }
-                        }
-                    }
-                    if (totalEdgePts >= 8 && (cleanPts / totalEdgePts) < 0.78) return null;
-                }
-
-                const meanQual = (pTL.density + pTR.density + pBR.density + pBL.density) / 4;
-                const meanLum = (pTL.meanBlobLum + pTR.meanBlobLum + pBR.meanBlobLum + pBL.meanBlobLum) / 4;
-                const inkFactor = Math.max(0.25, 1.0 - meanLum / 220);
-                const aspectDev = Math.abs(aspect - 1.461);
-                const score = quadArea * Math.max(0.2, 1.0 - aspectDev * 0.45) * wRatio * hRatio * (0.5 + meanQual) * inkFactor;
-                if (!Number.isFinite(score) || score <= 0) return null;
-                return { ordered, score };
-            }
-
-            for (let i = 0; i < n; i++) {
-                for (let j = i + 1; j < n; j++) {
-                    for (let k = j + 1; k < n; k++) {
-                        for (let l = k + 1; l < n; l++) {
-                            const ordered = orderCorners([topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]]);
-                            if (!ordered) continue;
-                            const res = evaluateQuadCandidate(ordered);
-                            if (res && (!bestQuad || res.score > bestQuad.score)) {
-                                bestQuad = res;
-                            }
-                        }
+            // PASS 2: 2D Integral Adaptive + Otsu hybrid (rescues heavy shadows & spotlights)
+            if (!quad) {
+                const iw = procW + 1;
+                const integral = new Int32Array(iw * (procH + 1));
+                for (let y = 0; y < procH; y++) {
+                    let rowSum = 0;
+                    const rowBase = y * procW, iCur = (y + 1) * iw, iPrev = y * iw;
+                    for (let x = 0; x < procW; x++) {
+                        rowSum += gray[rowBase + x];
+                        integral[iCur + x + 1] = integral[iPrev + x + 1] + rowSum;
                     }
                 }
+                const rBox = Math.max(8, Math.round(minDim * 0.045));
+                const globalDarkCeil = Math.min(205, Math.max(otsuThresh + 45, 170));
+                for (let y = 0; y < procH; y++) {
+                    const y0 = Math.max(0, y - rBox), y1 = Math.min(procH - 1, y + rBox);
+                    const rOff = y * procW, iTop = y0 * iw, iBot = (y1 + 1) * iw, bhBox = y1 - y0 + 1;
+                    for (let x = 0; x < procW; x++) {
+                        const x0 = Math.max(0, x - rBox), x1 = Math.min(procW - 1, x + rBox);
+                        const lm = (integral[iBot + x1 + 1] - integral[iTop + x1 + 1] - integral[iBot + x0] + integral[iTop + x0]) / ((x1 - x0 + 1) * bhBox);
+                        const g = gray[rOff + x];
+                        mask[rOff + x] = ((g < lm - Math.max(12, lm * 0.14) && g < globalDarkCeil) || (g < Math.min(otsuThresh - 5, 105) && g < lm - 5)) ? 1 : 0;
+                    }
+                }
+                quad = findQuadFromMask();
             }
 
-            if (!bestQuad) return defaultCorners;
+            // PASS 3: Soft Boosted Otsu (+22 gray offset for dim/washed captures)
+            if (!quad) {
+                const boostedThresh = Math.min(200, otsuThresh + 22);
+                for (let p = 0; p < total; p++) mask[p] = gray[p] < boostedThresh ? 1 : 0;
+                quad = findQuadFromMask();
+            }
 
-            // Scale coordinates back to original image dimensions (W, H)
+            if (!quad) return defaultCorners;
+
             const scaleX = W / procW;
             const scaleY = H / procH;
-            return bestQuad.ordered.map(p => ({
+            return quad.map(p => ({
                 x: Math.round(p.x * scaleX),
                 y: Math.round(p.y * scaleY)
             }));
@@ -852,7 +967,7 @@
             leveledCanvas.width = TARGET_W;
             leveledCanvas.height = TARGET_H;
 
-            const orderedCorners = orderCorners(corners);
+            const orderedCorners = (corners && corners.length === 4) ? corners : orderCorners(corners);
 
             const srcImgData = rawCtx.getImageData(0, 0, W, H);
             const srcData = srcImgData.data;
