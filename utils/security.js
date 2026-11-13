@@ -336,3 +336,4 @@ module.exports = {
     isValidMongoId,
     uploadDir
 };
+
