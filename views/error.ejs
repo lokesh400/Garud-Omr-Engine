@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+
+        .error-card {
+            max-width: 460px;
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+
+        .error-icon {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 1.25rem auto;
+            border-radius: 50%;
+            background: #FEF2F2;
+            color: #DC2626;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 1px solid #FCA5A5;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="error-shell">
+        <div class="error-card">
+            <div class="error-icon">!</div>
+            <h1 style="font-size: 1.35rem; margin-bottom: 0.5rem; font-weight: 700;">Something went wrong</h1>
+            <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.75rem;">
+                <%= typeof message !== 'undefined' && message ? message : 'An unexpected error occurred. Please try again or return to the dashboard.' %>
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <a href="/" class="btn btn-primary">Return to Dashboard</a>
+                <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

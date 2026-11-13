@@ -23,21 +23,32 @@ const {
     extractFirst3
 } = require('./utils/bulkStudents');
 const { summarizeSections, buildDetailedResultsCsv } = require('./utils/resultsExport');
-
-// In-memory uploader for CSV/XLSX bulk student spreadsheets (5 MB max)
-const bulkSpreadsheetUpload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 }
-});
+const {
+    loginLimiter,
+    apiLimiter,
+    passwordChangeLimiter,
+    securityHeaders,
+    sanitizeMongo,
+    csrfProtection,
+    secureImageUpload,
+    secureSpreadsheetUpload,
+    isValidId,
+    isValidMongoId,
+    uploadDir
+} = require('./utils/security');
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Disable information disclosure & enable reverse proxy trust
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
+const PORT = process.env.PORT || (process.env.RENDER ? 10000 : 3000);
 const SESSION_COOKIE_NAME = 'garud.sid';
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, 'public/uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -67,6 +78,9 @@ async function ensureDefaultAdmin() {
                 );
                 console.log(`[Auth] Seeded default Admin account "${defaultUsername}".`);
             }
+            if (defaultPassword === 'admin123') {
+                console.warn('\x1b[33m%s\x1b[0m', '[SECURITY WARNING] Default admin password "admin123" is in use! Please change it in /account.');
+            }
         }
     } catch (err) {
         console.error('[Auth] Error seeding default admin:', err.message);
@@ -85,13 +99,29 @@ mongoConnectPromise
     .then(async () => {
         console.log('Connected to MongoDB');
         await ensureDefaultAdmin();
-        app.listen(PORT, () => {
-            console.log(`Server running on http://localhost:${PORT}`);
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`[Security Hardened] Server running on http://0.0.0.0:${PORT} (PORT=${PORT})`);
         });
     })
     .catch(err => console.error('MongoDB connection error:', err));
 
-// Middleware
+// Public Cloud Uptime & Health Check Endpoints (Bypasses auth/session)
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// Global Security Headers (CSP, FrameGuard, NoSniff, ReferrerPolicy, PermissionsPolicy)
+app.use(securityHeaders);
+
+// NoSQL Operator & Prototype Injection Sanitizer
+app.use(sanitizeMongo);
+
+// Cross-Site Request Forgery (CSRF) Origin/Referer Guard
+app.use(csrfProtection);
+
+// API Route Rate Limiting (Protects backend endpoints from abuse & scraping)
+app.use('/api', apiLimiter.middleware());
+
+// View engine & body parsers
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -100,7 +130,8 @@ app.use(express.json({ limit: '25mb' }));
 // Public stylesheets (needed for login page)
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 
-// Session & Passport configuration (passport-local + passport-local-mongoose)
+// Session & Passport configuration (Hardened cookies & session store)
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.RENDER);
 const sessionSecret = process.env.SESSION_SECRET ||
     crypto.createHash('sha256').update(process.env.MONGO_URL || 'garud-omr-session-secret').digest('hex');
 
@@ -113,6 +144,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
+        secure: isProduction,
         maxAge: 7 * 24 * 60 * 60 * 1000
     }
 }));
@@ -184,6 +216,16 @@ function requireAdmin(req, res, next) {
 
 // Protect uploaded/fallback OMR copies (students can only read fallback copies tied to their own roll)
 app.use('/uploads', requireAuth, (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self' data:;");
+
+    // Path traversal defense
+    const requestedPath = path.normalize(req.path);
+    const fullPath = path.join(uploadDir, requestedPath);
+    if (!fullPath.startsWith(uploadDir)) {
+        return res.status(403).send('Forbidden: Path Traversal Detected');
+    }
+
     if (req.user.role === 'admin') return next();
     const roll = String(req.user.rollnumber || req.user.username || '').trim().replace(/[^\w-]/g, '_');
     const basename = path.basename(req.path || '');
@@ -191,16 +233,11 @@ app.use('/uploads', requireAuth, (req, res, next) => {
         return next();
     }
     return res.status(403).send('Forbidden');
-}, express.static(uploadDir));
+}, express.static(uploadDir, { dotfiles: 'ignore', index: false }));
 
-// Multer setup for uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
+const upload = secureImageUpload;
 
-// Helper to convert answer key to object
+// Helper to convert answer key to object (with XSS script-breakout neutralization)
 function getAnswerKeyJson(paper) {
     if (!paper) return '{}';
     const obj = {};
@@ -208,16 +245,16 @@ function getAnswerKeyJson(paper) {
         paper.answer_key.forEach((val, idx) => {
             if (val) obj[String(idx + 1)] = val;
         });
-        return JSON.stringify(obj);
+        return JSON.stringify(obj).replace(/</g, '\\u003c');
     }
     if (paper.answerKey instanceof Map) {
-        return JSON.stringify(Object.fromEntries(paper.answerKey));
+        return JSON.stringify(Object.fromEntries(paper.answerKey)).replace(/</g, '\\u003c');
     }
     if (typeof paper.answerKey === 'object' && paper.answerKey !== null) {
         if (typeof paper.answerKey.toObject === 'function') {
-            return JSON.stringify(paper.answerKey.toObject());
+            return JSON.stringify(paper.answerKey.toObject()).replace(/</g, '\\u003c');
         }
-        return JSON.stringify(paper.answerKey);
+        return JSON.stringify(paper.answerKey).replace(/</g, '\\u003c');
     }
     return '{}';
 }
@@ -344,9 +381,13 @@ app.get('/login', (req, res) => {
     });
 });
 
-app.post('/login', (req, res, next) => {
+app.post('/login', loginLimiter.middleware((req) => {
+    const rawUsername = String((req.body && req.body.username) || '').trim().toLowerCase();
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    return `${ip}:${rawUsername}`;
+}), (req, res, next) => {
     const returnTo = req.session ? getSafeReturnTo(req.session.returnTo) : null;
-    const rawUsername = String((req.body && req.body.username) || '').trim();
+    const rawUsername = String((req.body && req.body.username) || '').trim().toLowerCase();
 
     passport.authenticate('local', (err, user, info) => {
         if (err) return next(err);
@@ -357,10 +398,20 @@ app.post('/login', (req, res, next) => {
                 username: rawUsername
             });
         }
-        req.logIn(user, (loginErr) => {
-            if (loginErr) return next(loginErr);
-            const dest = user.role === 'admin' ? (returnTo || '/') : '/student';
-            return res.redirect(dest);
+
+        // Reset rate limiter on successful authentication
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        loginLimiter.reset(`${ip}:${rawUsername}`);
+
+        // Session Fixation Defense: regenerate session ID upon authentication
+        const savedReturnTo = returnTo;
+        req.session.regenerate((regenErr) => {
+            if (regenErr) return next(regenErr);
+            req.logIn(user, (loginErr) => {
+                if (loginErr) return next(loginErr);
+                const dest = user.role === 'admin' ? (savedReturnTo || '/') : '/student';
+                return res.redirect(dest);
+            });
         });
     })(req, res, next);
 });
@@ -395,7 +446,7 @@ app.get('/account', requireAuth, (req, res) => {
     });
 });
 
-app.post('/account/password', requireAuth, async (req, res) => {
+app.post('/account/password', requireAuth, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
         const currentPassword = String((req.body && req.body.currentPassword) || '');
         const newPassword = String((req.body && req.body.newPassword) || '');
@@ -465,7 +516,7 @@ app.get('/users/bulk-template', requireAdmin, (req, res) => {
 });
 
 function handleBulkUploadMiddleware(req, res, next) {
-    bulkSpreadsheetUpload.single('studentFile')(req, res, (err) => {
+    secureSpreadsheetUpload.single('studentFile')(req, res, (err) => {
         if (err) {
             const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Uploaded file exceeds the 5 MB limit.' : (err.message || 'Upload failed.');
             if (isApiRequest(req) || (req.originalUrl && req.originalUrl.startsWith('/users/bulk/parse'))) {
@@ -680,8 +731,11 @@ app.post('/users', requireAdmin, async (req, res) => {
     }
 });
 
-app.post('/users/:id/password', requireAdmin, async (req, res) => {
+app.post('/users/:id/password', requireAdmin, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
+        if (!isValidMongoId(req.params.id)) {
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
         const password = String((req.body && req.body.password) || '');
         if (password.length < 6) {
             return res.redirect('/users?error=' + encodeURIComponent('Password must be at least 6 characters long.'));
@@ -700,6 +754,9 @@ app.post('/users/:id/password', requireAdmin, async (req, res) => {
 
 app.post('/users/:id/delete', requireAdmin, async (req, res) => {
     try {
+        if (!isValidMongoId(req.params.id)) {
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
         const targetUser = await User.findById(req.params.id);
         if (!targetUser) {
             return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
@@ -797,6 +854,17 @@ app.post('/paper/new', requireAdmin, async (req, res) => {
         console.error('Error creating paper:', error);
         res.status(500).send('Error creating paper: ' + error.message);
     }
+});
+
+// Resource ID Sanitizer (Protects against IDOR/injection via path parameters)
+app.param('id', (req, res, next, id) => {
+    if (!isValidId(id)) {
+        if (isApiRequest(req)) {
+            return res.status(400).json({ error: 'Invalid resource identifier format.' });
+        }
+        return res.status(400).render('error', { message: 'Invalid resource identifier format.' });
+    }
+    next();
 });
 
 app.get('/paper/:id', requireAdmin, async (req, res) => {
@@ -1451,4 +1519,29 @@ app.get('/paper/:id/results/export', requireAdmin, async (req, res) => {
         console.error('Error exporting paper results:', error);
         res.status(500).send('Error exporting results: ' + error.message);
     }
+});
+
+// 404 Not Found Handler
+app.use((req, res) => {
+    if (isApiRequest(req)) {
+        return res.status(404).json({ error: 'Endpoint not found' });
+    }
+    res.status(404).render('error', { message: 'The page or resource you requested could not be found.' });
+});
+
+// Centralized Safe Error Handler (Blocks internal paths & stack trace leaks in production)
+app.use((err, req, res, next) => {
+    console.error('[Unhandled Error]', err);
+    if (res.headersSent) return next(err);
+
+    const isApi = isApiRequest(req);
+    const status = (typeof err.status === 'number' && err.status >= 400 && err.status < 600) ? err.status : 500;
+    const safeMsg = (status >= 400 && status < 500)
+        ? (err.message || 'Invalid Request')
+        : (process.env.NODE_ENV === 'production' ? 'An unexpected server error occurred.' : (err.message || 'Server Error'));
+
+    if (isApi) {
+        return res.status(status).json({ error: safeMsg });
+    }
+    return res.status(status).render('error', { message: safeMsg });
 });
