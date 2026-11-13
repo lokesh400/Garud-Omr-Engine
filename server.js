@@ -33,7 +33,7 @@ const bulkSpreadsheetUpload = multer({
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || (process.env.RENDER ? 10000 : 3000);
+const PORT = process.env.PORT || 3000;
 const SESSION_COOKIE_NAME = 'garud.sid';
 
 // Ensure upload directory exists
@@ -85,15 +85,11 @@ mongoConnectPromise
     .then(async () => {
         console.log('Connected to MongoDB');
         await ensureDefaultAdmin();
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on http://0.0.0.0:${PORT} (PORT=${PORT})`);
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
         });
     })
     .catch(err => console.error('MongoDB connection error:', err));
-
-// Health check endpoints for Render / cloud monitoring (bypasses auth)
-app.get('/healthz', (req, res) => res.status(200).send('OK'));
-app.get('/health', (req, res) => res.status(200).send('OK'));
 
 // Middleware
 app.set('view engine', 'ejs');

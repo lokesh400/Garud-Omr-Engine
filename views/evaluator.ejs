@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evaluation • <%= paper.title %>
-    </title>
+    <title>Evaluation • <%= paper.title %></title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .eval-container {
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .eval-header-split {
             display: flex;
             justify-content: space-between;
@@ -26,20 +23,15 @@
             padding: 1.15rem 1.5rem;
             box-shadow: var(--shadow-xs);
         }
-
         .eval-layout {
             display: grid;
             grid-template-columns: 1.15fr 1fr;
             gap: 1.5rem;
             align-items: start;
         }
-
         @media (max-width: 1180px) {
-            .eval-layout {
-                grid-template-columns: 1fr;
-            }
+            .eval-layout { grid-template-columns: 1fr; }
         }
-
         .canvas-card {
             background: #FFFFFF;
             border-radius: var(--radius-lg);
@@ -48,7 +40,6 @@
             border: 1px solid var(--border-color);
             position: relative;
         }
-
         .canvas-toolbar {
             background: var(--surface-subtle);
             border-bottom: 1px solid var(--border-color);
@@ -60,7 +51,6 @@
             gap: 10px;
             font-size: 0.85rem;
         }
-
         .canvas-toolbar-btn {
             background: #FFFFFF;
             color: var(--text-main);
@@ -73,13 +63,11 @@
             transition: var(--transition);
             font-family: 'Inter', sans-serif;
         }
-
         .canvas-toolbar-btn:hover {
             background: var(--surface-subtle);
             border-color: var(--primary);
             color: var(--primary);
         }
-
         .canvas-wrapper {
             position: relative;
             background: var(--surface-subtle);
@@ -88,7 +76,6 @@
             justify-content: center;
             align-items: center;
         }
-
         #canvasOutput {
             width: 100%;
             height: auto;
@@ -97,7 +84,6 @@
             border: 1px solid var(--border-color);
             background: #FFFFFF;
         }
-
         .level-badge {
             background: var(--success-light);
             color: var(--success-hover);
@@ -110,7 +96,6 @@
             align-items: center;
             gap: 5px;
         }
-
         .score-hero {
             background: var(--primary-light);
             color: var(--text-main);
@@ -120,20 +105,17 @@
             text-align: center;
             margin-bottom: 1.25rem;
         }
-
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin-bottom: 1.25rem;
         }
-
         @media (max-width: 640px) {
             .stat-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
-
         .stat-box {
             background: var(--surface-subtle);
             border: 1px solid var(--border-color);
@@ -141,50 +123,21 @@
             padding: 0.8rem 0.5rem;
             text-align: center;
         }
-
-        .stat-box .num {
-            font-size: 1.45rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            line-height: 1.1;
-        }
-
-        .stat-box .lbl {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-top: 4px;
-            letter-spacing: 0.04em;
-        }
-
+        .stat-box .num { font-size: 1.45rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+        .stat-box .lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 4px; letter-spacing: 0.04em; }
         .breakdown-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.875rem;
             font-variant-numeric: tabular-nums;
         }
-
-        .breakdown-table th,
-        .breakdown-table td {
+        .breakdown-table th, .breakdown-table td {
             padding: 9px 12px;
             border-bottom: 1px solid #F1F5F9;
             text-align: center;
         }
-
-        .breakdown-table th {
-            background: var(--surface-subtle);
-            font-weight: 600;
-            color: var(--text-muted);
-            font-size: 0.74rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .breakdown-table tr:hover td {
-            background: var(--surface-subtle);
-        }
-
+        .breakdown-table th { background: var(--surface-subtle); font-weight: 600; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .breakdown-table tr:hover td { background: var(--surface-subtle); }
         .badge {
             display: inline-block;
             padding: 2px 9px;
@@ -192,37 +145,15 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-
-        .badge-correct {
-            background: var(--success-light);
-            color: var(--success-hover);
-            border: 1px solid var(--success-border);
-        }
-
-        .badge-wrong {
-            background: var(--danger-light);
-            color: var(--danger);
-            border: 1px solid var(--danger-border);
-        }
-
-        .badge-blank {
-            background: var(--surface-subtle);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-        }
-
-        .badge-marked {
-            background: var(--primary-light);
-            color: var(--primary);
-            border: 1px solid var(--primary-border);
-        }
-
+        .badge-correct { background: var(--success-light); color: var(--success-hover); border: 1px solid var(--success-border); }
+        .badge-wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+        .badge-blank { background: var(--surface-subtle); color: var(--text-muted); border: 1px solid var(--border-color); }
+        .badge-marked { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
         .badge-multiple {
             background: var(--danger-light);
             color: var(--danger-hover);
             border: 1px solid var(--danger-border);
         }
-
         /* Clean Light Roll Number Card */
         .roll-number-card {
             background: #FFFFFF;
@@ -232,14 +163,12 @@
             margin-bottom: 1.25rem;
             box-shadow: var(--shadow-xs);
         }
-
         .roll-label-row {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-bottom: 0.75rem;
         }
-
         .roll-title {
             font-size: 0.78rem;
             font-weight: 600;
@@ -247,7 +176,6 @@
             color: var(--text-muted);
             text-transform: uppercase;
         }
-
         .roll-status-pill {
             margin-left: auto;
             font-size: 0.74rem;
@@ -259,13 +187,11 @@
             border: 1px solid var(--success-border);
             font-family: 'JetBrains Mono', monospace;
         }
-
         .roll-boxes-display {
             display: flex;
             gap: 7px;
             justify-content: center;
         }
-
         .roll-digit-box {
             width: 36px;
             height: 44px;
@@ -280,13 +206,11 @@
             font-family: 'JetBrains Mono', monospace;
             color: var(--text-muted);
         }
-
         .roll-digit-box.filled {
             border-color: var(--primary-border);
             background: var(--primary-light);
             color: var(--primary-active);
         }
-
         .roll-digit-box.unknown {
             color: var(--text-subtle);
             border-style: dashed;
@@ -313,301 +237,290 @@
                 gap: 10px;
                 margin-bottom: 1.25rem;
             }
-
-            .score-hero {
-                padding: 1.25rem 1rem;
-            }
-
-            .score-hero .score-val {
-                font-size: 2.5rem !important;
-            }
-
-            .canvas-wrapper {
-                padding: 0.75rem;
-            }
-
-            .canvas-toolbar {
-                padding: 8px 12px;
-            }
+            .score-hero { padding: 1.25rem 1rem; }
+            .score-hero .score-val { font-size: 2.5rem !important; }
+            .canvas-wrapper { padding: 0.75rem; }
+            .canvas-toolbar { padding: 8px 12px; }
         }
 
         @media (max-width: 480px) {
-            .roll-number-card {
-                padding: 0.9rem 0.75rem;
-            }
-
-            .roll-boxes-display {
-                gap: 5px;
-            }
-
-            .roll-digit-box {
-                width: 31px;
-                height: 40px;
-                font-size: 1.1rem;
-            }
-
-            .stat-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-
-            .stat-box {
-                padding: 0.7rem 0.35rem;
-            }
-
-            .stat-box .num {
-                font-size: 1.25rem;
-            }
+            .roll-number-card { padding: 0.9rem 0.75rem; }
+            .roll-boxes-display { gap: 5px; }
+            .roll-digit-box { width: 31px; height: 40px; font-size: 1.1rem; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .stat-box { padding: 0.7rem 0.35rem; }
+            .stat-box .num { font-size: 1.25rem; }
         }
 
         @media (max-width: 360px) {
-            .roll-boxes-display {
-                gap: 3px;
-            }
-
-            .roll-digit-box {
-                width: 27px;
-                height: 36px;
-                font-size: 0.95rem;
-            }
+            .roll-boxes-display { gap: 3px; }
+            .roll-digit-box { width: 27px; height: 36px; font-size: 0.95rem; }
         }
 
         @media (min-width: 1200px) {
-            .eval-layout {
-                grid-template-columns: 1.2fr 1fr;
-                gap: 1.75rem;
-            }
+            .eval-layout { grid-template-columns: 1.2fr 1fr; gap: 1.75rem; }
         }
     </style>
 </head>
-
 <body>
-    <%- include('partials/sidebar_start', { activeNav: 'evaluator' , paper: paper }) %>
-        <div class="container eval-container">
-            <div class="eval-header-split">
-                <div>
-                    <h1 style="font-size: 1.35rem; margin: 0 0 2px 0; font-weight: 700;">Evaluation Results</h1>
-                    <p style="color: var(--text-muted); margin: 0; font-size: 0.875rem;">
-                        <%= paper.title %> &middot; <%= paper.numQuestions %> Questions
-                    </p>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
-                    <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">Answer
-                        Key</a>
-                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" class="btn btn-primary btn-sm"
-                        title="View all student results and checked copies">View Results</a>
+    <%- include('partials/sidebar_start', { activeNav: 'evaluator', paper: paper }) %>
+    <div class="container eval-container">
+        <div class="eval-header-split">
+            <div>
+                <h1 style="font-size: 1.35rem; margin: 0 0 2px 0; font-weight: 700;">Evaluation Results</h1>
+                <p style="color: var(--text-muted); margin: 0; font-size: 0.875rem;">
+                    <%= paper.title %> &middot; <%= paper.numQuestions %> Questions
+                </p>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
+                <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">Answer Key</a>
+                <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" class="btn btn-primary btn-sm" title="View all student results and checked copies">View Results</a>
+            </div>
+        </div>
+
+        <div class="eval-layout">
+            <div>
+                <div class="canvas-card">
+                    <div class="canvas-toolbar">
+                        <span class="level-badge">Auto-Leveled &amp; Cropped (A4)</span>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" class="canvas-toolbar-btn" id="toggleViewBtn" onclick="toggleRawView()">View Raw Upload</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="canvasOutput"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div class="eval-layout">
-                <div>
-                    <div class="canvas-card">
-                        <div class="canvas-toolbar">
-                            <span class="level-badge">Auto-Leveled &amp; Cropped (A4)</span>
-                            <div style="display:flex; gap:8px;">
-                                <button type="button" class="canvas-toolbar-btn" id="toggleViewBtn"
-                                    onclick="toggleRawView()">View Raw Upload</button>
-                            </div>
-                        </div>
-                        <div class="canvas-wrapper">
-                            <canvas id="canvasOutput"></canvas>
-                        </div>
+            <div>
+                <div class="roll-number-card">
+                    <div class="roll-label-row">
+                        <span class="roll-title">Student Roll Number</span>
+                        <span class="roll-status-pill" id="rollStatusPill">Detecting...</span>
+                    </div>
+                    <div class="roll-boxes-display" id="rollBoxesDisplay">
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
+                        <div class="roll-digit-box unknown">-</div>
                     </div>
                 </div>
 
-                <div>
-                    <div class="roll-number-card">
-                        <div class="roll-label-row">
-                            <span class="roll-title">Student Roll Number</span>
-                            <span class="roll-status-pill" id="rollStatusPill">Detecting...</span>
+                <div class="score-hero">
+                    <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600;">Score Achieved</div>
+                    <div class="score-val" id="scoreValue" style="font-size: 3rem; font-weight: 700; margin: 0.2rem 0; font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; color: var(--primary);">0 / 0</div>
+                    <div id="scorePercentage" style="font-size: 1rem; font-weight: 600; color: var(--text-body);">0% Accuracy</div>
+                </div>
+
+                <div class="card" style="padding: 1.25rem;">
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="num" id="statCorrect" style="color: var(--success);">0</div>
+                            <div class="lbl">Correct</div>
                         </div>
-                        <div class="roll-boxes-display" id="rollBoxesDisplay">
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
-                            <div class="roll-digit-box unknown">-</div>
+                        <div class="stat-box">
+                            <div class="num" id="statWrong" style="color: var(--danger);">0</div>
+                            <div class="lbl">Wrong</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statMultiple" style="color: var(--danger-hover);">0</div>
+                            <div class="lbl">Multiple</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statAttempted" style="color: var(--primary);">0</div>
+                            <div class="lbl">Attempted</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="num" id="statBlank" style="color: var(--text-muted);">0</div>
+                            <div class="lbl">Unmarked</div>
                         </div>
                     </div>
 
-                    <div class="score-hero">
-                        <div
-                            style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600;">
-                            Score Achieved</div>
-                        <div class="score-val" id="scoreValue"
-                            style="font-size: 3rem; font-weight: 700; margin: 0.2rem 0; font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; color: var(--primary);">
-                            0 / 0</div>
-                        <div id="scorePercentage" style="font-size: 1rem; font-weight: 600; color: var(--text-body);">0%
-                            Accuracy</div>
-                    </div>
-
-                    <div class="card" style="padding: 1.25rem;">
-                        <div class="stat-grid">
-                            <div class="stat-box">
-                                <div class="num" id="statCorrect" style="color: var(--success);">0</div>
-                                <div class="lbl">Correct</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="num" id="statWrong" style="color: var(--danger);">0</div>
-                                <div class="lbl">Wrong</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="num" id="statMultiple" style="color: var(--danger-hover);">0</div>
-                                <div class="lbl">Multiple</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="num" id="statAttempted" style="color: var(--primary);">0</div>
-                                <div class="lbl">Attempted</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="num" id="statBlank" style="color: var(--text-muted);">0</div>
-                                <div class="lbl">Unmarked</div>
-                            </div>
-                        </div>
-
-                        <h4 style="margin: 1rem 0 0.6rem 0; font-size: 0.95rem; font-weight: 700;">Question Breakdown
-                        </h4>
-                        <div
-                            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                            <table class="breakdown-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Marked</th>
-                                        <th>Key</th>
-                                        <th>Verdict</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableBody"></tbody>
-                            </table>
-                        </div>
+                    <h4 style="margin: 1rem 0 0.6rem 0; font-size: 0.95rem; font-weight: 700;">Question Breakdown</h4>
+                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                        <table class="breakdown-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Marked</th>
+                                    <th>Key</th>
+                                    <th>Verdict</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Hidden source image -->
-        <img id="uploadedImage" src="<%= imagePath %>"
-            style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
+    <!-- Hidden source image -->
+    <img id="uploadedImage" src="<%= imagePath %>" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
 
-        <script>
-            const answerKey = <% - answerKey || '{}' %>;
-            const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
-            const img = document.getElementById('uploadedImage');
-            const canvas = document.getElementById('canvasOutput');
-            const ctx = canvas.getContext('2d');
-            const evalStatus = document.getElementById('evalStatus');
-            const toggleViewBtn = document.getElementById('toggleViewBtn');
+    <script>
+        const answerKey = <%- answerKey || '{}' %>;
+        const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+        const img = document.getElementById('uploadedImage');
+        const canvas = document.getElementById('canvasOutput');
+        const ctx = canvas.getContext('2d');
+        const evalStatus = document.getElementById('evalStatus');
+        const toggleViewBtn = document.getElementById('toggleViewBtn');
 
-            let rawCanvas = document.createElement('canvas');
-            let rawCtx = rawCanvas.getContext('2d');
-            let leveledCanvas = document.createElement('canvas');
-            let leveledCtx = leveledCanvas.getContext('2d');
-            let showingRaw = false;
+        let rawCanvas = document.createElement('canvas');
+        let rawCtx = rawCanvas.getContext('2d');
+        let leveledCanvas = document.createElement('canvas');
+        let leveledCtx = leveledCanvas.getContext('2d');
+        let showingRaw = false;
 
-            const TARGET_W = 1000;
-            const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
+        const TARGET_W = 1000;
+        const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
 
-            // Measured Exact Ratios from Rendered A4 Sheet
-            const U_START = 0.061846;
-            const V_START = 0.256331;
-            const U_BUBBLE_STEP = 0.028042;
-            const V_ROW_STEP = 0.018233;
-            const U_COL_STEP = 0.201332;
-            const QUESTIONS_PER_COL = 40;
-            const OPTIONS = ['A', 'B', 'C', 'D'];
+        // Measured Exact Ratios from Rendered A4 Sheet
+        const U_START = 0.061846;
+        const V_START = 0.256331;
+        const U_BUBBLE_STEP = 0.028042;
+        const V_ROW_STEP = 0.018233;
+        const U_COL_STEP = 0.201332;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
 
-            // Roll Number Exact Ratios
-            const U_ROLL_START = 0.619879;
-            const V_ROLL_START = 0.058644;
-            const U_ROLL_COL_STEP = 0.026640;
-            const V_ROLL_ROW_STEP = 0.018233;
+        // Roll Number Exact Ratios
+        const U_ROLL_START = 0.619879;
+        const V_ROLL_START = 0.058644;
+        const U_ROLL_COL_STEP = 0.026640;
+        const V_ROLL_ROW_STEP = 0.018233;
 
-            let _evalStarted = false;
-            function initEvaluator() {
-                if (_evalStarted) return;
-                if (!img.complete || img.naturalWidth === 0) {
-                    setTimeout(initEvaluator, 100);
-                    return;
-                }
-                _evalStarted = true;
-
-                const W = img.naturalWidth;
-                const H = img.naturalHeight;
-                rawCanvas.width = W;
-                rawCanvas.height = H;
-                rawCtx.drawImage(img, 0, 0);
-
-                // Auto-detect 4 corner square markers
-                const corners = autoDetectCorners(rawCtx, W, H);
-
-                // Warp & level into the flat upright A4 canvas
-                warpAndEvaluate(corners, W, H);
+        function initEvaluator() {
+            if (!img.complete || img.naturalWidth === 0) {
+                setTimeout(initEvaluator, 100);
+                return;
             }
 
-            function toggleRawView() {
-                showingRaw = !showingRaw;
-                if (showingRaw) {
-                    canvas.width = rawCanvas.width;
-                    canvas.height = rawCanvas.height;
-                    ctx.drawImage(rawCanvas, 0, 0);
-                    toggleViewBtn.textContent = 'View Leveled & Cropped';
-                } else {
-                    canvas.width = leveledCanvas.width;
-                    canvas.height = leveledCanvas.height;
-                    ctx.drawImage(leveledCanvas, 0, 0);
-                    toggleViewBtn.textContent = 'View Raw Upload';
-                }
-            }
+            const W = img.naturalWidth;
+            const H = img.naturalHeight;
+            rawCanvas.width = W;
+            rawCanvas.height = H;
+            rawCtx.drawImage(img, 0, 0);
 
-            function orderCorners(pts) {
+            // Auto-detect 4 corner square markers
+            const corners = autoDetectCorners(rawCtx, W, H);
+
+            // Warp & level into the flat upright A4 canvas
+            warpAndEvaluate(corners, W, H);
+        }
+
+        function toggleRawView() {
+            showingRaw = !showingRaw;
+            if (showingRaw) {
+                canvas.width = rawCanvas.width;
+                canvas.height = rawCanvas.height;
+                ctx.drawImage(rawCanvas, 0, 0);
+                toggleViewBtn.textContent = 'View Leveled & Cropped';
+            } else {
+                canvas.width = leveledCanvas.width;
+                canvas.height = leveledCanvas.height;
+                ctx.drawImage(leveledCanvas, 0, 0);
+                toggleViewBtn.textContent = 'View Raw Upload';
+            }
+        }
+
+                function orderCorners(pts) {
             if (!pts || pts.length !== 4) return pts;
-            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) * 0.25;
-            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) * 0.25;
-            const sorted = pts.map(p => ({
-                orig: p,
+            let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
+            let minSum = pts[0].x + pts[0].y, maxSum = minSum;
+            let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
+
+            for (let i = 1; i < pts.length; i++) {
+                const p = pts[i];
+                const sum = p.x + p.y;
+                const diff = p.x - p.y;
+                if (sum < minSum) { minSum = sum; tl = p; }
+                if (sum > maxSum) { maxSum = sum; br = p; }
+                if (diff > maxDiff) { maxDiff = diff; tr = p; }
+                if (diff < minDiff) { minDiff = diff; bl = p; }
+            }
+
+            const unique = new Set([tl, tr, br, bl]);
+            if (unique.size === 4) {
+                return [tl, tr, br, bl];
+            }
+
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+            const sorted = [...pts].map(p => ({
+                x: p.x,
+                y: p.y,
                 angle: Math.atan2(p.y - cy, p.x - cx)
             })).sort((a, b) => a.angle - b.angle);
-            return [sorted[0].orig, sorted[1].orig, sorted[2].orig, sorted[3].orig];
+
+            let minAngleDiff = Infinity;
+            let tlIdx = 0;
+            const targetAngle = -2.35619;
+            sorted.forEach((p, idx) => {
+                let diff = Math.abs(p.angle - targetAngle);
+                if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                if (diff < minAngleDiff) {
+                    minAngleDiff = diff;
+                    tlIdx = idx;
+                }
+            });
+
+            return [
+                sorted[tlIdx],
+                sorted[(tlIdx + 1) % 4],
+                sorted[(tlIdx + 2) % 4],
+                sorted[(tlIdx + 3) % 4]
+            ].map(p => ({ x: p.x, y: p.y }));
         }
 
         function getPerspectiveTransform(src, dst) {
-                const A = [], B = [];
-                for (let i = 0; i < 4; i++) {
-                    const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
-                    A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
-                    A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
-                }
-                const n = 8;
-                for (let i = 0; i < n; i++) {
-                    let maxRow = i;
-                    for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
-                    [A[i], A[maxRow]] = [A[maxRow], A[i]];[B[i], B[maxRow]] = [B[maxRow], B[i]];
-                    const pivot = A[i][i];
-                    if (Math.abs(pivot) < 1e-10) return null;
-                    for (let j = i; j < n; j++) A[i][j] /= pivot;
-                    B[i] /= pivot;
-                    for (let k = 0; k < n; k++) {
-                        if (k !== i) {
-                            const factor = A[k][i];
-                            for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
-                            B[k] -= factor * B[i];
-                        }
+            const A = [], B = [];
+            for (let i = 0; i < 4; i++) {
+                const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
+            }
+            const n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                [A[i], A[maxRow]] = [A[maxRow], A[i]]; [B[i], B[maxRow]] = [B[maxRow], B[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot) < 1e-10) return null;
+                for (let j = i; j < n; j++) A[i][j] /= pivot;
+                B[i] /= pivot;
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = A[k][i];
+                        for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                        B[k] -= factor * B[i];
                     }
                 }
-                return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
             }
+            return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
+        }
 
-            function detectLiveCorners(ctx, sw, sh) {
-            const imgData = ctx.getImageData(0, 0, sw, sh);
+        function autoDetectCorners(ctx, W, H) {
+            // Work on downscaled canvas for fast and robust analysis
+            const procW = 500;
+            const procH = Math.max(1, Math.round(H * (procW / W)));
+            const procCanvas = document.createElement('canvas');
+            procCanvas.width = procW;
+            procCanvas.height = procH;
+            const procCtx = procCanvas.getContext('2d');
+            procCtx.drawImage(ctx.canvas, 0, 0, procW, procH);
+
+            const imgData = procCtx.getImageData(0, 0, procW, procH);
             const data = imgData.data;
-            const total = sw * sh;
+            const total = procW * procH;
 
-            // 1. Grayscale & Histogram
             const gray = new Uint8Array(total);
             const hist = new Int32Array(256);
             let pIdx = 0;
@@ -617,10 +530,9 @@
                 hist[g]++;
             }
 
-            // 2. Global Otsu Threshold
             let sum = 0;
             for (let i = 0; i < 256; i++) sum += i * hist[i];
-            let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 110;
+            let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
             for (let i = 0; i < 256; i++) {
                 wB += hist[i];
                 if (wB === 0) continue;
@@ -629,21 +541,129 @@
                 sumB += i * hist[i];
                 const diff = (sumB / wB) - ((sum - sumB) / wF);
                 const v = wB * wF * diff * diff;
-                if (v > maxVar) { maxVar = v; otsuThresh = i + 1; }
+                if (v > maxVar) { maxVar = v; thresh = i + 1; }
             }
-            otsuThresh = Math.max(40, Math.min(otsuThresh, 175));
-
-            const threshLevels = [
-                otsuThresh,
-                Math.min(205, Math.round(otsuThresh * 1.25 + 10)),
-                Math.max(35, Math.round(otsuThresh * 0.75 - 10))
-            ];
+            thresh = Math.max(40, Math.min(thresh, 175));
 
             const visited = new Uint8Array(total);
+            const candidates = [];
             const queue = new Int32Array(total);
 
-            function evaluateQuad(ordered) {
+            for (let py = 4; py < procH - 4; py += 2) {
+                for (let px = 4; px < procW - 4; px += 2) {
+                    const startP = py * procW + px;
+                    if (visited[startP] || gray[startP] >= thresh) continue;
+
+                    let count = 0, sumX = 0, sumY = 0;
+                    let minX = px, maxX = px, minY = py, maxY = py;
+                    let qHead = 0, qTail = 0;
+                    queue[qTail++] = startP;
+                    visited[startP] = 1;
+
+                    while (qHead < qTail) {
+                        if (count > 3000) break;
+                        const cur = queue[qHead++];
+                        const cy = Math.floor(cur / procW);
+                        const cx = cur % procW;
+                        count++;
+                        sumX += cx;
+                        sumY += cy;
+                        if (cx < minX) minX = cx;
+                        if (cx > maxX) maxX = cx;
+                        if (cy < minY) minY = cy;
+                        if (cy > maxY) maxY = cy;
+
+                        const neighbors = [cur - 1, cur + 1, cur - procW, cur + procW];
+                        for (let k = 0; k < 4; k++) {
+                            const nb = neighbors[k];
+                            if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                visited[nb] = 1;
+                                queue[qTail++] = nb;
+                            }
+                        }
+                    }
+
+                    const bw = maxX - minX + 1;
+                    const bh = maxY - minY + 1;
+                    const aspect = bw / bh;
+                    const density = count / (bw * bh);
+
+                    if (bw >= 5 && bh >= 5 && bw <= 45 && bh <= 45 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.45 && count >= 14 && count <= 1200) {
+                        const bx = sumX / count;
+                        const by = sumY / count;
+                        const blobR = Math.max(bw, bh) / 2;
+
+                        // Inward isolation semi-ring check (immune to dark desk)
+                        const dirX = Math.sign((procW / 2) - bx);
+                        const dirY = Math.sign((procH / 2) - by);
+                        const rIn = Math.round(blobR * 1.3);
+                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.5));
+                        let darkPixels = 0, totalRing = 0;
+
+                        for (let dy = -rOut; dy <= rOut; dy += 2) {
+                            for (let dx = -rOut; dx <= rOut; dx += 2) {
+                                const d2 = dx * dx + dy * dy;
+                                if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                    if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
+                                        const gx = Math.round(bx + dx);
+                                        const gy = Math.round(by + dy);
+                                        if (gx >= 0 && gx < procW && gy >= 0 && gy < procH) {
+                                            totalRing++;
+                                            if (gray[gy * procW + gx] < thresh) darkPixels++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
+                        if (ringDarkRatio > 0.20) continue;
+
+                        // Inward white path check
+                        let whiteInwardCount = 0;
+                        const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
+                        for (let d of testDists) {
+                            const ix = Math.round(bx + dirX * d);
+                            const iy = Math.round(by + dirY * d);
+                            if (ix >= 0 && ix < procW && iy >= 0 && iy < procH) {
+                                if (gray[iy * procW + ix] >= (thresh - 15)) whiteInwardCount++;
+                            }
+                        }
+                        if (whiteInwardCount < 2) continue;
+
+                        const distFromCenter = Math.hypot(bx - procW / 2, by - procH / 2);
+                        const score = (density * 3.0) + (distFromCenter / (procW * 0.5) * 2.0) - (ringDarkRatio * 8.0);
+
+                        candidates.push({
+                            x: bx,
+                            y: by,
+                            bw,
+                            bh,
+                            count,
+                            score
+                        });
+                    }
+                }
+            }
+
+            // Fallback default corners if detection fails
+            const defaultCorners = [
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+            ];
+
+            if (candidates.length < 4) return defaultCorners;
+
+            candidates.sort((a, b) => b.score - a.score);
+            const topCandidates = candidates.slice(0, 10);
+            const n = topCandidates.length;
+            let bestQuad = null;
+
+            function evaluateQuadCandidate(ordered) {
                 const [pTL, pTR, pBR, pBL] = ordered;
+
                 const pts = [pTL, pTR, pBR, pBL];
                 for (let i = 0; i < 4; i++) {
                     const a = pts[i];
@@ -660,841 +680,680 @@
 
                 const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
                 const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                if (wRatio < 0.45 || hRatio < 0.45) return null;
+                if (wRatio < 0.50 || hRatio < 0.50) return null;
 
-                const avgW = (wTop + wBot) * 0.5;
-                const avgH = (hLeft + hRight) * 0.5;
+                const avgW = (wTop + wBot) / 2;
+                const avgH = (hLeft + hRight) / 2;
                 const aspect = avgH / avgW;
-                if (aspect < 0.85 || aspect > 2.30) return null;
+                if (aspect < 1.00 || aspect > 2.10) return null;
 
                 const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
                 const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.50) return null;
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.55) return null;
 
                 const quadArea = 0.5 * Math.abs(
-                    (pTL.x * pTR.y - pTL.y * pTR.x) + (pTR.x * pBR.y - pTR.y * pBR.x) +
-                    (pBR.x * pBL.y - pBR.y * pBL.x) + (pBL.x * pTL.y - pBL.y * pTL.x)
+                    (pTL.x * pTR.y - pTL.y * pTR.x) +
+                    (pTR.x * pBR.y - pTR.y * pBR.x) +
+                    (pBR.x * pBL.y - pBR.y * pBL.x) +
+                    (pBL.x * pTL.y - pBL.y * pTL.x)
                 );
-                if (quadArea < sw * sh * 0.06) return null;
+                if (quadArea < procW * procH * 0.08) return null;
 
                 const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
                 const minC = Math.min(...counts);
                 const maxC = Math.max(...counts);
-                if (minC / maxC < 0.10) return null;
+                if (minC / maxC < 0.12) return null;
 
-                // Center of quad must be white paper
-                const midX = Math.round((pTL.x + pTR.x + pBR.x + pBL.x) * 0.25);
-                const midY = Math.round((pTL.y + pTR.y + pBR.y + pBL.y) * 0.25);
-                if (gray[midY * sw + midX] < (otsuThresh - 15)) return null;
+                const aspectDev = Math.abs(aspect - 1.461);
+                const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
 
-                const aspectDev = Math.abs(aspect - 1.414);
-                const score = quadArea * (1.0 - aspectDev * 0.3) * wRatio * hRatio;
                 return { ordered, score };
             }
 
-            let bestQuad = null;
-
-            for (let thresh of threshLevels) {
-                visited.fill(0);
-                const candidates = [];
-
-                for (let py = 4; py < sh - 4; py += 2) {
-                    const rowOff = py * sw;
-                    for (let px = 4; px < sw - 4; px += 2) {
-                        const startP = rowOff + px;
-                        if (visited[startP] || gray[startP] >= thresh) continue;
-
-                        let count = 0, sumX = 0, sumY = 0;
-                        let minX = px, maxX = px, minY = py, maxY = py;
-                        let qHead = 0, qTail = 0;
-                        queue[qTail++] = startP;
-                        visited[startP] = 1;
-
-                        while (qHead < qTail) {
-                            if (count > 1200) break;
-                            const cur = queue[qHead++];
-                            const cy = (cur / sw) | 0;
-                            const cx = cur - cy * sw;
-                            count++;
-                            sumX += cx;
-                            sumY += cy;
-                            if (cx < minX) minX = cx;
-                            if (cx > maxX) maxX = cx;
-                            if (cy < minY) minY = cy;
-                            if (cy > maxY) maxY = cy;
-
-                            const nbs = [cur - 1, cur + 1, cur - sw, cur + sw];
-                            for (let nb of nbs) {
-                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh && qTail < total - 2) {
-                                    visited[nb] = 1;
-                                    queue[qTail++] = nb;
-                                }
-                            }
-                        }
-
-                        const bw = maxX - minX + 1;
-                        const bh = maxY - minY + 1;
-                        const aspect = bw / bh;
-                        const density = count / (bw * bh);
-
-                        if (bw >= 3 && bh >= 3 && bw <= 50 && bh <= 50 && aspect >= 0.50 && aspect <= 2.00 && density >= 0.38 && count >= 8) {
-                            const bx = sumX / count;
-                            const by = sumY / count;
-                            const blobR = Math.max(bw, bh) * 0.5;
-
-                            // INWARD ISOLATION CHECK:
-                            // Samples facing inward toward the center of the sheet.
-                            // Completely immune to dark desks outside the paper boundary!
-                            // Rejects all bubbles & text, which are surrounded by other bubbles/text!
-                            const dirX = Math.sign(sw * 0.5 - bx);
-                            const dirY = Math.sign(sh * 0.5 - by);
-                            const rIn = Math.round(blobR * 1.3);
-                            const rOut = Math.max(12, Math.round(blobR * 3.0));
-                            let darkPixels = 0, totalRing = 0;
-
-                            for (let dy = -rOut; dy <= rOut; dy += 2) {
-                                for (let dx = -rOut; dx <= rOut; dx += 2) {
-                                    const d2 = dx * dx + dy * dy;
-                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
-                                        if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
-                                            const gx = Math.round(bx + dx);
-                                            const gy = Math.round(by + dy);
-                                            if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
-                                                totalRing++;
-                                                if (gray[gy * sw + gx] < thresh) darkPixels++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
-                            if (ringDarkRatio > 0.20) continue;
-
-                            // Inward white paper margin confirmation
-                            let whiteInwardCount = 0;
-                            const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
-                            for (let d of testDists) {
-                                const ix = Math.round(bx + dirX * d);
-                                const iy = Math.round(by + dirY * d);
-                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
-                                    if (gray[iy * sw + ix] >= (thresh - 15)) whiteInwardCount++;
-                                }
-                            }
-                            if (whiteInwardCount < 2) continue;
-
-                            const distFromCenter = Math.hypot(bx - sw * 0.5, by - sh * 0.5);
-                            const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.5) - (ringDarkRatio * 8.0);
-                            candidates.push({ x: bx, y: by, bw, bh, count, score });
-                        }
-                    }
-                }
-
-                if (candidates.length < 4) continue;
-                candidates.sort((a, b) => b.score - a.score);
-                const topCandidates = candidates.slice(0, 10);
-                const n = topCandidates.length;
-
-                for (let i = 0; i < n; i++) {
-                    for (let j = i + 1; j < n; j++) {
-                        for (let k = j + 1; k < n; k++) {
-                            for (let l = k + 1; l < n; l++) {
-                                const ordered = orderCorners([topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]]);
-                                const res = evaluateQuad(ordered);
-                                if (res && (!bestQuad || res.score > bestQuad.score)) {
-                                    bestQuad = res;
-                                }
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    for (let k = j + 1; k < n; k++) {
+                        for (let l = k + 1; l < n; l++) {
+                            const quad4 = [topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]];
+                            const ordered = orderCorners(quad4);
+                            if (!ordered) continue;
+                            const res = evaluateQuadCandidate(ordered);
+                            if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                bestQuad = res;
                             }
                         }
                     }
                 }
-                if (bestQuad) break;
             }
 
-            if (!bestQuad) return null;
-            return bestQuad.ordered.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
-        }
+            if (!bestQuad) return defaultCorners;
 
-        
-        function autoDetectCorners(ctx, W, H) {
-            const defaultCorners = [
-                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
-                { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
-                { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
-                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
-            ];
-
-            const fastScale = Math.min(1, 560 / Math.max(W, H));
-            const sw = Math.max(1, Math.round(W * fastScale));
-            const sh = Math.max(1, Math.round(H * fastScale));
-
-            const procCanvas = document.createElement('canvas');
-            procCanvas.width = sw;
-            procCanvas.height = sh;
-            const procCtx = procCanvas.getContext('2d');
-            procCtx.drawImage(ctx.canvas, 0, 0, sw, sh);
-
-            const raw = detectLiveCorners(procCtx, sw, sh);
-            if (!raw) return defaultCorners;
-
-            const scaleX = W / sw;
-            const scaleY = H / sh;
-            return raw.map(p => ({
+            // Scale coordinates back to original image dimensions (W, H)
+            const scaleX = W / procW;
+            const scaleY = H / procH;
+            return bestQuad.ordered.map(p => ({
                 x: Math.round(p.x * scaleX),
                 y: Math.round(p.y * scaleY)
             }));
         }
 
         function warpAndEvaluate(corners, W, H) {
-                leveledCanvas.width = TARGET_W;
-                leveledCanvas.height = TARGET_H;
+            leveledCanvas.width = TARGET_W;
+            leveledCanvas.height = TARGET_H;
 
-                const defaultCorners = [
-                    { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
-                    { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
-                    { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
-                    { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
-                ];
-                const pts = (corners && corners.length === 4) ? corners : defaultCorners;
-                const orderedCorners = orderCorners(pts) || defaultCorners;
+            const orderedCorners = orderCorners(corners);
 
-                const srcImgData = rawCtx.getImageData(0, 0, W, H);
-                const srcData = srcImgData.data;
-                const src32 = new Uint32Array(srcImgData.data.buffer);
+            const srcImgData = rawCtx.getImageData(0, 0, W, H);
+            const srcData = srcImgData.data;
+            const src32 = new Uint32Array(srcImgData.data.buffer);
 
-                // Guarded Sub-Pixel Flood-Fill Centroid Refinement (Immune to dark-desk bleed!)
-                const approxW = (Math.hypot(orderedCorners[1].x - orderedCorners[0].x, orderedCorners[1].y - orderedCorners[0].y) +
-                    Math.hypot(orderedCorners[2].x - orderedCorners[3].x, orderedCorners[2].y - orderedCorners[3].y)) * 0.5;
-                const expMarkerSide = Math.max(4, approxW * (20 / 713.22));
-                const qcx = (orderedCorners[0].x + orderedCorners[1].x + orderedCorners[2].x + orderedCorners[3].x) * 0.25;
-                const qcy = (orderedCorners[0].y + orderedCorners[1].y + orderedCorners[2].y + orderedCorners[3].y) * 0.25;
+            // Sub-Pixel Flood-Fill Centroid Refinement
+            function refineCornerSubpixel(pt) {
+                const searchR = Math.max(12, Math.min(22, Math.round(Math.min(W, H) * 0.018)));
+                const minX = Math.max(0, Math.round(pt.x - searchR));
+                const maxX = Math.min(W - 1, Math.round(pt.x + searchR));
+                const minY = Math.max(0, Math.round(pt.y - searchR));
+                const maxY = Math.min(H - 1, Math.round(pt.y + searchR));
 
-                function refineCornerSubpixel(pt) {
-                    const vx = qcx - pt.x, vy = qcy - pt.y;
-                    const vLen = Math.hypot(vx, vy) || 1;
-                    const ux = vx / vLen, uy = vy / vLen;
-
-                    const paperSamples = [];
-                    for (let mult = 1.2; mult <= 2.4; mult += 0.3) {
-                        const px = Math.round(pt.x + ux * expMarkerSide * mult);
-                        const py = Math.round(pt.y + uy * expMarkerSide * mult);
-                        if (px >= 0 && px < W && py >= 0 && py < H) {
-                            const idx = (py * W + px) * 4;
-                            paperSamples.push((srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8);
+                let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
+                for (let y = minY; y <= maxY; y++) {
+                    const rowIdx = y * W;
+                    for (let x = minX; x <= maxX; x++) {
+                        const idx = (rowIdx + x) * 4;
+                        const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
+                        if (lum < minLum) {
+                            minLum = lum;
+                            seedX = x;
+                            seedY = y;
                         }
                     }
-                    paperSamples.sort((a, b) => a - b);
-                    const localWhite = paperSamples.length ? paperSamples[Math.floor(paperSamples.length * 0.75)] : 220;
+                }
 
-                    const seedR = Math.max(5, Math.round(expMarkerSide * 0.85));
-                    const minX = Math.max(0, Math.round(pt.x - seedR));
-                    const maxX = Math.min(W - 1, Math.round(pt.x + seedR));
-                    const minY = Math.max(0, Math.round(pt.y - seedR));
-                    const maxY = Math.min(H - 1, Math.round(pt.y + seedR));
+                if (minLum > 140) return pt;
 
-                    let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
-                    for (let y = minY; y <= maxY; y++) {
-                        const rowIdx = y * W;
-                        for (let x = minX; x <= maxX; x++) {
-                            const idx = (rowIdx + x) * 4;
-                            const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
-                            if (lum < minLum) {
-                                minLum = lum;
-                                seedX = x;
-                                seedY = y;
-                            }
-                        }
-                    }
+                const markerThresh = minLum + 45;
+                const maxR = Math.max(18, searchR * 1.6);
+                const maxR2 = maxR * maxR;
+                const winDim = Math.round(maxR * 2) + 3;
+                const visited = new Uint8Array(winDim * winDim);
+                const ox = seedX - Math.round(maxR) - 1;
+                const oy = seedY - Math.round(maxR) - 1;
 
-                    if (localWhite - minLum < 35) return pt;
+                const qX = new Int32Array(4096);
+                const qY = new Int32Array(4096);
+                let qHead = 0, qTail = 0;
 
-                    const markerThresh = Math.min(minLum + 55, (minLum + localWhite) * 0.5);
-                    const maxR = Math.max(10, Math.round(expMarkerSide * 1.4));
-                    const maxR2 = maxR * maxR;
-                    const maxAllowedCount = Math.max(60, Math.round(expMarkerSide * expMarkerSide * 3.0));
-                    const winDim = maxR * 2 + 3;
-                    const visited = new Uint8Array(winDim * winDim);
-                    const ox = seedX - maxR - 1;
-                    const oy = seedY - maxR - 1;
+                const startLx = seedX - ox;
+                const startLy = seedY - oy;
+                visited[startLy * winDim + startLx] = 1;
+                qX[qTail] = seedX;
+                qY[qTail] = seedY;
+                qTail++;
 
-                    const qX = new Int32Array(maxAllowedCount + 32);
-                    const qY = new Int32Array(maxAllowedCount + 32);
-                    let qHead = 0, qTail = 0;
+                let sumX = 0, sumY = 0, count = 0;
 
-                    const startLx = seedX - ox;
-                    const startLy = seedY - oy;
-                    visited[startLy * winDim + startLx] = 1;
-                    qX[qTail] = seedX;
-                    qY[qTail] = seedY;
-                    qTail++;
+                while (qHead < qTail && count < 3500) {
+                    const cx = qX[qHead];
+                    const cy = qY[qHead];
+                    qHead++;
 
-                    let sumX = 0, sumY = 0, count = 0;
-                    let bMinX = seedX, bMaxX = seedX, bMinY = seedY, bMaxY = seedY;
+                    sumX += cx;
+                    sumY += cy;
+                    count++;
 
-                    while (qHead < qTail && count <= maxAllowedCount) {
-                        const cx = qX[qHead];
-                        const cy = qY[qHead];
-                        qHead++;
+                    const neighbors = [
+                        [cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]
+                    ];
+                    for (let k = 0; k < 4; k++) {
+                        const nx = neighbors[k][0];
+                        const ny = neighbors[k][1];
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
 
-                        sumX += cx;
-                        sumY += cy;
-                        count++;
-                        if (cx < bMinX) bMinX = cx;
-                        if (cx > bMaxX) bMaxX = cx;
-                        if (cy < bMinY) bMinY = cy;
-                        if (cy > bMaxY) bMaxY = cy;
+                        const dx = nx - seedX;
+                        const dy = ny - seedY;
+                        if (dx * dx + dy * dy > maxR2) continue;
 
-                        const neighbors = [
-                            [cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]
-                        ];
-                        for (let k = 0; k < 4; k++) {
-                            const nx = neighbors[k][0];
-                            const ny = neighbors[k][1];
-                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                        const lx = nx - ox;
+                        const ly = ny - oy;
+                        if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
+                        const vIdx = ly * winDim + lx;
+                        if (visited[vIdx]) continue;
+                        visited[vIdx] = 1;
 
-                            const dx = nx - seedX;
-                            const dy = ny - seedY;
-                            if (dx * dx + dy * dy > maxR2) continue;
-
-                            const lx = nx - ox;
-                            const ly = ny - oy;
-                            if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
-                            const vIdx = ly * winDim + lx;
-                            if (visited[vIdx]) continue;
-                            visited[vIdx] = 1;
-
-                            const pIdx = (ny * W + nx) * 4;
-                            const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
-                            if (lum < markerThresh && qTail < maxAllowedCount + 20) {
+                        const pIdx = (ny * W + nx) * 4;
+                        const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
+                        if (lum < markerThresh) {
+                            if (qTail < 4090) {
                                 qX[qTail] = nx;
                                 qY[qTail] = ny;
                                 qTail++;
                             }
                         }
                     }
-
-                    if (count < 9 || count > maxAllowedCount) return pt;
-                    const bw = bMaxX - bMinX + 1, bh = bMaxY - bMinY + 1;
-                    const aspect = bw / bh;
-                    if (aspect < 0.45 || aspect > 2.2) return pt;
-                    const rx = sumX / count, ry = sumY / count;
-                    if (Math.hypot(rx - pt.x, ry - pt.y) > Math.max(6, expMarkerSide * 0.9)) return pt;
-                    return { x: rx, y: ry };
                 }
 
-                const refinedCorners = orderedCorners.map(p => refineCornerSubpixel(p));
-
-                // Warp and crop strictly about the 4 detected corners
-                const dstRectCorners = [
-                    { x: 0, y: 0 },
-                    { x: TARGET_W, y: 0 },
-                    { x: TARGET_W, y: TARGET_H },
-                    { x: 0, y: TARGET_H }
-                ];
-
-                const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
-                if (!H_mat) {
-                    evalStatus.textContent = 'Invalid Corner Geometry';
-                    evalStatus.style.background = '#FEF2F2';
-                    evalStatus.style.color = '#B91C1C';
-                    return;
+                if (count >= 16) {
+                    return { x: sumX / count, y: sumY / count };
                 }
-
-                const dstImgData = leveledCtx.createImageData(TARGET_W, TARGET_H);
-                const dst32 = new Uint32Array(dstImgData.data.buffer);
-
-                const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
-                const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
-                const h6 = H_mat[6], h7 = H_mat[7];
-
-                let dstIdx = 0;
-                for (let y = 0; y < TARGET_H; y++) {
-                    const wx = h1 * y + h2;
-                    const wy = h4 * y + h5;
-                    const wz = h7 * y + 1;
-                    for (let x = 0; x < TARGET_W; x++) {
-                        const z = 1 / (h6 * x + wz);
-                        const sx = Math.round((h0 * x + wx) * z);
-                        const sy = Math.round((h3 * x + wy) * z);
-                        if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                            dst32[dstIdx] = src32[sy * W + sx];
-                        } else {
-                            dst32[dstIdx] = 0xFFFFFFFF;
-                        }
-                        dstIdx++;
-                    }
-                }
-
-                leveledCtx.putImageData(dstImgData, 0, 0);
-
-                // Capture CLEAN rectified sheet BEFORE painting checking circles so answer key updates stay recheckable
-                try {
-                    window.cleanLeveledImageData = leveledCanvas.toDataURL('image/jpeg', 0.78);
-                } catch (e) {
-                    window.cleanLeveledImageData = leveledCanvas.toDataURL();
-                }
-
-                // Grade bubbles on the leveled cropped sheet
-                evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
-
-                // Draw leveled sheet to main canvas
-                canvas.width = TARGET_W;
-                canvas.height = TARGET_H;
-                ctx.drawImage(leveledCanvas, 0, 0);
-
-                evalStatus.textContent = 'Leveled & Graded';
-                evalStatus.style.background = '#F0FDF4';
-                evalStatus.style.color = '#15803D';
+                return pt;
             }
 
-            // Evaluate bubbles and roll number on the flat, leveled A4 sheet
-            // Precision Annular Moat (4.3..7.4px) & Normalized Local Paper Baseline OMR Evaluator
-            function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
-                const imgData = ctx.getImageData(0, 0, W, H);
-                const data = imgData.data;
+            const refinedCorners = orderedCorners.map(p => refineCornerSubpixel(p));
 
-                function getGray(x, y) {
-                    if (x < 0 || x >= W || y < 0 || y >= H) return 255;
-                    const idx = (y * W + x) * 4;
-                    return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+            // Warp and crop strictly about the 4 detected corners
+            const dstRectCorners = [
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
+            ];
+
+            const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
+
+            const dstImgData = leveledCtx.createImageData(TARGET_W, TARGET_H);
+            const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+            const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+            const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+            const h6 = H_mat[6], h7 = H_mat[7];
+
+            let dstIdx = 0;
+            for (let y = 0; y < TARGET_H; y++) {
+                const wx = h1 * y + h2;
+                const wy = h4 * y + h5;
+                const wz = h7 * y + 1;
+                for (let x = 0; x < TARGET_W; x++) {
+                    const z = 1 / (h6 * x + wz);
+                    const sx = Math.round((h0 * x + wx) * z);
+                    const sy = Math.round((h3 * x + wy) * z);
+                    if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                        dst32[dstIdx] = src32[sy * W + sx];
+                    } else {
+                        dst32[dstIdx] = 0xFFFFFFFF;
+                    }
+                    dstIdx++;
                 }
+            }
 
-                function sampleDisk(cx, cy, r) {
-                    let sum = 0, count = 0;
-                    const r2 = r * r;
-                    const ir = Math.ceil(r);
-                    for (let dy = -ir; dy <= ir; dy++) {
-                        for (let dx = -ir; dx <= ir; dx++) {
-                            if (dx * dx + dy * dy <= r2) {
-                                sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
-                                count++;
-                            }
+            leveledCtx.putImageData(dstImgData, 0, 0);
+
+            // Capture CLEAN rectified sheet BEFORE painting checking circles so answer key updates stay recheckable
+            try {
+                window.cleanLeveledImageData = leveledCanvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                window.cleanLeveledImageData = leveledCanvas.toDataURL();
+            }
+
+            // Grade bubbles on the leveled cropped sheet
+            evaluateLeveledSheet(leveledCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
+
+            // Draw leveled sheet to main canvas
+            canvas.width = TARGET_W;
+            canvas.height = TARGET_H;
+            ctx.drawImage(leveledCanvas, 0, 0);
+
+            evalStatus.textContent = 'Leveled & Graded';
+            evalStatus.style.background = '#F0FDF4';
+            evalStatus.style.color = '#15803D';
+        }
+
+        // Evaluate bubbles and roll number on the flat, leveled A4 sheet
+                // High-Precision Annular Moat & Interior OMR Evaluator
+        // Distinguishes printed letters/digits from authentic student shading by sampling
+        // both the annular moat (4.0 <= r <= 7.2px, where unfilled bubbles are pure white paper)
+        // and full interior (r <= 7.2px), with adaptive row-level baseline contrast.
+        function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+            const imgData = ctx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            function getGray(x, y) {
+                if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                const idx = (y * W + x) * 4;
+                return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+            }
+
+            function sampleDisk(cx, cy, r) {
+                let sum = 0, count = 0;
+                const r2 = r * r;
+                const ir = Math.ceil(r);
+                for (let dy = -ir; dy <= ir; dy++) {
+                    for (let dx = -ir; dx <= ir; dx++) {
+                        if (dx * dx + dy * dy <= r2) {
+                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            count++;
                         }
                     }
-                    return count > 0 ? (sum / count) : 255;
                 }
+                return count > 0 ? (sum / count) : 255;
+            }
 
-                // Sample clean white paper from interstitial diamonds around a point (immune to shadows & .q-num digits)
-                function sampleCleanPaperNear(px, py, stepX, stepY, fallbackX) {
-                    const pts = [
-                        sampleDisk(px + stepX * 0.5, py - stepY * 0.5, 2.5),
-                        sampleDisk(px + stepX * 0.5, py + stepY * 0.5, 2.5)
-                    ];
-                    if (fallbackX !== undefined) pts.push(sampleDisk(fallbackX, py, 2.5));
-                    pts.sort((a, b) => b - a);
-                    return pts.length >= 2 ? (pts[0] + pts[1]) * 0.5 : pts[0];
-                }
+            // Annular Moat & Interior Bubble Sampler
+            // Evaluates:
+            // 1) midDarkness: protected annular moat (2.5 <= r <= 5.8px) between center letter and outer circular border
+            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 15, midDarkRatio <= 0.05).
+            //    In filled bubbles, student shading covers this moat (midDarkness >= 35, midDarkRatio >= 0.40).
+            // 2) fullDarkness: interior disk (r <= 5.8px)
+            function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
+                const offsets = [
+                    [0, 0], [-1.0, 0], [1.0, 0], [0, -1.0], [0, 1.0]
+                ];
+                let bestStat = null;
 
-                // Precision Annular Moat & Core Interior Sampler:
-                // Printed letters (A,B,C,D / 0..9) stay inside r <= ~4.0px; outer circle border sits at r = 9.8..11.2px.
-                // Sampling cleanly in annular ring 4.3 <= d <= 7.4px eliminates letter-shape false positives on B/D!
-                function sampleBubbleFeatures(cx, cy, paperVal) {
-                    let midSum = 0, midCount = 0;
+                for (let k = 0; k < offsets.length; k++) {
+                    const cx = nominalX + offsets[k][0];
+                    const cy = nominalY + offsets[k][1];
+                    let midSum = 0, midCount = 0, darkMidCount = 0;
                     let fullSum = 0, fullCount = 0;
 
-                    for (let dy = -8; dy <= 8; dy++) {
-                        for (let dx = -8; dx <= 8; dx++) {
-                            const d = Math.hypot(dx, dy);
-                            if (d > 7.4) continue;
+                    for (let dy = -6; dy <= 6; dy++) {
+                        for (let dx = -6; dx <= 6; dx++) {
+                            const d2 = dx * dx + dy * dy;
+                            const d = Math.sqrt(d2);
+                            if (d > 5.8) continue; // Protected: never reaches printed outer circular ring (r >= 6.5)
+
                             const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
                             fullSum += g;
                             fullCount++;
-                            if (d >= 4.3) {
+
+                            if (d >= 2.5 && d <= 5.8) {
                                 midSum += g;
                                 midCount++;
+                                if (g < (paperVal - 22)) darkMidCount++;
                             }
                         }
                     }
 
-                    if (midCount === 0 || fullCount === 0) {
-                        return { midDarkness: 0, fullDarkness: 0, normMidDrop: 0, normFullDrop: 0, fillScore: 0 };
-                    }
+                    if (midCount === 0 || fullCount === 0) continue;
 
                     const midMean = midSum / midCount;
                     const fullMean = fullSum / fullCount;
                     const midDarkness = Math.max(0, paperVal - midMean);
                     const fullDarkness = Math.max(0, paperVal - fullMean);
-                    const normMidDrop = paperVal > 20 ? (midDarkness / paperVal) : 0;
-                    const normFullDrop = paperVal > 20 ? (fullDarkness / paperVal) : 0;
-                    const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
+                    const midDarkRatio = darkMidCount / midCount;
 
-                    return {
-                        midDarkness,
-                        fullDarkness,
-                        normMidDrop,
-                        normFullDrop,
-                        fillScore
-                    };
+                    // Combined fill score: weights the clean moat around the center letter
+                    const fillScore = midDarkness * 0.70 + fullDarkness * 0.30;
+
+                    if (!bestStat || fillScore > bestStat.fillScore) {
+                        bestStat = {
+                            midDarkness,
+                            fullDarkness,
+                            midDarkRatio,
+                            fillScore
+                        };
+                    }
                 }
 
-                // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
-                const rollRadius = 8.5;
-                const rollStepX = U_ROLL_COL_STEP * markerW;
-                const rollStepY = V_ROLL_ROW_STEP * markerH;
-                let detectedRollNumber = '';
-                let rollDigitsArray = [];
-                let detectedDigitsCount = 0;
+                return bestStat || {
+                    midDarkness: 0,
+                    fullDarkness: 0,
+                    midDarkRatio: 0,
+                    fillScore: 0
+                };
+            }
 
-                for (let c = 0; c < 8; c++) {
-                    const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
+            // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
+            const rollRadius = 8.5;
+            let detectedRollNumber = '';
+            let rollDigitsArray = [];
+            let detectedDigitsCount = 0;
 
-                    let colStats = [];
-                    for (let d = 0; d < 10; d++) {
-                        const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
-                        const diamondX = c < 7 ? (colX + rollStepX * 0.5) : (colX - rollStepX * 0.5);
-                        const rollPaperVal = Math.max(
-                            sampleDisk(diamondX, rowY - rollStepY * 0.5, 2.5),
-                            sampleDisk(diamondX, rowY + rollStepY * 0.5, 2.5)
-                        );
-                        const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
+            for (let c = 0; c < 8; c++) {
+                const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
 
-                        colStats.push({
-                            digit: d,
-                            ...bubbleSample,
-                            x: colX,
-                            y: rowY
-                        });
-                    }
+                // Sample clean paper baseline in whitespace to the left/right of the roll column
+                const paperVal1 = sampleDisk(colX - 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
+                const paperVal2 = sampleDisk(colX + 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
+                const rollPaperVal = Math.max(paperVal1, paperVal2);
 
-                    // Sort ascending to get column baseline from lightest bubbles
-                    const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
-                    const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+                let colStats = [];
+                for (let d = 0; d < 10; d++) {
+                    const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
+                    const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
 
-                    colStats.sort((a, b) => b.fillScore - a.fillScore);
-                    const top1 = colStats[0];
-                    const top2 = colStats[1];
-
-                    const top1Contrast = top1.fillScore - colBase;
-                    const isColFilled = (
-                        top1.normMidDrop >= 0.25 &&
-                        top1Contrast >= 22 &&
-                        (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 32)
-                    );
-
-                    const detectedDigit = isColFilled ? top1.digit.toString() : '-';
-                    if (isColFilled) detectedDigitsCount++;
-                    detectedRollNumber += detectedDigit;
-                    rollDigitsArray.push({
-                        digit: detectedDigit,
-                        isFilled: isColFilled,
-                        chosen: isColFilled ? top1 : null
+                    colStats.push({
+                        digit: d,
+                        ...bubbleSample,
+                        x: colX,
+                        y: rowY
                     });
+                }
 
-                    // Draw roll number grid overlays on canvas
-                    for (let d = 0; d < 10; d++) {
-                        const stat = colStats.find(s => s.digit === d);
+                // Sort ascending to get row baseline from lightest bubbles
+                const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
+                const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+
+                colStats.sort((a, b) => b.fillScore - a.fillScore);
+                const top1 = colStats[0];
+                const top2 = colStats[1];
+
+                const top1Contrast = top1.fillScore - colBase;
+                let isColFilled = false;
+                if (top1.midDarkness >= 32 && top1Contrast >= 18) {
+                    if (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 24) {
+                        isColFilled = true;
+                    }
+                }
+
+                const detectedDigit = isColFilled ? top1.digit.toString() : '-';
+                if (isColFilled) detectedDigitsCount++;
+                detectedRollNumber += detectedDigit;
+                rollDigitsArray.push({
+                    digit: detectedDigit,
+                    isFilled: isColFilled,
+                    chosen: isColFilled ? top1 : null
+                });
+
+                // Draw roll number grid overlays on canvas
+                for (let d = 0; d < 10; d++) {
+                    const stat = colStats.find(s => s.digit === d);
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
+
+                    if (isColFilled && d === top1.digit) {
+                        ctx.strokeStyle = '#06B6D4';
+                        ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            // Update Roll Number UI Display
+            const rollBoxesEl = document.getElementById('rollBoxesDisplay');
+            if (rollBoxesEl) {
+                let rollBoxesHtml = '';
+                for (let c = 0; c < 8; c++) {
+                    const item = rollDigitsArray[c];
+                    if (item.isFilled) {
+                        rollBoxesHtml += '<div class="roll-digit-box filled">' + item.digit + '</div>';
+                    } else {
+                        rollBoxesHtml += '<div class="roll-digit-box unknown">-</div>';
+                    }
+                }
+                rollBoxesEl.innerHTML = rollBoxesHtml;
+            }
+            const rollStatusPill = document.getElementById('rollStatusPill');
+            if (rollStatusPill) {
+                if (detectedDigitsCount === 8) {
+                    rollStatusPill.textContent = '8/8 Digits Detected';
+                    rollStatusPill.style.background = '#F0FDF4';
+                    rollStatusPill.style.color = '#15803D';
+                    rollStatusPill.style.borderColor = '#BBF7D0';
+                } else if (detectedDigitsCount > 0) {
+                    rollStatusPill.textContent = detectedDigitsCount + '/8 Digits Detected';
+                    rollStatusPill.style.background = '#FFFBEB';
+                    rollStatusPill.style.color = '#B45309';
+                    rollStatusPill.style.borderColor = '#FDE68A';
+                } else {
+                    rollStatusPill.textContent = 'No Roll No Detected';
+                    rollStatusPill.style.background = '#F1F5F9';
+                    rollStatusPill.style.color = '#475569';
+                    rollStatusPill.style.borderColor = '#E2E8F0';
+                }
+            }
+
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO PRINTED LETTERS & BORDERS)
+            const bubbleRadius = 9.0;
+            let score = 0;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let multipleCount = 0;
+            let attemptedCount = 0;
+            let blankCount = 0;
+            let evaluatedKeyCount = 0;
+            let rowsHtml = '';
+            const questionBreakdown = [];
+
+            for (let q = 1; q <= totalPaperQuestions; q++) {
+                const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const row = (q - 1) % QUESTIONS_PER_COL;
+
+                // Exact pixel coordinates on the leveled sheet
+                const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                // Sample clean paper baseline in the column gutter (16px to right of Option D)
+                const optD_X = colX + 3 * U_BUBBLE_STEP * markerW;
+                const gutterSampleX = Math.min(W - 14, optD_X + 16);
+                const paperVal1 = sampleDisk(gutterSampleX, rowY, 3.5);
+                const paperVal2 = sampleDisk(Math.max(14, colX - 16), rowY, 3.5);
+                const paperVal = Math.max(paperVal1, paperVal2);
+
+                let bubbleStats = [];
+                for (let b = 0; b < 4; b++) {
+                    const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
+                    const sample = sampleBubbleFeatures(bubbleX, rowY, paperVal);
+
+                    bubbleStats.push({
+                        opt: OPTIONS[b],
+                        ...sample,
+                        x: bubbleX,
+                        y: rowY
+                    });
+                }
+
+                // Sort ascending to get row baseline from the 2 lightest options
+                const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
+                const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+
+                function isOptionFilled(s) {
+                    const contrast = s.fillScore - rowBase;
+                    // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
+                    if (s.midDarkness >= 36 && contrast >= 16) return true;
+                    // Rule 2: Faint HB pencil fill with clear relative contrast
+                    if (s.midDarkness >= 26 && contrast >= 14 && s.midDarkRatio >= 0.28) return true;
+                    // Rule 3: Heavy dark pen fill with confirmed contrast
+                    if (s.fillScore >= 48 && contrast >= 16) return true;
+                    // Rule 4: Deliberate multiple marking where student shaded multiple bubbles
+                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.50 && s.fullDarkness >= 45) return true;
+                    return false;
+                }
+
+                // Filter filled candidates using annular metric
+                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                let filledBubbles = [];
+
+                if (filledCandidates.length === 0) {
+                    filledBubbles = [];
+                } else if (filledCandidates.length === 1) {
+                    filledBubbles = filledCandidates;
+                } else {
+                    // Sort multiple candidates by fillScore descending
+                    const sortedCandidates = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                    const top1 = sortedCandidates[0];
+                    const top2 = sortedCandidates[1];
+
+                    // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
+                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 55) {
+                        filledBubbles = [top1];
+                    } else {
+                        filledBubbles = filledCandidates;
+                    }
+                }
+
+                const isMultiple = filledBubbles.length > 1;
+                const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
+                const correctAns = answerKey[q.toString()] || '';
+
+                let verdict = 'unmarked';
+                if (correctAns) evaluatedKeyCount++;
+
+                if (isMultiple) {
+                    attemptedCount++;
+                    wrongCount++;
+                    multipleCount++;
+                    verdict = 'multiple';
+                } else if (filledBubbles.length === 1) {
+                    const singleAns = filledBubbles[0].opt;
+                    attemptedCount++;
+                    if (correctAns && singleAns === correctAns) {
+                        score++;
+                        correctCount++;
+                        verdict = 'correct';
+                    } else if (correctAns) {
+                        wrongCount++;
+                        verdict = 'wrong';
+                    } else {
+                        verdict = 'marked';
+                    }
+                } else {
+                    blankCount++;
+                }
+
+                questionBreakdown.push({
+                    q: q,
+                    marked: detectedAnswer || '',
+                    correctKey: correctAns || '',
+                    verdict: verdict
+                });
+
+                // Draw Overlay Rings on the Leveled Cropped Sheet
+                for (let b = 0; b < 4; b++) {
+                    const opt = OPTIONS[b];
+                    const stat = bubbleStats[b];
+                    const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
+
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
+
+                    if (isMultiple && isThisBubbleFilled) {
+                        ctx.strokeStyle = '#EF4444';
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 2;
+                        const sz = Math.round(bubbleRadius * 0.5);
                         ctx.beginPath();
-                        ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
-                        ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
-
-                        if (isColFilled && d === top1.digit) {
+                        ctx.moveTo(stat.x - sz, stat.y - sz);
+                        ctx.lineTo(stat.x + sz, stat.y + sz);
+                        ctx.moveTo(stat.x + sz, stat.y - sz);
+                        ctx.lineTo(stat.x - sz, stat.y + sz);
+                        ctx.stroke();
+                    } else if (isThisBubbleFilled) {
+                        if (verdict === 'correct') {
+                            ctx.strokeStyle = '#10B981';
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
+                        } else if (verdict === 'wrong') {
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        } else {
                             ctx.strokeStyle = '#06B6D4';
                             ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
-                            ctx.fill();
-                        } else {
-                            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
                         }
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                        ctx.strokeStyle = '#10B981';
+                        ctx.setLineDash([3, 3]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
                         ctx.stroke();
                     }
                 }
 
-                // Update Roll Number UI Display
-                const rollBoxesEl = document.getElementById('rollBoxesDisplay');
-                if (rollBoxesEl) {
-                    let rollBoxesHtml = '';
-                    for (let c = 0; c < 8; c++) {
-                        const item = rollDigitsArray[c];
-                        if (item.isFilled) {
-                            rollBoxesHtml += '<div class="roll-digit-box filled">' + item.digit + '</div>';
-                        } else {
-                            rollBoxesHtml += '<div class="roll-digit-box unknown">-</div>';
-                        }
-                    }
-                    rollBoxesEl.innerHTML = rollBoxesHtml;
-                }
-                const rollStatusPill = document.getElementById('rollStatusPill');
-                if (rollStatusPill) {
-                    if (detectedDigitsCount === 8) {
-                        rollStatusPill.textContent = '8/8 Digits Detected';
-                        rollStatusPill.style.background = '#F0FDF4';
-                        rollStatusPill.style.color = '#15803D';
-                        rollStatusPill.style.borderColor = '#BBF7D0';
-                    } else if (detectedDigitsCount > 0) {
-                        rollStatusPill.textContent = detectedDigitsCount + '/8 Digits Detected';
-                        rollStatusPill.style.background = '#FFFBEB';
-                        rollStatusPill.style.color = '#B45309';
-                        rollStatusPill.style.borderColor = '#FDE68A';
-                    } else {
-                        rollStatusPill.textContent = 'No Roll No Detected';
-                        rollStatusPill.style.background = '#F1F5F9';
-                        rollStatusPill.style.color = '#475569';
-                        rollStatusPill.style.borderColor = '#E2E8F0';
-                    }
+                let badgeClass = 'badge-blank';
+                let verdictText = 'Blank';
+                let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
+
+                if (verdict === 'multiple') {
+                    badgeClass = 'badge-multiple';
+                    verdictText = 'Multiple (Invalid)';
+                    markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#B91C1C; font-weight:600;">(Multi)</span>';
+                } else if (verdict === 'correct') {
+                    badgeClass = 'badge-correct';
+                    verdictText = 'Correct';
+                    markedCellHtml = '<strong style="color: #15803D; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'wrong') {
+                    badgeClass = 'badge-wrong';
+                    verdictText = 'Wrong';
+                    markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'marked') {
+                    badgeClass = 'badge-marked';
+                    verdictText = 'Recorded';
+                    markedCellHtml = '<strong style="color: #1D4ED8; font-size:0.95rem;">' + detectedAnswer + '</strong>';
                 }
 
-                // 2. DETECT QUESTIONS & MULTIPLE MARKINGS
-                const stepX = U_BUBBLE_STEP * markerW;
-                const stepY = V_ROW_STEP * markerH;
-                const bubbleRadius = 9.0;
-                let score = 0;
-                let correctCount = 0;
-                let wrongCount = 0;
-                let multipleCount = 0;
-                let attemptedCount = 0;
-                let blankCount = 0;
-                let evaluatedKeyCount = 0;
-                let rowsHtml = '';
-                const questionBreakdown = [];
+                rowsHtml += '<tr>' +
+                    '<td style="font-weight:600; color:#475569;">Q' + q + '</td>' +
+                    '<td>' + markedCellHtml + '</td>' +
+                    '<td>' + (correctAns ? '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>' : '<span style="color:#64748B;">None</span>') + '</td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                '</tr>';
+            }
 
-                for (let q = 1; q <= totalPaperQuestions; q++) {
-                    const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
-                    const row = (q - 1) % QUESTIONS_PER_COL;
+            // Safe UI Scoreboard Updates
+            const safeSetText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
 
-                    const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
-                    const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+            const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
+            safeSetText('scoreValue', `${score} / ${totalGraded}`);
+            const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+            safeSetText('scorePercentage', `${pct}% Accuracy`);
 
-                    // Clean white baseline interpolated locally across the 4 options using interstitial diamonds
-                    const rightGutter = sampleDisk(Math.min(W - 14, colX + 3 * stepX + 16), rowY, 3.0);
-                    const midLeftGutter = sampleCleanPaperNear(colX, rowY, stepX, stepY, Math.max(14, colX - 16));
-                    const midRightGutter = sampleCleanPaperNear(colX + 2 * stepX, rowY, stepX, stepY, Math.min(W - 14, colX + 3 * stepX + 16));
+            safeSetText('statCorrect', correctCount);
+            safeSetText('statWrong', wrongCount);
+            safeSetText('statMultiple', multipleCount);
+            safeSetText('statAttempted', attemptedCount);
+            safeSetText('statBlank', blankCount);
 
-                    let bubbleStats = [];
-                    for (let b = 0; b < 4; b++) {
-                        const bubbleX = colX + b * stepX;
-                        const localPV = b < 2
-                            ? midLeftGutter
-                            : (b === 2 ? (midLeftGutter + midRightGutter) * 0.5 : (midRightGutter + rightGutter) * 0.5);
-                        const sample = sampleBubbleFeatures(bubbleX, rowY, localPV);
+            const tbl = document.getElementById('tableBody');
+            if (tbl) tbl.innerHTML = rowsHtml;
 
-                        bubbleStats.push({
-                            opt: OPTIONS[b],
-                            ...sample,
-                            x: bubbleX,
-                            y: rowY
-                        });
-                    }
-
-                    // Row baseline from the 2 lightest options
-                    const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
-                    const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
-                    const rowBaseMid = (sortedAsc[0].midDarkness + sortedAsc[1].midDarkness) / 2;
-
-                    function isOptionFilled(s) {
-                        const contrast = s.fillScore - rowBase;
-                        const midContrast = s.midDarkness - rowBaseMid;
-                        // Rule 1: Pencil or pen shading with clear moat & sibling contrast
-                        if (contrast >= 24 && midContrast >= 20 && s.normMidDrop >= 0.24) return true;
-                        // Rule 2: Lighter HB pencil shading sharply darker than unfilled siblings
-                        if (contrast >= 30 && s.normMidDrop >= 0.22 && s.normFullDrop >= 0.24) return true;
-                        // Rule 3: Heavily shaded 3- or 4-bubble multiple mark (no sibling contrast available)
-                        if (s.normMidDrop >= 0.45 && s.normFullDrop >= 0.45 && s.midDarkness >= 85) return true;
-                        return false;
-                    }
-
-                    const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
-                    let filledBubbles = [];
-
-                    if (filledCandidates.length === 0) {
-                        filledBubbles = [];
-                    } else if (filledCandidates.length === 1) {
-                        filledBubbles = filledCandidates;
-                    } else {
-                        const sortedCandidates = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
-                        const top1 = sortedCandidates[0];
-                        const top2 = sortedCandidates[1];
-
-                        // Solid fill on top1 vs partial erasure smudge on top2
-                        if (top1.fillScore - top2.fillScore >= 40 && top1.fillScore >= 65) {
-                            filledBubbles = [top1];
-                        } else {
-                            filledBubbles = filledCandidates;
-                        }
-                    }
-
-                    const isMultiple = filledBubbles.length > 1;
-                    const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
-                    const correctAns = answerKey[q.toString()] || '';
-
-                    let verdict = 'unmarked';
-                    if (correctAns) evaluatedKeyCount++;
-
-                    if (isMultiple) {
-                        attemptedCount++;
-                        wrongCount++;
-                        multipleCount++;
-                        verdict = 'multiple';
-                    } else if (filledBubbles.length === 1) {
-                        const singleAns = filledBubbles[0].opt;
-                        attemptedCount++;
-                        if (correctAns && singleAns === correctAns) {
-                            score++;
-                            correctCount++;
-                            verdict = 'correct';
-                        } else if (correctAns) {
-                            wrongCount++;
-                            verdict = 'wrong';
-                        } else {
-                            verdict = 'marked';
-                        }
-                    } else {
-                        blankCount++;
-                    }
-
-                    questionBreakdown.push({
-                        q: q,
-                        marked: detectedAnswer || '',
-                        correctKey: correctAns || '',
-                        verdict: verdict
-                    });
-
-                    // Draw Overlay Rings on the Leveled Cropped Sheet
-                    for (let b = 0; b < 4; b++) {
-                        const opt = OPTIONS[b];
-                        const stat = bubbleStats[b];
-                        const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
-
-                        ctx.beginPath();
-                        ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
-                        ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
-
-                        if (isMultiple && isThisBubbleFilled) {
-                            ctx.strokeStyle = '#EF4444';
-                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
-                            ctx.fill();
-                            ctx.stroke();
-
-                            ctx.strokeStyle = '#FFFFFF';
-                            ctx.lineWidth = 2;
-                            const sz = Math.round(bubbleRadius * 0.5);
-                            ctx.beginPath();
-                            ctx.moveTo(stat.x - sz, stat.y - sz);
-                            ctx.lineTo(stat.x + sz, stat.y + sz);
-                            ctx.moveTo(stat.x + sz, stat.y - sz);
-                            ctx.lineTo(stat.x - sz, stat.y + sz);
-                            ctx.stroke();
-                        } else if (isThisBubbleFilled) {
-                            if (verdict === 'correct') {
-                                ctx.strokeStyle = '#10B981';
-                                ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
-                            } else if (verdict === 'wrong') {
-                                ctx.strokeStyle = '#EF4444';
-                                ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
-                            } else {
-                                ctx.strokeStyle = '#06B6D4';
-                                ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
-                            }
-                            ctx.fill();
-                            ctx.stroke();
-                        } else if (correctAns && opt === correctAns && verdict === 'wrong') {
-                            ctx.strokeStyle = '#10B981';
-                            ctx.setLineDash([3, 3]);
-                            ctx.stroke();
-                            ctx.setLineDash([]);
-                        } else {
-                            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
-                            ctx.stroke();
-                        }
-                    }
-
-                    let badgeClass = 'badge-blank';
-                    let verdictText = 'Blank';
-                    let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
-
-                    if (verdict === 'multiple') {
-                        badgeClass = 'badge-multiple';
-                        verdictText = 'Multiple (Invalid)';
-                        markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#B91C1C; font-weight:600;">(Multi)</span>';
-                    } else if (verdict === 'correct') {
-                        badgeClass = 'badge-correct';
-                        verdictText = 'Correct';
-                        markedCellHtml = '<strong style="color: #15803D; font-size:0.95rem;">' + detectedAnswer + '</strong>';
-                    } else if (verdict === 'wrong') {
-                        badgeClass = 'badge-wrong';
-                        verdictText = 'Wrong';
-                        markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
-                    } else if (verdict === 'marked') {
-                        badgeClass = 'badge-marked';
-                        verdictText = 'Recorded';
-                        markedCellHtml = '<strong style="color: #1D4ED8; font-size:0.95rem;">' + detectedAnswer + '</strong>';
-                    }
-
-                    rowsHtml += '<tr>' +
-                        '<td style="font-weight:600; color:#475569;">Q' + q + '</td>' +
-                        '<td>' + markedCellHtml + '</td>' +
-                        '<td>' + (correctAns ? '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>' : '<span style="color:#64748B;">None</span>') + '</td>' +
-                        '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
-                        '</tr>';
+            // Auto-archive CLEAN evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
+            try {
+                const statusPill = document.getElementById('evalStatus');
+                let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
+                if (!rollNo || rollNo.length === 0) {
+                    rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
                 }
 
-                // Safe UI Scoreboard Updates
-                const safeSetText = (id, text) => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = text;
-                };
+                const imageData = window.cleanLeveledImageData || (typeof leveledCanvas !== 'undefined' ? leveledCanvas.toDataURL('image/jpeg', 0.78) : null);
+                if (imageData) {
+                    if (statusPill) statusPill.textContent = 'Uploading to Cloudinary...';
 
-                const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
-                safeSetText('scoreValue', `${score} / ${totalGraded}`);
-                const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
-                safeSetText('scorePercentage', `${pct}% Accuracy`);
-
-                safeSetText('statCorrect', correctCount);
-                safeSetText('statWrong', wrongCount);
-                safeSetText('statMultiple', multipleCount);
-                safeSetText('statAttempted', attemptedCount);
-                safeSetText('statBlank', blankCount);
-
-                const tbl = document.getElementById('tableBody');
-                if (tbl) tbl.innerHTML = rowsHtml;
-
-                // Auto-archive CLEAN evaluated OMR copy to Cloudinary (5 accounts pool) & MongoDB
-                try {
-                    const statusPill = document.getElementById('evalStatus');
-                    let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
-                    if (!rollNo || rollNo.length === 0) {
-                        rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
-                    }
-
-                    const imageData = window.cleanLeveledImageData || (typeof leveledCanvas !== 'undefined' ? leveledCanvas.toDataURL('image/jpeg', 0.78) : null);
-                    if (imageData) {
-                        if (statusPill) statusPill.textContent = 'Uploading to Cloudinary...';
-
-                        fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/save-result', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                rollNumber: rollNo,
-                                score: score,
-                                totalQuestions: totalPaperQuestions,
-                                correctCount: correctCount,
-                                wrongCount: wrongCount,
-                                multipleCount: multipleCount,
-                                blankCount: blankCount,
-                                breakdown: questionBreakdown,
-                                imageData: imageData
-                            })
+                    fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/save-result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rollNumber: rollNo,
+                            score: score,
+                            totalQuestions: totalPaperQuestions,
+                            correctCount: correctCount,
+                            wrongCount: wrongCount,
+                            multipleCount: multipleCount,
+                            blankCount: blankCount,
+                            breakdown: questionBreakdown,
+                            imageData: imageData
                         })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (statusPill && data.success) {
-                                    statusPill.innerHTML = 'Saved to Cloudinary &middot; <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" style="color:inherit; font-weight:700; text-decoration:underline;">View Results</a>';
-                                }
-                            })
-                            .catch(e => {
-                                console.warn('Cloudinary archive error:', e);
-                                if (statusPill) statusPill.textContent = 'Evaluation Complete';
-                            });
-                    }
-                } catch (err) {
-                    console.warn('Canvas export error:', err);
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (statusPill && data.success) {
+                            statusPill.innerHTML = 'Saved to Cloudinary &middot; <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" style="color:inherit; font-weight:700; text-decoration:underline;">View Results</a>';
+                        }
+                    })
+                    .catch(e => {
+                        console.warn('Cloudinary archive error:', e);
+                        if (statusPill) statusPill.textContent = 'Evaluation Complete';
+                    });
                 }
+            } catch (err) {
+                console.warn('Canvas export error:', err);
             }
+        }
 
-            window.addEventListener('DOMContentLoaded', initEvaluator);
-            if (document.readyState !== 'loading') {
-                initEvaluator();
-            }
         </script>
-        <%- include('partials/sidebar_end') %>
+    <%- include('partials/sidebar_end') %>
 </body>
-
 </html>
