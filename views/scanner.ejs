@@ -825,18 +825,37 @@
             document.getElementById('resultsSection').style.display = 'none';
             if (freezeBanner) freezeBanner.style.display = 'none';
             scanLaser.style.display = 'block';
-            hudStatus.textContent = 'Align paper in view';
+            hudStatus.textContent = 'Starting camera...';
             captureBtn.classList.remove('locked');
             captureBtn.innerHTML = 'Capture &amp; Evaluate';
 
-            // Reuse existing active stream if available
+            // 1. Check for Secure Context / getUserMedia availability
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!window.isSecureContext && !isLocal) {
+                hudStatus.textContent = 'CAMERA BLOCKED: HTTPS REQUIRED';
+                alert('Camera access requires HTTPS or localhost.\n\nYour current URL is:\n' + window.location.href + '\n\nBrowsers block camera access over insecure HTTP. Please open this site via HTTPS or localhost.');
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                hudStatus.textContent = 'CAMERA ERROR: NOT SUPPORTED';
+                alert('Your browser does not support navigator.mediaDevices.getUserMedia camera access.');
+                return;
+            }
+
+            // 2. Reuse existing active stream if available
             if (cameraStream && cameraStream.active) {
                 try {
                     video.srcObject = cameraStream;
                     video.muted = true;
+                    video.setAttribute('playsinline', '');
+                    video.setAttribute('webkit-playsinline', '');
+                    video.setAttribute('muted', '');
+                    video.setAttribute('autoplay', '');
                     await video.play();
                     previewCanvas.width = video.videoWidth || 1280;
                     previewCanvas.height = video.videoHeight || 720;
+                    hudStatus.textContent = 'Align paper in view';
                     renderLoop();
                     return;
                 } catch (e) {
@@ -849,43 +868,97 @@
                 cameraStream = null;
             }
 
-            let stream = null;
+            // 3. Fallback constraints list
             const constraintsList = [
                 { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
-                { video: { facingMode: 'environment' }, audio: false },
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+                { video: { facingMode: { ideal: 'environment' } }, audio: false },
                 { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
                 { video: true, audio: false }
             ];
+
+            let stream = null;
+            let lastErr = null;
 
             for (const c of constraintsList) {
                 try {
                     stream = await navigator.mediaDevices.getUserMedia(c);
                     if (stream) break;
-                } catch (err) { }
+                } catch (err) {
+                    lastErr = err;
+                    console.warn('getUserMedia constraint failed:', c, err.name, err.message);
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        break;
+                    }
+                }
             }
 
             if (!stream) {
-                hudStatus.textContent = 'CAMERA ERROR: CAMERA NOT ACCESSIBLE';
+                if (lastErr && (lastErr.name === 'NotAllowedError' || lastErr.name === 'PermissionDeniedError')) {
+                    hudStatus.textContent = 'CAMERA BLOCKED: PERMISSION DENIED';
+                    alert('Camera permission was denied. Please allow camera access in your browser settings (click the camera/lock icon in your address bar).');
+                } else if (lastErr && (lastErr.name === 'NotFoundError' || lastErr.name === 'DevicesNotFoundError')) {
+                    hudStatus.textContent = 'CAMERA ERROR: NO CAMERA FOUND';
+                    alert('No camera device found on this system.');
+                } else if (lastErr && (lastErr.name === 'NotReadableError' || lastErr.name === 'TrackStartError')) {
+                    hudStatus.textContent = 'CAMERA ERROR: CAMERA IN USE';
+                    alert('Camera is currently in use by another application. Please close other apps and retry.');
+                } else {
+                    hudStatus.textContent = 'CAMERA ERROR: ' + (lastErr ? lastErr.message : 'UNABLE TO ACCESS');
+                    alert('Unable to access camera: ' + (lastErr ? (lastErr.name + ' - ' + lastErr.message) : 'Unknown error'));
+                }
                 return;
             }
 
+            // 4. Attach stream to video and start playback
             try {
                 cameraStream = stream;
-                video.srcObject = cameraStream;
                 video.muted = true;
-                await video.play();
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+                video.setAttribute('muted', '');
+                video.setAttribute('autoplay', '');
+                video.srcObject = cameraStream;
+
+                // Wait for video metadata to load
+                await new Promise((resolve) => {
+                    if (video.readyState >= 1 && video.videoWidth > 0) return resolve();
+                    video.onloadedmetadata = () => resolve();
+                    setTimeout(resolve, 800);
+                });
+
+                try {
+                    await video.play();
+                } catch (playErr) {
+                    console.warn('Autoplay failed, awaiting user tap:', playErr);
+                    hudStatus.textContent = 'TAP HERE TO START CAMERA';
+                    const startOnTap = async () => {
+                        window.removeEventListener('click', startOnTap);
+                        window.removeEventListener('touchstart', startOnTap);
+                        try {
+                            await video.play();
+                            hudStatus.textContent = 'Align paper in view';
+                            renderLoop();
+                        } catch (e) {
+                            console.error('Play on tap failed:', e);
+                        }
+                    };
+                    window.addEventListener('click', startOnTap, { once: true });
+                    window.addEventListener('touchstart', startOnTap, { once: true });
+                    return;
+                }
 
                 previewCanvas.width = video.videoWidth || 1280;
                 previewCanvas.height = video.videoHeight || 720;
+                hudStatus.textContent = 'Align paper in view';
 
                 renderLoop();
             } catch (err) {
-                console.error(err);
+                console.error('Video setup error:', err);
                 hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
             }
         }
 
-        // Robust 4-corner ordering [TL, TR, BR, BL]
         function orderCorners(pts) {
             if (!pts || pts.length !== 4) return pts;
             const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) * 0.25;
@@ -1453,6 +1526,10 @@
 
         // Tap screen to compute photo
         function handleTapToCapture() {
+            if (!cameraStream || !cameraStream.active) {
+                initCamera();
+                return;
+            }
             triggerManualCapture();
         }
 
@@ -2290,7 +2367,11 @@
             initCamera();
         }
 
-        window.addEventListener('DOMContentLoaded', initCamera);
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', initCamera);
+        } else {
+            initCamera();
+        }
     </script>
 </body>
 
