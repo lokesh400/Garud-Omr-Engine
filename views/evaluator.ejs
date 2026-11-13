@@ -565,54 +565,17 @@
             }
 
             function orderCorners(pts) {
-                if (!pts || pts.length !== 4) return pts;
-                let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
-                let minSum = pts[0].x + pts[0].y, maxSum = minSum;
-                let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
+            if (!pts || pts.length !== 4) return pts;
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) * 0.25;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) * 0.25;
+            const sorted = pts.map(p => ({
+                orig: p,
+                angle: Math.atan2(p.y - cy, p.x - cx)
+            })).sort((a, b) => a.angle - b.angle);
+            return [sorted[0].orig, sorted[1].orig, sorted[2].orig, sorted[3].orig];
+        }
 
-                for (let i = 1; i < pts.length; i++) {
-                    const p = pts[i];
-                    const sum = p.x + p.y;
-                    const diff = p.x - p.y;
-                    if (sum < minSum) { minSum = sum; tl = p; }
-                    if (sum > maxSum) { maxSum = sum; br = p; }
-                    if (diff > maxDiff) { maxDiff = diff; tr = p; }
-                    if (diff < minDiff) { minDiff = diff; bl = p; }
-                }
-
-                const unique = new Set([tl, tr, br, bl]);
-                if (unique.size === 4) {
-                    return [tl, tr, br, bl];
-                }
-
-                const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
-                const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
-                const sorted = pts.map(p => ({
-                    orig: p,
-                    angle: Math.atan2(p.y - cy, p.x - cx)
-                })).sort((a, b) => a.angle - b.angle);
-
-                let minAngleDiff = Infinity;
-                let tlIdx = 0;
-                const targetAngle = -2.35619;
-                sorted.forEach((p, idx) => {
-                    let diff = Math.abs(p.angle - targetAngle);
-                    if (diff > Math.PI) diff = 2 * Math.PI - diff;
-                    if (diff < minAngleDiff) {
-                        minAngleDiff = diff;
-                        tlIdx = idx;
-                    }
-                });
-
-                return [
-                    sorted[tlIdx].orig,
-                    sorted[(tlIdx + 1) % 4].orig,
-                    sorted[(tlIdx + 2) % 4].orig,
-                    sorted[(tlIdx + 3) % 4].orig
-                ];
-            }
-
-            function getPerspectiveTransform(src, dst) {
+        function getPerspectiveTransform(src, dst) {
                 const A = [], B = [];
                 for (let i = 0; i < 4; i++) {
                     const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
@@ -639,404 +602,250 @@
                 return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
             }
 
-            function autoDetectCorners(ctx, W, H) {
-                const defaultCorners = [
-                    { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
-                    { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
-                    { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
-                    { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
-                ];
-                const fastScale = Math.min(1, 640 / Math.max(W, H));
-                const sw = Math.max(1, Math.round(W * fastScale));
-                const sh = Math.max(1, Math.round(H * fastScale));
+            function detectLiveCorners(ctx, sw, sh) {
+            const imgData = ctx.getImageData(0, 0, sw, sh);
+            const data = imgData.data;
+            const total = sw * sh;
 
-                let procCtx = ctx;
-                if (fastScale < 1) {
-                    const procCanvas = document.createElement('canvas');
-                    procCanvas.width = sw;
-                    procCanvas.height = sh;
-                    procCtx = procCanvas.getContext('2d');
-                    procCtx.drawImage(ctx.canvas || video, 0, 0, sw, sh);
-                }
-
-                const imgData = procCtx.getImageData(0, 0, sw, sh);
-                const data = imgData.data;
-                const total = sw * sh;
-                const minDim = Math.min(sw, sh);
-
-                const gray = new Uint8Array(total);
-                const hist = new Int32Array(256);
-                for (let i = 0, p = 0; i < data.length; i += 4) {
-                    const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
-                    gray[p++] = g;
-                    hist[g]++;
-                }
-
-                // Otsu threshold
-                let sum = 0;
-                for (let i = 0; i < 256; i++) sum += i * hist[i];
-                let sumB = 0, wB = 0, maxVar = 0, otsuRaw = 115;
-                for (let i = 0; i < 256; i++) {
-                    wB += hist[i];
-                    if (wB === 0) continue;
-                    const wF = total - wB;
-                    if (wF === 0) break;
-                    sumB += i * hist[i];
-                    const diff = (sumB / wB) - ((sum - sumB) / wF);
-                    const v = wB * wF * diff * diff;
-                    if (v > maxVar) { maxVar = v; otsuRaw = i + 1; }
-                }
-                otsuRaw = Math.max(35, Math.min(otsuRaw, 200));
-
-                const darkInkT = Math.max(30, Math.min(85, Math.round(otsuRaw * 0.52)));
-                const threshLevels = [
-                    otsuRaw,
-                    darkInkT,
-                    Math.max(30, otsuRaw - 25),
-                    Math.min(215, otsuRaw + 25)
-                ];
-
-                const visited = new Uint8Array(total);
-                const queue = new Int32Array(total);
-
-                const minSide = Math.max(2, Math.round(minDim * 0.006));
-                const maxSide = Math.max(28, Math.round(minDim * 0.16));
-                const maxArea = Math.round(maxSide * maxSide * 0.95);
-
-                function findBlobs(tVal) {
-                    visited.fill(0);
-                    const blobs = [];
-                    const step = 2;
-
-                    for (let py = 2; py < sh - 2; py += step) {
-                        const rowOff = py * sw;
-                        for (let px = 2; px < sw - 2; px += step) {
-                            const startP = rowOff + px;
-                            if (visited[startP] || gray[startP] >= tVal) continue;
-
-                            let count = 0, sumX = 0, sumY = 0, sumLum = 0;
-                            let minX = px, maxX = px, minY = py, maxY = py;
-                            let qHead = 0, qTail = 0;
-                            queue[qTail++] = startP;
-                            visited[startP] = 1;
-                            let overflow = false;
-
-                            while (qHead < qTail) {
-                                if (count > maxArea) { overflow = true; break; }
-                                const cur = queue[qHead++];
-                                const cy = (cur / sw) | 0;
-                                const cx = cur - cy * sw;
-                                count++;
-                                sumX += cx;
-                                sumY += cy;
-                                sumLum += gray[cur];
-                                if (cx < minX) minX = cx;
-                                if (cx > maxX) maxX = cx;
-                                if (cy < minY) minY = cy;
-                                if (cy > maxY) maxY = cy;
-
-                                if (cx > 1) {
-                                    const nb = cur - 1;
-                                    if (!visited[nb] && gray[nb] < tVal && qTail < total - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                                }
-                                if (cx + 2 < sw) {
-                                    const nb = cur + 1;
-                                    if (!visited[nb] && gray[nb] < tVal && qTail < total - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                                }
-                                if (cy > 1) {
-                                    const nb = cur - sw;
-                                    if (!visited[nb] && gray[nb] < tVal && qTail < total - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                                }
-                                if (cy + 2 < sh) {
-                                    const nb = cur + sw;
-                                    if (!visited[nb] && gray[nb] < tVal && qTail < total - 2) { visited[nb] = 1; queue[qTail++] = nb; }
-                                }
-                            }
-
-                            if (overflow) continue;
-
-                            const bw = maxX - minX + 1;
-                            const bh = maxY - minY + 1;
-                            const density = count / (bw * bh);
-                            const aspect = bw / bh;
-
-                            if (bw >= minSide && bh >= minSide && bw <= maxSide && bh <= maxSide &&
-                                aspect >= 0.45 && aspect <= 2.22 && density >= 0.38 && count >= 6) {
-                                const bx = sumX / count;
-                                const by = sumY / count;
-                                const meanLum = sumLum / count;
-
-                                const rSample = Math.max(bw, bh) * 1.5;
-                                let maxSurround = 0;
-                                for (let a = 0; a < 8; a++) {
-                                    const ang = a * (Math.PI / 4);
-                                    const sx = Math.round(bx + Math.cos(ang) * rSample);
-                                    const sy = Math.round(by + Math.sin(ang) * rSample);
-                                    if (sx >= 0 && sx < sw && sy >= 0 && sy < sh) {
-                                        const g = gray[sy * sw + sx];
-                                        if (g > maxSurround) maxSurround = g;
-                                    }
-                                }
-
-                                const localContrast = maxSurround - meanLum;
-                                if (localContrast < 10) continue;
-
-                                const aspectDev = Math.abs(1.0 - aspect);
-                                const distFromCenter = Math.hypot(bx - sw * 0.5, by - sh * 0.5) / (minDim * 0.5);
-                                const score = (density * 2.5) + (1.0 - Math.min(1.0, aspectDev)) + Math.min(2.0, localContrast / 35) + (distFromCenter * 3.0);
-
-                                blobs.push({
-                                    x: bx, y: by, bw, bh, count, density, meanLum, localContrast, score
-                                });
-                            }
-                        }
-                    }
-                    return blobs;
-                }
-
-                function evaluateQuad(ordered) {
-                    const [pTL, pTR, pBR, pBL] = ordered;
-
-                    const pts = [pTL, pTR, pBR, pBL];
-                    let prevSign = 0;
-                    for (let i = 0; i < 4; i++) {
-                        const a = pts[i];
-                        const b = pts[(i + 1) % 4];
-                        const c = pts[(i + 2) % 4];
-                        const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
-                        if (Math.abs(cross) < 1e-4) return null;
-                        const sign = cross > 0 ? 1 : -1;
-                        if (prevSign === 0) prevSign = sign;
-                        else if (sign !== prevSign) return null;
-                    }
-
-                    const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
-                    const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
-                    const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
-                    const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
-
-                    const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
-                    const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
-                    if (wRatio < 0.45 || hRatio < 0.45) return null;
-
-                    const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
-                    const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
-                    const diagRatio = Math.min(d1, d2) / Math.max(d1, d2);
-                    if (diagRatio < 0.48) return null;
-
-                    const quadArea = 0.5 * Math.abs(
-                        (pTL.x * pTR.y - pTL.y * pTR.x) + (pTR.x * pBR.y - pTR.y * pBR.x) +
-                        (pBR.x * pBL.y - pBR.y * pBL.x) + (pBL.x * pTL.y - pBL.y * pTL.x)
-                    );
-                    if (quadArea < total * 0.04) return null;
-
-                    const avgW = (wTop + wBot) * 0.5;
-                    const avgH = (hLeft + hRight) * 0.5;
-                    const aspect = avgH / avgW;
-
-                    let aspectFit = 0;
-                    let isPortrait = true;
-                    if (aspect >= 0.95 && aspect <= 2.3) {
-                        aspectFit = Math.exp(-Math.abs(aspect - 1.461) * 2.0);
-                        isPortrait = true;
-                    } else if (aspect >= 0.43 && aspect < 0.95) {
-                        aspectFit = Math.exp(-Math.abs(aspect - 0.684) * 2.0);
-                        isPortrait = false;
-                    } else {
-                        return null;
-                    }
-
-                    const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
-                    const minC = Math.min(...counts);
-                    const maxC = Math.max(...counts);
-                    if (minC / maxC < 0.10) return null;
-
-                    const minMarkerLum = Math.min(pTL.meanLum, pTR.meanLum, pBR.meanLum, pBL.meanLum);
-                    let intLumSum = 0, intCount = 0;
-                    const sampleGrid = [0.25, 0.5, 0.75];
-                    for (let sv of sampleGrid) {
-                        const lx = pTL.x + (pBL.x - pTL.x) * sv, ly = pTL.y + (pBL.y - pTL.y) * sv;
-                        const rx = pTR.x + (pBR.x - pTR.x) * sv, ry = pTR.y + (pBR.y - pTR.y) * sv;
-                        for (let su of sampleGrid) {
-                            const sx = Math.round(lx + (rx - lx) * su);
-                            const sy = Math.round(ly + (ry - ly) * su);
-                            if (sx >= 0 && sx < sw && sy >= 0 && sy < sh) {
-                                intLumSum += gray[sy * sw + sx];
-                                intCount++;
-                            }
-                        }
-                    }
-                    const avgIntLum = intCount > 0 ? (intLumSum / intCount) : 255;
-                    if (avgIntLum < 80 || (avgIntLum - minMarkerLum) < 28) return null;
-
-                    const score = quadArea * aspectFit * wRatio * hRatio * diagRatio * (0.4 + 0.6 * (minC / maxC));
-                    return { ordered, score, isPortrait, avgIntLum };
-                }
-
-                let bestQuad = null;
-
-                for (let t of threshLevels) {
-                    const candidates = findBlobs(t);
-                    if (candidates.length < 4) continue;
-
-                    candidates.sort((a, b) => b.score - a.score);
-
-                    // Spatial cell diversity: Ensure corners from all 4 quadrants of the frame are in pool
-                    const pool = [];
-                    const seen = new Set();
-                    const quadBuckets = [[], [], [], []];
-                    for (let c of candidates) {
-                        const qIdx = (c.x < sw * 0.5 ? 0 : 1) + (c.y < sh * 0.5 ? 0 : 2);
-                        quadBuckets[qIdx].push(c);
-                    }
-                    for (let q = 0; q < 4; q++) {
-                        for (let i = 0; i < Math.min(4, quadBuckets[q].length); i++) {
-                            const b = quadBuckets[q][i];
-                            if (!seen.has(b)) { seen.add(b); pool.push(b); }
-                        }
-                    }
-                    for (let c of candidates) {
-                        if (pool.length >= 16) break;
-                        if (!seen.has(c)) { seen.add(c); pool.push(c); }
-                    }
-                    const n = pool.length;
-
-                    for (let i = 0; i < n; i++) {
-                        for (let j = i + 1; j < n; j++) {
-                            for (let k = j + 1; k < n; k++) {
-                                for (let l = k + 1; l < n; l++) {
-                                    const ordered = orderCorners([pool[i], pool[j], pool[k], pool[l]]);
-                                    if (!ordered) continue;
-                                    const res = evaluateQuad(ordered);
-                                    if (res && (!bestQuad || res.score > bestQuad.score)) {
-                                        bestQuad = res;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (bestQuad) break;
-                }
-
-                // Track 2: Sheet Boundary Contour Detection Fallback
-                if (!bestQuad) {
-                    const paperThresh = Math.max(40, otsuRaw - 15);
-                    visited.fill(0);
-                    let maxPaperCount = 0;
-                    let paperTL = null, paperTR = null, paperBR = null, paperBL = null;
-
-                    for (let py = 4; py < sh - 4; py += 4) {
-                        for (let px = 4; px < sw - 4; px += 4) {
-                            const sp = py * sw + px;
-                            if (visited[sp] || gray[sp] < paperThresh) continue;
-
-                            let count = 0;
-                            let qHead = 0, qTail = 0;
-                            queue[qTail++] = sp;
-                            visited[sp] = 1;
-                            let cMinX = px, cMaxX = px, cMinY = py, cMaxY = py;
-
-                            let minSum = px + py, maxSum = px + py;
-                            let maxDiff = px - py, minDiff = px - py;
-                            let cTL = { x: px, y: py }, cBR = { x: px, y: py };
-                            let cTR = { x: px, y: py }, cBL = { x: px, y: py };
-
-                            while (qHead < qTail) {
-                                const cur = queue[qHead++];
-                                const cy = (cur / sw) | 0;
-                                const cx = cur - cy * sw;
-                                count++;
-                                if (cx < cMinX) cMinX = cx;
-                                if (cx > cMaxX) cMaxX = cx;
-                                if (cy < cMinY) cMinY = cy;
-                                if (cy > cMaxY) cMaxY = cy;
-
-                                const sum = cx + cy, diff = cx - cy;
-                                if (sum < minSum) { minSum = sum; cTL = { x: cx, y: cy }; }
-                                if (sum > maxSum) { maxSum = sum; cBR = { x: cx, y: cy }; }
-                                if (diff > maxDiff) { maxDiff = diff; cTR = { x: cx, y: cy }; }
-                                if (diff < minDiff) { minDiff = diff; cBL = { x: cx, y: cy }; }
-
-                                const stepN = 4;
-                                const nbs = [cur - stepN, cur + stepN, cur - stepN * sw, cur + stepN * sw];
-                                for (let nb of nbs) {
-                                    if (nb >= 0 && nb < total && !visited[nb] && gray[nb] >= paperThresh && qTail < total - 2) {
-                                        visited[nb] = 1;
-                                        queue[qTail++] = nb;
-                                    }
-                                }
-                            }
-
-                            if (count > maxPaperCount && count > (total * 0.05)) {
-                                maxPaperCount = count;
-                                paperTL = cTL; paperTR = cTR; paperBR = cBR; paperBL = cBL;
-                            }
-                        }
-                    }
-
-                    if (paperTL && paperTR && paperBR && paperBL) {
-                        const paperQuad = orderCorners([paperTL, paperTR, paperBR, paperBL]);
-                        if (paperQuad) {
-                            const u = 0.038, v = 0.027;
-                            const lerpQ = (tl, tr, br, bl, lu, lv) => ({
-                                x: Math.round((1 - lv) * ((1 - lu) * tl.x + lu * tr.x) + lv * ((1 - lu) * bl.x + lu * br.x)),
-                                y: Math.round((1 - lv) * ((1 - lu) * tl.y + lu * tr.y) + lv * ((1 - lu) * bl.y + lu * br.y))
-                            });
-                            const [c0, c1, c2, c3] = paperQuad;
-                            const mTL = lerpQ(c0, c1, c2, c3, u, v);
-                            const mTR = lerpQ(c0, c1, c2, c3, 1 - u, v);
-                            const mBR = lerpQ(c0, c1, c2, c3, 1 - u, 1 - v);
-                            const mBL = lerpQ(c0, c1, c2, c3, u, 1 - v);
-                            const res = evaluateQuad([mTL, mTR, mBR, mBL]);
-                            if (res) bestQuad = res;
-                        }
-                    }
-                }
-
-                if (!bestQuad) return defaultCorners;
-
-                let ordered = bestQuad.ordered;
-
-                function getInk(u0, u1, v0, v1) {
-                    let dark = 0, tot = 0;
-                    const [tl, tr, br, bl] = ordered;
-                    for (let i = 0; i <= 5; i++) {
-                        const v = v0 + (v1 - v0) * (i / 5);
-                        const lx = tl.x + (bl.x - tl.x) * v, ly = tl.y + (bl.y - tl.y) * v;
-                        const rx = tr.x + (br.x - tr.x) * v, ry = tr.y + (br.y - tr.y) * v;
-                        for (let j = 0; j <= 5; j++) {
-                            const u = u0 + (u1 - u0) * (j / 5);
-                            const sx = Math.round(lx + (rx - lx) * u);
-                            const sy = Math.round(ly + (ry - ly) * u);
-                            if (sx >= 0 && sx < sw && sy >= 0 && sy < sh) {
-                                tot++;
-                                if (gray[sy * sw + sx] < (bestQuad.avgIntLum - 16)) dark++;
-                            }
-                        }
-                    }
-                    return tot > 0 ? (dark / tot) : 0;
-                }
-
-                if (!bestQuad.isPortrait) {
-                    const leftInk = getInk(0.05, 0.25, 0.1, 0.9);
-                    const rightInk = getInk(0.75, 0.95, 0.1, 0.9);
-                    if (leftInk > rightInk) {
-                        ordered = [ordered[3], ordered[0], ordered[1], ordered[2]];
-                    } else {
-                        ordered = [ordered[1], ordered[2], ordered[3], ordered[0]];
-                    }
-                }
-
-                const scaleX = W / sw;
-                const scaleY = H / sh;
-                return ordered.map(p => ({
-                    x: Math.round(p.x * scaleX),
-                    y: Math.round(p.y * scaleY)
-                }));
+            // 1. Grayscale & Histogram
+            const gray = new Uint8Array(total);
+            const hist = new Int32Array(256);
+            let pIdx = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                gray[pIdx++] = g;
+                hist[g]++;
             }
 
+            // 2. Global Otsu Threshold
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 110;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (wB === 0) continue;
+                const wF = total - wB;
+                if (wF === 0) break;
+                sumB += i * hist[i];
+                const diff = (sumB / wB) - ((sum - sumB) / wF);
+                const v = wB * wF * diff * diff;
+                if (v > maxVar) { maxVar = v; otsuThresh = i + 1; }
+            }
+            otsuThresh = Math.max(40, Math.min(otsuThresh, 175));
 
-            function warpAndEvaluate(corners, W, H) {
+            const threshLevels = [
+                otsuThresh,
+                Math.min(205, Math.round(otsuThresh * 1.25 + 10)),
+                Math.max(35, Math.round(otsuThresh * 0.75 - 10))
+            ];
+
+            const visited = new Uint8Array(total);
+            const queue = new Int32Array(total);
+
+            function evaluateQuad(ordered) {
+                const [pTL, pTR, pBR, pBL] = ordered;
+                const pts = [pTL, pTR, pBR, pBL];
+                for (let i = 0; i < 4; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % 4];
+                    const c = pts[(i + 2) % 4];
+                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                    if (cross <= 0) return null;
+                }
+
+                const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
+                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
+                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
+                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
+
+                const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
+                const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
+                if (wRatio < 0.45 || hRatio < 0.45) return null;
+
+                const avgW = (wTop + wBot) * 0.5;
+                const avgH = (hLeft + hRight) * 0.5;
+                const aspect = avgH / avgW;
+                if (aspect < 0.85 || aspect > 2.30) return null;
+
+                const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
+                const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.50) return null;
+
+                const quadArea = 0.5 * Math.abs(
+                    (pTL.x * pTR.y - pTL.y * pTR.x) + (pTR.x * pBR.y - pTR.y * pBR.x) +
+                    (pBR.x * pBL.y - pBR.y * pBL.x) + (pBL.x * pTL.y - pBL.y * pTL.x)
+                );
+                if (quadArea < sw * sh * 0.06) return null;
+
+                const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
+                const minC = Math.min(...counts);
+                const maxC = Math.max(...counts);
+                if (minC / maxC < 0.10) return null;
+
+                // Center of quad must be white paper
+                const midX = Math.round((pTL.x + pTR.x + pBR.x + pBL.x) * 0.25);
+                const midY = Math.round((pTL.y + pTR.y + pBR.y + pBL.y) * 0.25);
+                if (gray[midY * sw + midX] < (otsuThresh - 15)) return null;
+
+                const aspectDev = Math.abs(aspect - 1.414);
+                const score = quadArea * (1.0 - aspectDev * 0.3) * wRatio * hRatio;
+                return { ordered, score };
+            }
+
+            let bestQuad = null;
+
+            for (let thresh of threshLevels) {
+                visited.fill(0);
+                const candidates = [];
+
+                for (let py = 4; py < sh - 4; py += 2) {
+                    const rowOff = py * sw;
+                    for (let px = 4; px < sw - 4; px += 2) {
+                        const startP = rowOff + px;
+                        if (visited[startP] || gray[startP] >= thresh) continue;
+
+                        let count = 0, sumX = 0, sumY = 0;
+                        let minX = px, maxX = px, minY = py, maxY = py;
+                        let qHead = 0, qTail = 0;
+                        queue[qTail++] = startP;
+                        visited[startP] = 1;
+
+                        while (qHead < qTail) {
+                            if (count > 1200) break;
+                            const cur = queue[qHead++];
+                            const cy = (cur / sw) | 0;
+                            const cx = cur - cy * sw;
+                            count++;
+                            sumX += cx;
+                            sumY += cy;
+                            if (cx < minX) minX = cx;
+                            if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy;
+                            if (cy > maxY) maxY = cy;
+
+                            const nbs = [cur - 1, cur + 1, cur - sw, cur + sw];
+                            for (let nb of nbs) {
+                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh && qTail < total - 2) {
+                                    visited[nb] = 1;
+                                    queue[qTail++] = nb;
+                                }
+                            }
+                        }
+
+                        const bw = maxX - minX + 1;
+                        const bh = maxY - minY + 1;
+                        const aspect = bw / bh;
+                        const density = count / (bw * bh);
+
+                        if (bw >= 3 && bh >= 3 && bw <= 50 && bh <= 50 && aspect >= 0.50 && aspect <= 2.00 && density >= 0.38 && count >= 8) {
+                            const bx = sumX / count;
+                            const by = sumY / count;
+                            const blobR = Math.max(bw, bh) * 0.5;
+
+                            // INWARD ISOLATION CHECK:
+                            // Samples facing inward toward the center of the sheet.
+                            // Completely immune to dark desks outside the paper boundary!
+                            // Rejects all bubbles & text, which are surrounded by other bubbles/text!
+                            const dirX = Math.sign(sw * 0.5 - bx);
+                            const dirY = Math.sign(sh * 0.5 - by);
+                            const rIn = Math.round(blobR * 1.3);
+                            const rOut = Math.max(12, Math.round(blobR * 3.0));
+                            let darkPixels = 0, totalRing = 0;
+
+                            for (let dy = -rOut; dy <= rOut; dy += 2) {
+                                for (let dx = -rOut; dx <= rOut; dx += 2) {
+                                    const d2 = dx * dx + dy * dy;
+                                    if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                        if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
+                                            const gx = Math.round(bx + dx);
+                                            const gy = Math.round(by + dy);
+                                            if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                                totalRing++;
+                                                if (gray[gy * sw + gx] < thresh) darkPixels++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
+                            if (ringDarkRatio > 0.20) continue;
+
+                            // Inward white paper margin confirmation
+                            let whiteInwardCount = 0;
+                            const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
+                            for (let d of testDists) {
+                                const ix = Math.round(bx + dirX * d);
+                                const iy = Math.round(by + dirY * d);
+                                if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
+                                    if (gray[iy * sw + ix] >= (thresh - 15)) whiteInwardCount++;
+                                }
+                            }
+                            if (whiteInwardCount < 2) continue;
+
+                            const distFromCenter = Math.hypot(bx - sw * 0.5, by - sh * 0.5);
+                            const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.5) - (ringDarkRatio * 8.0);
+                            candidates.push({ x: bx, y: by, bw, bh, count, score });
+                        }
+                    }
+                }
+
+                if (candidates.length < 4) continue;
+                candidates.sort((a, b) => b.score - a.score);
+                const topCandidates = candidates.slice(0, 10);
+                const n = topCandidates.length;
+
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 1; j < n; j++) {
+                        for (let k = j + 1; k < n; k++) {
+                            for (let l = k + 1; l < n; l++) {
+                                const ordered = orderCorners([topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]]);
+                                const res = evaluateQuad(ordered);
+                                if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                    bestQuad = res;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (bestQuad) break;
+            }
+
+            if (!bestQuad) return null;
+            return bestQuad.ordered.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+        }
+
+        
+        function autoDetectCorners(ctx, W, H) {
+            const defaultCorners = [
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
+                { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
+                { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+            ];
+
+            const fastScale = Math.min(1, 560 / Math.max(W, H));
+            const sw = Math.max(1, Math.round(W * fastScale));
+            const sh = Math.max(1, Math.round(H * fastScale));
+
+            const procCanvas = document.createElement('canvas');
+            procCanvas.width = sw;
+            procCanvas.height = sh;
+            const procCtx = procCanvas.getContext('2d');
+            procCtx.drawImage(ctx.canvas, 0, 0, sw, sh);
+
+            const raw = detectLiveCorners(procCtx, sw, sh);
+            if (!raw) return defaultCorners;
+
+            const scaleX = W / sw;
+            const scaleY = H / sh;
+            return raw.map(p => ({
+                x: Math.round(p.x * scaleX),
+                y: Math.round(p.y * scaleY)
+            }));
+        }
+
+        function warpAndEvaluate(corners, W, H) {
                 leveledCanvas.width = TARGET_W;
                 leveledCanvas.height = TARGET_H;
 
