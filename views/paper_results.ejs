@@ -801,6 +801,7 @@
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
                         <thead>
                             <tr style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
+                                <th style="padding: 8px; font-weight: 600;" id="thSubjectCol">Subject</th>
                                 <th style="padding: 8px; font-weight: 600;">#</th>
                                 <th style="padding: 8px; font-weight: 600;">Response</th>
                                 <th style="padding: 8px; font-weight: 600;">Key</th>
@@ -817,6 +818,8 @@
 
     <script>
         const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
+        const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
+        const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
         let currentModalSubmission = null;
         let currentModalList = [];
         let showCheckingOverlay = true;
@@ -919,7 +922,8 @@
 
             // 2. Highlight evaluated question bubbles dynamically against current answer key
             list.forEach(b => {
-                const q = Number(b.q);
+                if (b.isNumerical) return;
+                const q = Number(b.omrQ || b.q);
                 if (!q || q < 1) return;
 
                 const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
@@ -1163,8 +1167,157 @@
             const tbody = document.getElementById('modalBreakdownBody');
             tbody.innerHTML = '';
 
+            const isJee = (data.examType === 'jee') || 
+                          (data.numericalScores && Object.keys(data.numericalScores).length > 0) || 
+                          (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) || 
+                          /jee/i.test(PAPER_TITLE) || 
+                          /jee/i.test(PAPER_SUBJECT);
+
+            const thSub = document.getElementById('thSubjectCol');
+            if (thSub) thSub.style.display = isJee ? '' : 'none';
+
             let list = [];
-            if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
+            if (isJee) {
+                // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
+                for (let qNum = 1; qNum <= 20; qNum++) {
+                    const resp = (data.responses && data.responses[qNum - 1]) || '';
+                    const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
+                    let verdict = 'blank';
+                    if (resp && String(resp).trim() !== '') {
+                        const cleaned = String(resp).trim().toUpperCase();
+                        if (cleaned.includes(',')) verdict = 'multiple';
+                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                        else verdict = 'marked';
+                    }
+                    list.push({
+                        q: qNum,
+                        displayQ: qNum,
+                        omrQ: qNum,
+                        subject: '⚛️ Phy',
+                        marked: resp || '',
+                        correctKey: correctKey,
+                        verdict: verdict,
+                        isNumerical: false
+                    });
+                }
+
+                // Section 1: Physics Q21-25 (NVQ Section B)
+                const phyNvq = (data.numericalScores && data.numericalScores.phy) || [];
+                for (let i = 1; i <= 5; i++) {
+                    const qNum = 20 + i;
+                    const val = Number(phyNvq[i - 1] || 0);
+                    let verdict = 'blank';
+                    let marks = '0';
+                    let markedText = 'Blank';
+                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                    list.push({
+                        q: qNum,
+                        displayQ: qNum,
+                        omrQ: qNum,
+                        subject: '⚛️ Phy',
+                        marked: markedText,
+                        correctKey: 'NVQ',
+                        marks: marks,
+                        verdict: verdict,
+                        isNumerical: true
+                    });
+                }
+
+                // Section 2: Chemistry Q26-45 (MCQ mapped from OMR Q41-60)
+                for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                    const displayQ = 26 + (omrQ - 41);
+                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
+                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || '-';
+                    let verdict = 'blank';
+                    if (resp && String(resp).trim() !== '') {
+                        const cleaned = String(resp).trim().toUpperCase();
+                        if (cleaned.includes(',')) verdict = 'multiple';
+                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                        else verdict = 'marked';
+                    }
+                    list.push({
+                        q: displayQ,
+                        displayQ: displayQ,
+                        omrQ: omrQ,
+                        subject: '🧪 Chem',
+                        marked: resp || '',
+                        correctKey: correctKey,
+                        verdict: verdict,
+                        isNumerical: false
+                    });
+                }
+
+                // Section 2: Chemistry Q46-50 (NVQ Section B)
+                const chemNvq = (data.numericalScores && data.numericalScores.chem) || [];
+                for (let i = 1; i <= 5; i++) {
+                    const qNum = 45 + i;
+                    const val = Number(chemNvq[i - 1] || 0);
+                    let verdict = 'blank';
+                    let marks = '0';
+                    let markedText = 'Blank';
+                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                    list.push({
+                        q: qNum,
+                        displayQ: qNum,
+                        omrQ: qNum,
+                        subject: '🧪 Chem',
+                        marked: markedText,
+                        correctKey: 'NVQ',
+                        marks: marks,
+                        verdict: verdict,
+                        isNumerical: true
+                    });
+                }
+
+                // Section 3: Mathematics Q51-70 (MCQ mapped from OMR Q81-100)
+                for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                    const displayQ = 51 + (omrQ - 81);
+                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
+                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || '-';
+                    let verdict = 'blank';
+                    if (resp && String(resp).trim() !== '') {
+                        const cleaned = String(resp).trim().toUpperCase();
+                        if (cleaned.includes(',')) verdict = 'multiple';
+                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                        else verdict = 'marked';
+                    }
+                    list.push({
+                        q: displayQ,
+                        displayQ: displayQ,
+                        omrQ: omrQ,
+                        subject: '📐 Math',
+                        marked: resp || '',
+                        correctKey: correctKey,
+                        verdict: verdict,
+                        isNumerical: false
+                    });
+                }
+
+                // Section 3: Mathematics Q71-75 (NVQ Section B)
+                const mathNvq = (data.numericalScores && data.numericalScores.math) || [];
+                for (let i = 1; i <= 5; i++) {
+                    const qNum = 70 + i;
+                    const val = Number(mathNvq[i - 1] || 0);
+                    let verdict = 'blank';
+                    let marks = '0';
+                    let markedText = 'Blank';
+                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                    list.push({
+                        q: qNum,
+                        displayQ: qNum,
+                        omrQ: qNum,
+                        subject: '📐 Math',
+                        marked: markedText,
+                        correctKey: 'NVQ',
+                        marks: marks,
+                        verdict: verdict,
+                        isNumerical: true
+                    });
+                }
+            } else if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
                 list = data.breakdown;
             } else if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
                 const qTotal = Math.max(data.responses.length, data.totalQuestions || 0);
@@ -1185,6 +1338,7 @@
                     }
                     list.push({
                         q: qNum,
+                        displayQ: qNum,
                         marked: resp || '',
                         correctKey: correctKey,
                         verdict: verdict
@@ -1201,22 +1355,33 @@
                     tr.style.borderBottom = '1px solid #F1F5F9';
                     let vColor = '#64748B';
                     let vText = 'Blank';
-                    let qMarksText = '0';
+                    let qMarksText = (b.marks !== undefined) ? b.marks : '0';
                     let qMarksColor = '#64748B';
 
                     if (b.verdict === 'correct') {
-                        vColor = '#15803D'; vText = 'Correct'; qMarksText = '+4'; qMarksColor = '#15803D';
+                        vColor = '#15803D'; vText = 'Correct'; if (b.marks === undefined) qMarksText = '+4'; qMarksColor = '#15803D';
                     } else if (b.verdict === 'wrong') {
-                        vColor = '#DC2626'; vText = 'Wrong'; qMarksText = '-1'; qMarksColor = '#DC2626';
+                        vColor = '#DC2626'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#DC2626';
                     } else if (b.verdict === 'multiple') {
-                        vColor = '#B91C1C'; vText = 'Multiple'; qMarksText = '-1'; qMarksColor = '#B91C1C';
+                        vColor = '#B91C1C'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#B91C1C';
                     } else if (b.verdict === 'marked') {
                         vColor = '#1D4ED8'; vText = 'Recorded';
                     }
 
+                    if (isJee) {
+                        const tdSub = document.createElement('td');
+                        tdSub.style.cssText = 'padding: 7px; font-weight:700; font-size:0.75rem; color:#475569;';
+                        tdSub.textContent = b.subject || '-';
+                        tr.appendChild(tdSub);
+                    }
+
                     const tdQ = document.createElement('td');
-                    tdQ.style.cssText = 'padding: 7px; font-weight:600; color:#475569;';
-                    tdQ.textContent = 'Q' + b.q;
+                    tdQ.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
+                    if (b.omrQ && b.omrQ !== b.displayQ) {
+                        tdQ.innerHTML = `Q${b.displayQ} <span style="font-size:0.67rem; font-weight:500; color:var(--text-muted);">(OMR Q${b.omrQ})</span>`;
+                    } else {
+                        tdQ.textContent = 'Q' + (b.displayQ || b.q);
+                    }
 
                     const tdMarked = document.createElement('td');
                     tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
@@ -1249,7 +1414,7 @@
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
             }
 
             if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {

@@ -1225,7 +1225,7 @@ function buildGradedSubmissionObj(doc, paper) {
         const sectionWise = [
             {
                 sectionName: 'Physics',
-                range: 'Q1-20 (MCQ) + Q21-25 (NVQ)',
+                range: 'Q1–Q25 (MCQ 1–20 + NVQ 21–25)',
                 correct: mcqScores.phy ? mcqScores.phy.correct : 0,
                 wrong: mcqScores.phy ? mcqScores.phy.wrong : 0,
                 blank: mcqScores.phy ? mcqScores.phy.blank : 0,
@@ -1237,7 +1237,7 @@ function buildGradedSubmissionObj(doc, paper) {
             },
             {
                 sectionName: 'Chemistry',
-                range: 'Q41-60 (MCQ) + Q46-50 (NVQ)',
+                range: 'Q26–Q50 (MCQ 26–45 + NVQ 46–50)',
                 correct: mcqScores.chem ? mcqScores.chem.correct : 0,
                 wrong: mcqScores.chem ? mcqScores.chem.wrong : 0,
                 blank: mcqScores.chem ? mcqScores.chem.blank : 0,
@@ -1249,7 +1249,7 @@ function buildGradedSubmissionObj(doc, paper) {
             },
             {
                 sectionName: 'Mathematics',
-                range: 'Q81-100 (MCQ) + Q71-75 (NVQ)',
+                range: 'Q51–Q75 (MCQ 51–70 + NVQ 71–75)',
                 correct: mcqScores.math ? mcqScores.math.correct : 0,
                 wrong: mcqScores.math ? mcqScores.math.wrong : 0,
                 blank: mcqScores.math ? mcqScores.math.blank : 0,

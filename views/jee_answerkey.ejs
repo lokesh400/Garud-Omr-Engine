@@ -423,30 +423,39 @@
         const encodedId = encodeURIComponent(paper._id);
         const JEE_SECTIONS = [
             {
-                name: 'Section 1: ⚛️ Physics (MCQs)',
-                range: 'Q1 – Q20',
+                name: 'Section 1: ⚛️ Physics',
+                range: 'Q1 – Q25',
                 from: 1,
                 to: 20,
+                displayFrom: 1,
+                displayTo: 20,
+                nvqRange: 'Q21 – Q25',
                 bannerClass: '',
-                badge: '20 MCQs • 80 Max Marks',
+                badge: '20 MCQs (Q1–Q20) • 80 Max Marks',
                 color: '#2563EB'
             },
             {
-                name: 'Section 2: 🧪 Chemistry (MCQs)',
-                range: 'Q41 – Q60',
+                name: 'Section 2: 🧪 Chemistry',
+                range: 'Q26 – Q50',
                 from: 41,
                 to: 60,
+                displayFrom: 26,
+                displayTo: 45,
+                nvqRange: 'Q46 – Q50',
                 bannerClass: 'chem-banner',
-                badge: '20 MCQs • 80 Max Marks',
+                badge: '20 MCQs (Q26–Q45) • 80 Max Marks',
                 color: '#059669'
             },
             {
-                name: 'Section 3: 📐 Mathematics (MCQs)',
-                range: 'Q81 – Q100',
+                name: 'Section 3: 📐 Mathematics',
+                range: 'Q51 – Q75',
                 from: 81,
                 to: 100,
+                displayFrom: 51,
+                displayTo: 70,
+                nvqRange: 'Q71 – Q75',
                 bannerClass: 'math-banner',
-                badge: '20 MCQs • 80 Max Marks',
+                badge: '20 MCQs (Q51–Q70) • 80 Max Marks',
                 color: '#7C3AED'
             }
         ];
@@ -515,15 +524,15 @@
             <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-right: 4px;">Jump To:</span>
             <a href="#sec_1" class="section-quick-tab">
                 <span>⚛️ Physics</span>
-                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#2563EB;">Q1–Q20</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#2563EB;">Q1–Q25 (MCQ 1–20)</span>
             </a>
             <a href="#sec_41" class="section-quick-tab">
                 <span>🧪 Chemistry</span>
-                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#059669;">Q41–Q60</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#059669;">Q26–Q50 (MCQ 26–45)</span>
             </a>
             <a href="#sec_81" class="section-quick-tab">
                 <span>📐 Mathematics</span>
-                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#7C3AED;">Q81–Q100</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#7C3AED;">Q51–Q75 (MCQ 51–70)</span>
             </a>
         </nav>
 
@@ -533,7 +542,7 @@
                 <% JEE_SECTIONS.forEach(sec => { %>
                     <!-- Section Divider Banner -->
                     <div class="section-divider-banner <%= sec.bannerClass %>" id="sec_<%= sec.from %>">
-                        <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             <strong style="font-size:0.95rem; color: var(--text-main);"><%= sec.name %></strong>
                             <span style="color: var(--text-muted); font-size:0.8rem; font-family:'JetBrains Mono',monospace;">(<%= sec.range %>)</span>
                         </div>
@@ -545,6 +554,7 @@
                     <!-- 20 Question Rows for this section -->
                     <% for(let i = sec.from; i <= sec.to; i++) { %>
                         <%
+                            const displayQ = sec.displayFrom + (i - sec.from);
                             let currentVal = "";
                             if (Array.isArray(paper.answer_key) && paper.answer_key.length >= i) {
                                 currentVal = paper.answer_key[i - 1] || "";
@@ -558,10 +568,15 @@
                         %>
                         <div class="omr-key-row <%= currentVal ? 'has-val' : '' %>" id="row_q<%= i %>">
                             <div class="omr-q-badge">
-                                <span class="omr-q-num">Q<%= i %></span>
+                                <div style="display:flex; flex-direction:column; line-height:1.15;">
+                                    <span class="omr-q-num">Q<%= displayQ %></span>
+                                    <% if (sec.from !== sec.displayFrom) { %>
+                                        <span style="font-size:0.67rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">(OMR Q<%= i %>)</span>
+                                    <% } %>
+                                </div>
                                 <span class="omr-selected-val" id="badge_val_q<%= i %>"><%= currentVal || '-' %></span>
                             </div>
-                            <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
+                            <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= displayQ %> options">
                                 <% ['A','B','C','D'].forEach(opt => { %>
                                     <button type="button"
                                             class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>"
@@ -569,7 +584,7 @@
                                             data-q="<%= i %>"
                                             data-opt="<%= opt %>"
                                             onclick="selectAnswer('<%= i %>', '<%= opt %>')"
-                                            title="Select <%= opt %> for Question <%= i %>">
+                                            title="Select <%= opt %> for Question <%= displayQ %> (OMR Q<%= i %>)">
                                         <%= opt %>
                                     </button>
                                 <% }) %>

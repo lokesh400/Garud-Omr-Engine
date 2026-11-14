@@ -832,8 +832,8 @@
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0 0.5rem 0;">
-                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Bubble Breakdown (Q1-20, Q41-60, Q81-100)</h4>
-                            <span style="font-size:0.75rem; color:var(--text-muted);">60 Questions Evaluated</span>
+                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Bubble Breakdown (Q1-20, Q26-45, Q51-70)</h4>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">60 MCQs Evaluated</span>
                         </div>
                         <div
                             style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
@@ -871,9 +871,9 @@
 
         // JEE MAINS SPECIFIC: Only check Q1-20 (Physics), Q41-60 (Chemistry), Q81-100 (Math)
         const JEE_QUESTIONS = [];
-        for (let q = 1; q <= 20; q++) JEE_QUESTIONS.push({ q, subject: 'Physics', subKey: 'phy' });
-        for (let q = 41; q <= 60; q++) JEE_QUESTIONS.push({ q, subject: 'Chemistry', subKey: 'chem' });
-        for (let q = 81; q <= 100; q++) JEE_QUESTIONS.push({ q, subject: 'Mathematics', subKey: 'math' });
+        for (let q = 1; q <= 20; q++) JEE_QUESTIONS.push({ q, displayQ: q, subject: 'Physics', subKey: 'phy' });
+        for (let q = 41; q <= 60; q++) JEE_QUESTIONS.push({ q, displayQ: q - 41 + 26, subject: 'Chemistry', subKey: 'chem' });
+        for (let q = 81; q <= 100; q++) JEE_QUESTIONS.push({ q, displayQ: q - 81 + 51, subject: 'Mathematics', subKey: 'math' });
 
         // State for Section B Numerical Questions (5 each for Physics, Chemistry, Math)
         const numericalScores = {
@@ -2188,7 +2188,9 @@
                 }
 
                 scannerBreakdown.push({
-                    q: q,
+                    q: item.displayQ,
+                    displayQ: item.displayQ,
+                    omrQ: q,
                     subject: subject,
                     subKey: subKey,
                     marked: detectedAnswer || '',
@@ -2268,10 +2270,11 @@
                 }
 
                 const subIcon = subKey === 'phy' ? '⚛️ Phy' : (subKey === 'chem' ? '🧪 Chem' : '📐 Math');
+                const omrHint = item.q !== item.displayQ ? ' <span style="font-size:0.7rem; font-weight:500; color:var(--text-muted);">(OMR Q' + item.q + ')</span>' : '';
 
                 rowsHtml += '<tr>' +
                     '<td style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">' + subIcon + '</td>' +
-                    '<td style="font-weight:700; font-family:\'JetBrains Mono\',monospace;">Q' + q + '</td>' +
+                    '<td style="font-weight:700; font-family:\'JetBrains Mono\',monospace;">Q' + item.displayQ + omrHint + '</td>' +
                     '<td>' + markedCellHtml + '</td>' +
                     '<td style="font-family:\'JetBrains Mono\',monospace; font-weight:700; color:var(--text-muted);">' + (correctAns || '-') + '</td>' +
                     '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
