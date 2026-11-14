@@ -44,7 +44,10 @@ const submissionSchema = new mongoose.Schema({
   maxMarks: { type: Number, default: 0 },
   correctCount: { type: Number, default: 0 },
   wrongCount: { type: Number, default: 0 },
-  blankCount: { type: Number, default: 0 }
+  blankCount: { type: Number, default: 0 },
+  examType: { type: String, default: 'standard' },
+  numericalScores: { type: mongoose.Schema.Types.Mixed, default: {} },
+  mcqSubjectScores: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, {
   collection: 'submissions',
   timestamps: { createdAt: 'submitted_at', updatedAt: false },
@@ -63,6 +66,9 @@ submissionSchema.virtual('cloudinaryPublicId').get(function() { return this.clou
 submissionSchema.virtual('cloudinaryAccount').get(function() { return this.cloudinary_account; }).set(function(val) { this.cloudinary_account = val; });
 submissionSchema.virtual('scannedAt').get(function() { return this.submitted_at; }).set(function(val) { this.submitted_at = val; });
 submissionSchema.virtual('aggregateMarks').get(function() {
+  if (this.examType === 'jee') {
+    return this.score !== undefined ? this.score : 0;
+  }
   const marks = (this.correctCount * 4) - (this.wrongCount * 1);
   return marks > 0 ? marks : 0;
 });

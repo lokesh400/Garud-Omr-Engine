@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Mains Evaluation • <%= paper.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .eval-container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .eval-header-split {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.15rem 1.5rem;
+            box-shadow: var(--shadow-xs);
+        }
+        .eval-layout {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 1180px) {
+            .eval-layout { grid-template-columns: 1fr; }
+        }
+        .canvas-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-xs);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .canvas-toolbar {
+            background: var(--surface-subtle);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        .canvas-toolbar-btn {
+            background: #FFFFFF;
+            color: var(--text-main);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-xs);
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .canvas-toolbar-btn:hover {
+            background: var(--surface-subtle);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .canvas-wrapper {
+            position: relative;
+            background: var(--surface-subtle);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #canvasOutput {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+        }
+        .level-badge {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border: 1px solid var(--success-border);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .jee-badge {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+        }
+        .score-hero {
+            background: linear-gradient(135deg, #F0FDF4 0%, #EFF6FF 100%);
+            color: var(--text-main);
+            border: 1px solid #BBF7D0;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+        .jee-subject-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .jee-sub-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 6px;
+            text-align: center;
+        }
+        .jee-sub-card .sub-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+        .jee-sub-card .sub-score {
+            font-size: 1.25rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            margin: 2px 0;
+        }
+        .jee-sub-card .sub-detail {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 640px) {
+            .stat-grid { grid-template-columns: repeat(3, 1fr); }
+            .jee-subject-cards { grid-template-columns: 1fr; }
+        }
+        .stat-box {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 0.5rem;
+            text-align: center;
+        }
+        .stat-box .num { font-size: 1.45rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+        .stat-box .lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 4px; letter-spacing: 0.04em; }
+
+        /* Numerical Questions Grading Panel */
+        .nvq-panel {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+        .nvq-subject-section {
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .nvq-subject-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .nvq-sub-heading {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .nvq-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .nvq-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+        .nvq-num-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-main);
+        }
+        .nvq-btn-group {
+            display: inline-flex;
+            gap: 4px;
+        }
+        .nvq-btn {
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .nvq-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .nvq-btn.active.correct {
+            background: #10B981;
+            color: #FFFFFF;
+            border-color: #059669;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+        }
+        .nvq-btn.active.wrong {
+            background: #EF4444;
+            color: #FFFFFF;
+            border-color: #DC2626;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+        }
+        .nvq-btn.active.blank {
+            background: #64748B;
+            color: #FFFFFF;
+            border-color: #475569;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .breakdown-table th, .breakdown-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #F1F5F9;
+            text-align: center;
+        }
+        .breakdown-table th { background: var(--surface-subtle); font-weight: 600; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .breakdown-table tr:hover td { background: var(--surface-subtle); }
+        .badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-correct { background: var(--success-light); color: var(--success-hover); border: 1px solid var(--success-border); }
+        .badge-wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+        .badge-blank { background: var(--surface-subtle); color: var(--text-muted); border: 1px solid var(--border-color); }
+        .badge-marked { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
+        .badge-multiple {
+            background: var(--danger-light);
+            color: var(--danger-hover);
+            border: 1px solid var(--danger-border);
+        }
+        .roll-number-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+        .roll-label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .roll-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .roll-status-pill {
+            margin-left: auto;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+        .roll-boxes-display {
+            display: flex;
+            gap: 6px;
+        }
+        .roll-digit-box {
+            flex: 1;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--surface-subtle);
+            color: var(--text-main);
+        }
+        .roll-digit-box.filled {
+            background: #EFF6FF;
+            border-color: #93C5FD;
+            color: #1D4ED8;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/sidebar_start', { activeNav: 'paper_key', paper: paper }) %>
+        <div class="container eval-container">
+            <div class="eval-header-split">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span class="jee-badge">JEE MAINS MODE</span>
+                        <h1 style="font-size: 1.35rem; margin: 0; font-weight: 700;">Evaluation Results</h1>
+                    </div>
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.85rem;">
+                        <%= paper.title %> &middot; Checking: <strong>Q1-20 (Physics)</strong> &bull; <strong>Q41-60 (Chemistry)</strong> &bull; <strong>Q81-100 (Math)</strong> + Numerical
+                    </p>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span id="evalStatus" class="status-pill">Analyzing sheet...</span>
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">Answer Key</a>
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" class="btn btn-primary btn-sm">View Results</a>
+                </div>
+            </div>
+
+            <div class="eval-layout">
+                <!-- Left: Sheet Preview Canvas -->
+                <div>
+                    <div class="canvas-card">
+                        <div class="canvas-toolbar">
+                            <span class="level-badge">Auto-Leveled &amp; Cropped (A4)</span>
+                            <div style="display:flex; gap:8px;">
+                                <input type="file" id="sheetFileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+                                <button type="button" class="canvas-toolbar-btn" onclick="document.getElementById('sheetFileInput').click()" title="Select an OMR sheet image from device">📁 Choose Sheet Image</button>
+                                <button type="button" class="canvas-toolbar-btn" id="toggleViewBtn" onclick="toggleRawView()">View Raw Upload</button>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="canvasOutput"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Results & Numerical Panel -->
+                <div>
+                    <!-- Roll Number Card -->
+                    <div class="roll-number-card">
+                        <div class="roll-label-row">
+                            <span class="roll-title">Student Roll Number</span>
+                            <span class="roll-status-pill" id="rollStatusPill">Detecting...</span>
+                        </div>
+                        <div class="roll-boxes-display" id="rollBoxesDisplay">
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                        </div>
+                    </div>
+
+                    <!-- JEE Score Hero -->
+                    <div class="score-hero">
+                        <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700;">Total JEE Mains Score</div>
+                        <div class="score-val" id="scoreValue" style="font-size: 2.75rem; font-weight: 800; margin: 0.2rem 0; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">0 / 300</div>
+                        <div id="scorePercentage" style="font-size: 0.95rem; font-weight: 600; color: var(--text-body);">0% Aggregate Marks</div>
+
+                        <!-- 3 Subjects Mini Cards -->
+                        <div class="jee-subject-cards">
+                            <div class="jee-sub-card">
+                                <div class="sub-title">⚛️ Physics</div>
+                                <div class="sub-score" id="phyTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="phyMcqMarks">0</span> &bull; NVQ: <span id="phyNvqMarks">0</span></div>
+                            </div>
+                            <div class="jee-sub-card">
+                                <div class="sub-title">🧪 Chemistry</div>
+                                <div class="sub-score" id="chemTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="chemMcqMarks">0</span> &bull; NVQ: <span id="chemNvqMarks">0</span></div>
+                            </div>
+                            <div class="jee-sub-card">
+                                <div class="sub-title">📐 Mathematics</div>
+                                <div class="sub-score" id="mathTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="mathMcqMarks">0</span> &bull; NVQ: <span id="mathNvqMarks">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section B: Numerical Type Questions Grading Panel -->
+                    <div class="nvq-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h3 style="margin:0; font-size:0.95rem; font-weight:700;">Section B: Numerical Value Questions</h3>
+                            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Manual Checking (+4 / -1 / 0)</span>
+                        </div>
+
+                        <!-- Physics NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>⚛️ Physics Numerical (Q21–Q25)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="phyNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 20 + i %></span>
+                                        <div class="nvq-btn-group" id="nvq_phy_<%= i %>">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('phy', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('phy', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('phy', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Chemistry NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>🧪 Chemistry Numerical (Q46–Q50)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="chemNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 45 + i %></span>
+                                        <div class="nvq-btn-group" id="nvq_chem_<%= i %>">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('chem', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('chem', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('chem', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Mathematics NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>📐 Mathematics Numerical (Q71–Q75)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="mathNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 70 + i %></span>
+                                        <div class="nvq-btn-group" id="nvq_math_<%= i %>">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('math', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('math', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('math', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scanned MCQs Stat Grid & Breakdown Table -->
+                    <div class="card" style="padding: 1.25rem;">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 700;">Section A: Scanned 60 MCQs Overview</h4>
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="num" id="statCorrect" style="color: var(--success);">0</div>
+                                <div class="lbl">Correct (+4)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statWrong" style="color: var(--danger);">0</div>
+                                <div class="lbl">Wrong (-1)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statMultiple" style="color: var(--danger-hover);">0</div>
+                                <div class="lbl">Multiple (-1)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statAttempted" style="color: var(--primary);">0</div>
+                                <div class="lbl">Attempted</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statBlank" style="color: var(--text-muted);">0</div>
+                                <div class="lbl">Blank (0)</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0 0.5rem 0;">
+                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Scanned Bubble Breakdown</h4>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">Showing Q1-20, Q41-60, Q81-100</span>
+                        </div>
+                        <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            <table class="breakdown-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>#</th>
+                                        <th>Marked</th>
+                                        <th>Key</th>
+                                        <th>Verdict</th>
+                                        <th>Marks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden source image -->
+        <img id="uploadedImage" src="<%= imagePath || '' %>" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
+
+        <script>
+            const answerKey = <%- answerKey || '{}' %>;
+            const img = document.getElementById('uploadedImage');
+            const canvas = document.getElementById('canvasOutput');
+            const ctx = canvas.getContext('2d');
+            const evalStatus = document.getElementById('evalStatus');
+            const toggleViewBtn = document.getElementById('toggleViewBtn');
+
+            let rawCanvas = document.createElement('canvas');
+            let rawCtx = rawCanvas.getContext('2d');
+            let leveledCanvas = document.createElement('canvas');
+            let leveledCtx = leveledCanvas.getContext('2d');
+            let showingRaw = false;
+
+            const TARGET_W = 1000;
+            const TARGET_H = 1461;
+
+            // Measured Exact Ratios from Rendered A4 Sheet
+            const U_START = 0.061846;
+            const V_START = 0.256331;
+            const U_BUBBLE_STEP = 0.028042;
+            const V_ROW_STEP = 0.018233;
+            const U_COL_STEP = 0.201332;
+            const QUESTIONS_PER_COL = 40;
+            const OPTIONS = ['A', 'B', 'C', 'D'];
+
+            // Roll Number Exact Ratios
+            const U_ROLL_START = 0.619879;
+            const V_ROLL_START = 0.058644;
+            const U_ROLL_COL_STEP = 0.026640;
+            const V_ROLL_ROW_STEP = 0.018233;
+
+            // JEE MAINS SPECIFIC: Only check Q1-20 (Physics), Q41-60 (Chemistry), Q81-100 (Math)
+            const JEE_QUESTIONS = [];
+            for (let q = 1; q <= 20; q++) JEE_QUESTIONS.push({ q, subject: 'Physics', subKey: 'phy' });
+            for (let q = 41; q <= 60; q++) JEE_QUESTIONS.push({ q, subject: 'Chemistry', subKey: 'chem' });
+            for (let q = 81; q <= 100; q++) JEE_QUESTIONS.push({ q, subject: 'Mathematics', subKey: 'math' });
+
+            // State for Numerical Questions (5 each for Physics, Chemistry, Math)
+            const numericalScores = {
+                phy: [0, 0, 0, 0, 0],
+                chem: [0, 0, 0, 0, 0],
+                math: [0, 0, 0, 0, 0]
+            };
+
+            let mcqSubjectScores = {
+                phy: 0,
+                chem: 0,
+                math: 0
+            };
+
+            let detectedRollNo = '';
+            let lastQuestionBreakdown = [];
+
+            function setNvq(subKey, index, marks, btn) {
+                numericalScores[subKey][index] = marks;
+                const parent = btn.parentElement;
+                parent.querySelectorAll('.nvq-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                updateJeeTotals();
+                saveJeeResultsToBackend();
+            }
+
+            function updateJeeTotals() {
+                const sumArr = (arr) => arr.reduce((acc, v) => acc + v, 0);
+
+                const phyNvq = sumArr(numericalScores.phy);
+                const chemNvq = sumArr(numericalScores.chem);
+                const mathNvq = sumArr(numericalScores.math);
+
+                document.getElementById('phyNvqSummary').textContent = (phyNvq >= 0 ? '+' : '') + phyNvq + ' Marks';
+                document.getElementById('chemNvqSummary').textContent = (chemNvq >= 0 ? '+' : '') + chemNvq + ' Marks';
+                document.getElementById('mathNvqSummary').textContent = (mathNvq >= 0 ? '+' : '') + mathNvq + ' Marks';
+
+                document.getElementById('phyNvqMarks').textContent = (phyNvq >= 0 ? '+' : '') + phyNvq;
+                document.getElementById('chemNvqMarks').textContent = (chemNvq >= 0 ? '+' : '') + chemNvq;
+                document.getElementById('mathNvqMarks').textContent = (mathNvq >= 0 ? '+' : '') + mathNvq;
+
+                const phyTotal = mcqSubjectScores.phy + phyNvq;
+                const chemTotal = mcqSubjectScores.chem + chemNvq;
+                const mathTotal = mcqSubjectScores.math + mathNvq;
+
+                document.getElementById('phyTotal').textContent = phyTotal + ' / 100';
+                document.getElementById('chemTotal').textContent = chemTotal + ' / 100';
+                document.getElementById('mathTotal').textContent = mathTotal + ' / 100';
+
+                const grandTotal = phyTotal + chemTotal + mathTotal;
+                document.getElementById('scoreValue').textContent = grandTotal + ' / 300';
+
+                const pct = Math.max(0, Math.round((grandTotal / 300) * 100));
+                document.getElementById('scorePercentage').textContent = pct + '% Aggregate Marks (' + grandTotal + '/300)';
+            }
+
+            function handleFileSelect(evt) {
+                const file = evt.target.files && evt.target.files[0];
+                if (!file) return;
+                loadSheetFile(file);
+            }
+
+            function loadSheetFile(file) {
+                evalStatus.textContent = 'Loading image...';
+                evalStatus.className = 'status-pill';
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    _evalStarted = false;
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        initEvaluator();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+
+            let _evalStarted = false;
+            function initEvaluator() {
+                if (_evalStarted) return;
+                if (!img.src || img.src === window.location.href || img.src.endsWith('/') || img.getAttribute('src') === '') {
+                    evalStatus.textContent = 'Please choose an OMR sheet image to evaluate.';
+                    evalStatus.className = 'status-pill';
+                    return;
+                }
+                if (!img.complete || img.naturalWidth === 0) {
+                    setTimeout(initEvaluator, 100);
+                    return;
+                }
+                _evalStarted = true;
+
+                const W = img.naturalWidth;
+                const H = img.naturalHeight;
+                rawCanvas.width = W;
+                rawCanvas.height = H;
+                rawCtx.drawImage(img, 0, 0);
+
+                const corners = autoDetectCorners(rawCtx, W, H);
+                warpAndEvaluate(corners, W, H);
+            }
+
+            function toggleRawView() {
+                showingRaw = !showingRaw;
+                if (showingRaw) {
+                    canvas.width = rawCanvas.width;
+                    canvas.height = rawCanvas.height;
+                    ctx.drawImage(rawCanvas, 0, 0);
+                    toggleViewBtn.textContent = 'View Leveled & Cropped';
+                } else {
+                    canvas.width = leveledCanvas.width;
+                    canvas.height = leveledCanvas.height;
+                    ctx.drawImage(leveledCanvas, 0, 0);
+                    toggleViewBtn.textContent = 'View Raw Upload';
+                }
+            }
+
+            function orderCorners(pts) {
+                if (!pts || pts.length !== 4) return pts;
+                const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) * 0.25;
+                const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) * 0.25;
+                const sorted = pts.map(p => ({
+                    orig: p,
+                    angle: Math.atan2(p.y - cy, p.x - cx)
+                })).sort((a, b) => a.angle - b.angle);
+                return [sorted[0].orig, sorted[1].orig, sorted[2].orig, sorted[3].orig];
+            }
+
+            function getPerspectiveTransform(src, dst) {
+                const A = [], B = [];
+                for (let i = 0; i < 4; i++) {
+                    const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                    A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                    A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
+                }
+                const n = 8;
+                for (let i = 0; i < n; i++) {
+                    let maxRow = i;
+                    for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                    [A[i], A[maxRow]] = [A[maxRow], A[i]];[B[i], B[maxRow]] = [B[maxRow], B[i]];
+                    const pivot = A[i][i];
+                    if (Math.abs(pivot) < 1e-10) return null;
+                    for (let j = i; j < n; j++) A[i][j] /= pivot;
+                    B[i] /= pivot;
+                    for (let k = 0; k < n; k++) {
+                        if (k !== i) {
+                            const factor = A[k][i];
+                            for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                            B[k] -= factor * B[i];
+                        }
+                    }
+                }
+                return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
+            }
+
+            // Zero-GC Corner Detector Cache
+            const _omrBuf = {
+                size: 0,
+                gray: null,
+                visited: null,
+                queue: null,
+                hist: new Int32Array(256)
+            };
+
+            function detectLiveCorners(ctx, sw, sh) {
+                const total = sw * sh;
+                if (_omrBuf.size < total) {
+                    _omrBuf.size = total;
+                    _omrBuf.gray = new Uint8Array(total);
+                    _omrBuf.visited = new Uint8Array(total);
+                    _omrBuf.queue = new Int32Array(total);
+                }
+
+                const imgData = ctx.getImageData(0, 0, sw, sh);
+                const data = imgData.data;
+                const gray = _omrBuf.gray;
+                const hist = _omrBuf.hist;
+                hist.fill(0);
+
+                for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                    const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                    gray[p] = g;
+                    hist[g]++;
+                }
+
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * hist[i];
+                let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 110;
+                for (let i = 0; i < 256; i++) {
+                    wB += hist[i];
+                    if (wB === 0) continue;
+                    const wF = total - wB;
+                    if (wF === 0) break;
+                    sumB += i * hist[i];
+                    const diff = (sumB / wB) - ((sum - sumB) / wF);
+                    const v = wB * wF * diff * diff;
+                    if (v > maxVar) { maxVar = v; otsuThresh = i + 1; }
+                }
+                otsuThresh = Math.max(35, Math.min(otsuThresh, 185));
+
+                const darkInkBase = Math.max(30, Math.min(105, Math.round(otsuThresh * 0.65)));
+                const visited = _omrBuf.visited;
+                const queue = _omrBuf.queue;
+
+                function findCornersAtThreshold(inkThresh) {
+                    visited.fill(0, 0, total);
+                    const candidates = [];
+                    const step = 2;
+
+                    for (let py = 4; py < sh - 4; py += step) {
+                        const rowOff = py * sw;
+                        for (let px = 4; px < sw - 4; px += step) {
+                            const startP = rowOff + px;
+                            if (visited[startP] || gray[startP] >= inkThresh) continue;
+
+                            let count = 0, sumX = 0, sumY = 0;
+                            let minX = px, maxX = px, minY = py, maxY = py;
+                            let qHead = 0, qTail = 0;
+                            queue[qTail++] = startP;
+                            visited[startP] = 1;
+
+                            while (qHead < qTail) {
+                                if (count > 900) break;
+                                const cur = queue[qHead++];
+                                const cy = (cur / sw) | 0;
+                                const cx = cur - cy * sw;
+                                count++;
+                                sumX += cx; sumY += cy;
+                                if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                                if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+                                const nbs = [cur - 1, cur + 1, cur - sw, cur + sw];
+                                for (let k = 0; k < 4; k++) {
+                                    const nb = nbs[k];
+                                    if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < inkThresh && qTail < total - 2) {
+                                        visited[nb] = 1; queue[qTail++] = nb;
+                                    }
+                                }
+                            }
+
+                            const bw = maxX - minX + 1;
+                            const bh = maxY - minY + 1;
+                            const aspect = bw / bh;
+                            const density = count / (bw * bh);
+
+                            if (bw >= 3 && bh >= 3 && bw <= 45 && bh <= 45 && aspect >= 0.45 && aspect <= 2.20 && density >= 0.35 && count >= 6) {
+                                candidates.push({ x: sumX / count, y: sumY / count });
+                            }
+                        }
+                    }
+
+                    if (candidates.length < 4) return null;
+
+                    let cMinX = sw, cMaxX = 0, cMinY = sh, cMaxY = 0;
+                    candidates.forEach(c => {
+                        if (c.x < cMinX) cMinX = c.x; if (c.x > cMaxX) cMaxX = c.x;
+                        if (c.y < cMinY) cMinY = c.y; if (c.y > cMaxY) cMaxY = c.y;
+                    });
+                    const paperMidX = (cMinX + cMaxX) * 0.5;
+                    const paperMidY = (cMinY + cMaxY) * 0.5;
+
+                    const quadBest = [null, null, null, null];
+                    const quadBestDist = [0, 0, 0, 0];
+
+                    candidates.forEach(c => {
+                        const q = (c.x < paperMidX ? 0 : 1) + (c.y < paperMidY ? 0 : 2);
+                        const dist = Math.hypot(c.x - paperMidX, c.y - paperMidY);
+                        if (dist > quadBestDist[q]) {
+                            quadBestDist[q] = dist;
+                            quadBest[q] = c;
+                        }
+                    });
+
+                    if (!quadBest[0] || !quadBest[1] || !quadBest[2] || !quadBest[3]) return null;
+
+                    const ordered = [quadBest[0], quadBest[1], quadBest[3], quadBest[2]];
+
+                    for (let i = 0; i < 4; i++) {
+                        const a = ordered[i], b = ordered[(i + 1) % 4], c = ordered[(i + 2) % 4];
+                        const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                        if (cross <= 0) return null;
+                    }
+
+                    const wTop = Math.hypot(ordered[1].x - ordered[0].x, ordered[1].y - ordered[0].y);
+                    const wBot = Math.hypot(ordered[2].x - ordered[3].x, ordered[2].y - ordered[3].y);
+                    const hLeft = Math.hypot(ordered[3].x - ordered[0].x, ordered[3].y - ordered[0].y);
+                    const hRight = Math.hypot(ordered[2].x - ordered[1].x, ordered[2].y - ordered[1].y);
+
+                    if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.40) return null;
+                    if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.40) return null;
+
+                    const quadArea = 0.5 * Math.abs(
+                        (ordered[0].x * ordered[1].y - ordered[0].y * ordered[1].x) +
+                        (ordered[1].x * ordered[2].y - ordered[1].y * ordered[2].x) +
+                        (ordered[2].x * ordered[3].y - ordered[2].y * ordered[3].x) +
+                        (ordered[3].x * ordered[0].y - ordered[3].y * ordered[0].x)
+                    );
+                    if (quadArea < total * 0.05) return null;
+
+                    return ordered.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+                }
+
+                let result = findCornersAtThreshold(darkInkBase);
+                if (!result) result = findCornersAtThreshold(Math.min(130, darkInkBase + 24));
+                if (!result) result = findCornersAtThreshold(Math.max(25, darkInkBase - 14));
+                return result;
+            }
+
+            function autoDetectCorners(ctx, W, H) {
+                const defaultCorners = [
+                    { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                    { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
+                    { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
+                    { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+                ];
+
+                const fastScale = Math.min(1, 560 / Math.max(W, H));
+                const sw = Math.max(1, Math.round(W * fastScale));
+                const sh = Math.max(1, Math.round(H * fastScale));
+
+                const procCanvas = document.createElement('canvas');
+                procCanvas.width = sw;
+                procCanvas.height = sh;
+                const procCtx = procCanvas.getContext('2d');
+                procCtx.drawImage(ctx.canvas, 0, 0, sw, sh);
+
+                const raw = detectLiveCorners(procCtx, sw, sh);
+                if (!raw) return defaultCorners;
+
+                const scaleX = W / sw;
+                const scaleY = H / sh;
+                return raw.map(p => ({
+                    x: Math.round(p.x * scaleX),
+                    y: Math.round(p.y * scaleY)
+                }));
+            }
+
+            function warpAndEvaluate(corners, W, H) {
+                leveledCanvas.width = TARGET_W;
+                leveledCanvas.height = TARGET_H;
+
+                const defaultCorners = [
+                    { x: Math.round(W * 0.056), y: Math.round(H * 0.038) },
+                    { x: Math.round(W * 0.944), y: Math.round(H * 0.038) },
+                    { x: Math.round(W * 0.944), y: Math.round(H * 0.962) },
+                    { x: Math.round(W * 0.056), y: Math.round(H * 0.962) }
+                ];
+                const pts = (corners && corners.length === 4) ? corners : defaultCorners;
+                const orderedCorners = orderCorners(pts) || defaultCorners;
+
+                const srcImgData = rawCtx.getImageData(0, 0, W, H);
+                const srcData = srcImgData.data;
+                const src32 = new Uint32Array(srcImgData.data.buffer);
+
+                const approxW = (Math.hypot(orderedCorners[1].x - orderedCorners[0].x, orderedCorners[1].y - orderedCorners[0].y) +
+                    Math.hypot(orderedCorners[2].x - orderedCorners[3].x, orderedCorners[2].y - orderedCorners[3].y)) * 0.5;
+                const expMarkerSide = Math.max(4, approxW * (20 / 713.22));
+                const qcx = (orderedCorners[0].x + orderedCorners[1].x + orderedCorners[2].x + orderedCorners[3].x) * 0.25;
+                const qcy = (orderedCorners[0].y + orderedCorners[1].y + orderedCorners[2].y + orderedCorners[3].y) * 0.25;
+
+                function refineCornerSubpixel(pt) {
+                    const vx = qcx - pt.x, vy = qcy - pt.y;
+                    const vLen = Math.hypot(vx, vy) || 1;
+                    const ux = vx / vLen, uy = vy / vLen;
+
+                    const paperSamples = [];
+                    for (let mult = 1.2; mult <= 2.4; mult += 0.3) {
+                        const px = Math.round(pt.x + ux * expMarkerSide * mult);
+                        const py = Math.round(pt.y + uy * expMarkerSide * mult);
+                        if (px >= 0 && px < W && py >= 0 && py < H) {
+                            const idx = (py * W + px) * 4;
+                            paperSamples.push((srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8);
+                        }
+                    }
+                    paperSamples.sort((a, b) => a - b);
+                    const localWhite = paperSamples.length ? paperSamples[Math.floor(paperSamples.length * 0.75)] : 220;
+
+                    const seedR = Math.max(5, Math.round(expMarkerSide * 0.85));
+                    const minX = Math.max(0, Math.round(pt.x - seedR));
+                    const maxX = Math.min(W - 1, Math.round(pt.x + seedR));
+                    const minY = Math.max(0, Math.round(pt.y - seedR));
+                    const maxY = Math.min(H - 1, Math.round(pt.y + seedR));
+
+                    let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
+                    for (let y = minY; y <= maxY; y++) {
+                        const rowIdx = y * W;
+                        for (let x = minX; x <= maxX; x++) {
+                            const idx = (rowIdx + x) * 4;
+                            const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
+                            if (lum < minLum) { minLum = lum; seedX = x; seedY = y; }
+                        }
+                    }
+
+                    if (localWhite - minLum < 35) return pt;
+
+                    const markerThresh = Math.min(minLum + 55, (minLum + localWhite) * 0.5);
+                    const maxR = Math.max(10, Math.round(expMarkerSide * 1.4));
+                    const maxR2 = maxR * maxR;
+                    const maxAllowedCount = Math.max(60, Math.round(expMarkerSide * expMarkerSide * 3.0));
+                    const winDim = maxR * 2 + 3;
+                    const visited = new Uint8Array(winDim * winDim);
+                    const ox = seedX - maxR - 1;
+                    const oy = seedY - maxR - 1;
+
+                    const qX = new Int32Array(maxAllowedCount + 32);
+                    const qY = new Int32Array(maxAllowedCount + 32);
+                    let qHead = 0, qTail = 0;
+
+                    const startLx = seedX - ox;
+                    const startLy = seedY - oy;
+                    visited[startLy * winDim + startLx] = 1;
+                    qX[qTail] = seedX;
+                    qY[qTail] = seedY;
+                    qTail++;
+
+                    let sumX = 0, sumY = 0, count = 0;
+                    let bMinX = seedX, bMaxX = seedX, bMinY = seedY, bMaxY = seedY;
+
+                    while (qHead < qTail && count <= maxAllowedCount) {
+                        const cx = qX[qHead];
+                        const cy = qY[qHead];
+                        qHead++;
+                        sumX += cx; sumY += cy; count++;
+                        if (cx < bMinX) bMinX = cx; if (cx > bMaxX) bMaxX = cx;
+                        if (cy < bMinY) bMinY = cy; if (cy > bMaxY) bMaxY = cy;
+
+                        const neighbors = [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]];
+                        for (let k = 0; k < 4; k++) {
+                            const nx = neighbors[k][0], ny = neighbors[k][1];
+                            if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                            const dx = nx - seedX, dy = ny - seedY;
+                            if (dx * dx + dy * dy > maxR2) continue;
+                            const lx = nx - ox, ly = ny - oy;
+                            if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
+                            const vIdx = ly * winDim + lx;
+                            if (visited[vIdx]) continue;
+                            visited[vIdx] = 1;
+                            const pIdx = (ny * W + nx) * 4;
+                            const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
+                            if (lum < markerThresh && qTail < maxAllowedCount + 20) {
+                                qX[qTail] = nx; qY[qTail] = ny; qTail++;
+                            }
+                        }
+                    }
+
+                    if (count < 9 || count > maxAllowedCount) return pt;
+                    const bw = bMaxX - bMinX + 1, bh = bMaxY - bMinY + 1;
+                    const aspect = bw / bh;
+                    if (aspect < 0.45 || aspect > 2.2) return pt;
+                    const rx = sumX / count, ry = sumY / count;
+                    if (Math.hypot(rx - pt.x, ry - pt.y) > Math.max(6, expMarkerSide * 0.9)) return pt;
+                    return { x: rx, y: ry };
+                }
+
+                const refinedCorners = orderedCorners.map(p => refineCornerSubpixel(p));
+
+                const dstRectCorners = [
+                    { x: 0, y: 0 },
+                    { x: TARGET_W, y: 0 },
+                    { x: TARGET_W, y: TARGET_H },
+                    { x: 0, y: TARGET_H }
+                ];
+
+                const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
+                if (!H_mat) {
+                    evalStatus.textContent = 'Invalid Corner Geometry';
+                    evalStatus.style.background = '#FEF2F2';
+                    evalStatus.style.color = '#B91C1C';
+                    return;
+                }
+
+                const dstImgData = leveledCtx.createImageData(TARGET_W, TARGET_H);
+                const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+                const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+                const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+                const h6 = H_mat[6], h7 = H_mat[7];
+
+                let dstIdx = 0;
+                for (let y = 0; y < TARGET_H; y++) {
+                    const wx = h1 * y + h2;
+                    const wy = h4 * y + h5;
+                    const wz = h7 * y + 1;
+                    for (let x = 0; x < TARGET_W; x++) {
+                        const z = 1 / (h6 * x + wz);
+                        const sx = Math.round((h0 * x + wx) * z);
+                        const sy = Math.round((h3 * x + wy) * z);
+                        if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                            dst32[dstIdx] = src32[sy * W + sx];
+                        } else {
+                            dst32[dstIdx] = 0xFFFFFFFF;
+                        }
+                        dstIdx++;
+                    }
+                }
+
+                leveledCtx.putImageData(dstImgData, 0, 0);
+
+                try {
+                    window.cleanLeveledImageData = leveledCanvas.toDataURL('image/jpeg', 0.78);
+                } catch (e) {
+                    window.cleanLeveledImageData = leveledCanvas.toDataURL();
+                }
+
+                evaluateJeeSheet(leveledCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
+
+                canvas.width = TARGET_W;
+                canvas.height = TARGET_H;
+                ctx.drawImage(leveledCanvas, 0, 0);
+
+                evalStatus.textContent = 'Leveled & Graded';
+                evalStatus.style.background = '#F0FDF4';
+                evalStatus.style.color = '#15803D';
+            }
+
+            function evaluateJeeSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+                const imgData = ctx.getImageData(0, 0, W, H);
+                const data = imgData.data;
+
+                function getGray(x, y) {
+                    if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                    const idx = (y * W + x) * 4;
+                    return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+                }
+
+                function sampleDisk(cx, cy, r) {
+                    let sum = 0, count = 0;
+                    const r2 = r * r;
+                    const ir = Math.ceil(r);
+                    for (let dy = -ir; dy <= ir; dy++) {
+                        for (let dx = -ir; dx <= ir; dx++) {
+                            if (dx * dx + dy * dy <= r2) {
+                                sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                                count++;
+                            }
+                        }
+                    }
+                    return count > 0 ? (sum / count) : 255;
+                }
+
+                function sampleCleanPaperNear(px, py, stepX, stepY, fallbackX) {
+                    const pts = [
+                        sampleDisk(px + stepX * 0.5, py - stepY * 0.5, 2.5),
+                        sampleDisk(px + stepX * 0.5, py + stepY * 0.5, 2.5)
+                    ];
+                    if (fallbackX !== undefined) pts.push(sampleDisk(fallbackX, py, 2.5));
+                    pts.sort((a, b) => b - a);
+                    return pts.length >= 2 ? (pts[0] + pts[1]) * 0.5 : pts[0];
+                }
+
+                function sampleBubbleFeatures(cx, cy, paperVal) {
+                    let midSum = 0, midCount = 0;
+                    let fullSum = 0, fullCount = 0;
+                    for (let dy = -8; dy <= 8; dy++) {
+                        for (let dx = -8; dx <= 8; dx++) {
+                            const d = Math.hypot(dx, dy);
+                            if (d > 7.4) continue;
+                            const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            fullSum += g; fullCount++;
+                            if (d >= 4.3) { midSum += g; midCount++; }
+                        }
+                    }
+                    if (midCount === 0 || fullCount === 0) {
+                        return { midDarkness: 0, fullDarkness: 0, normMidDrop: 0, normFullDrop: 0, fillScore: 0 };
+                    }
+                    const midMean = midSum / midCount;
+                    const fullMean = fullSum / fullCount;
+                    const midDarkness = Math.max(0, paperVal - midMean);
+                    const fullDarkness = Math.max(0, paperVal - fullMean);
+                    const normMidDrop = paperVal > 20 ? (midDarkness / paperVal) : 0;
+                    const normFullDrop = paperVal > 20 ? (fullDarkness / paperVal) : 0;
+                    const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
+                    return { midDarkness, fullDarkness, normMidDrop, normFullDrop, fillScore };
+                }
+
+                // 1. DETECT ROLL NUMBER
+                const rollRadius = 8.5;
+                const rollStepX = U_ROLL_COL_STEP * markerW;
+                const rollStepY = V_ROLL_ROW_STEP * markerH;
+                let detectedRollNumber = '';
+                let rollDigitsArray = [];
+                let detectedDigitsCount = 0;
+
+                for (let c = 0; c < 8; c++) {
+                    const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
+                    let colStats = [];
+                    for (let d = 0; d < 10; d++) {
+                        const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
+                        const diamondX = c < 7 ? (colX + rollStepX * 0.5) : (colX - rollStepX * 0.5);
+                        const rollPaperVal = Math.max(sampleDisk(diamondX, rowY - rollStepY * 0.5, 2.5), sampleDisk(diamondX, rowY + rollStepY * 0.5, 2.5));
+                        const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
+                        colStats.push({ digit: d, ...bubbleSample, x: colX, y: rowY });
+                    }
+                    const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
+                    const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+
+                    colStats.sort((a, b) => b.fillScore - a.fillScore);
+                    const top1 = colStats[0];
+                    const top2 = colStats[1];
+                    const top1Contrast = top1.fillScore - colBase;
+                    const isColFilled = (top1.normMidDrop >= 0.25 && top1Contrast >= 22 && (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 32));
+
+                    const detectedDigit = isColFilled ? top1.digit.toString() : '-';
+                    if (isColFilled) detectedDigitsCount++;
+                    detectedRollNumber += detectedDigit;
+                    rollDigitsArray.push({ digit: detectedDigit, isFilled: isColFilled, chosen: isColFilled ? top1 : null });
+
+                    for (let d = 0; d < 10; d++) {
+                        const stat = colStats.find(s => s.digit === d);
+                        ctx.beginPath();
+                        ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
+                        ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
+                        if (isColFilled && d === top1.digit) {
+                            ctx.strokeStyle = '#06B6D4';
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                            ctx.fill();
+                        } else {
+                            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                        }
+                        ctx.stroke();
+                    }
+                }
+
+                detectedRollNo = detectedRollNumber;
+                const rollBoxesEl = document.getElementById('rollBoxesDisplay');
+                if (rollBoxesEl) {
+                    let rollBoxesHtml = '';
+                    for (let c = 0; c < 8; c++) {
+                        const item = rollDigitsArray[c];
+                        rollBoxesHtml += item.isFilled
+                            ? '<div class="roll-digit-box filled">' + item.digit + '</div>'
+                            : '<div class="roll-digit-box unknown">-</div>';
+                    }
+                    rollBoxesEl.innerHTML = rollBoxesHtml;
+                }
+                const rollStatusPill = document.getElementById('rollStatusPill');
+                if (rollStatusPill) {
+                    if (detectedDigitsCount === 8) {
+                        rollStatusPill.textContent = '8/8 Digits Detected';
+                        rollStatusPill.style.background = '#F0FDF4'; rollStatusPill.style.color = '#15803D';
+                    } else if (detectedDigitsCount > 0) {
+                        rollStatusPill.textContent = detectedDigitsCount + '/8 Digits';
+                        rollStatusPill.style.background = '#FFFBEB'; rollStatusPill.style.color = '#B45309';
+                    } else {
+                        rollStatusPill.textContent = 'No Roll Detected';
+                    }
+                }
+
+                // 2. DETECT JEE MAINS MCQS (ONLY Q1-20, Q41-60, Q81-100)
+                const stepX = U_BUBBLE_STEP * markerW;
+                const stepY = V_ROW_STEP * markerH;
+                const bubbleRadius = 9.0;
+                let correctCount = 0;
+                let wrongCount = 0;
+                let multipleCount = 0;
+                let attemptedCount = 0;
+                let blankCount = 0;
+                let rowsHtml = '';
+                const questionBreakdown = [];
+
+                mcqSubjectScores = { phy: 0, chem: 0, math: 0 };
+
+                JEE_QUESTIONS.forEach(item => {
+                    const q = item.q;
+                    const subject = item.subject;
+                    const subKey = item.subKey;
+
+                    const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                    const row = (q - 1) % QUESTIONS_PER_COL;
+
+                    const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                    const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                    const rightGutter = sampleDisk(Math.min(W - 14, colX + 3 * stepX + 16), rowY, 3.0);
+                    const midLeftGutter = sampleCleanPaperNear(colX, rowY, stepX, stepY, Math.max(14, colX - 16));
+                    const midRightGutter = sampleCleanPaperNear(colX + 2 * stepX, rowY, stepX, stepY, Math.min(W - 14, colX + 3 * stepX + 16));
+
+                    let bubbleStats = [];
+                    for (let b = 0; b < 4; b++) {
+                        const bubbleX = colX + b * stepX;
+                        const localPV = b < 2
+                            ? midLeftGutter
+                            : (b === 2 ? (midLeftGutter + midRightGutter) * 0.5 : (midRightGutter + rightGutter) * 0.5);
+                        const sample = sampleBubbleFeatures(bubbleX, rowY, localPV);
+                        bubbleStats.push({ opt: OPTIONS[b], ...sample, x: bubbleX, y: rowY });
+                    }
+
+                    const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
+                    const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+                    const rowBaseMid = (sortedAsc[0].midDarkness + sortedAsc[1].midDarkness) / 2;
+
+                    function isOptionFilled(s) {
+                        const contrast = s.fillScore - rowBase;
+                        const midContrast = s.midDarkness - rowBaseMid;
+                        if (contrast >= 24 && midContrast >= 20 && s.normMidDrop >= 0.24) return true;
+                        if (contrast >= 30 && s.normMidDrop >= 0.22 && s.normFullDrop >= 0.24) return true;
+                        if (s.normMidDrop >= 0.45 && s.normFullDrop >= 0.45 && s.midDarkness >= 85) return true;
+                        return false;
+                    }
+
+                    const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                    let filledBubbles = [];
+                    if (filledCandidates.length === 1) {
+                        filledBubbles = filledCandidates;
+                    } else if (filledCandidates.length > 1) {
+                        const sortedC = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                        if (sortedC[0].fillScore - sortedC[1].fillScore >= 40 && sortedC[0].fillScore >= 65) {
+                            filledBubbles = [sortedC[0]];
+                        } else {
+                            filledBubbles = filledCandidates;
+                        }
+                    }
+
+                    const isMultiple = filledBubbles.length > 1;
+                    const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
+                    const correctAns = answerKey[q.toString()] || '';
+
+                    let verdict = 'unmarked';
+                    let qMarks = 0;
+
+                    if (isMultiple) {
+                        attemptedCount++;
+                        wrongCount++;
+                        multipleCount++;
+                        verdict = 'multiple';
+                        qMarks = -1;
+                    } else if (filledBubbles.length === 1) {
+                        const singleAns = filledBubbles[0].opt;
+                        attemptedCount++;
+                        if (correctAns && singleAns === correctAns) {
+                            correctCount++;
+                            verdict = 'correct';
+                            qMarks = 4;
+                        } else if (correctAns) {
+                            wrongCount++;
+                            verdict = 'wrong';
+                            qMarks = -1;
+                        } else {
+                            verdict = 'marked';
+                            qMarks = 0;
+                        }
+                    } else {
+                        blankCount++;
+                        qMarks = 0;
+                    }
+
+                    mcqSubjectScores[subKey] += qMarks;
+
+                    questionBreakdown.push({
+                        q: q,
+                        subject: subject,
+                        marked: detectedAnswer || '',
+                        correctKey: correctAns || '',
+                        verdict: verdict,
+                        marks: qMarks
+                    });
+
+                    // Draw Overlay Rings strictly on these checked questions
+                    for (let b = 0; b < 4; b++) {
+                        const opt = OPTIONS[b];
+                        const stat = bubbleStats[b];
+                        const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
+
+                        ctx.beginPath();
+                        ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
+                        ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
+
+                        if (isMultiple && isThisBubbleFilled) {
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                            ctx.fill(); ctx.stroke();
+                        } else if (isThisBubbleFilled) {
+                            if (verdict === 'correct') {
+                                ctx.strokeStyle = '#10B981';
+                                ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
+                            } else if (verdict === 'wrong') {
+                                ctx.strokeStyle = '#EF4444';
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                            } else {
+                                ctx.strokeStyle = '#06B6D4';
+                                ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                            }
+                            ctx.fill(); ctx.stroke();
+                        } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                            ctx.strokeStyle = '#10B981';
+                            ctx.setLineDash([3, 3]);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+                        } else {
+                            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                            ctx.stroke();
+                        }
+                    }
+
+                    let badgeClass = 'badge-blank';
+                    let verdictText = 'Blank (0)';
+                    let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
+
+                    if (verdict === 'multiple') {
+                        badgeClass = 'badge-multiple'; verdictText = 'Multiple (-1)';
+                        markedCellHtml = '<strong style="color: #DC2626;">' + detectedAnswer + '</strong>';
+                    } else if (verdict === 'correct') {
+                        badgeClass = 'badge-correct'; verdictText = 'Correct (+4)';
+                        markedCellHtml = '<strong style="color: #15803D;">' + detectedAnswer + '</strong>';
+                    } else if (verdict === 'wrong') {
+                        badgeClass = 'badge-wrong'; verdictText = 'Wrong (-1)';
+                        markedCellHtml = '<strong style="color: #DC2626;">' + detectedAnswer + '</strong>';
+                    } else if (verdict === 'marked') {
+                        badgeClass = 'badge-marked'; verdictText = 'Recorded (0)';
+                        markedCellHtml = '<strong style="color: #1D4ED8;">' + detectedAnswer + '</strong>';
+                    }
+
+                    rowsHtml += '<tr>' +
+                        '<td style="font-weight:700; font-size:0.78rem; color:#64748B;">' + subject + '</td>' +
+                        '<td style="font-weight:700; color:#1E293B;">Q' + q + '</td>' +
+                        '<td>' + markedCellHtml + '</td>' +
+                        '<td>' + (correctAns ? '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>' : '<span style="color:#64748B;">-</span>') + '</td>' +
+                        '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                        '<td style="font-weight:700; font-family:\'JetBrains Mono\',monospace;">' + (qMarks > 0 ? '+' : '') + qMarks + '</td>' +
+                    '</tr>';
+                });
+
+                lastQuestionBreakdown = questionBreakdown;
+
+                document.getElementById('statCorrect').textContent = correctCount;
+                document.getElementById('statWrong').textContent = wrongCount;
+                document.getElementById('statMultiple').textContent = multipleCount;
+                document.getElementById('statAttempted').textContent = attemptedCount;
+                document.getElementById('statBlank').textContent = blankCount;
+
+                document.getElementById('phyMcqMarks').textContent = mcqSubjectScores.phy;
+                document.getElementById('chemMcqMarks').textContent = mcqSubjectScores.chem;
+                document.getElementById('mathMcqMarks').textContent = mcqSubjectScores.math;
+
+                const tbl = document.getElementById('tableBody');
+                if (tbl) tbl.innerHTML = rowsHtml;
+
+                updateJeeTotals();
+                saveJeeResultsToBackend();
+            }
+
+            function saveJeeResultsToBackend() {
+                const statusPill = document.getElementById('evalStatus');
+                let rollNo = (typeof detectedRollNo !== 'undefined' && detectedRollNo) ? detectedRollNo : '';
+                if (!rollNo || rollNo.length === 0) {
+                    rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+                }
+
+                const imageData = window.cleanLeveledImageData || (typeof leveledCanvas !== 'undefined' ? leveledCanvas.toDataURL('image/jpeg', 0.78) : null);
+                if (!imageData) return;
+
+                const sumArr = (arr) => arr.reduce((acc, v) => acc + v, 0);
+                const phyNvq = sumArr(numericalScores.phy);
+                const chemNvq = sumArr(numericalScores.chem);
+                const mathNvq = sumArr(numericalScores.math);
+                const grandTotal = mcqSubjectScores.phy + phyNvq + mcqSubjectScores.chem + chemNvq + mcqSubjectScores.math + mathNvq;
+
+                if (statusPill) statusPill.textContent = 'Saving evaluation...';
+
+                fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/jee-save-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rollNumber: rollNo,
+                        score: grandTotal,
+                        totalQuestions: 75,
+                        maxMarks: 300,
+                        numericalScores: numericalScores,
+                        mcqSubjectScores: mcqSubjectScores,
+                        breakdown: lastQuestionBreakdown,
+                        imageData: imageData
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (statusPill && data.success) {
+                        statusPill.innerHTML = 'Saved &middot; <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" style="color:inherit; font-weight:700; text-decoration:underline;">View Results</a>';
+                    }
+                })
+                .catch(e => {
+                    console.warn('Save error:', e);
+                    if (statusPill) statusPill.textContent = 'Graded (Unsaved)';
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initEvaluator);
+            } else {
+                initEvaluator();
+            }
+        </script>
+        <%- include('partials/sidebar_end') %>
+</body>
+</html>

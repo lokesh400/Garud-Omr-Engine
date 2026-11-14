@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Mains Scanner • <%= paper.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .scanner-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .viewfinder-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #0F172A;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+        }
+        #videoInput { display: none; }
+        #canvasPreview { width: 100%; height: auto; display: block; }
+        .hud-top-bar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .hud-chip {
+            background: rgba(15, 23, 42, 0.82);
+            color: #FFFFFF;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+        .lock-meter {
+            width: 68px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 3px;
+            overflow: hidden;
+            display: none;
+            margin-left: 4px;
+        }
+        .lock-meter.active { display: block; }
+        .lock-meter-fill {
+            height: 100%;
+            width: 0%;
+            background: #22C55E;
+            border-radius: 3px;
+            transition: width 0.08s ease-out;
+        }
+        .hud-chip.locked {
+            border-color: #22C55E;
+            color: #DCFCE7;
+        }
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #F59E0B;
+        }
+        .status-dot.active { background: #22C55E; }
+        .scan-laser {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(37, 99, 235, 0.65);
+            pointer-events: none;
+            z-index: 20;
+            display: none;
+            animation: laser-sweep 2.2s ease-in-out infinite alternate;
+        }
+        @keyframes laser-sweep {
+            0% { top: 12%; opacity: 0.25; }
+            50% { opacity: 0.85; }
+            100% { top: 88%; opacity: 0.25; }
+        }
+        .scanner-bottom-bar {
+            background: #FFFFFF;
+            border-top: 1px solid var(--border-color);
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: var(--text-body);
+        }
+        .btn-capture-auto {
+            background: var(--primary);
+            color: #FFFFFF;
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-sm);
+            padding: 10px 20px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition), scale 120ms ease-out;
+        }
+        .btn-capture-auto:hover:not(:disabled) {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        .btn-capture-auto.locked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+        #resultsSection { display: none; width: 100%; }
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 960px) {
+            .results-grid { grid-template-columns: 1fr; }
+        }
+        .rectified-canvas-wrap {
+            background: var(--surface-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .rectified-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--success);
+            color: #FFFFFF;
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            z-index: 10;
+        }
+        #canvasResult {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+        }
+        .score-hero {
+            background: linear-gradient(135deg, #F0FDF4 0%, #EFF6FF 100%);
+            color: var(--text-main);
+            border: 1px solid #BBF7D0;
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+        .jee-subject-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .jee-sub-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 6px;
+            text-align: center;
+        }
+        .jee-sub-card .sub-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+        .jee-sub-card .sub-score {
+            font-size: 1.25rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            margin: 2px 0;
+        }
+        .jee-sub-card .sub-detail {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 640px) {
+            .stat-grid { grid-template-columns: repeat(3, 1fr); }
+            .jee-subject-cards { grid-template-columns: 1fr; }
+        }
+        .stat-box {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 0.5rem;
+            text-align: center;
+        }
+        .stat-box .num { font-size: 1.45rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+        .stat-box .lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 4px; letter-spacing: 0.04em; }
+
+        /* Numerical Questions Grading Panel */
+        .nvq-panel {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+        .nvq-subject-section {
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .nvq-subject-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .nvq-sub-heading {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .nvq-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .nvq-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+        .nvq-num-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-main);
+        }
+        .nvq-btn-group { display: inline-flex; gap: 4px; }
+        .nvq-btn {
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .nvq-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .nvq-btn.active.correct {
+            background: #10B981; color: #FFFFFF; border-color: #059669;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+        }
+        .nvq-btn.active.wrong {
+            background: #EF4444; color: #FFFFFF; border-color: #DC2626;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+        }
+        .nvq-btn.active.blank {
+            background: #64748B; color: #FFFFFF; border-color: #475569;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .breakdown-table th, .breakdown-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #F1F5F9;
+            text-align: center;
+        }
+        .breakdown-table th { background: var(--surface-subtle); font-weight: 600; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .breakdown-table tr:hover td { background: var(--surface-subtle); }
+        .badge { display: inline-block; padding: 2px 9px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; }
+        .badge-correct { background: var(--success-light); color: var(--success-hover); border: 1px solid var(--success-border); }
+        .badge-wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger-border); }
+        .badge-blank { background: var(--surface-subtle); color: var(--text-muted); border: 1px solid var(--border-color); }
+        .badge-marked { background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary-border); }
+        .badge-multiple { background: var(--danger-light); color: var(--danger-hover); border: 1px solid var(--danger-border); }
+
+        .roll-number-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+        .roll-label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .roll-title {
+            font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
+            color: var(--text-muted); text-transform: uppercase;
+        }
+        .roll-status-pill {
+            margin-left: auto; font-size: 0.75rem; font-weight: 600;
+            padding: 2px 8px; border-radius: var(--radius-full);
+            background: var(--surface-subtle); border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+        .roll-boxes-display { display: flex; gap: 6px; }
+        .roll-digit-box {
+            flex: 1; height: 38px; display: flex; align-items: center; justify-content: center;
+            border: 1.5px solid var(--border-color); border-radius: var(--radius-sm);
+            font-size: 1.2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+            background: var(--surface-subtle); color: var(--text-main);
+        }
+        .roll-digit-box.filled {
+            background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8;
+        }
+        .shutter-flash {
+            position: absolute; inset: 0; background: #FFFFFF; opacity: 0; pointer-events: none; z-index: 50; transition: opacity 0.12s ease-out;
+        }
+        .shutter-flash.flash { opacity: 0.85; }
+    </style>
+</head>
+<body>
+    <%- include('partials/sidebar_start', { activeNav: 'paper_key', paper: paper }) %>
+    <div class="container scanner-container">
+        <!-- TOP VIEW: Live Camera Viewfinder -->
+        <section id="viewfinderSection">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="pill pill-info" style="font-weight:700;">JEE MAINS SCANNER</span>
+                        <h1 style="font-size:1.35rem; margin:0; font-weight:700;"><%= paper.title %></h1>
+                    </div>
+                    <p style="color:var(--text-muted); margin:3px 0 0 0; font-size:0.85rem;">
+                        Scanning: <strong>Q1-20 (Physics)</strong> &bull; <strong>Q41-60 (Chemistry)</strong> &bull; <strong>Q81-100 (Math)</strong> &bull; Hold steady to auto-capture
+                    </p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm">Answer Key</a>
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/results" class="btn btn-primary btn-sm">Results</a>
+                </div>
+            </div>
+
+            <div class="viewfinder-card">
+                <div class="video-wrapper" id="videoWrapper" onclick="manualCapture()" title="Tap to capture immediately">
+                    <video id="videoInput" playsinline webkit-playsinline muted autoplay></video>
+                    <canvas id="canvasPreview"></canvas>
+                    <div class="scan-laser" id="scanLaser"></div>
+                    <div class="shutter-flash" id="flashScreen"></div>
+
+                    <div class="hud-top-bar">
+                        <div class="hud-chip" id="hudChip">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span id="hudStatus">Starting camera...</span>
+                            <div class="lock-meter" id="lockMeter">
+                                <div class="lock-meter-fill" id="lockMeterFill"></div>
+                            </div>
+                        </div>
+                        <div class="hud-chip" style="font-size:0.75rem;">
+                            <span>JEE MAINS &bull; 300M</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scanner-bottom-bar">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.85rem; color:var(--text-muted);">
+                            Align the 4 black corner squares inside the view
+                        </span>
+                    </div>
+                    <button type="button" class="btn-capture-auto" id="captureBtn" onclick="manualCapture()">
+                        Capture &amp; Evaluate
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESULTS VIEW: Shown after scan -->
+        <section id="resultsSection">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="pill pill-success" style="font-weight:700;">SHEET EVALUATED</span>
+                        <h2 style="font-size:1.35rem; margin:0; font-weight:700;"><%= paper.title %></h2>
+                    </div>
+                    <p style="color:var(--text-muted); margin:3px 0 0 0; font-size:0.85rem;">
+                        Verify student roll number, rate Section B numerical questions, and save to records.
+                    </p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="rescanSheet()">Discard &amp; Rescan</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="topSaveBtn" onclick="saveJeeAndScanNext()">Save &amp; Scan Next</button>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <!-- Left: Rectified Canvas -->
+                <div>
+                    <div class="rectified-canvas-wrap">
+                        <span class="rectified-badge">Auto-Leveled A4</span>
+                        <canvas id="canvasResult"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right: Scoreboard & Numerical Grading -->
+                <div>
+                    <div class="roll-number-card">
+                        <div class="roll-label-row">
+                            <span class="roll-title">Student Roll Number</span>
+                            <span class="roll-status-pill" id="rollStatusPill">Ready</span>
+                        </div>
+                        <div class="roll-boxes-display" id="rollBoxesDisplay">
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                        </div>
+                    </div>
+
+                    <!-- JEE Score Hero -->
+                    <div class="score-hero">
+                        <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700;">Total JEE Mains Score</div>
+                        <div class="score-val" id="scoreValue" style="font-size: 2.75rem; font-weight: 800; margin: 0.2rem 0; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">0 / 300</div>
+                        <div id="scorePercentage" style="font-size: 0.95rem; font-weight: 600; color: var(--text-body);">0% Aggregate Marks</div>
+
+                        <div class="jee-subject-cards">
+                            <div class="jee-sub-card">
+                                <div class="sub-title">⚛️ Physics</div>
+                                <div class="sub-score" id="phyTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="phyMcqMarks">0</span> &bull; NVQ: <span id="phyNvqMarks">0</span></div>
+                            </div>
+                            <div class="jee-sub-card">
+                                <div class="sub-title">🧪 Chemistry</div>
+                                <div class="sub-score" id="chemTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="chemMcqMarks">0</span> &bull; NVQ: <span id="chemNvqMarks">0</span></div>
+                            </div>
+                            <div class="jee-sub-card">
+                                <div class="sub-title">📐 Mathematics</div>
+                                <div class="sub-score" id="mathTotal">0 / 100</div>
+                                <div class="sub-detail">MCQ: <span id="mathMcqMarks">0</span> &bull; NVQ: <span id="mathNvqMarks">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section B Numerical Panel -->
+                    <div class="nvq-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h3 style="margin:0; font-size:0.95rem; font-weight:700;">Section B: Numerical Value Questions</h3>
+                            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Manual Checking (+4 / -1 / 0)</span>
+                        </div>
+
+                        <!-- Physics NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>⚛️ Physics Numerical (Q21–Q25)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="phyNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 20 + i %></span>
+                                        <div class="nvq-btn-group">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('phy', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('phy', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('phy', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Chemistry NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>🧪 Chemistry Numerical (Q46–Q50)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="chemNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 45 + i %></span>
+                                        <div class="nvq-btn-group">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('chem', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('chem', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('chem', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Mathematics NVQ -->
+                        <div class="nvq-subject-section">
+                            <div class="nvq-sub-heading">
+                                <span>📐 Mathematics Numerical (Q71–Q75)</span>
+                                <span style="font-family:'JetBrains Mono',monospace;" id="mathNvqSummary">+0 Marks</span>
+                            </div>
+                            <div class="nvq-grid">
+                                <% for(let i=1; i<=5; i++) { %>
+                                    <div class="nvq-item">
+                                        <span class="nvq-num-label">Q<%= 70 + i %></span>
+                                        <div class="nvq-btn-group">
+                                            <button type="button" class="nvq-btn correct" onclick="setNvq('math', <%= i-1 %>, 4, this)">+4 Correct</button>
+                                            <button type="button" class="nvq-btn wrong" onclick="setNvq('math', <%= i-1 %>, -1, this)">-1 Wrong</button>
+                                            <button type="button" class="nvq-btn blank active" onclick="setNvq('math', <%= i-1 %>, 0, this)">0 Blank</button>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scanned MCQs Overview & Table -->
+                    <div class="card" style="padding: 1.25rem;">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; font-weight: 700;">Section A: Scanned 60 MCQs Overview</h4>
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="num" id="statCorrect" style="color: var(--success);">0</div>
+                                <div class="lbl">Correct (+4)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statWrong" style="color: var(--danger);">0</div>
+                                <div class="lbl">Wrong (-1)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statMultiple" style="color: var(--danger-hover);">0</div>
+                                <div class="lbl">Multiple (-1)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statAttempted" style="color: var(--primary);">0</div>
+                                <div class="lbl">Attempted</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statBlank" style="color: var(--text-muted);">0</div>
+                                <div class="lbl">Blank (0)</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin: 1rem 0 0.5rem 0;">
+                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Scanned Bubble Breakdown</h4>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">Q1-20, Q41-60, Q81-100</span>
+                        </div>
+                        <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            <table class="breakdown-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>#</th>
+                                        <th>Marked</th>
+                                        <th>Key</th>
+                                        <th>Verdict</th>
+                                        <th>Marks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.25rem; display:flex; gap:10px;">
+                        <button type="button" class="btn btn-secondary btn-lg" style="flex:1;" onclick="rescanSheet()">Discard &amp; Rescan</button>
+                        <button type="button" class="btn btn-primary btn-lg" style="flex:2;" id="btnSaveNext" onclick="saveJeeAndScanNext()">Save &amp; Scan Next</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const answerKey = <%- answerKey || '{}' %>;
+        const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+
+        const video = document.getElementById('videoInput');
+        const previewCanvas = document.getElementById('canvasPreview');
+        const previewCtx = previewCanvas.getContext('2d');
+        const resultCanvas = document.getElementById('canvasResult');
+        const resultCtx = resultCanvas.getContext('2d');
+
+        const hudStatus = document.getElementById('hudStatus');
+        const statusDot = document.getElementById('statusDot');
+        const hudChip = document.getElementById('hudChip');
+        const lockMeter = document.getElementById('lockMeter');
+        const lockMeterFill = document.getElementById('lockMeterFill');
+        const scanLaser = document.getElementById('scanLaser');
+        const flashScreen = document.getElementById('flashScreen');
+        const captureBtn = document.getElementById('captureBtn');
+
+        let cameraStream = null;
+        let animationFrameId = null;
+        let isCaptured = false;
+        let smoothedCorners = null;
+        let lastRawCorners = null;
+        let lockStreak = 0;
+        const LOCK_REQUIRED_FRAMES = 5;
+        let isFrozen = false;
+        let frozenCorners = null;
+
+        const fastCanvas = document.createElement('canvas');
+        const fastCtx = fastCanvas.getContext('2d');
+
+        const TARGET_W = 1000;
+        const TARGET_H = 1461;
+
+        const U_START = 0.061846;
+        const V_START = 0.256331;
+        const U_BUBBLE_STEP = 0.028042;
+        const V_ROW_STEP = 0.018233;
+        const U_COL_STEP = 0.201332;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
+
+        const U_ROLL_START = 0.619879;
+        const V_ROLL_START = 0.058644;
+        const U_ROLL_COL_STEP = 0.026640;
+        const V_ROLL_ROW_STEP = 0.018233;
+
+        // JEE MAINS SPECIFIC: Only check Q1-20 (Physics), Q41-60 (Chemistry), Q81-100 (Math)
+        const JEE_QUESTIONS = [];
+        for (let q = 1; q <= 20; q++) JEE_QUESTIONS.push({ q, subject: 'Physics', subKey: 'phy' });
+        for (let q = 41; q <= 60; q++) JEE_QUESTIONS.push({ q, subject: 'Chemistry', subKey: 'chem' });
+        for (let q = 81; q <= 100; q++) JEE_QUESTIONS.push({ q, subject: 'Mathematics', subKey: 'math' });
+
+        const numericalScores = {
+            phy: [0, 0, 0, 0, 0],
+            chem: [0, 0, 0, 0, 0],
+            math: [0, 0, 0, 0, 0]
+        };
+
+        let mcqSubjectScores = { phy: 0, chem: 0, math: 0 };
+        let detectedRollNo = '';
+        let lastQuestionBreakdown = [];
+
+        function setNvq(subKey, index, marks, btn) {
+            numericalScores[subKey][index] = marks;
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.nvq-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateJeeTotals();
+        }
+
+        function updateJeeTotals() {
+            const sumArr = (arr) => arr.reduce((acc, v) => acc + v, 0);
+
+            const phyNvq = sumArr(numericalScores.phy);
+            const chemNvq = sumArr(numericalScores.chem);
+            const mathNvq = sumArr(numericalScores.math);
+
+            const phyEl = document.getElementById('phyNvqSummary');
+            if (phyEl) phyEl.textContent = (phyNvq >= 0 ? '+' : '') + phyNvq + ' Marks';
+            const chemEl = document.getElementById('chemNvqSummary');
+            if (chemEl) chemEl.textContent = (chemNvq >= 0 ? '+' : '') + chemNvq + ' Marks';
+            const mathEl = document.getElementById('mathNvqSummary');
+            if (mathEl) mathEl.textContent = (mathNvq >= 0 ? '+' : '') + mathNvq + ' Marks';
+
+            const pM = document.getElementById('phyNvqMarks');
+            if (pM) pM.textContent = (phyNvq >= 0 ? '+' : '') + phyNvq;
+            const cM = document.getElementById('chemNvqMarks');
+            if (cM) cM.textContent = (chemNvq >= 0 ? '+' : '') + chemNvq;
+            const mM = document.getElementById('mathNvqMarks');
+            if (mM) mM.textContent = (mathNvq >= 0 ? '+' : '') + mathNvq;
+
+            const phyTotal = mcqSubjectScores.phy + phyNvq;
+            const chemTotal = mcqSubjectScores.chem + chemNvq;
+            const mathTotal = mcqSubjectScores.math + mathNvq;
+
+            const pTot = document.getElementById('phyTotal');
+            if (pTot) pTot.textContent = phyTotal + ' / 100';
+            const cTot = document.getElementById('chemTotal');
+            if (cTot) cTot.textContent = chemTotal + ' / 100';
+            const mTot = document.getElementById('mathTotal');
+            if (mTot) mTot.textContent = mathTotal + ' / 100';
+
+            const grandTotal = phyTotal + chemTotal + mathTotal;
+            const scoreVal = document.getElementById('scoreValue');
+            if (scoreVal) scoreVal.textContent = grandTotal + ' / 300';
+
+            const pct = Math.max(0, Math.round((grandTotal / 300) * 100));
+            const pctEl = document.getElementById('scorePercentage');
+            if (pctEl) pctEl.textContent = pct + '% Aggregate Marks (' + grandTotal + '/300)';
+        }
+
+        async function initCamera() {
+            isCaptured = false;
+            isFrozen = false;
+            frozenCorners = null;
+            smoothedCorners = null;
+            lastRawCorners = null;
+            lockStreak = 0;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            document.getElementById('viewfinderSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            scanLaser.style.display = 'block';
+            hudStatus.textContent = 'Starting camera...';
+            captureBtn.classList.remove('locked');
+            captureBtn.innerHTML = 'Capture &amp; Evaluate';
+
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!window.isSecureContext && !isLocal) {
+                hudStatus.textContent = 'CAMERA BLOCKED: HTTPS REQUIRED';
+                alert('Camera access requires HTTPS or localhost.');
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                hudStatus.textContent = 'CAMERA ERROR: NOT SUPPORTED';
+                alert('Your browser does not support camera access.');
+                return;
+            }
+
+            if (cameraStream && cameraStream.active) {
+                try {
+                    video.srcObject = cameraStream;
+                    video.muted = true;
+                    video.setAttribute('playsinline', '');
+                    await video.play();
+                    previewCanvas.width = video.videoWidth || 1280;
+                    previewCanvas.height = video.videoHeight || 720;
+                    hudStatus.textContent = 'Align paper in view';
+                    renderLoop();
+                    return;
+                } catch (e) {
+                    console.warn('Reuse stream failed:', e);
+                }
+            }
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+
+            const constraintsList = [
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+                { video: { facingMode: { ideal: 'environment' } }, audio: false },
+                { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+                { video: true, audio: false }
+            ];
+
+            let stream = null;
+            for (const c of constraintsList) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(c);
+                    if (stream) break;
+                } catch (err) { }
+            }
+
+            if (!stream) {
+                hudStatus.textContent = 'CAMERA ACCESS FAILED';
+                alert('Could not access camera. Please verify permissions in your browser settings.');
+                return;
+            }
+
+            try {
+                cameraStream = stream;
+                video.muted = true;
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+                video.setAttribute('muted', '');
+                video.setAttribute('autoplay', '');
+                video.srcObject = cameraStream;
+
+                await new Promise((resolve) => {
+                    if (video.readyState >= 1 && video.videoWidth > 0) return resolve();
+                    video.onloadedmetadata = () => resolve();
+                    setTimeout(resolve, 800);
+                });
+
+                await video.play();
+                previewCanvas.width = video.videoWidth || 1280;
+                previewCanvas.height = video.videoHeight || 720;
+                hudStatus.textContent = 'Align paper in view';
+                renderLoop();
+            } catch (err) {
+                console.error('Video setup error:', err);
+                hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
+            }
+        }
+
+        function orderCorners(pts) {
+            if (!pts || pts.length !== 4) return pts;
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) * 0.25;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) * 0.25;
+            const sorted = pts.map(p => ({
+                orig: p,
+                angle: Math.atan2(p.y - cy, p.x - cx)
+            })).sort((a, b) => a.angle - b.angle);
+            return [sorted[0].orig, sorted[1].orig, sorted[2].orig, sorted[3].orig];
+        }
+
+        function getPerspectiveTransform(src, dst) {
+            const A = [], B = [];
+            for (let i = 0; i < 4; i++) {
+                const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
+            }
+            const n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                [A[i], A[maxRow]] = [A[maxRow], A[i]];[B[i], B[maxRow]] = [B[maxRow], B[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot) < 1e-10) return null;
+                for (let j = i; j < n; j++) A[i][j] /= pivot;
+                B[i] /= pivot;
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = A[k][i];
+                        for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                        B[k] -= factor * B[i];
+                    }
+                }
+            }
+            return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
+        }
+
+        const _omrBuf = {
+            size: 0,
+            gray: null,
+            visited: null,
+            queue: null,
+            hist: new Int32Array(256)
+        };
+
+        function detectLiveCorners(ctx, sw, sh) {
+            const total = sw * sh;
+            if (_omrBuf.size < total) {
+                _omrBuf.size = total;
+                _omrBuf.gray = new Uint8Array(total);
+                _omrBuf.visited = new Uint8Array(total);
+                _omrBuf.queue = new Int32Array(total);
+            }
+
+            const imgData = ctx.getImageData(0, 0, sw, sh);
+            const data = imgData.data;
+            const gray = _omrBuf.gray;
+            const hist = _omrBuf.hist;
+            hist.fill(0);
+
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                gray[p] = g;
+                hist[g]++;
+            }
+
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 110;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (wB === 0) continue;
+                const wF = total - wB;
+                if (wF === 0) break;
+                sumB += i * hist[i];
+                const diff = (sumB / wB) - ((sum - sumB) / wF);
+                const v = wB * wF * diff * diff;
+                if (v > maxVar) { maxVar = v; otsuThresh = i + 1; }
+            }
+            otsuThresh = Math.max(35, Math.min(otsuThresh, 185));
+
+            const darkInkBase = Math.max(30, Math.min(105, Math.round(otsuThresh * 0.65)));
+            const visited = _omrBuf.visited;
+            const queue = _omrBuf.queue;
+
+            function findCornersAtThreshold(inkThresh) {
+                visited.fill(0, 0, total);
+                const candidates = [];
+                const step = 2;
+
+                for (let py = 4; py < sh - 4; py += step) {
+                    const rowOff = py * sw;
+                    for (let px = 4; px < sw - 4; px += step) {
+                        const startP = rowOff + px;
+                        if (visited[startP] || gray[startP] >= inkThresh) continue;
+
+                        let count = 0, sumX = 0, sumY = 0;
+                        let minX = px, maxX = px, minY = py, maxY = py;
+                        let qHead = 0, qTail = 0;
+                        queue[qTail++] = startP;
+                        visited[startP] = 1;
+
+                        while (qHead < qTail) {
+                            if (count > 900) break;
+                            const cur = queue[qHead++];
+                            const cy = (cur / sw) | 0;
+                            const cx = cur - cy * sw;
+                            count++;
+                            sumX += cx; sumY += cy;
+                            if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+                            if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+
+                            const nbs = [cur - 1, cur + 1, cur - sw, cur + sw];
+                            for (let k = 0; k < 4; k++) {
+                                const nb = nbs[k];
+                                if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < inkThresh && qTail < total - 2) {
+                                    visited[nb] = 1; queue[qTail++] = nb;
+                                }
+                            }
+                        }
+
+                        const bw = maxX - minX + 1;
+                        const bh = maxY - minY + 1;
+                        const aspect = bw / bh;
+                        const density = count / (bw * bh);
+
+                        if (bw >= 3 && bh >= 3 && bw <= 45 && bh <= 45 && aspect >= 0.45 && aspect <= 2.20 && density >= 0.35 && count >= 6) {
+                            candidates.push({ x: sumX / count, y: sumY / count });
+                        }
+                    }
+                }
+
+                if (candidates.length < 4) return null;
+
+                let cMinX = sw, cMaxX = 0, cMinY = sh, cMaxY = 0;
+                candidates.forEach(c => {
+                    if (c.x < cMinX) cMinX = c.x; if (c.x > cMaxX) cMaxX = c.x;
+                    if (c.y < cMinY) cMinY = c.y; if (c.y > cMaxY) cMaxY = c.y;
+                });
+                const paperMidX = (cMinX + cMaxX) * 0.5;
+                const paperMidY = (cMinY + cMaxY) * 0.5;
+
+                const quadBest = [null, null, null, null];
+                const quadBestDist = [0, 0, 0, 0];
+
+                candidates.forEach(c => {
+                    const q = (c.x < paperMidX ? 0 : 1) + (c.y < paperMidY ? 0 : 2);
+                    const dist = Math.hypot(c.x - paperMidX, c.y - paperMidY);
+                    if (dist > quadBestDist[q]) {
+                        quadBestDist[q] = dist;
+                        quadBest[q] = c;
+                    }
+                });
+
+                if (!quadBest[0] || !quadBest[1] || !quadBest[2] || !quadBest[3]) return null;
+
+                const ordered = [quadBest[0], quadBest[1], quadBest[3], quadBest[2]];
+
+                for (let i = 0; i < 4; i++) {
+                    const a = ordered[i], b = ordered[(i + 1) % 4], c = ordered[(i + 2) % 4];
+                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                    if (cross <= 0) return null;
+                }
+
+                const wTop = Math.hypot(ordered[1].x - ordered[0].x, ordered[1].y - ordered[0].y);
+                const wBot = Math.hypot(ordered[2].x - ordered[3].x, ordered[2].y - ordered[3].y);
+                const hLeft = Math.hypot(ordered[3].x - ordered[0].x, ordered[3].y - ordered[0].y);
+                const hRight = Math.hypot(ordered[2].x - ordered[1].x, ordered[2].y - ordered[1].y);
+
+                if (Math.min(wTop, wBot) / Math.max(wTop, wBot) < 0.40) return null;
+                if (Math.min(hLeft, hRight) / Math.max(hLeft, hRight) < 0.40) return null;
+
+                const quadArea = 0.5 * Math.abs(
+                    (ordered[0].x * ordered[1].y - ordered[0].y * ordered[1].x) +
+                    (ordered[1].x * ordered[2].y - ordered[1].y * ordered[2].x) +
+                    (ordered[2].x * ordered[3].y - ordered[2].y * ordered[3].x) +
+                    (ordered[3].x * ordered[0].y - ordered[3].y * ordered[0].x)
+                );
+                if (quadArea < total * 0.05) return null;
+
+                return ordered.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+            }
+
+            let result = findCornersAtThreshold(darkInkBase);
+            if (!result) result = findCornersAtThreshold(Math.min(130, darkInkBase + 24));
+            if (!result) result = findCornersAtThreshold(Math.max(25, darkInkBase - 14));
+            return result;
+        }
+
+        function drawFramingGuide(ctx, W, H) {
+            const gw = Math.round(W * 0.65);
+            const gh = Math.min(Math.round(H * 0.88), Math.round(gw * 1.414));
+            const gx = Math.round((W - gw) * 0.5);
+            const gy = Math.round((H - gh) * 0.5);
+
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.28)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([8, 8]);
+            ctx.strokeRect(gx, gy, gw, gh);
+            ctx.setLineDash([]);
+
+            ctx.strokeStyle = '#06B6D4';
+            ctx.lineWidth = 3;
+            const cLen = 22;
+            ctx.beginPath();
+            ctx.moveTo(gx, gy + cLen); ctx.lineTo(gx, gy); ctx.lineTo(gx + cLen, gy);
+            ctx.moveTo(gx + gw - cLen, gy); ctx.lineTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + cLen);
+            ctx.moveTo(gx + gw, gy + gh - cLen); ctx.lineTo(gx + gw, gy + gh); ctx.lineTo(gx + gw - cLen, gy + gh);
+            ctx.moveTo(gx + cLen, gy + gh); ctx.lineTo(gx, gy + gh); ctx.lineTo(gx, gy + gh - cLen);
+            ctx.stroke();
+        }
+
+        function drawCyberOverlay(ctx, pts, isLocked, lockPct) {
+            if (!pts || pts.length !== 4) return;
+            const color = isLocked ? '#22C55E' : '#06B6D4';
+            const fillColor = isLocked ? 'rgba(34, 197, 94, 0.12)' : 'rgba(6, 182, 212, 0.08)';
+
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[1].x, pts[1].y);
+            ctx.lineTo(pts[2].x, pts[2].y);
+            ctx.lineTo(pts[3].x, pts[3].y);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            const cLen = 16;
+            pts.forEach(pt => {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function renderLoop() {
+            if (isCaptured || isFrozen) return;
+
+            if (video.readyState >= 2) {
+                if (video.videoWidth > 0 && video.videoHeight > 0 &&
+                    (previewCanvas.width !== video.videoWidth || previewCanvas.height !== video.videoHeight)) {
+                    previewCanvas.width = video.videoWidth;
+                    previewCanvas.height = video.videoHeight;
+                }
+                const W = previewCanvas.width;
+                const H = previewCanvas.height;
+                previewCtx.drawImage(video, 0, 0, W, H);
+
+                const fastW = 440;
+                const fastH = Math.max(1, Math.round(H * (fastW / W)));
+                if (fastCanvas.width !== fastW || fastCanvas.height !== fastH) {
+                    fastCanvas.width = fastW;
+                    fastCanvas.height = fastH;
+                }
+                fastCtx.drawImage(video, 0, 0, fastW, fastH);
+
+                const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
+
+                if (detectedRaw) {
+                    const scale = W / fastW;
+                    const currentCorners = detectedRaw.map(pt => ({
+                        x: pt.x * scale,
+                        y: pt.y * scale
+                    }));
+
+                    let isSteady = false;
+                    const steadyThresh = Math.max(16, Math.min(W, H) * 0.035);
+                    if (lastRawCorners) {
+                        const maxDelta = Math.max(...currentCorners.map((pt, i) =>
+                            Math.hypot(pt.x - lastRawCorners[i].x, pt.y - lastRawCorners[i].y)
+                        ));
+                        if (maxDelta < steadyThresh) isSteady = true;
+                    } else {
+                        isSteady = true;
+                    }
+                    lastRawCorners = currentCorners;
+
+                    if (isSteady) lockStreak++;
+                    else lockStreak = Math.max(0, lockStreak - 1);
+
+                    if (!smoothedCorners) {
+                        smoothedCorners = currentCorners;
+                    } else {
+                        smoothedCorners = smoothedCorners.map((pt, i) => ({
+                            x: pt.x * 0.70 + currentCorners[i].x * 0.30,
+                            y: pt.y * 0.70 + currentCorners[i].y * 0.30
+                        }));
+                    }
+
+                    const pct = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
+
+                    hudChip.classList.add('locked');
+                    statusDot.className = 'status-dot active';
+                    hudStatus.textContent = `JEE sheet locked (${pct}%)`;
+
+                    if (lockMeter) {
+                        lockMeter.classList.add('active');
+                        if (lockMeterFill) lockMeterFill.style.width = pct + '%';
+                    }
+
+                    captureBtn.classList.add('locked');
+                    captureBtn.innerHTML = 'Auto-Capturing...';
+
+                    drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES, pct);
+
+                    if (lockStreak >= LOCK_REQUIRED_FRAMES) {
+                        snapAndWarpSheet(smoothedCorners);
+                        return;
+                    }
+                } else {
+                    lockStreak = Math.max(0, lockStreak - 1);
+                    if (lockStreak === 0) {
+                        lastRawCorners = null;
+                        smoothedCorners = null;
+                    }
+
+                    hudChip.classList.remove('locked');
+                    statusDot.className = 'status-dot';
+                    hudStatus.textContent = 'Align paper in view';
+                    captureBtn.classList.remove('locked');
+                    captureBtn.innerHTML = 'Capture &amp; Evaluate';
+
+                    if (lockMeter) lockMeter.classList.remove('active');
+                    drawFramingGuide(previewCtx, W, H);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(renderLoop);
+        }
+
+        function manualCapture() {
+            if (isCaptured) return;
+            if (isFrozen && frozenCorners) {
+                snapAndWarpSheet(frozenCorners);
+                return;
+            }
+            if (smoothedCorners || lastRawCorners) {
+                snapAndWarpSheet(smoothedCorners || lastRawCorners);
+                return;
+            }
+
+            const W = previewCanvas.width;
+            const H = previewCanvas.height;
+            const fastW = 440;
+            const fastH = Math.max(1, Math.round(H * (fastW / W)));
+            if (fastCanvas.width !== fastW || fastCanvas.height !== fastH) {
+                fastCanvas.width = fastW; fastCanvas.height = fastH;
+            }
+            fastCtx.drawImage(previewCanvas, 0, 0, fastW, fastH);
+            const rawCorners = detectLiveCorners(fastCtx, fastW, fastH);
+            if (rawCorners) {
+                const scale = W / fastW;
+                snapAndWarpSheet(rawCorners.map(p => ({ x: p.x * scale, y: p.y * scale })));
+                return;
+            }
+
+            const gw = Math.round(W * 0.65);
+            const gh = Math.min(Math.round(H * 0.88), Math.round(gw * 1.414));
+            const gx = Math.round((W - gw) * 0.5);
+            const gy = Math.round((H - gh) * 0.5);
+            snapAndWarpSheet([
+                { x: gx, y: gy },
+                { x: gx + gw, y: gy },
+                { x: gx + gw, y: gy + gh },
+                { x: gx, y: gy + gh }
+            ]);
+        }
+
+        function playShutter() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } catch (e) { }
+        }
+
+        function snapAndWarpSheet(passedCorners) {
+            isCaptured = true;
+            isFrozen = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            playShutter();
+            flashScreen.classList.add('flash');
+            setTimeout(() => flashScreen.classList.remove('flash'), 120);
+
+            const W = previewCanvas.width;
+            const H = previewCanvas.height;
+
+            const rawCorners = passedCorners || frozenCorners || smoothedCorners;
+            const corners = (rawCorners && rawCorners.length === 4) ? rawCorners : [
+                { x: W * 0.10, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.94 },
+                { x: W * 0.10, y: H * 0.94 }
+            ];
+
+            resultCanvas.width = TARGET_W;
+            resultCanvas.height = TARGET_H;
+
+            const dstRectCorners = [
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
+            ];
+
+            const cleanCanvas = document.createElement('canvas');
+            cleanCanvas.width = W;
+            cleanCanvas.height = H;
+            const cleanCtx = cleanCanvas.getContext('2d');
+            cleanCtx.drawImage(video, 0, 0, W, H);
+            const srcImgData = cleanCtx.getImageData(0, 0, W, H);
+            const srcData = srcImgData.data;
+            const src32 = new Uint32Array(srcImgData.data.buffer);
+
+            const approxW = (Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y) +
+                Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y)) * 0.5;
+            const expMarkerSide = Math.max(4, approxW * (20 / 713.22));
+            const qcx = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) * 0.25;
+            const qcy = (corners[0].y + corners[1].y + corners[2].y + corners[3].y) * 0.25;
+
+            function refineCornerSubpixel(pt) {
+                const vx = qcx - pt.x, vy = qcy - pt.y;
+                const vLen = Math.hypot(vx, vy) || 1;
+                const ux = vx / vLen, uy = vy / vLen;
+
+                const paperSamples = [];
+                for (let mult = 1.2; mult <= 2.4; mult += 0.3) {
+                    const px = Math.round(pt.x + ux * expMarkerSide * mult);
+                    const py = Math.round(pt.y + uy * expMarkerSide * mult);
+                    if (px >= 0 && px < W && py >= 0 && py < H) {
+                        const idx = (py * W + px) * 4;
+                        paperSamples.push((srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8);
+                    }
+                }
+                paperSamples.sort((a, b) => a - b);
+                const localWhite = paperSamples.length ? paperSamples[Math.floor(paperSamples.length * 0.75)] : 220;
+
+                const seedR = Math.max(5, Math.round(expMarkerSide * 0.85));
+                const minX = Math.max(0, Math.round(pt.x - seedR));
+                const maxX = Math.min(W - 1, Math.round(pt.x + seedR));
+                const minY = Math.max(0, Math.round(pt.y - seedR));
+                const maxY = Math.min(H - 1, Math.round(pt.y + seedR));
+
+                let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
+                for (let y = minY; y <= maxY; y++) {
+                    const rowIdx = y * W;
+                    for (let x = minX; x <= maxX; x++) {
+                        const idx = (rowIdx + x) * 4;
+                        const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
+                        if (lum < minLum) { minLum = lum; seedX = x; seedY = y; }
+                    }
+                }
+
+                if (localWhite - minLum < 35) return pt;
+
+                const markerThresh = Math.min(minLum + 55, (minLum + localWhite) * 0.5);
+                const maxR = Math.max(10, Math.round(expMarkerSide * 1.4));
+                const maxR2 = maxR * maxR;
+                const maxAllowedCount = Math.max(60, Math.round(expMarkerSide * expMarkerSide * 3.0));
+                const winDim = maxR * 2 + 3;
+                const visited = new Uint8Array(winDim * winDim);
+                const ox = seedX - maxR - 1;
+                const oy = seedY - maxR - 1;
+
+                const qX = new Int32Array(maxAllowedCount + 32);
+                const qY = new Int32Array(maxAllowedCount + 32);
+                let qHead = 0, qTail = 0;
+
+                const startLx = seedX - ox;
+                const startLy = seedY - oy;
+                visited[startLy * winDim + startLx] = 1;
+                qX[qTail] = seedX; qY[qTail] = seedY; qTail++;
+
+                let sumX = 0, sumY = 0, count = 0;
+                let bMinX = seedX, bMaxX = seedX, bMinY = seedY, bMaxY = seedY;
+
+                while (qHead < qTail && count <= maxAllowedCount) {
+                    const cx = qX[qHead]; const cy = qY[qHead]; qHead++;
+                    sumX += cx; sumY += cy; count++;
+                    if (cx < bMinX) bMinX = cx; if (cx > bMaxX) bMaxX = cx;
+                    if (cy < bMinY) bMinY = cy; if (cy > bMaxY) bMaxY = cy;
+
+                    const neighbors = [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]];
+                    for (let k = 0; k < 4; k++) {
+                        const nx = neighbors[k][0], ny = neighbors[k][1];
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                        const dx = nx - seedX, dy = ny - seedY;
+                        if (dx * dx + dy * dy > maxR2) continue;
+                        const lx = nx - ox, ly = ny - oy;
+                        if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
+                        const vIdx = ly * winDim + lx;
+                        if (visited[vIdx]) continue;
+                        visited[vIdx] = 1;
+                        const pIdx = (ny * W + nx) * 4;
+                        const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
+                        if (lum < markerThresh && qTail < maxAllowedCount + 20) {
+                            qX[qTail] = nx; qY[qTail] = ny; qTail++;
+                        }
+                    }
+                }
+
+                if (count < 9 || count > maxAllowedCount) return pt;
+                const bw = bMaxX - bMinX + 1, bh = bMaxY - bMinY + 1;
+                const aspect = bw / bh;
+                if (aspect < 0.45 || aspect > 2.2) return pt;
+                const rx = sumX / count, ry = sumY / count;
+                if (Math.hypot(rx - pt.x, ry - pt.y) > Math.max(6, expMarkerSide * 0.9)) return pt;
+                return { x: rx, y: ry };
+            }
+
+            const refinedCorners = corners.map(p => refineCornerSubpixel(p));
+            const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
+            if (!H_mat) {
+                alert('Could not align sheet cleanly. Please try again.');
+                rescanSheet();
+                return;
+            }
+
+            const dstImgData = resultCtx.createImageData(TARGET_W, TARGET_H);
+            const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+            const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+            const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+            const h6 = H_mat[6], h7 = H_mat[7];
+
+            let dstIdx = 0;
+            for (let y = 0; y < TARGET_H; y++) {
+                const wx = h1 * y + h2;
+                const wy = h4 * y + h5;
+                const wz = h7 * y + 1;
+                for (let x = 0; x < TARGET_W; x++) {
+                    const z = 1 / (h6 * x + wz);
+                    const sx = Math.round((h0 * x + wx) * z);
+                    const sy = Math.round((h3 * x + wy) * z);
+                    if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                        dst32[dstIdx] = src32[sy * W + sx];
+                    } else {
+                        dst32[dstIdx] = 0xFFFFFFFF;
+                    }
+                    dstIdx++;
+                }
+            }
+
+            resultCtx.putImageData(dstImgData, 0, 0);
+
+            try {
+                window.cleanLeveledImageData = resultCanvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                window.cleanLeveledImageData = resultCanvas.toDataURL();
+            }
+
+            video.pause();
+
+            evaluateJeeSheet(resultCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
+
+            document.getElementById('viewfinderSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function evaluateJeeSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+            const imgData = ctx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            function getGray(x, y) {
+                if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                const idx = (y * W + x) * 4;
+                return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+            }
+
+            function sampleDisk(cx, cy, r) {
+                let sum = 0, count = 0;
+                const r2 = r * r;
+                const ir = Math.ceil(r);
+                for (let dy = -ir; dy <= ir; dy++) {
+                    for (let dx = -ir; dx <= ir; dx++) {
+                        if (dx * dx + dy * dy <= r2) {
+                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            count++;
+                        }
+                    }
+                }
+                return count > 0 ? (sum / count) : 255;
+            }
+
+            function sampleCleanPaperNear(px, py, stepX, stepY, fallbackX) {
+                const pts = [
+                    sampleDisk(px + stepX * 0.5, py - stepY * 0.5, 2.5),
+                    sampleDisk(px + stepX * 0.5, py + stepY * 0.5, 2.5)
+                ];
+                if (fallbackX !== undefined) pts.push(sampleDisk(fallbackX, py, 2.5));
+                pts.sort((a, b) => b - a);
+                return pts.length >= 2 ? (pts[0] + pts[1]) * 0.5 : pts[0];
+            }
+
+            function sampleBubbleFeatures(cx, cy, paperVal) {
+                let midSum = 0, midCount = 0;
+                let fullSum = 0, fullCount = 0;
+                for (let dy = -8; dy <= 8; dy++) {
+                    for (let dx = -8; dx <= 8; dx++) {
+                        const d = Math.hypot(dx, dy);
+                        if (d > 7.4) continue;
+                        const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
+                        fullSum += g; fullCount++;
+                        if (d >= 4.3) { midSum += g; midCount++; }
+                    }
+                }
+                if (midCount === 0 || fullCount === 0) {
+                    return { midDarkness: 0, fullDarkness: 0, normMidDrop: 0, normFullDrop: 0, fillScore: 0 };
+                }
+                const midMean = midSum / midCount;
+                const fullMean = fullSum / fullCount;
+                const midDarkness = Math.max(0, paperVal - midMean);
+                const fullDarkness = Math.max(0, paperVal - fullMean);
+                const normMidDrop = paperVal > 20 ? (midDarkness / paperVal) : 0;
+                const normFullDrop = paperVal > 20 ? (fullDarkness / paperVal) : 0;
+                const fillScore = midDarkness * 0.65 + fullDarkness * 0.35;
+                return { midDarkness, fullDarkness, normMidDrop, normFullDrop, fillScore };
+            }
+
+            // 1. DETECT ROLL NUMBER
+            const rollRadius = 8.5;
+            const rollStepX = U_ROLL_COL_STEP * markerW;
+            const rollStepY = V_ROLL_ROW_STEP * markerH;
+            let detectedRollNumber = '';
+            let rollDigitsArray = [];
+            let detectedDigitsCount = 0;
+
+            for (let c = 0; c < 8; c++) {
+                const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
+                let colStats = [];
+                for (let d = 0; d < 10; d++) {
+                    const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
+                    const diamondX = c < 7 ? (colX + rollStepX * 0.5) : (colX - rollStepX * 0.5);
+                    const rollPaperVal = Math.max(sampleDisk(diamondX, rowY - rollStepY * 0.5, 2.5), sampleDisk(diamondX, rowY + rollStepY * 0.5, 2.5));
+                    const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
+                    colStats.push({ digit: d, ...bubbleSample, x: colX, y: rowY });
+                }
+                const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
+                const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+
+                colStats.sort((a, b) => b.fillScore - a.fillScore);
+                const top1 = colStats[0];
+                const top2 = colStats[1];
+                const top1Contrast = top1.fillScore - colBase;
+                const isColFilled = (top1.normMidDrop >= 0.25 && top1Contrast >= 22 && (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 32));
+
+                const detectedDigit = isColFilled ? top1.digit.toString() : '-';
+                if (isColFilled) detectedDigitsCount++;
+                detectedRollNumber += detectedDigit;
+                rollDigitsArray.push({ digit: detectedDigit, isFilled: isColFilled, chosen: isColFilled ? top1 : null });
+
+                for (let d = 0; d < 10; d++) {
+                    const stat = colStats.find(s => s.digit === d);
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
+                    if (isColFilled && d === top1.digit) {
+                        ctx.strokeStyle = '#06B6D4';
+                        ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            detectedRollNo = detectedRollNumber;
+            const rollBoxesEl = document.getElementById('rollBoxesDisplay');
+            if (rollBoxesEl) {
+                let rollBoxesHtml = '';
+                for (let c = 0; c < 8; c++) {
+                    const item = rollDigitsArray[c];
+                    rollBoxesHtml += item.isFilled
+                        ? '<div class="roll-digit-box filled">' + item.digit + '</div>'
+                        : '<div class="roll-digit-box unknown">-</div>';
+                }
+                rollBoxesEl.innerHTML = rollBoxesHtml;
+            }
+            const rollStatusPill = document.getElementById('rollStatusPill');
+            if (rollStatusPill) {
+                if (detectedDigitsCount === 8) {
+                    rollStatusPill.textContent = '8/8 Digits Detected';
+                    rollStatusPill.style.background = '#F0FDF4'; rollStatusPill.style.color = '#15803D';
+                } else if (detectedDigitsCount > 0) {
+                    rollStatusPill.textContent = detectedDigitsCount + '/8 Digits';
+                    rollStatusPill.style.background = '#FFFBEB'; rollStatusPill.style.color = '#B45309';
+                } else {
+                    rollStatusPill.textContent = 'No Roll Detected';
+                }
+            }
+
+            // 2. DETECT JEE MAINS MCQS (ONLY Q1-20, Q41-60, Q81-100)
+            const stepX = U_BUBBLE_STEP * markerW;
+            const stepY = V_ROW_STEP * markerH;
+            const bubbleRadius = 9.0;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let multipleCount = 0;
+            let attemptedCount = 0;
+            let blankCount = 0;
+            let rowsHtml = '';
+            const questionBreakdown = [];
+
+            mcqSubjectScores = { phy: 0, chem: 0, math: 0 };
+
+            JEE_QUESTIONS.forEach(item => {
+                const q = item.q;
+                const subject = item.subject;
+                const subKey = item.subKey;
+
+                const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const row = (q - 1) % QUESTIONS_PER_COL;
+
+                const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                const rightGutter = sampleDisk(Math.min(W - 14, colX + 3 * stepX + 16), rowY, 3.0);
+                const midLeftGutter = sampleCleanPaperNear(colX, rowY, stepX, stepY, Math.max(14, colX - 16));
+                const midRightGutter = sampleCleanPaperNear(colX + 2 * stepX, rowY, stepX, stepY, Math.min(W - 14, colX + 3 * stepX + 16));
+
+                let bubbleStats = [];
+                for (let b = 0; b < 4; b++) {
+                    const bubbleX = colX + b * stepX;
+                    const localPV = b < 2
+                        ? midLeftGutter
+                        : (b === 2 ? (midLeftGutter + midRightGutter) * 0.5 : (midRightGutter + rightGutter) * 0.5);
+                    const sample = sampleBubbleFeatures(bubbleX, rowY, localPV);
+                    bubbleStats.push({ opt: OPTIONS[b], ...sample, x: bubbleX, y: rowY });
+                }
+
+                const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
+                const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+                const rowBaseMid = (sortedAsc[0].midDarkness + sortedAsc[1].midDarkness) / 2;
+
+                function isOptionFilled(s) {
+                    const contrast = s.fillScore - rowBase;
+                    const midContrast = s.midDarkness - rowBaseMid;
+                    if (contrast >= 24 && midContrast >= 20 && s.normMidDrop >= 0.24) return true;
+                    if (contrast >= 30 && s.normMidDrop >= 0.22 && s.normFullDrop >= 0.24) return true;
+                    if (s.normMidDrop >= 0.45 && s.normFullDrop >= 0.45 && s.midDarkness >= 85) return true;
+                    return false;
+                }
+
+                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                let filledBubbles = [];
+                if (filledCandidates.length === 1) {
+                    filledBubbles = filledCandidates;
+                } else if (filledCandidates.length > 1) {
+                    const sortedC = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                    if (sortedC[0].fillScore - sortedC[1].fillScore >= 40 && sortedC[0].fillScore >= 65) {
+                        filledBubbles = [sortedC[0]];
+                    } else {
+                        filledBubbles = filledCandidates;
+                    }
+                }
+
+                const isMultiple = filledBubbles.length > 1;
+                const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
+                const correctAns = answerKey[q.toString()] || '';
+
+                let verdict = 'unmarked';
+                let qMarks = 0;
+
+                if (isMultiple) {
+                    attemptedCount++; wrongCount++; multipleCount++; verdict = 'multiple'; qMarks = -1;
+                } else if (filledBubbles.length === 1) {
+                    const singleAns = filledBubbles[0].opt;
+                    attemptedCount++;
+                    if (correctAns && singleAns === correctAns) {
+                        correctCount++; verdict = 'correct'; qMarks = 4;
+                    } else if (correctAns) {
+                        wrongCount++; verdict = 'wrong'; qMarks = -1;
+                    } else {
+                        verdict = 'marked'; qMarks = 0;
+                    }
+                } else {
+                    blankCount++; qMarks = 0;
+                }
+
+                mcqSubjectScores[subKey] += qMarks;
+
+                questionBreakdown.push({
+                    q: q,
+                    subject: subject,
+                    marked: detectedAnswer || '',
+                    correctKey: correctAns || '',
+                    verdict: verdict,
+                    marks: qMarks
+                });
+
+                for (let b = 0; b < 4; b++) {
+                    const opt = OPTIONS[b];
+                    const stat = bubbleStats[b];
+                    const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
+
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
+
+                    if (isMultiple && isThisBubbleFilled) {
+                        ctx.strokeStyle = '#EF4444';
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        ctx.fill(); ctx.stroke();
+                    } else if (isThisBubbleFilled) {
+                        if (verdict === 'correct') {
+                            ctx.strokeStyle = '#10B981';
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
+                        } else if (verdict === 'wrong') {
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        } else {
+                            ctx.strokeStyle = '#06B6D4';
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        }
+                        ctx.fill(); ctx.stroke();
+                    } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                        ctx.strokeStyle = '#10B981';
+                        ctx.setLineDash([3, 3]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                        ctx.stroke();
+                    }
+                }
+
+                let badgeClass = 'badge-blank';
+                let verdictText = 'Blank (0)';
+                let markedCellHtml = '<span style="color:#9CA3AF;">-</span>';
+
+                if (verdict === 'multiple') {
+                    badgeClass = 'badge-multiple'; verdictText = 'Multiple (-1)';
+                    markedCellHtml = '<strong style="color: #DC2626;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'correct') {
+                    badgeClass = 'badge-correct'; verdictText = 'Correct (+4)';
+                    markedCellHtml = '<strong style="color: #15803D;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'wrong') {
+                    badgeClass = 'badge-wrong'; verdictText = 'Wrong (-1)';
+                    markedCellHtml = '<strong style="color: #DC2626;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'marked') {
+                    badgeClass = 'badge-marked'; verdictText = 'Recorded (0)';
+                    markedCellHtml = '<strong style="color: #1D4ED8;">' + detectedAnswer + '</strong>';
+                }
+
+                rowsHtml += '<tr>' +
+                    '<td style="font-weight:700; font-size:0.78rem; color:#64748B;">' + subject + '</td>' +
+                    '<td style="font-weight:700; color:#1E293B;">Q' + q + '</td>' +
+                    '<td>' + markedCellHtml + '</td>' +
+                    '<td>' + (correctAns ? '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>' : '<span style="color:#64748B;">-</span>') + '</td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                    '<td style="font-weight:700; font-family:\'JetBrains Mono\',monospace;">' + (qMarks > 0 ? '+' : '') + qMarks + '</td>' +
+                '</tr>';
+            });
+
+            lastQuestionBreakdown = questionBreakdown;
+
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+            document.getElementById('statMultiple').textContent = multipleCount;
+            document.getElementById('statAttempted').textContent = attemptedCount;
+            document.getElementById('statBlank').textContent = blankCount;
+
+            document.getElementById('phyMcqMarks').textContent = mcqSubjectScores.phy;
+            document.getElementById('chemMcqMarks').textContent = mcqSubjectScores.chem;
+            document.getElementById('mathMcqMarks').textContent = mcqSubjectScores.math;
+
+            const tbl = document.getElementById('tableBody');
+            if (tbl) tbl.innerHTML = rowsHtml;
+
+            updateJeeTotals();
+        }
+
+        let isSavingSubmission = false;
+
+        async function saveJeeAndScanNext() {
+            if (isSavingSubmission) return;
+
+            const canvas = document.getElementById('canvasResult');
+            let rollNo = (typeof detectedRollNo !== 'undefined' && detectedRollNo) ? detectedRollNo : '';
+            if (!rollNo || rollNo.length === 0) {
+                rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+            }
+
+            let imageData = window.cleanLeveledImageData || (canvas ? canvas.toDataURL('image/jpeg', 0.78) : null);
+            if (!imageData) {
+                alert('No evaluated sheet available to save.');
+                return;
+            }
+
+            isSavingSubmission = true;
+            const btn = document.getElementById('btnSaveNext');
+            const topBtn = document.getElementById('topSaveBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+            if (topBtn) { topBtn.disabled = true; topBtn.textContent = 'Saving...'; }
+
+            const pill = document.getElementById('rollStatusPill');
+            if (pill) { pill.textContent = 'Saving...'; }
+
+            const sumArr = (arr) => arr.reduce((acc, v) => acc + v, 0);
+            const phyNvq = sumArr(numericalScores.phy);
+            const chemNvq = sumArr(numericalScores.chem);
+            const mathNvq = sumArr(numericalScores.math);
+            const grandTotal = mcqSubjectScores.phy + phyNvq + mcqSubjectScores.chem + chemNvq + mcqSubjectScores.math + mathNvq;
+
+            try {
+                const res = await fetch('/api/paper/<%= encodeURIComponent(paper._id) %>/jee-save-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rollNumber: rollNo,
+                        score: grandTotal,
+                        totalQuestions: 75,
+                        maxMarks: 300,
+                        numericalScores: numericalScores,
+                        mcqSubjectScores: mcqSubjectScores,
+                        breakdown: lastQuestionBreakdown,
+                        imageData: imageData
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (pill) { pill.textContent = 'Saved!'; pill.style.background = '#F0FDF4'; pill.style.color = '#15803D'; }
+                    setTimeout(() => {
+                        rescanSheet();
+                    }, 500);
+                } else {
+                    alert('Error saving: ' + (data.error || 'Failed to save'));
+                }
+            } catch (err) {
+                console.error('Save error:', err);
+                alert('Upload error: ' + err.message);
+            } finally {
+                isSavingSubmission = false;
+                if (btn) { btn.disabled = false; btn.textContent = 'Save & Scan Next'; }
+                if (topBtn) { topBtn.disabled = false; topBtn.textContent = 'Save & Scan Next'; }
+            }
+        }
+
+        function rescanSheet() {
+            window.cleanLeveledImageData = null;
+            isSavingSubmission = false;
+            initCamera();
+        }
+
+        window.addEventListener('DOMContentLoaded', initCamera);
+    </script>
+</body>
+</html>

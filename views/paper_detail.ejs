@@ -469,6 +469,16 @@
                 <% } %>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="Launch JEE Mains Camera Scanner (Q1-20, Q41-60, Q81-100 + Numerical)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    JEE Scanner
+                </a>
+                <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary btn-sm" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0;" title="Upload and evaluate JEE Mains sheet directly">
+                    📁 JEE Evaluator
+                </a>
                 <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="20" x2="18" y2="10"></line>

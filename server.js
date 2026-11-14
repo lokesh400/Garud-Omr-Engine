@@ -336,7 +336,9 @@ async function regradePaperSubmissions(paper) {
     const defaultTotalQ = paper.total_questions || paper.numQuestions || 50;
     const paperMaxMarks = paper.max_marks || (defaultTotalQ * 4);
 
-    const bulkOps = submissions.map(sub => {
+    const bulkOps = submissions
+        .filter(sub => sub.examType !== 'jee')
+        .map(sub => {
         const totalQ = sub.totalQuestions || defaultTotalQ;
         const graded = evaluateResponsesAgainstKey(sub.responses, keyLookup, totalQ);
 
@@ -986,6 +988,53 @@ app.post('/paper/:id/check', requireAdmin, upload.single('omrSheet'), async (req
     }
 });
 
+// JEE Mains Live Camera Scanner (Q1-20, Q41-60, Q81-100 + Section B Numerical)
+app.get('/paper/:id/jee-scan', requireAdmin, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).send('Paper not found');
+        res.render('jee_scanner', { paper, answerKey: getAnswerKeyJson(paper) });
+    } catch (error) {
+        res.status(500).send('Error loading JEE scanner: ' + error.message);
+    }
+});
+
+// JEE Mains Manual/File Sheet Evaluator
+app.get('/paper/:id/jee-evaluator', requireAdmin, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).send('Paper not found');
+        res.render('jee_evaluator', {
+            paper,
+            imagePath: '',
+            answerKey: getAnswerKeyJson(paper)
+        });
+    } catch (error) {
+        res.status(500).send('Error loading JEE evaluator: ' + error.message);
+    }
+});
+
+// JEE Mains Image Upload Evaluator
+app.post('/paper/:id/jee-check', requireAdmin, secureImageUpload.single('omrSheet'), async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).send('Paper not found');
+
+        if (!req.file) {
+            return res.status(400).send('No file selected. Please go back and upload an image file.');
+        }
+
+        res.render('jee_evaluator', {
+            paper,
+            imagePath: '/uploads/' + req.file.filename,
+            answerKey: getAnswerKeyJson(paper)
+        });
+    } catch (error) {
+        console.error('JEE Evaluation upload error:', error);
+        res.status(500).send('Error processing JEE upload: ' + error.message);
+    }
+});
+
 // Helper to compute section-wise marks and total aggregate marks
 function computeSectionWise(breakdown, totalQuestions, customSections = null) {
     let sectionDefs = [];
@@ -1098,6 +1147,70 @@ function buildGradedSubmissionObj(doc, paper) {
     const defaultTotalQ = (paper && (paper.total_questions || paper.numQuestions)) || 50;
     const totalQ = doc.totalQuestions || defaultTotalQ;
     const keyLookup = paper ? buildKeyLookup(paper) : {};
+
+    // Special handling for JEE Mains submissions
+    if (doc.examType === 'jee') {
+        const numScores = doc.numericalScores || {};
+        const sumArr = arr => Array.isArray(arr) ? arr.reduce((a, b) => a + Number(b || 0), 0) : 0;
+        const phyNvq = sumArr(numScores.phy);
+        const chemNvq = sumArr(numScores.chem);
+        const mathNvq = sumArr(numScores.math);
+        const mcqScores = doc.mcqSubjectScores || {};
+
+        const phyMcq = (mcqScores.phy && mcqScores.phy.score !== undefined) ? mcqScores.phy.score : 0;
+        const chemMcq = (mcqScores.chem && mcqScores.chem.score !== undefined) ? mcqScores.chem.score : 0;
+        const mathMcq = (mcqScores.math && mcqScores.math.score !== undefined) ? mcqScores.math.score : 0;
+
+        const sectionWise = [
+            {
+                sectionName: 'Physics',
+                range: 'Q1-20 (MCQ) + Q21-25 (NVQ)',
+                correct: mcqScores.phy ? mcqScores.phy.correct : 0,
+                wrong: mcqScores.phy ? mcqScores.phy.wrong : 0,
+                blank: mcqScores.phy ? mcqScores.phy.blank : 0,
+                totalQuestions: 25,
+                attempted: (mcqScores.phy ? (mcqScores.phy.correct + mcqScores.phy.wrong) : 0),
+                unattempted: mcqScores.phy ? mcqScores.phy.blank : 0,
+                marks: phyMcq + phyNvq,
+                maxMarks: 100
+            },
+            {
+                sectionName: 'Chemistry',
+                range: 'Q41-60 (MCQ) + Q46-50 (NVQ)',
+                correct: mcqScores.chem ? mcqScores.chem.correct : 0,
+                wrong: mcqScores.chem ? mcqScores.chem.wrong : 0,
+                blank: mcqScores.chem ? mcqScores.chem.blank : 0,
+                totalQuestions: 25,
+                attempted: (mcqScores.chem ? (mcqScores.chem.correct + mcqScores.chem.wrong) : 0),
+                unattempted: mcqScores.chem ? mcqScores.chem.blank : 0,
+                marks: chemMcq + chemNvq,
+                maxMarks: 100
+            },
+            {
+                sectionName: 'Mathematics',
+                range: 'Q81-100 (MCQ) + Q71-75 (NVQ)',
+                correct: mcqScores.math ? mcqScores.math.correct : 0,
+                wrong: mcqScores.math ? mcqScores.math.wrong : 0,
+                blank: mcqScores.math ? mcqScores.math.blank : 0,
+                totalQuestions: 25,
+                attempted: (mcqScores.math ? (mcqScores.math.correct + mcqScores.math.wrong) : 0),
+                unattempted: mcqScores.math ? mcqScores.math.blank : 0,
+                marks: mathMcq + mathNvq,
+                maxMarks: 100
+            }
+        ];
+
+        const obj = (typeof doc.toObject === 'function') ? doc.toObject({ virtuals: true }) : { ...doc };
+        obj.sectionWise = sectionWise;
+        obj.answerKeyLookup = keyLookup;
+        obj.paperTitle = paper ? paper.title : (doc.paper_id || 'JEE Exam Paper');
+        obj.paperSubject = 'JEE Mains';
+        obj.maxMarks = 300;
+        obj.aggregateMarks = doc.score !== undefined ? doc.score : 0;
+        obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
+        return obj;
+    }
+
     const sectionsDef = getPaperSectionsDef(paper, totalQ);
 
     if (Array.isArray(doc.responses) && doc.responses.length > 0 && paper) {
@@ -1324,6 +1437,140 @@ app.post('/api/paper/:id/save-result', requireAdmin, async (req, res) => {
         });
     } catch (error) {
         console.error('Error saving evaluation result:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Save JEE Mains Evaluated Result (Q1-20, Q41-60, Q81-100 + Section B Numerical)
+app.post('/api/paper/:id/jee-save-result', requireAdmin, async (req, res) => {
+    try {
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        if (!req.body) {
+            return res.status(400).json({ error: 'Missing request body' });
+        }
+
+        const {
+            rollnumber,
+            rollNumber,
+            score,
+            totalQuestions,
+            maxMarks,
+            numericalScores,
+            mcqSubjectScores,
+            breakdown,
+            imageData
+        } = req.body;
+
+        if (!imageData) {
+            return res.status(400).json({ error: 'Image data is required' });
+        }
+
+        const studentRoll = (rollnumber || rollNumber || 'STUDENT-' + Date.now().toString().slice(-4)).toString().trim();
+        const totalQ = Number(totalQuestions) || 75;
+        const maxM = Number(maxMarks) || 300;
+        const totalScore = Number(score !== undefined ? score : 0);
+
+        console.log(`[JEE Save Result] Processing JEE OMR submission for roll: "${studentRoll}" on paper: "${paper._id}" (Score: ${totalScore}/${maxM})`);
+
+        // Upload clean leveled OMR image to Cloudinary (using 5-account rotation)
+        let uploadResult = null;
+        try {
+            uploadResult = await uploadOmrSheet(imageData, {
+                rollNumber: studentRoll,
+                paperId: String(paper._id)
+            });
+            console.log(`[Cloudinary] Successfully uploaded JEE OMR copy for ${studentRoll} to account: ${uploadResult.account}`);
+        } catch (cloudErr) {
+            console.warn(`[Cloudinary Warning] Upload to Cloudinary pool failed (${cloudErr.message}). Saving copy locally as fallback.`);
+            const filename = `jee_omr_${Date.now()}_${studentRoll.replace(/[^\w-]/g, '_')}.jpg`;
+            const localFilePath = path.join(uploadDir, filename);
+            const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+            fs.writeFileSync(localFilePath, Buffer.from(base64Data, 'base64'));
+            uploadResult = {
+                url: '/uploads/' + filename,
+                publicId: 'local_' + filename,
+                account: 'local_storage'
+            };
+        }
+
+        // Build 100-length responses array for JEE
+        const responsesArray = new Array(100).fill(null);
+        let correctCount = 0;
+        let wrongCount = 0;
+        let blankCount = 0;
+
+        if (Array.isArray(breakdown)) {
+            breakdown.forEach(item => {
+                if (item && item.q) {
+                    const idx = Number(item.q) - 1;
+                    if (idx >= 0 && idx < 100) {
+                        if (item.marked && typeof item.marked === 'string' && item.marked.trim() !== '' && item.verdict !== 'blank') {
+                            responsesArray[idx] = item.marked.trim().toUpperCase();
+                        }
+                    }
+                    if (item.verdict === 'correct') correctCount++;
+                    else if (item.verdict === 'wrong' || item.verdict === 'multiple') wrongCount++;
+                    else blankCount++;
+                }
+            });
+        }
+
+        // Numerical Questions grading tally
+        const numScores = numericalScores || {};
+        ['phy', 'chem', 'math'].forEach(sub => {
+            const arr = numScores[sub] || [];
+            arr.forEach(val => {
+                const n = Number(val);
+                if (n === 4) correctCount++;
+                else if (n === -1) wrongCount++;
+                else blankCount++;
+            });
+        });
+
+        const percentage = maxM > 0 ? Math.round((totalScore / maxM) * 100) : 0;
+
+        const newSubmission = new Submission({
+            rollnumber: studentRoll,
+            paper_id: String(paper._id),
+            submitted_at: new Date(),
+            responses: responsesArray,
+            cloudinary_image_url: uploadResult.url,
+            cloudinary_public_id: uploadResult.publicId,
+            cloudinary_account: uploadResult.account,
+            score: totalScore,
+            totalQuestions: totalQ,
+            percentage: percentage,
+            maxMarks: maxM,
+            correctCount: correctCount,
+            wrongCount: wrongCount,
+            blankCount: blankCount,
+            examType: 'jee',
+            numericalScores: numericalScores || {},
+            mcqSubjectScores: mcqSubjectScores || {}
+        });
+
+        await newSubmission.save();
+
+        res.json({
+            success: true,
+            submissionId: newSubmission._id,
+            resultId: newSubmission._id,
+            rollnumber: newSubmission.rollnumber,
+            paper_id: newSubmission.paper_id,
+            score: newSubmission.score,
+            maxMarks: newSubmission.maxMarks,
+            cloudinary_image_url: newSubmission.cloudinary_image_url,
+            cloudinary_public_id: newSubmission.cloudinary_public_id,
+            omrImageUrl: newSubmission.cloudinary_image_url,
+            aggregateMarks: newSubmission.score,
+            responses: newSubmission.responses,
+            cloudinaryAccount: uploadResult.account
+        });
+    } catch (error) {
+        console.error('Error saving JEE evaluation result:', error);
         res.status(500).json({ error: error.message });
     }
 });
