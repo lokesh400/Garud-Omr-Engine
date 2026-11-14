@@ -36,6 +36,25 @@
             margin-bottom: 14px;
             box-shadow: var(--shadow-sm);
             gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .jee-tools-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            padding: 3px;
+            border-radius: var(--radius-md);
+            flex-wrap: wrap;
         }
 
         .btn-back {
@@ -351,6 +370,13 @@
         @media (max-width: 959px) {
             .slim-top-bar {
                 position: static;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .topbar-actions-group {
+                width: 100%;
+                justify-content: flex-start;
             }
         }
 
@@ -360,13 +386,37 @@
             }
 
             .slim-top-bar {
-                padding: 8px 10px;
+                padding: 10px 12px;
                 margin-bottom: 10px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
             }
 
             .page-title {
                 font-size: 0.95rem;
-                max-width: 145px;
+                max-width: 100%;
+            }
+
+            .topbar-actions-group {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .jee-tools-pill {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                gap: 4px;
+            }
+
+            .jee-tools-pill .btn {
+                flex: 1;
+                justify-content: center;
+                padding: 6px 4px;
+                font-size: 0.74rem;
             }
 
             .btn-back span {
@@ -468,21 +518,23 @@
                     <span class="code-chip"><%= paper._id %></span>
                 <% } %>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; font-weight:700;" title="Configure JEE Mains Answer Key (Only Q1-20, Q41-60, Q81-100 divided into 3 sections)">
-                    ⚛️ JEE Key (3 Sections)
-                </a>
-                <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="Launch JEE Mains Camera Scanner (Q1-20, Q41-60, Q81-100 + Numerical)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    JEE Scanner
-                </a>
-                <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary btn-sm" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0;" title="Upload and evaluate JEE Mains sheet directly">
-                    📁 JEE Evaluator
-                </a>
-                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies">
+            <div class="topbar-actions-group">
+                <div class="jee-tools-pill">
+                    <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; font-weight:700; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Configure JEE Mains Answer Key (Only Q1-20, Q26-45, Q51-70)">
+                        ⚛️ JEE Key
+                    </a>
+                    <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; font-weight:600; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Launch JEE Mains Camera Scanner">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        JEE Scan
+                    </a>
+                    <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary btn-sm" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0; font-weight:600; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Upload and evaluate JEE Mains sheet directly">
+                        📁 JEE Eval
+                    </a>
+                </div>
+                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="20" x2="18" y2="10"></line>
                         <line x1="12" y1="20" x2="12" y2="4"></line>

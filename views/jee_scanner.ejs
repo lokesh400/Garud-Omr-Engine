@@ -595,11 +595,12 @@
             }
             .action-buttons-group, .scanner-sticky-dock {
                 width: 100%;
-                display: grid;
-                grid-template-columns: 1fr 1.5fr;
+                display: flex;
+                flex-wrap: wrap;
                 gap: 8px;
             }
-            .btn-save-next, .btn-rescan {
+            .btn-save-next, .btn-rescan, .action-buttons-group .btn {
+                flex: 1 1 auto;
                 justify-content: center;
                 padding: 10px 12px;
                 font-size: 0.86rem;
@@ -643,8 +644,8 @@
 
             <!-- Bottom Toolbar -->
             <div class="scanner-bottom-bar">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; text-decoration:none; font-weight:600;" title="Edit JEE Answer Key (Q1-20, Q41-60, Q81-100)">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; text-decoration:none; font-weight:600;" title="Edit JEE Answer Key (Q1-20, Q26-45, Q51-70)">
                         ⚛️ JEE Key
                     </a>
                     <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
