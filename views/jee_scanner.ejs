@@ -644,6 +644,9 @@
             <!-- Bottom Toolbar -->
             <div class="scanner-bottom-bar">
                 <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; text-decoration:none; font-weight:600;" title="Edit JEE Answer Key (Q1-20, Q41-60, Q81-100)">
+                        ⚛️ JEE Key
+                    </a>
                     <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
                         Auto-captures when 4 corners align, or tap the viewfinder
                     </span>
@@ -664,6 +667,9 @@
                     <span style="font-size: 0.825rem; color: var(--text-muted);"><%= paper.title %> &bull; Checked: <strong>Q1-20 (Phy)</strong>, <strong>Q41-60 (Chem)</strong>, <strong>Q81-100 (Math)</strong> + Numerical</span>
                 </div>
                 <div class="action-buttons-group">
+                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-answerkey" class="btn btn-secondary btn-sm" style="text-decoration:none; font-weight:600;" title="Edit JEE Answer Key (Q1-20, Q41-60, Q81-100)">
+                        ⚛️ JEE Key
+                    </a>
                     <button type="button" class="btn-rescan" id="topRescanBtn" onclick="rescanSheet()" title="Discard this scan and rescan immediately">
                         Rescan
                     </button>

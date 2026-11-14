@@ -871,11 +871,72 @@ app.param('id', (req, res, next, id) => {
 
 app.get('/paper/:id', requireAdmin, async (req, res) => {
     try {
-        const paper = await Paper.findById(req.params.id);
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).send('Paper not found');
         res.render('paper_detail', { paper });
     } catch (error) {
         res.status(500).send('Error loading paper: ' + error.message);
+    }
+});
+
+// Dedicated JEE Mains Answer Key Page (Shows only Q1-20, Q41-60, Q81-100 divided into 3 sections)
+app.get('/paper/:id/jee-answerkey', requireAdmin, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).send('Paper not found');
+        res.render('jee_answerkey', { paper, saved: req.query.saved === 'true' });
+    } catch (error) {
+        res.status(500).send('Error loading JEE answer key: ' + error.message);
+    }
+});
+
+// Save JEE Mains Answer Key
+app.post('/paper/:id/jee-answerkey', requireAdmin, async (req, res) => {
+    try {
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+        if (!paper) return res.status(404).send('Paper not found');
+
+        const currentTotal = paper.total_questions || paper.numQuestions || 50;
+        const newTotalQ = Math.max(100, currentTotal);
+        paper.total_questions = newTotalQ;
+
+        // Clone or create array with enough length for Q1-100
+        const answerKeyArr = new Array(newTotalQ).fill(null);
+        if (Array.isArray(paper.answer_key)) {
+            for (let i = 0; i < paper.answer_key.length && i < newTotalQ; i++) {
+                answerKeyArr[i] = paper.answer_key[i];
+            }
+        }
+
+        // Section 1: Physics Q1-20
+        for (let i = 1; i <= 20; i++) {
+            const val = req.body[`q${i}`];
+            answerKeyArr[i - 1] = (val && typeof val === 'string' && val.trim() !== '') ? val.trim().toUpperCase() : null;
+        }
+
+        // Section 2: Chemistry Q41-60
+        for (let i = 41; i <= 60; i++) {
+            const val = req.body[`q${i}`];
+            answerKeyArr[i - 1] = (val && typeof val === 'string' && val.trim() !== '') ? val.trim().toUpperCase() : null;
+        }
+
+        // Section 3: Mathematics Q81-100
+        for (let i = 81; i <= 100; i++) {
+            const val = req.body[`q${i}`];
+            answerKeyArr[i - 1] = (val && typeof val === 'string' && val.trim() !== '') ? val.trim().toUpperCase() : null;
+        }
+
+        paper.answer_key = answerKeyArr;
+        await paper.save();
+
+        // Automatically recheck all previously scanned OMR submissions against the updated key
+        await regradePaperSubmissions(paper);
+
+        res.redirect(`/paper/${encodeURIComponent(paper._id)}/jee-answerkey?saved=true`);
+    } catch (error) {
+        console.error('Error saving JEE answer key:', error);
+        res.status(500).send('Error saving JEE answer key: ' + error.message);
     }
 });
 
