@@ -329,18 +329,23 @@
             border-color: var(--primary-border);
         }
 
-        /* Native <dialog> Lightbox Modal */
+        /* Full-Page Immersive Inspection Viewer (100% Whole Screen, Zero Space Left) */
         dialog.omr-modal-dialog {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
+            border: none;
+            border-radius: 0;
             padding: 0;
-            width: min(1040px, calc(100vw - 24px));
-            max-height: 92vh;
-            background: #FFFFFF;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            background: #090D16;
             color: var(--text-body);
-            box-shadow: var(--shadow-2xl);
-            margin: auto;
+            box-shadow: none;
+            margin: 0;
+            inset: 0;
+            position: fixed;
             overflow: hidden;
+            z-index: 99999;
         }
 
         dialog.omr-modal-dialog:modal {
@@ -348,72 +353,254 @@
         }
 
         dialog.omr-modal-dialog::backdrop {
-            overflow: hidden;
-            overscroll-behavior: contain;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
         }
 
         dialog.omr-modal-dialog[open] {
             display: flex;
             flex-direction: column;
+            width: 100vw;
+            height: 100vh;
         }
 
         .omr-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 1rem 1.35rem;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--surface-subtle);
+            gap: 12px;
+            padding: 0.65rem 1.25rem;
+            background: #0F172A;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
             flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .btn-omr-back {
+            background: rgba(255, 255, 255, 0.08);
+            color: #F8FAFC;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: var(--radius-xs);
+            font-size: 0.825rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-omr-back:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #FFFFFF;
+        }
+
+        .btn-omr-tool {
+            background: rgba(255, 255, 255, 0.08);
+            color: #E2E8F0;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 5px 11px;
+            border-radius: var(--radius-xs);
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-omr-tool:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
         }
 
         .omr-modal-body {
-            padding: 1.35rem;
+            padding: 0;
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 1.35rem;
-            align-items: start;
-            overflow-y: auto;
+            grid-template-columns: 50% 50%;
+            height: calc(100vh - 56px);
+            max-height: calc(100vh - 56px);
+            overflow: hidden;
+            background: #090D16;
+        }
+
+        .omr-stage-pane {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #070B13;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .omr-stage-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            padding: 14px;
+            position: relative;
         }
 
         .omr-preview-frame {
-            background: var(--surface-subtle);
-            border-radius: var(--radius-md);
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            text-align: center;
+            position: relative;
+            max-height: calc(100vh - 125px);
+            aspect-ratio: 1000 / 1461;
+            width: auto;
+            height: 100%;
+            background: #FFFFFF;
+            border-radius: 6px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .omr-preview-frame img {
+            position: absolute;
+            inset: 0;
             width: 100%;
-            height: auto;
-            border-radius: var(--radius-xs);
+            height: 100%;
+            object-fit: fill;
             display: block;
-            border: 1px solid var(--border-color);
+            border: none;
             background: #FFFFFF;
         }
 
-        .btn-modal-close {
+        .omr-preview-frame svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .omr-stage-footer {
+            height: 44px;
+            background: #0F172A;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: #94A3B8;
+            font-size: 0.77rem;
+            flex-shrink: 0;
+        }
+
+        .omr-details-pane {
+            height: 100%;
+            overflow-y: auto;
+            background: #F8FAFC;
+            color: #1E293B;
+            padding: 1.25rem 1.5rem 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+        }
+
+        .omr-hero-banner {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border-radius: var(--radius-md);
+            padding: 1.15rem 1.35rem;
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .omr-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .omr-kpi-tile {
             background: #FFFFFF;
-            border: 1px solid var(--border-hover);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 9px 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .omr-kpi-tile .kpi-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .omr-kpi-tile .kpi-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+
+        .breakdown-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .filter-pill {
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-pill:hover,
+        .filter-pill.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        .btn-modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             width: 32px;
             height: 32px;
             border-radius: var(--radius-xs);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #F8FAFC;
             cursor: pointer;
             transition: var(--transition);
         }
 
         .btn-modal-close:hover {
-            background: var(--surface-subtle-hover);
-            color: var(--text-main);
+            background: rgba(239, 68, 68, 0.85);
+            border-color: rgba(239, 68, 68, 0.9);
+            color: #FFFFFF;
         }
 
         /* Hard Recheck Dialog Styles */
@@ -584,16 +771,19 @@
             }
 
             dialog.omr-modal-dialog {
-                width: calc(100vw - 16px);
-                max-height: 94vh;
+                width: 100vw;
+                height: 100vh;
+                max-height: 100vh;
             }
 
             .omr-modal-header {
-                padding: 0.85rem 1rem;
+                padding: 0.6rem 0.85rem;
             }
 
             .omr-modal-body {
-                padding: 1rem;
+                grid-template-columns: 1fr;
+                height: calc(100vh - 56px);
+                overflow-y: auto;
             }
         }
     </style>
@@ -989,108 +1179,163 @@
                     </div>
         </div>
 
-        <!-- Checked OMR Copy Modal Dialog -->
+        <!-- Checked OMR Copy Full-Page Dialog -->
         <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalScoreText">
-            <div class="omr-modal-header">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span class="roll-badge" id="modalRollNo">ROLL NO</span>
-                    <span style="font-size: 0.86rem; font-weight: 600; color: var(--text-main); display: none;"
-                        id="modalStudentName"></span>
-                    <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-body);" id="modalScoreText">0 /
-                        0 Questions</span>
-                    <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
+            <header class="omr-modal-header">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <button type="button" class="btn-omr-back" onclick="closeOmrModalDirect()" title="Return to Paper Results">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Back</span>
+                    </button>
+                    <div style="width: 1px; height: 22px; background: rgba(255, 255, 255, 0.15);"></div>
+                    <span class="roll-badge" id="modalRollNo" style="font-size: 0.88rem; padding: 4px 10px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; letter-spacing: 0.5px;">ROLL NO</span>
+                    <span style="font-size: 0.92rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
+                    <span style="font-size: 0.76rem; padding: 3px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: #94A3B8; font-weight: 600;">
+                        <%= paper.exam_type === 'jee' ? 'JEE Mains Paper' : (paper.title || 'OMR Paper') %>
+                    </span>
                 </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.95rem; padding: 4px 12px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px;">Marks: 0</span>
+                    <span style="font-weight: 500; font-size: 0.82rem; color: #94A3B8;" id="modalScoreText">0 / 0 Questions</span>
+                </div>
+
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm"
-                        title="Open full resolution photo in new tab">
+                    <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()">
+                        Live Marks: ON
+                    </button>
+                    <a id="modalOpenFullBtn" href="#" target="_blank" class="btn-omr-tool" title="Open full resolution photo in new tab">
                         Full Photo &#8599;
                     </a>
-                    <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn"
-                        onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
+                    <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
                         Delete Copy
                     </button>
-                    <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()"
-                        aria-label="Close modal">&times;</button>
+                    <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()" aria-label="Close modal">&times;</button>
                 </div>
-            </div>
+            </header>
 
             <div class="omr-modal-body">
-                <!-- Left: Evaluated OMR Sheet Image + Live Dynamic Checking Overlay -->
-                <div>
-                    <div class="omr-preview-frame">
-                        <div
-                            style="position: relative; width: 100%; aspect-ratio: 1000 / 1461; line-height: 0; background: #FFFFFF; border-radius: var(--radius-xs); overflow: hidden; box-shadow: inset 0 0 0 1px var(--border-color);">
+                <!-- Left: Full-Height OMR Sheet Stage with Centered Canvas & Live Checking Overlay -->
+                <div class="omr-stage-pane">
+                    <div class="omr-stage-viewport">
+                        <div class="omr-preview-frame">
                             <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
-                                style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; display: block;"
                                 onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
-                            <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
-                                style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
+                            <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
-                    <div
-                        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
-                        <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm"
-                            onclick="toggleCheckingOverlay()">
-                            Live Marks: ON
-                        </button>
-                        <div
-                            style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.76rem; font-weight:600; color:var(--text-muted);">
-                            <span><span style="color:#16A34A;">&#9679;</span> Correct</span>
-                            <span><span style="color:#DC2626;">&#9679;</span> Wrong / Multi</span>
-                            <span><span style="color:#16A34A;">&#9676;</span> True Key</span>
+                    <div class="omr-stage-footer">
+                        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
+                            <span><span style="color: #10B981;">&#9679;</span> Correct (+4)</span>
+                            <span><span style="color: #EF4444;">&#9679;</span> Wrong (-1)</span>
+                            <span><span style="color: #10B981;">&#9676;</span> Official Key</span>
+                            <span><span style="color: #06B6D4;">&#9679;</span> Roll No</span>
                         </div>
-                    </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;"
-                        id="modalCloudInfo">
-                        Stored on Cloudinary Multi-Account Pool
+                        <div id="modalCloudInfo" style="color: #64748B;">
+                            Stored on Cloudinary Multi-Account Pool
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right: Section-wise & Question Breakdown -->
-                <div>
-                    <div class="aggregate-grand-card">
+                <!-- Right: Comprehensive Performance & Breakdown Dashboard -->
+                <div class="omr-details-pane">
+                    <!-- Hero Banner -->
+                    <div class="omr-hero-banner">
                         <div>
-                            <div
-                                style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">
-                                All Sections (Sum) Marks</div>
-                            <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
-                            <div style="font-size:0.76rem; color:var(--text-body); margin-top:6px; font-variant-numeric: tabular-nums;"
-                                id="modalAllSectionsStats">
+                            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; font-weight: 700;">
+                                Total Obtained Score
+                            </div>
+                            <div class="aggregate-grand-val" id="modalGrandAggregate" style="font-size: 2.1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #FFFFFF; line-height: 1.15; margin-top: 2px;">
+                                0 / 0
+                            </div>
+                            <div style="font-size: 0.78rem; color: #CBD5E1; margin-top: 6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
                                 Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
                             </div>
                         </div>
-                        <div style="text-align:right;">
-                            <div
-                                style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">
-                                Accuracy</div>
-                            <div style="font-size:1.3rem; font-weight:700; font-family:'JetBrains Mono',monospace; color: var(--text-main); margin-top:2px;"
-                                id="modalAccuracyText">0%</div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; font-weight: 700;">
+                                Overall Accuracy
+                            </div>
+                            <div style="font-size: 1.75rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34D399; margin-top: 2px;" id="modalAccuracyText">
+                                0%
+                            </div>
                         </div>
                     </div>
 
-                    <h4 style="margin: 0 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">
-                        Section-Wise Performance</h4>
-                    <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.15rem;"></div>
+                    <!-- KPI Tiles Grid -->
+                    <div class="omr-kpi-grid">
+                        <div class="omr-kpi-tile">
+                            <span class="kpi-label">Attempted</span>
+                            <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
+                        </div>
+                        <div class="omr-kpi-tile">
+                            <span class="kpi-label">Correct (+4)</span>
+                            <span class="kpi-val" id="kpiCorrect" style="color: #059669;">0</span>
+                        </div>
+                        <div class="omr-kpi-tile">
+                            <span class="kpi-label">Wrong (-1)</span>
+                            <span class="kpi-val" id="kpiWrong" style="color: #DC2626;">0</span>
+                        </div>
+                        <div class="omr-kpi-tile">
+                            <span class="kpi-label">Unattempted</span>
+                            <span class="kpi-val" id="kpiBlank" style="color: #64748B;">0</span>
+                        </div>
+                    </div>
 
-                    <h4 style="margin: 1rem 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">
-                        Question Breakdown</h4>
-                    <div
-                        style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                        <table
-                            style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
-                            <thead>
-                                <tr
-                                    style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
-                                    <th style="padding: 8px; font-weight: 600;" id="thSubjectCol">Subject</th>
-                                    <th style="padding: 8px; font-weight: 600;">#</th>
-                                    <th style="padding: 8px; font-weight: 600;">Response</th>
-                                    <th style="padding: 8px; font-weight: 600;">Key</th>
-                                    <th style="padding: 8px; font-weight: 600;">Marks</th>
-                                    <th style="padding: 8px; font-weight: 600;">Verdict</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modalBreakdownBody"></tbody>
-                        </table>
+                    <!-- Subject/Section Breakdown Section -->
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            Subject Performance
+                        </h4>
+                        <div id="modalSectionContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
+                    </div>
+
+                    <!-- Question Breakdown Table Section -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <h4 style="margin: 0; font-size: 0.94rem; font-weight: 700; color: #0F172A;">
+                                Question-by-Question Breakdown
+                            </h4>
+                            <div class="breakdown-filter-bar">
+                                <button type="button" class="filter-pill active" data-filter="all" onclick="filterModalBreakdown('all')">
+                                    All (<span id="filterCountAll">0</span>)
+                                </button>
+                                <button type="button" class="filter-pill" data-filter="correct" onclick="filterModalBreakdown('correct')">
+                                    Correct (<span id="filterCountCorrect">0</span>)
+                                </button>
+                                <button type="button" class="filter-pill" data-filter="wrong" onclick="filterModalBreakdown('wrong')">
+                                    Wrong (<span id="filterCountWrong">0</span>)
+                                </button>
+                                <button type="button" class="filter-pill" data-filter="blank" onclick="filterModalBreakdown('blank')">
+                                    Blank (<span id="filterCountBlank">0</span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; box-shadow: var(--shadow-sm);">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.825rem; text-align: center; font-variant-numeric: tabular-nums;">
+                                <thead>
+                                    <tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                                        <th style="padding: 9px 8px; font-weight: 700;" id="thSubjectCol">Subject</th>
+                                        <th style="padding: 9px 8px; font-weight: 700;">Q#</th>
+                                        <th style="padding: 9px 8px; font-weight: 700;">Student Response</th>
+                                        <th style="padding: 9px 8px; font-weight: 700;">Official Key</th>
+                                        <th style="padding: 9px 8px; font-weight: 700;">Marks</th>
+                                        <th style="padding: 9px 8px; font-weight: 700;">Verdict</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalBreakdownBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1600,44 +1845,173 @@
             }
 
             function appendSectionSummaryCard(container, opts) {
-                const row = document.createElement('div');
-                row.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
-                row.style.padding = '10px 14px';
-                row.style.gap = '8px';
+                const card = document.createElement('div');
+                card.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
+                card.style.cssText = `
+                    background: ${opts.isTotal ? '#EEF2FF' : '#FFFFFF'};
+                    border: 1px solid ${opts.isTotal ? '#C7D2FE' : '#E2E8F0'};
+                    border-radius: var(--radius-sm);
+                    padding: 10px 14px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+                `;
 
-                const headWrap = document.createElement('div');
-                const titleEl = document.createElement('div');
-                titleEl.className = 'sec-title';
-                titleEl.style.fontSize = '0.88rem';
-                if (opts.isTotal) titleEl.style.color = 'var(--primary-active)';
-                titleEl.textContent = opts.title;
+                const head = document.createElement('div');
+                head.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
 
-                const rangeEl = document.createElement('div');
-                rangeEl.className = 'sec-range';
-                rangeEl.textContent = opts.metaText;
+                const title = document.createElement('div');
+                title.style.cssText = `font-weight:700; font-size:0.86rem; color:${opts.isTotal ? '#3730A3' : '#1E293B'};`;
+                title.textContent = opts.title;
 
-                headWrap.appendChild(titleEl);
-                headWrap.appendChild(rangeEl);
+                const marks = document.createElement('div');
+                marks.style.cssText = `font-weight:800; font-family:"JetBrains Mono",monospace; font-size:1.05rem; color:${opts.isTotal ? '#4338CA' : '#2563EB'};`;
+                marks.innerHTML = `${opts.obtainedMarks} <span style="font-size:0.72rem; font-weight:600; color:#64748B;">/ ${opts.totalMarks}</span>`;
 
-                const marksWrap = document.createElement('div');
-                marksWrap.className = 'sec-marks';
-                marksWrap.style.paddingTop = '6px';
+                head.appendChild(title);
+                head.appendChild(marks);
 
-                const marksVal = document.createElement('div');
-                marksVal.className = 'sec-marks-val';
-                marksVal.style.fontSize = '1.02rem';
-                marksVal.textContent = `${opts.obtainedMarks} `;
+                const meta = document.createElement('div');
+                meta.style.cssText = 'font-size:0.73rem; color:#64748B; line-height:1.35; font-variant-numeric:tabular-nums;';
+                meta.textContent = opts.metaText;
 
-                const maxSpan = document.createElement('span');
-                maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
-                maxSpan.textContent = `/ ${opts.totalMarks} marks`;
+                card.appendChild(head);
+                card.appendChild(meta);
+                container.appendChild(card);
+            }
 
-                marksVal.appendChild(maxSpan);
-                marksWrap.appendChild(marksVal);
+            let currentFilterVerdict = 'all';
 
-                row.appendChild(headWrap);
-                row.appendChild(marksWrap);
-                container.appendChild(row);
+            function filterModalBreakdown(verdict) {
+                currentFilterVerdict = verdict;
+                document.querySelectorAll('.filter-pill').forEach(p => {
+                    if (p.getAttribute('data-filter') === verdict) {
+                        p.classList.add('active');
+                    } else {
+                        p.classList.remove('active');
+                    }
+                });
+                renderModalBreakdownTable();
+            }
+
+            function renderModalBreakdownTable() {
+                const tbody = document.getElementById('modalBreakdownBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                const list = currentModalList || [];
+                const data = currentModalSubmission || {};
+                const isJee = (PAPER_EXAM_TYPE === 'jee') ||
+                    (data.examType === 'jee') ||
+                    (data.exam_type === 'jee') ||
+                    (data.numericalScores && Object.keys(data.numericalScores).length > 0) ||
+                    (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) ||
+                    /jee/i.test(PAPER_TITLE) ||
+                    /jee/i.test(PAPER_SUBJECT);
+
+                const thSub = document.getElementById('thSubjectCol');
+                if (thSub) thSub.style.display = isJee ? '' : 'none';
+
+                let allCount = list.length;
+                let corCount = 0, wrnCount = 0, blkCount = 0;
+
+                list.forEach(b => {
+                    if (b.verdict === 'correct' || b.verdict === 'marked') corCount++;
+                    else if (b.verdict === 'wrong' || b.verdict === 'multiple') wrnCount++;
+                    else blkCount++;
+                });
+
+                const cAll = document.getElementById('filterCountAll');
+                const cCor = document.getElementById('filterCountCorrect');
+                const cWrn = document.getElementById('filterCountWrong');
+                const cBlk = document.getElementById('filterCountBlank');
+                if (cAll) cAll.textContent = allCount;
+                if (cCor) cCor.textContent = corCount;
+                if (cWrn) cWrn.textContent = wrnCount;
+                if (cBlk) cBlk.textContent = blkCount;
+
+                const filtered = list.filter(b => {
+                    if (currentFilterVerdict === 'all') return true;
+                    if (currentFilterVerdict === 'correct') return b.verdict === 'correct' || b.verdict === 'marked';
+                    if (currentFilterVerdict === 'wrong') return b.verdict === 'wrong' || b.verdict === 'multiple';
+                    if (currentFilterVerdict === 'blank') return b.verdict === 'blank' || b.verdict === 'unmarked';
+                    return true;
+                });
+
+                if (filtered.length > 0) {
+                    filtered.forEach(b => {
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid #E2E8F0';
+
+                        let vColor = '#475569';
+                        let vBg = '#F1F5F9';
+                        let vText = 'Blank';
+                        let qMarksText = (b.marks !== undefined) ? b.marks : '0';
+                        let qMarksColor = '#64748B';
+
+                        if (b.verdict === 'correct') {
+                            vColor = '#065F46'; vBg = '#D1FAE5'; vText = 'Correct';
+                            if (b.marks === undefined) qMarksText = '+4';
+                            qMarksColor = '#059669';
+                        } else if (b.verdict === 'wrong') {
+                            vColor = '#991B1B'; vBg = '#FEE2E2'; vText = 'Wrong';
+                            if (b.marks === undefined) qMarksText = '-1';
+                            qMarksColor = '#DC2626';
+                        } else if (b.verdict === 'multiple') {
+                            vColor = '#9A3412'; vBg = '#FFEDD5'; vText = 'Multiple';
+                            if (b.marks === undefined) qMarksText = '-1';
+                            qMarksColor = '#EA580C';
+                        } else if (b.verdict === 'marked') {
+                            vColor = '#1E40AF'; vBg = '#DBEAFE'; vText = 'Recorded';
+                            qMarksColor = '#2563EB';
+                        }
+
+                        if (isJee) {
+                            const tdSub = document.createElement('td');
+                            tdSub.style.cssText = 'padding: 8px 10px; font-weight:700; font-size:0.75rem; color:#475569;';
+                            tdSub.textContent = b.subject || '-';
+                            tr.appendChild(tdSub);
+                        }
+
+                        const tdQ = document.createElement('td');
+                        tdQ.style.cssText = 'padding: 8px 10px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#334155;';
+                        tdQ.textContent = 'Q' + (b.displayQ || b.q);
+                        if (b.isNumerical) {
+                            tdQ.innerHTML += ' <span style="font-size:0.68rem; padding:1px 4px; border-radius:3px; background:#F3E8FF; color:#7E22CE; font-weight:600;">NVQ</span>';
+                        }
+
+                        const tdMarked = document.createElement('td');
+                        tdMarked.style.cssText = 'padding: 8px 10px; font-weight:700; font-family:"JetBrains Mono",monospace;';
+                        if (b.marked && b.marked !== '-' && b.marked !== 'Blank') {
+                            const isCorr = b.verdict === 'correct' || b.verdict === 'marked';
+                            tdMarked.innerHTML = `<span style="padding: 2px 8px; border-radius: 4px; background: ${isCorr ? '#DCFCE7; color: #15803D;' : '#FEE2E2; color: #B91C1C;'} border: 1px solid currentColor;">${escapeText(b.marked)}</span>`;
+                        } else {
+                            tdMarked.innerHTML = `<span style="color:#94A3B8;">—</span>`;
+                        }
+
+                        const tdKey = document.createElement('td');
+                        tdKey.style.cssText = 'padding: 8px 10px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#2563EB;';
+                        tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #EFF6FF; border: 1px solid #BFDBFE;">${escapeText(b.correctKey || '-')}</span>`;
+
+                        const tdMarks = document.createElement('td');
+                        tdMarks.style.cssText = `padding: 8px 10px; font-weight:800; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
+                        tdMarks.textContent = qMarksText;
+
+                        const tdVerdict = document.createElement('td');
+                        tdVerdict.style.cssText = 'padding: 8px 10px;';
+                        tdVerdict.innerHTML = `<span style="padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; background: ${vBg}; color: ${vColor}; display: inline-block;">${vText}</span>`;
+
+                        tr.appendChild(tdQ);
+                        tr.appendChild(tdMarked);
+                        tr.appendChild(tdKey);
+                        tr.appendChild(tdMarks);
+                        tr.appendChild(tdVerdict);
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--text-muted);">No questions match the selected filter.</td></tr>';
+                }
             }
 
             function openOmrModal(data) {
@@ -1893,72 +2267,17 @@
                 currentModalList = list;
                 renderOmrOverlay(data, list);
 
-                if (list.length > 0) {
-                    list.forEach(b => {
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = '1px solid #F1F5F9';
-                        let vColor = '#64748B';
-                        let vText = 'Blank';
-                        let qMarksText = (b.marks !== undefined) ? b.marks : '0';
-                        let qMarksColor = '#64748B';
-
-                        if (b.verdict === 'correct') {
-                            vColor = '#15803D'; vText = 'Correct'; if (b.marks === undefined) qMarksText = '+4'; qMarksColor = '#15803D';
-                        } else if (b.verdict === 'wrong') {
-                            vColor = '#DC2626'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#DC2626';
-                        } else if (b.verdict === 'multiple') {
-                            vColor = '#B91C1C'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#B91C1C';
-                        } else if (b.verdict === 'marked') {
-                            vColor = '#1D4ED8'; vText = 'Recorded';
-                        }
-
-                        if (isJee) {
-                            const tdSub = document.createElement('td');
-                            tdSub.style.cssText = 'padding: 7px; font-weight:700; font-size:0.75rem; color:#475569;';
-                            tdSub.textContent = b.subject || '-';
-                            tr.appendChild(tdSub);
-                        }
-
-                        const tdQ = document.createElement('td');
-                        tdQ.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
-                        tdQ.textContent = 'Q' + (b.displayQ || b.q);
-
-                        const tdMarked = document.createElement('td');
-                        tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
-                        if (b.marked) {
-                            tdMarked.textContent = b.marked;
-                        } else {
-                            const dash = document.createElement('span');
-                            dash.style.color = '#CBD5E1';
-                            dash.textContent = '—';
-                            tdMarked.appendChild(dash);
-                        }
-
-                        const tdKey = document.createElement('td');
-                        tdKey.style.cssText = 'padding: 7px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
-                        tdKey.textContent = b.correctKey || '-';
-
-                        const tdMarks = document.createElement('td');
-                        tdMarks.style.cssText = `padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
-                        tdMarks.textContent = qMarksText;
-
-                        const tdVerdict = document.createElement('td');
-                        tdVerdict.style.cssText = `padding: 7px; font-weight:600; font-size:0.78rem; color:${vColor};`;
-                        tdVerdict.textContent = vText;
-
-                        tr.appendChild(tdQ);
-                        tr.appendChild(tdMarked);
-                        tr.appendChild(tdKey);
-                        tr.appendChild(tdMarks);
-                        tr.appendChild(tdVerdict);
-                        tbody.appendChild(tr);
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
-                }
+                currentFilterVerdict = 'all';
+                document.querySelectorAll('.filter-pill').forEach(p => {
+                    if (p.getAttribute('data-filter') === 'all') p.classList.add('active');
+                    else p.classList.remove('active');
+                });
+                renderModalBreakdownTable();
 
                 if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
                     omrModalDialog.showModal();
+                } else if (omrModalDialog) {
+                    omrModalDialog.setAttribute('open', '');
                 }
             }
 
