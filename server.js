@@ -879,6 +879,50 @@ app.get('/paper/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Dedicated JEE Mains Portal Dashboard
+app.get('/jee', requireAdmin, async (req, res) => {
+    try {
+        const allPapers = await Paper.find({}).sort({ createdAt: -1 });
+        const jeePapers = allPapers.filter(p => 
+            (p.exam_type === 'jee') || 
+            /jee/i.test(p.title || '') || 
+            /jee/i.test(p.subject || '')
+        );
+        res.render('jee_dashboard', { papers: jeePapers, allPapers });
+    } catch (error) {
+        res.status(500).send('Error loading JEE Mains portal: ' + error.message);
+    }
+});
+
+// Create New JEE Mains Paper Form
+app.get('/jee/new', requireAdmin, (req, res) => {
+    res.render('create_jee_paper');
+});
+
+// Process New JEE Mains Paper Creation
+app.post('/jee/new', requireAdmin, async (req, res) => {
+    try {
+        const title = (req.body.title || 'JEE Mains Exam').trim();
+        const paper = new Paper({
+            title: title,
+            subject: 'JEE Mains',
+            total_questions: 100,
+            max_marks: 300,
+            exam_type: 'jee',
+            sections: [
+                { name: 'Physics', from_question: 1, to_question: 25, max_marks: 100 },
+                { name: 'Chemistry', from_question: 26, to_question: 50, max_marks: 100 },
+                { name: 'Mathematics', from_question: 51, to_question: 75, max_marks: 100 }
+            ],
+            answer_key: new Array(100).fill(null)
+        });
+        await paper.save();
+        res.redirect(`/paper/${encodeURIComponent(paper._id)}/jee-answerkey`);
+    } catch (error) {
+        res.status(500).send('Error creating JEE Mains paper: ' + error.message);
+    }
+});
+
 // Dedicated JEE Mains Answer Key Page (Shows only Q1-20, Q41-60, Q81-100 divided into 3 sections)
 app.get('/paper/:id/jee-answerkey', requireAdmin, async (req, res) => {
     try {

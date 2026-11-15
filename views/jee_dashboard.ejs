@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Mains Assessment Portal • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .jee-portal-hero {
+            background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 50%, #FAF5FF 100%);
+            border: 1px solid #BFDBFE;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .jee-hero-left h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #1E3A8A;
+            margin: 0 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .jee-hero-left p {
+            margin: 0;
+            font-size: 0.86rem;
+            color: #475569;
+            max-width: 650px;
+            line-height: 1.45;
+        }
+
+        .jee-subjects-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .jee-sub-chip-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            box-shadow: var(--shadow-xs);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .jee-sub-icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .paper-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .jee-paper-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.25rem;
+            box-shadow: var(--shadow-xs);
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+            border-top: 4px solid #2563EB;
+        }
+
+        .jee-paper-card:hover {
+            border-color: #93C5FD;
+            box-shadow: var(--shadow-md);
+        }
+
+        .jee-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .jee-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.35;
+        }
+
+        .jee-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding-top: 1rem;
+            border-top: 1px solid #F1F5F9;
+        }
+
+        .jee-actions-grid .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 0.55rem 0.75rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+        }
+
+        .jee-actions-grid .btn-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 640px) {
+            .jee-portal-hero {
+                padding: 1.15rem;
+            }
+            .paper-list {
+                grid-template-columns: 1fr;
+            }
+            .jee-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('partials/sidebar_start', { activeNav: 'jee' }) %>
+    <div class="container">
+        <main>
+            <!-- Hero Header -->
+            <div class="jee-portal-hero">
+                <div class="jee-hero-left">
+                    <h1>
+                        <span>⚛️ JEE Mains Exam Section</span>
+                        <span class="badge" style="background:#DBEAFE; color:#1D4ED8; font-size:0.75rem; font-weight:700;">300 Max Marks</span>
+                    </h1>
+                    <p>
+                        Dedicated evaluation portal for <strong>JEE Mains Examination Papers</strong>. Evaluates 75 questions divided into 3 subjects (Physics Q1–25, Chemistry Q26–50, Mathematics Q51–75) with automated MCQ grading and single-tap Section B Numerical grading.
+                    </p>
+                </div>
+                <div>
+                    <a href="/jee/new" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        + Create JEE Paper
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3 Subjects Overview Cards -->
+            <div class="jee-subjects-strip">
+                <div class="jee-sub-chip-card">
+                    <div class="jee-sub-icon-box" style="background:#EFF6FF; color:#2563EB;">⚛️</div>
+                    <div>
+                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 1: Physics</strong>
+                        <span style="font-size:0.75rem; color:#64748B;">Q1–25 &bull; 20 MCQs + 5 NVQs (100 M)</span>
+                    </div>
+                </div>
+                <div class="jee-sub-chip-card">
+                    <div class="jee-sub-icon-box" style="background:#F0FDF4; color:#059669;">🧪</div>
+                    <div>
+                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 2: Chemistry</strong>
+                        <span style="font-size:0.75rem; color:#64748B;">Q26–50 &bull; 20 MCQs + 5 NVQs (100 M)</span>
+                    </div>
+                </div>
+                <div class="jee-sub-chip-card">
+                    <div class="jee-sub-icon-box" style="background:#FAF5FF; color:#7C3AED;">📐</div>
+                    <div>
+                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 3: Mathematics</strong>
+                        <span style="font-size:0.75rem; color:#64748B;">Q51–75 &bull; 20 MCQs + 5 NVQs (100 M)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Title -->
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span>JEE Mains Papers</span>
+                    <span class="count-badge"><%= papers ? papers.length : 0 %> Papers</span>
+                </h2>
+            </div>
+
+            <!-- Papers List -->
+            <% if (papers && papers.length > 0) { %>
+                <div class="paper-list">
+                    <% papers.forEach(paper => { %>
+                        <%
+                            const hasKey = (Array.isArray(paper.answer_key) && paper.answer_key.some(k => k)) ||
+                                           (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0));
+                            const encodedId = encodeURIComponent(paper._id);
+                        %>
+                        <article class="jee-paper-card">
+                            <div>
+                                <div class="jee-card-header">
+                                    <h3 class="jee-card-title"><%= paper.title %></h3>
+                                    <% if (hasKey) { %>
+                                        <span class="status-chip status-ready">
+                                            <span class="status-dot-sm"></span> Key Configured
+                                        </span>
+                                    <% } else { %>
+                                        <span class="status-chip status-pending">
+                                            <span class="status-dot-sm"></span> Key Pending
+                                        </span>
+                                    <% } %>
+                                </div>
+
+                                <div class="paper-meta-line">
+                                    <span style="color:#1D4ED8; font-weight:600;">JEE Mains Format</span>
+                                    <span>&middot;</span>
+                                    <span class="paper-id-code"><%= paper._id %></span>
+                                </div>
+
+                                <div class="paper-specs">
+                                    <span class="spec-chip">75 Questions (60 MCQ + 15 NVQ)</span>
+                                    <span class="spec-chip" style="color:#1D4ED8; background:#EFF6FF; border-color:#BFDBFE; font-weight:600;">300 Max Marks</span>
+                                </div>
+                            </div>
+
+                            <div class="jee-actions-grid">
+                                <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="Configure 3-Section JEE Mains Answer Key">
+                                    ⚛️ JEE Key
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-primary" title="Launch Live Camera Scanner for JEE Mains">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    JEE Scanner
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0;" title="Upload and evaluate JEE Mains sheet from image file">
+                                    📁 JEE Evaluator
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary" title="View Evaluated Copies and Breakdown">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                    Results &amp; Copies
+                                </a>
+
+                                <a href="/paper/<%= encodedId %>/omr" target="_blank" rel="noopener" class="btn btn-secondary btn-full" title="Open Printable A4 OMR Sheet for JEE Mains">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                    Print A4 OMR Sheet
+                                </a>
+                            </div>
+                        </article>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon" aria-hidden="true" style="background:#EFF6FF; color:#2563EB;">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"></circle>
+                            <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+                        </svg>
+                    </div>
+                    <h3 style="margin-bottom: 0.4rem;">No JEE Mains papers yet</h3>
+                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.92rem;">
+                        Create a dedicated JEE Mains exam paper to evaluate Physics (Q1–25), Chemistry (Q26–50), and Mathematics (Q51–75) with 300 Max Marks.
+                    </p>
+                    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                        <a href="/jee/new" class="btn btn-primary btn-lg">
+                            + Create First JEE Mains Paper
+                        </a>
+                        <a href="/" class="btn btn-secondary btn-lg">
+                            &larr; Return to Standard Dashboard
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </main>
+    </div>
+    <%- include('partials/sidebar_end') %>
+</body>
+</html>

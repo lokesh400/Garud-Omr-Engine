@@ -59,6 +59,11 @@ const paperSchema = new mongoose.Schema({
     type: [mongoose.Schema.Types.Mixed],
     default: []
   },
+  // Exam type: 'standard' or 'jee'
+  exam_type: {
+    type: String,
+    default: 'standard'
+  },
   // Multiple sections in the paper with selectable question ranges
   sections: {
     type: [sectionSchema],
@@ -81,6 +86,14 @@ paperSchema.virtual('numQuestions')
   })
   .set(function (val) {
     this.total_questions = Number(val);
+  });
+
+paperSchema.virtual('examType')
+  .get(function () {
+    return this.exam_type;
+  })
+  .set(function (val) {
+    this.exam_type = val;
   });
 
 paperSchema.virtual('answerKey')

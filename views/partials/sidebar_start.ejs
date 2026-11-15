@@ -72,6 +72,16 @@
                             </a>
                         </li>
                         <li>
+                            <a href="/jee" class="sidebar-link" <%- _navActive === 'jee' ? 'aria-current="page"' : '' %>>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"></circle>
+                                    <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+                                </svg>
+                                <span>JEE Mains Section</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="/users" class="sidebar-link" <%- _navActive === 'users' ? 'aria-current="page"' : '' %>>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -117,46 +127,98 @@
             </div>
 
             <% if (_isAdmin && _paperCtx) { %>
+                <% const _isJeePaper = (_paperCtx.exam_type === 'jee') || (_navActive === 'jee_key') || /jee/i.test(_paperCtx.subject || '') || /jee/i.test(_paperCtx.title || ''); %>
                 <div>
-                    <div class="sidebar-group-label" title="<%= _paperCtx.title %>">Paper: <%= _paperCtx.title %></div>
+                    <div class="sidebar-group-label" title="<%= _paperCtx.title %>">
+                        <%= _isJeePaper ? '⚛️ JEE Paper: ' : 'Paper: ' %><%= _paperCtx.title %>
+                    </div>
                     <ul class="sidebar-link-list">
-                        <li>
-                            <a href="/paper/<%= _paperEncodedId %>" class="sidebar-link" <%- _navActive === 'paper_key' ? 'aria-current="page"' : '' %>>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
-                                </svg>
-                                <span>Answer Key</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/paper/<%= _paperEncodedId %>/results" class="sidebar-link" <%- _navActive === 'paper_results' ? 'aria-current="page"' : '' %>>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                                </svg>
-                                <span>Results &amp; Copies</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                    <rect x="6" y="14" width="12" height="8"></rect>
-                                </svg>
-                                <span>Print OMR</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/paper/<%= _paperEncodedId %>/scan" class="sidebar-link">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                                <span>Live Scanner</span>
-                            </a>
-                        </li>
+                        <% if (_isJeePaper) { %>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/jee-answerkey" class="sidebar-link" <%- _navActive === 'jee_key' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                                    </svg>
+                                    <span>JEE Answer Key</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/jee-scan" class="sidebar-link">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    <span>JEE Scanner</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/jee-evaluator" class="sidebar-link">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span>JEE Evaluator</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/results" class="sidebar-link" <%- _navActive === 'paper_results' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                    <span>Results &amp; Copies</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                    <span>Print OMR</span>
+                                </a>
+                            </li>
+                        <% } else { %>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>" class="sidebar-link" <%- _navActive === 'paper_key' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                                    </svg>
+                                    <span>Answer Key</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/results" class="sidebar-link" <%- _navActive === 'paper_results' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                                    </svg>
+                                    <span>Results &amp; Copies</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                    <span>Print OMR</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/paper/<%= _paperEncodedId %>/scan" class="sidebar-link">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    <span>Live Scanner</span>
+                                </a>
+                            </li>
+                        <% } %>
                     </ul>
                 </div>
             <% } %>

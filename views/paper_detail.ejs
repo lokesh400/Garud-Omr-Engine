@@ -519,21 +519,13 @@
                 <% } %>
             </div>
             <div class="topbar-actions-group">
-                <div class="jee-tools-pill">
-                    <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; font-weight:700; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Configure JEE Mains Answer Key (Only Q1-20, Q26-45, Q51-70)">
-                        ⚛️ JEE Key
-                    </a>
-                    <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE; font-weight:600; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Launch JEE Mains Camera Scanner">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                        JEE Scan
-                    </a>
-                    <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary btn-sm" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0; font-weight:600; padding:5px 10px; font-size:0.8rem; white-space:nowrap;" title="Upload and evaluate JEE Mains sheet directly">
-                        📁 JEE Eval
-                    </a>
-                </div>
+                <a href="/paper/<%= encodedId %>/scan" class="btn btn-primary btn-sm" title="Launch Camera Scanner for this paper" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Live Scanner
+                </a>
                 <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -547,6 +539,19 @@
                 </div>
             </div>
         </header>
+
+        <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
+            <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.86rem; color:#1E40AF;">
+                    <span>⚛️</span>
+                    <span><strong>JEE Mains Paper:</strong> This paper is configured for JEE Mains evaluation.</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary btn-sm" style="background:#FFFFFF; color:#1D4ED8; border-color:#BFDBFE; font-weight:700;">Open JEE Answer Key</a>
+                    <a href="/jee" class="btn btn-secondary btn-sm" style="background:#FFFFFF; color:#1D4ED8; border-color:#BFDBFE;">Go to JEE Section &rarr;</a>
+                </div>
+            </div>
+        <% } %>
 
         <% if (paper.sections && paper.sections.length > 0) { %>
             <nav class="section-quick-tabs" aria-label="Jump to section">
