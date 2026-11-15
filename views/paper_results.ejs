@@ -970,7 +970,7 @@
                         } else {
                             addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
                         }
-                    } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple')) {
+                    } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
                         addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
                     } else {
                         addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
@@ -1384,11 +1384,7 @@
 
                     const tdQ = document.createElement('td');
                     tdQ.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
-                    if (b.omrQ && b.omrQ !== b.displayQ) {
-                        tdQ.innerHTML = `Q${b.displayQ} <span style="font-size:0.67rem; font-weight:500; color:var(--text-muted);">(OMR Q${b.omrQ})</span>`;
-                    } else {
-                        tdQ.textContent = 'Q' + (b.displayQ || b.q);
-                    }
+                    tdQ.textContent = 'Q' + (b.displayQ || b.q);
 
                     const tdMarked = document.createElement('td');
                     tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
