@@ -646,14 +646,14 @@
                                 <button type="button" class="btn btn-warning btn-sm" id="hardRecheckBtn"
                                     onclick="confirmHardRecheck()"
                                     style="background: #FFFBEB; color: #B45309; border-color: #FCD34D; font-weight: 600;"
-                                    title="Download original OMR sheets from Cloudinary and re-scan all bubbles from scratch with Computer Vision">
+                                    title="Hard Reset All: Download original student OMR sheets from Cloudinary and re-scan all bubbles from scratch with Computer Vision">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
                                         aria-hidden="true">
                                         <path
                                             d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                                     </svg>
-                                    Hard Recheck
+                                    Hard Reset
                                 </button>
 
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()"
@@ -1107,7 +1107,7 @@
                     </div>
                     <div>
                         <h3 id="hardRecheckTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">
-                            Hard Recheck (Cloudinary Extraction)
+                            Hard Reset / Recheck (Cloudinary Extraction)
                         </h3>
                         <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
                             Computer vision re-evaluation of original student sheets
@@ -1326,6 +1326,19 @@
             }
 
             async function recheckAllSubmissions() {
+                // Confirmation 1 of 3
+                if (!confirm('Confirmation 1 of 3:\n\nAre you sure you want to RECHECK ALL student submissions for this paper?')) {
+                    return;
+                }
+                // Confirmation 2 of 3
+                if (!confirm('Confirmation 2 of 3:\n\nThis will recalculate and overwrite all student scores, verdicts, and breakdowns in the database against the latest Answer Key.\n\nDo you want to proceed?')) {
+                    return;
+                }
+                // Confirmation 3 of 3
+                if (!confirm('Final Confirmation (3 of 3):\n\nPlease confirm one last time to start Rechecking all submissions now.')) {
+                    return;
+                }
+
                 const btn = document.getElementById('recheckAllBtn');
                 const origHtml = btn ? btn.innerHTML : 'Recheck All';
                 if (btn) {
@@ -1366,7 +1379,16 @@
             }
 
             async function confirmHardRecheck() {
-                if (!confirm('Hard Recheck will download the original OMR sheet photos from Cloudinary for all student submissions and completely re-scan every bubble using computer vision.\n\nSection B numerical marks are preserved.\n\nDo you want to proceed?')) {
+                // Confirmation 1 of 3
+                if (!confirm('Confirmation 1 of 3:\n\nAre you sure you want to run HARD RESET / RECHECK?\n\nThis will extract all student OMR sheet photos from Cloudinary one-by-one and completely re-scan every bubble from scratch.')) {
+                    return;
+                }
+                // Confirmation 2 of 3
+                if (!confirm('Confirmation 2 of 3:\n\nComputer vision re-evaluation will re-detect every marked and blank bubble with the AI scanner. (Section B numerical answers will be preserved).\n\nDo you want to proceed?')) {
+                    return;
+                }
+                // Confirmation 3 of 3
+                if (!confirm('Final Confirmation (3 of 3):\n\nThis is the final confirmation to start extracting sheets from Cloudinary and re-evaluating all student copies. Begin now?')) {
                     return;
                 }
 
