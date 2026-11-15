@@ -1011,7 +1011,7 @@
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
                                                 <div class="sec-stack-name">
                                                     <%= s.sectionName %>
-                                                    <% if (s.range) { %>
+                                                    <% if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) { %>
                                                         <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
                                                     <% } %>
                                                 </div>
@@ -1765,9 +1765,13 @@
                     const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
                     const secTopObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
                     const secTopVal = secTopObj ? secTopObj.highest : null;
+                    let secTitle = s.sectionName || '';
+                    if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) {
+                        secTitle += ` (${s.range})`;
+                    }
                     appendSectionSummaryCard(secContainer, {
                         isTotal: false,
-                        title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
+                        title: secTitle,
                         metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
                         obtainedMarks: s.marks || 0,
                         totalMarks: s.maxMarks || (secTotalQ * 4),

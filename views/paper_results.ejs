@@ -963,6 +963,76 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Numerical Question Editing Bubbles */
+        .jee-nvq-btn {
+            border: 1.5px solid #CBD5E1;
+            background: #FFFFFF;
+            color: #64748B;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            user-select: none;
+            padding: 0;
+            line-height: 1;
+            box-sizing: border-box;
+        }
+        .jee-nvq-btn:hover {
+            transform: scale(1.1);
+            border-color: #94A3B8;
+        }
+        .jee-nvq-btn.btn-c:hover {
+            border-color: #10B981;
+            color: #10B981;
+        }
+        .jee-nvq-btn.btn-w:hover {
+            border-color: #EF4444;
+            color: #EF4444;
+        }
+        .jee-nvq-btn.btn-b:hover {
+            border-color: #64748B;
+            color: #64748B;
+        }
+        .jee-nvq-btn.btn-c.active {
+            background: #10B981 !important;
+            color: #FFFFFF !important;
+            border-color: #059669 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+        }
+        .jee-nvq-btn.btn-w.active {
+            background: #EF4444 !important;
+            color: #FFFFFF !important;
+            border-color: #DC2626 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+        }
+        .jee-nvq-btn.btn-b.active {
+            background: #64748B !important;
+            color: #FFFFFF !important;
+            border-color: #475569 !important;
+            box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.25);
+        }
+        .nvq-save-floating-bar {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 14px;
+            background: #FFFBEB;
+            border: 1.5px solid #FCD34D;
+            border-radius: var(--radius-sm);
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -1122,9 +1192,11 @@
                                 <div class="sec-title">
                                     <%= sec.sectionName %>
                                 </div>
-                                <div class="sec-range">
-                                    <%= sec.range %>
-                                </div>
+                                <% if (sec.range && !sec.range.includes('MCQ') && !sec.range.includes('NVQ')) { %>
+                                    <div class="sec-range">
+                                        <%= sec.range %>
+                                    </div>
+                                <% } %>
                             </div>
                             <div class="sec-marks">
                                 <div class="sec-marks-val">
@@ -1221,7 +1293,7 @@
                                                                         <div class="sec-stack-item">
                                                                             <div class="sec-stack-name">
                                                                                 <%= s.sectionName %>
-                                                                                    <% if (s.range) { %>
+                                                                                    <% if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) { %>
                                                                                         <span
                                                                                             style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
                                                                                             <%= s.range %>)
@@ -1582,6 +1654,18 @@
                                 <tbody id="modalBreakdownBody"></tbody>
                             </table>
                         </div>
+
+                        <!-- Floating NVQ Edit Save Bar -->
+                        <div id="nvqEditActionBar" class="nvq-save-floating-bar">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.05rem;">✏️</span>
+                                <span style="font-size: 0.82rem; font-weight: 600; color: #92400E;">Unsaved changes to numerical answers</span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelNvqEdits()" style="padding: 5px 12px; font-size: 0.8rem;">Discard</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btnSaveNvq" onclick="saveEditedNumericalScores()" style="padding: 5px 14px; font-size: 0.8rem; font-weight: 700; background: #059669; border-color: #059669; color: white;">💾 Save Changes</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1660,8 +1744,11 @@
             const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
             const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
             const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
+            const IS_ADMIN = <%- (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
             let currentModalSubmission = null;
             let currentModalList = [];
+            let currentEditingNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
+            let originalNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let showCheckingOverlay = true;
             const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
             const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
@@ -1674,6 +1761,8 @@
             if (omrModalDialog) {
                 omrModalDialog.addEventListener('close', () => {
                     currentModalSubmission = null;
+                    const bar = document.getElementById('nvqEditActionBar');
+                    if (bar) bar.style.display = 'none';
                 });
                 // Progressive enhancement light-dismiss for Safari / browsers without dialog.closedBy
                 if (!('closedBy' in HTMLDialogElement.prototype)) {
@@ -2214,6 +2303,55 @@
                 renderModalBreakdownTable();
             }
 
+            function getNumericalScoreValue(b) {
+                if (!b || !b.isNumerical) return 0;
+                let subKey = b.subKey;
+                let idx = b.nvqIndex;
+                const qNum = Number(b.displayQ || b.q);
+                if (!subKey) {
+                    if (qNum >= 71) subKey = 'math';
+                    else if (qNum >= 46) subKey = 'chem';
+                    else subKey = 'phy';
+                }
+                if (idx === undefined || idx === null) {
+                    if (qNum >= 71) idx = qNum - 71;
+                    else if (qNum >= 46) idx = qNum - 46;
+                    else idx = qNum - 21;
+                }
+                if (currentEditingNumericalScores && currentEditingNumericalScores[subKey] && currentEditingNumericalScores[subKey][idx] !== undefined) {
+                    return Number(currentEditingNumericalScores[subKey][idx]);
+                }
+                return (b.verdict === 'correct' || b.marks === '+4') ? 4 : ((b.verdict === 'wrong' || b.marks === '-1') ? -1 : 0);
+            }
+
+            function updateFilterCounts() {
+                const list = currentModalList || [];
+                let allCount = list.length;
+                let corCount = 0, wrnCount = 0, blkCount = 0;
+
+                list.forEach(b => {
+                    let v = b.verdict;
+                    if (b.isNumerical) {
+                        const val = getNumericalScoreValue(b);
+                        if (val === 4) v = 'correct';
+                        else if (val === -1) v = 'wrong';
+                        else v = 'blank';
+                    }
+                    if (v === 'correct' || v === 'marked') corCount++;
+                    else if (v === 'wrong' || v === 'multiple') wrnCount++;
+                    else blkCount++;
+                });
+
+                const cAll = document.getElementById('filterCountAll');
+                const cCor = document.getElementById('filterCountCorrect');
+                const cWrn = document.getElementById('filterCountWrong');
+                const cBlk = document.getElementById('filterCountBlank');
+                if (cAll) cAll.textContent = allCount;
+                if (cCor) cCor.textContent = corCount;
+                if (cWrn) cWrn.textContent = wrnCount;
+                if (cBlk) cBlk.textContent = blkCount;
+            }
+
             function renderModalBreakdownTable() {
                 const tbody = document.getElementById('modalBreakdownBody');
                 if (!tbody) return;
@@ -2232,29 +2370,20 @@
                 const thSub = document.getElementById('thSubjectCol');
                 if (thSub) thSub.style.display = isJee ? '' : 'none';
 
-                let allCount = list.length;
-                let corCount = 0, wrnCount = 0, blkCount = 0;
-
-                list.forEach(b => {
-                    if (b.verdict === 'correct' || b.verdict === 'marked') corCount++;
-                    else if (b.verdict === 'wrong' || b.verdict === 'multiple') wrnCount++;
-                    else blkCount++;
-                });
-
-                const cAll = document.getElementById('filterCountAll');
-                const cCor = document.getElementById('filterCountCorrect');
-                const cWrn = document.getElementById('filterCountWrong');
-                const cBlk = document.getElementById('filterCountBlank');
-                if (cAll) cAll.textContent = allCount;
-                if (cCor) cCor.textContent = corCount;
-                if (cWrn) cWrn.textContent = wrnCount;
-                if (cBlk) cBlk.textContent = blkCount;
+                updateFilterCounts();
 
                 const filtered = list.filter(b => {
+                    let v = b.verdict;
+                    if (b.isNumerical) {
+                        const val = getNumericalScoreValue(b);
+                        if (val === 4) v = 'correct';
+                        else if (val === -1) v = 'wrong';
+                        else v = 'blank';
+                    }
                     if (currentFilterVerdict === 'all') return true;
-                    if (currentFilterVerdict === 'correct') return b.verdict === 'correct' || b.verdict === 'marked';
-                    if (currentFilterVerdict === 'wrong') return b.verdict === 'wrong' || b.verdict === 'multiple';
-                    if (currentFilterVerdict === 'blank') return b.verdict === 'blank' || b.verdict === 'unmarked';
+                    if (currentFilterVerdict === 'correct') return v === 'correct' || v === 'marked';
+                    if (currentFilterVerdict === 'wrong') return v === 'wrong' || v === 'multiple';
+                    if (currentFilterVerdict === 'blank') return v === 'blank' || v === 'unmarked';
                     return true;
                 });
 
@@ -2269,21 +2398,36 @@
                         let qMarksText = (b.marks !== undefined) ? b.marks : '0';
                         let qMarksColor = '#64748B';
 
-                        if (b.verdict === 'correct') {
-                            vColor = '#065F46'; vBg = '#D1FAE5'; vText = 'Correct';
-                            if (b.marks === undefined) qMarksText = '+4';
-                            qMarksColor = '#059669';
-                        } else if (b.verdict === 'wrong') {
-                            vColor = '#991B1B'; vBg = '#FEE2E2'; vText = 'Wrong';
-                            if (b.marks === undefined) qMarksText = '-1';
-                            qMarksColor = '#DC2626';
-                        } else if (b.verdict === 'multiple') {
-                            vColor = '#9A3412'; vBg = '#FFEDD5'; vText = 'Multiple';
-                            if (b.marks === undefined) qMarksText = '-1';
-                            qMarksColor = '#EA580C';
-                        } else if (b.verdict === 'marked') {
-                            vColor = '#1E40AF'; vBg = '#DBEAFE'; vText = 'Recorded';
-                            qMarksColor = '#2563EB';
+                        let numVal = 0;
+                        if (b.isNumerical) {
+                            numVal = getNumericalScoreValue(b);
+                            if (numVal === 4) {
+                                vColor = '#065F46'; vBg = '#D1FAE5'; vText = 'Correct';
+                                qMarksText = '+4'; qMarksColor = '#059669';
+                            } else if (numVal === -1) {
+                                vColor = '#991B1B'; vBg = '#FEE2E2'; vText = 'Wrong';
+                                qMarksText = '-1'; qMarksColor = '#DC2626';
+                            } else {
+                                vColor = '#475569'; vBg = '#F1F5F9'; vText = 'Blank';
+                                qMarksText = '0'; qMarksColor = '#64748B';
+                            }
+                        } else {
+                            if (b.verdict === 'correct') {
+                                vColor = '#065F46'; vBg = '#D1FAE5'; vText = 'Correct';
+                                if (b.marks === undefined) qMarksText = '+4';
+                                qMarksColor = '#059669';
+                            } else if (b.verdict === 'wrong') {
+                                vColor = '#991B1B'; vBg = '#FEE2E2'; vText = 'Wrong';
+                                if (b.marks === undefined) qMarksText = '-1';
+                                qMarksColor = '#DC2626';
+                            } else if (b.verdict === 'multiple') {
+                                vColor = '#9A3412'; vBg = '#FFEDD5'; vText = 'Multiple';
+                                if (b.marks === undefined) qMarksText = '-1';
+                                qMarksColor = '#EA580C';
+                            } else if (b.verdict === 'marked') {
+                                vColor = '#1E40AF'; vBg = '#DBEAFE'; vText = 'Recorded';
+                                qMarksColor = '#2563EB';
+                            }
                         }
 
                         if (isJee) {
@@ -2302,7 +2446,39 @@
 
                         const tdMarked = document.createElement('td');
                         tdMarked.style.cssText = 'padding: 8px 10px; font-weight:700; font-family:"JetBrains Mono",monospace;';
-                        if (b.marked && b.marked !== '-' && b.marked !== 'Blank') {
+                        if (b.isNumerical) {
+                            let subKey = b.subKey;
+                            let idx = b.nvqIndex;
+                            const qNum = Number(b.displayQ || b.q);
+                            if (!subKey) {
+                                if (qNum >= 71) subKey = 'math';
+                                else if (qNum >= 46) subKey = 'chem';
+                                else subKey = 'phy';
+                            }
+                            if (idx === undefined || idx === null) {
+                                if (qNum >= 71) idx = qNum - 71;
+                                else if (qNum >= 46) idx = qNum - 46;
+                                else idx = qNum - 21;
+                            }
+
+                            if (IS_ADMIN) {
+                                tdMarked.innerHTML = `
+                                    <div style="display:inline-flex; align-items:center; gap:5px;" data-subkey="${subKey}" data-idx="${idx}">
+                                        <button type="button" class="jee-nvq-btn btn-c ${numVal === 4 ? 'active' : ''}" onclick="onTableNvqClick('${subKey}', ${idx}, 4, this)" title="Right (+4 marks)">&#10003;</button>
+                                        <button type="button" class="jee-nvq-btn btn-w ${numVal === -1 ? 'active' : ''}" onclick="onTableNvqClick('${subKey}', ${idx}, -1, this)" title="Wrong (-1 mark)">&#10005;</button>
+                                        <button type="button" class="jee-nvq-btn btn-b ${numVal === 0 ? 'active' : ''}" onclick="onTableNvqClick('${subKey}', ${idx}, 0, this)" title="Skipped (0 marks)">&#9675;</button>
+                                    </div>
+                                `;
+                            } else {
+                                tdMarked.innerHTML = `
+                                    <div style="display:inline-flex; align-items:center; gap:5px; pointer-events:none; opacity:0.95;">
+                                        <span class="jee-nvq-btn btn-c ${numVal === 4 ? 'active' : ''}" title="Right (+4)">&#10003;</span>
+                                        <span class="jee-nvq-btn btn-w ${numVal === -1 ? 'active' : ''}" title="Wrong (-1)">&#10005;</span>
+                                        <span class="jee-nvq-btn btn-b ${numVal === 0 ? 'active' : ''}" title="Skipped (0)">&#9675;</span>
+                                    </div>
+                                `;
+                            }
+                        } else if (b.marked && b.marked !== '-' && b.marked !== 'Blank') {
                             const isCorr = b.verdict === 'correct' || b.verdict === 'marked';
                             tdMarked.innerHTML = `<span style="padding: 2px 8px; border-radius: 4px; background: ${isCorr ? '#DCFCE7; color: #15803D;' : '#FEE2E2; color: #B91C1C;'} border: 1px solid currentColor;">${escapeText(b.marked)}</span>`;
                         } else {
@@ -2311,7 +2487,11 @@
 
                         const tdKey = document.createElement('td');
                         tdKey.style.cssText = 'padding: 8px 10px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#2563EB;';
-                        tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #EFF6FF; border: 1px solid #BFDBFE;">${escapeText(b.correctKey || '-')}</span>`;
+                        if (b.isNumerical) {
+                            tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #FAF5FF; border: 1px solid #E9D5FF; color: #7E22CE; font-weight:700;">NVQ</span>`;
+                        } else {
+                            tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #EFF6FF; border: 1px solid #BFDBFE;">${escapeText(b.correctKey || '-')}</span>`;
+                        }
 
                         const tdMarks = document.createElement('td');
                         tdMarks.style.cssText = `padding: 8px 10px; font-weight:800; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
@@ -2333,8 +2513,244 @@
                 }
             }
 
+            function onTableNvqClick(subKey, idx, marks, btn) {
+                if (!IS_ADMIN || !currentEditingNumericalScores) return;
+                if (!currentEditingNumericalScores[subKey]) currentEditingNumericalScores[subKey] = [0, 0, 0, 0, 0];
+                currentEditingNumericalScores[subKey][idx] = Number(marks);
+
+                const group = btn.closest('div');
+                if (group) {
+                    group.querySelectorAll('.jee-nvq-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+
+                const tr = btn.closest('tr');
+                if (tr) {
+                    const tds = tr.querySelectorAll('td');
+                    if (tds.length >= 5) {
+                        const tdMarks = tds[tds.length - 2];
+                        const tdVerdict = tds[tds.length - 1];
+                        if (marks === 4) {
+                            tdMarks.textContent = '+4';
+                            tdMarks.style.color = '#059669';
+                            tdVerdict.innerHTML = '<span style="padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; background: #D1FAE5; color: #065F46; display: inline-block;">CORRECT</span>';
+                        } else if (marks === -1) {
+                            tdMarks.textContent = '-1';
+                            tdMarks.style.color = '#DC2626';
+                            tdVerdict.innerHTML = '<span style="padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; background: #FEE2E2; color: #991B1B; display: inline-block;">WRONG</span>';
+                        } else {
+                            tdMarks.textContent = '0';
+                            tdMarks.style.color = '#64748B';
+                            tdVerdict.innerHTML = '<span style="padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; background: #F1F5F9; color: #475569; display: inline-block;">BLANK</span>';
+                        }
+                    }
+                }
+
+                if (currentModalList) {
+                    const item = currentModalList.find(b => {
+                        if (!b.isNumerical) return false;
+                        let sk = b.subKey;
+                        let ix = b.nvqIndex;
+                        const qNum = Number(b.displayQ || b.q);
+                        if (!sk) {
+                            if (qNum >= 71) sk = 'math';
+                            else if (qNum >= 46) sk = 'chem';
+                            else sk = 'phy';
+                        }
+                        if (ix === undefined || ix === null) {
+                            if (qNum >= 71) ix = qNum - 71;
+                            else if (qNum >= 46) ix = qNum - 46;
+                            else ix = qNum - 21;
+                        }
+                        return sk === subKey && ix === idx;
+                    });
+                    if (item) {
+                        if (marks === 4) {
+                            item.verdict = 'correct';
+                            item.marks = '+4';
+                            item.marked = '+4 (Correct)';
+                        } else if (marks === -1) {
+                            item.verdict = 'wrong';
+                            item.marks = '-1';
+                            item.marked = '-1 (Wrong)';
+                        } else {
+                            item.verdict = 'blank';
+                            item.marks = '0';
+                            item.marked = 'Blank';
+                        }
+                    }
+                }
+
+                updateFilterCounts();
+                checkNvqDirty();
+            }
+
+            function checkNvqDirty() {
+                const bar = document.getElementById('nvqEditActionBar');
+                if (!bar) return;
+                let isDirty = false;
+                ['phy', 'chem', 'math'].forEach(k => {
+                    const cur = (currentEditingNumericalScores && currentEditingNumericalScores[k]) || [];
+                    const orig = (originalNumericalScores && originalNumericalScores[k]) || [];
+                    for (let i = 0; i < 5; i++) {
+                        if (Number(cur[i] || 0) !== Number(orig[i] || 0)) {
+                            isDirty = true;
+                        }
+                    }
+                });
+                bar.style.display = isDirty ? 'flex' : 'none';
+            }
+
+            function cancelNvqEdits() {
+                currentEditingNumericalScores = JSON.parse(JSON.stringify(originalNumericalScores));
+                const bar = document.getElementById('nvqEditActionBar');
+                if (bar) bar.style.display = 'none';
+                renderModalBreakdownTable();
+            }
+
+            async function saveEditedNumericalScores() {
+                if (!currentModalSubmission) return;
+                const subId = currentModalSubmission._id;
+                const btn = document.getElementById('btnSaveNvq');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Saving...';
+                }
+
+                try {
+                    const res = await fetch('/api/submission/' + encodeURIComponent(subId) + '/numerical', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numericalScores: currentEditingNumericalScores })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update numerical scores');
+                    }
+
+                    const updatedSub = data.submission;
+                    originalNumericalScores = JSON.parse(JSON.stringify(currentEditingNumericalScores));
+                    currentModalSubmission = updatedSub;
+                    if (submissionsMap[subId]) {
+                        Object.assign(submissionsMap[subId], updatedSub);
+                    }
+
+                    updateTableRowForSubmission(updatedSub);
+                    openOmrModal(updatedSub);
+
+                    const bar = document.getElementById('nvqEditActionBar');
+                    if (bar) bar.style.display = 'none';
+
+                    alert('Numerical scores updated and recalculated successfully!');
+                } catch (err) {
+                    console.error('Failed to save numerical scores:', err);
+                    alert('Error saving numerical scores: ' + err.message);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '💾 Save Changes';
+                    }
+                }
+            }
+
+            function updateTableRowForSubmission(sub) {
+                if (!sub || !sub._id) return;
+                const row = document.getElementById('row-' + sub._id);
+                if (!row) return;
+                const sumSec = getSubmissionTotals(sub);
+
+                const secContainer = row.querySelector('.sec-stack-list');
+                if (secContainer && Array.isArray(sub.sectionWise)) {
+                    secContainer.innerHTML = sub.sectionWise.map(s => {
+                        const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
+                        const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
+                        const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
+                        let sTitle = s.sectionName || '';
+                        if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) {
+                            sTitle += ` (${s.range})`;
+                        }
+                        return `
+                            <div class="sec-stack-item">
+                                <div class="sec-stack-name">${sTitle}</div>
+                                <div class="sec-stack-marks">${s.marks} <span class="sec-stack-max">/ ${s.maxMarks} marks</span></div>
+                                <div class="sec-stack-meta">Total: <strong>${secTotalQ}</strong> &middot; Att: <strong>${secAtt}</strong> &middot; Unatt: <strong>${secUnatt}</strong></div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                const aggBadge = row.querySelector('.aggregate-badge');
+                if (aggBadge) {
+                    aggBadge.innerHTML = `${sumSec.obtainedMarks} <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/ ${sumSec.totalMarks}</span>`;
+                }
+
+                if (row.cells && row.cells.length >= 6) {
+                    const qSummaryCell = row.cells[4];
+                    if (qSummaryCell) {
+                        qSummaryCell.innerHTML = `
+                            <div style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
+                                ${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} <span style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">Att</span>
+                            </div>
+                            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+                                Unattempted: <strong style="color: var(--text-body);">${sumSec.unattemptedQuestions}</strong>
+                            </div>
+                            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace;">
+                                <span style="color: #059669; font-weight: 700;">+${sumSec.correctCount}C</span> &bull;
+                                <span style="color: #DC2626; font-weight: 700;">-${sumSec.wrongCount}W</span>
+                            </div>
+                        `;
+                    }
+
+                    const pct = sub.percentage !== undefined ? sub.percentage : (sumSec.totalMarks > 0 ? Math.round((sumSec.obtainedMarks / sumSec.totalMarks) * 100) : 0);
+                    const accCell = row.cells[5];
+                    if (accCell) {
+                        let accColor = '#DC2626';
+                        if (pct >= 75) accColor = '#059669';
+                        else if (pct >= 50) accColor = '#2563EB';
+                        else if (pct >= 35) accColor = '#D97706';
+                        accCell.innerHTML = `
+                            <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: ${accColor};">
+                                ${pct}%
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                ${pct >= 50 ? 'Passed' : 'Needs Review'}
+                            </div>
+                        `;
+                    }
+                }
+            }
+
             function openOmrModal(data) {
                 currentModalSubmission = data;
+
+                // Initialize numerical scores for editing
+                const extractNums = (arr) => Array.isArray(arr) ? arr.slice(0, 5).map(v => Number(v) || 0) : [0, 0, 0, 0, 0];
+                const ns = data.numericalScores || {};
+                let pNums = extractNums(ns.phy);
+                let cNums = extractNums(ns.chem);
+                let mNums = extractNums(ns.math);
+
+                if (data.breakdown && Array.isArray(data.breakdown)) {
+                    data.breakdown.forEach(item => {
+                        if (item.isNumerical) {
+                            const q = Number(item.displayQ || item.q);
+                            const val = (item.verdict === 'correct' || item.marks === '+4') ? 4 : ((item.verdict === 'wrong' || item.marks === '-1') ? -1 : 0);
+                            if (q >= 21 && q <= 25 && (!ns.phy || ns.phy.length === 0)) pNums[q - 21] = val;
+                            else if (q >= 46 && q <= 50 && (!ns.chem || ns.chem.length === 0)) cNums[q - 46] = val;
+                            else if (q >= 71 && q <= 75 && (!ns.math || ns.math.length === 0)) mNums[q - 71] = val;
+                        }
+                    });
+                }
+
+                currentEditingNumericalScores = {
+                    phy: pNums,
+                    chem: cNums,
+                    math: mNums
+                };
+                originalNumericalScores = JSON.parse(JSON.stringify(currentEditingNumericalScores));
+                const nvqBar = document.getElementById('nvqEditActionBar');
+                if (nvqBar) nvqBar.style.display = 'none';
+
                 const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
                 const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
                 const sumSec = getSubmissionTotals(data);
@@ -2404,9 +2820,13 @@
                         const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
                         const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
                         const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                        let secTitle = s.sectionName || '';
+                        if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) {
+                            secTitle += ` (${s.range})`;
+                        }
                         appendSectionSummaryCard(secContainer, {
                             isTotal: false,
-                            title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
+                            title: secTitle,
                             metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
                             obtainedMarks: s.marks || 0,
                             totalMarks: s.maxMarks || (secTotalQ * 4)
@@ -2633,6 +3053,8 @@
                 }
                 setOmrModalZoom(1);
                 currentModalSubmission = null;
+                const bar = document.getElementById('nvqEditActionBar');
+                if (bar) bar.style.display = 'none';
             }
 
             async function deleteSubmission(id, rollNumber) {
