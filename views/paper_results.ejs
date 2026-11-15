@@ -508,18 +508,123 @@
             gap: 1.15rem;
         }
 
+        /* Scorecard Collapsible Toggle & Light Theme Performance Cards */
+        .scorecard-toggle-wrap {
+            width: 100%;
+        }
+
+        .btn-scorecard-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: var(--shadow-xs);
+            transition: var(--transition);
+        }
+
+        .btn-scorecard-toggle:hover {
+            background: var(--surface-subtle);
+            border-color: var(--border-hover);
+        }
+
+        .scorecard-toggle-badge {
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            background: var(--primary-light);
+            color: var(--primary-active);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--primary-border);
+        }
+
+        .scorecard-toggle-chevron {
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .omr-scorecard-collapsible {
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            animation: fadeInDown 0.2s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .omr-hero-banner {
-            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
             border-radius: var(--radius-md);
             padding: 1.15rem 1.35rem;
-            color: #FFFFFF;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #0F172A;
+            box-shadow: var(--shadow-xs);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
+        }
+
+        .hero-sublabel {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #1E40AF;
+            font-weight: 700;
+        }
+
+        .hero-accuracy-val {
+            font-size: 1.85rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #059669;
+            margin-top: 2px;
+        }
+
+        .omr-zoom-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-zoom {
+            background: rgba(255, 255, 255, 0.1);
+            color: #CBD5E1;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-zoom:hover,
+        .btn-zoom.active {
+            background: #2563EB;
+            color: #FFFFFF;
+            border-color: #3B82F6;
+        }
+
+        .omr-mobile-nav {
+            display: none;
         }
 
         .omr-kpi-grid {
@@ -731,8 +836,81 @@
         }
 
         @media (max-width: 960px) {
+            .omr-mobile-nav {
+                display: flex;
+                background: #0F172A;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+                padding: 6px 12px;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .omr-mobile-nav-btn {
+                flex: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 8px 12px;
+                border-radius: var(--radius-xs);
+                font-size: 0.82rem;
+                font-weight: 600;
+                background: rgba(255, 255, 255, 0.08);
+                color: #94A3B8;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                cursor: pointer;
+                transition: var(--transition);
+            }
+
+            .omr-mobile-nav-btn.active {
+                background: #2563EB;
+                color: #FFFFFF;
+                border-color: #3B82F6;
+                box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+            }
+
             .omr-modal-body {
-                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+                grid-template-columns: none;
+                height: calc(100vh - 104px);
+                max-height: calc(100vh - 104px);
+                overflow: hidden;
+            }
+
+            .omr-stage-pane {
+                width: 100%;
+                height: 100%;
+                min-height: 0;
+                flex: 1;
+                border-right: none;
+            }
+
+            .omr-stage-viewport {
+                padding: 10px 8px;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .omr-preview-frame {
+                width: 100%;
+                max-width: min(100%, 480px);
+                height: auto;
+                max-height: 100%;
+                min-height: 380px;
+                aspect-ratio: 1000 / 1461;
+                margin: auto;
+            }
+
+            .omr-details-pane {
+                width: 100%;
+                height: 100%;
+                padding: 1rem 0.85rem 3rem 0.85rem;
+            }
+
+            .omr-stage-pane.mobile-tab-hidden,
+            .omr-details-pane.mobile-tab-hidden {
+                display: none !important;
             }
         }
 
@@ -777,13 +955,12 @@
             }
 
             .omr-modal-header {
-                padding: 0.6rem 0.85rem;
+                padding: 0.5rem 0.75rem;
+                gap: 6px;
             }
 
-            .omr-modal-body {
-                grid-template-columns: 1fr;
-                height: calc(100vh - 56px);
-                overflow-y: auto;
+            .omr-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -1234,6 +1411,29 @@
                 </div>
             </header>
 
+            <!-- Mobile Navigation Tab Bar (Visible on mobile/tablet <= 960px) -->
+            <nav class="omr-mobile-nav" id="omrMobileNav" aria-label="Modal View Tabs">
+                <button type="button" class="omr-mobile-nav-btn active" id="tabMobileOmr" onclick="setMobileModalTab('omr')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>OMR Sheet Copy</span>
+                </button>
+                <button type="button" class="omr-mobile-nav-btn" id="tabMobileBreakdown" onclick="setMobileModalTab('breakdown')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Questions & Marks</span>
+                </button>
+            </nav>
+
             <div class="omr-modal-body">
                 <!-- Left: Full-Height OMR Sheet Stage with Centered Canvas & Live Checking Overlay -->
                 <div class="omr-stage-pane">
@@ -1245,75 +1445,104 @@
                         </div>
                     </div>
                     <div class="omr-stage-footer">
-                        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
                             <span><span style="color: #10B981;">&#9679;</span> Correct (+4)</span>
                             <span><span style="color: #EF4444;">&#9679;</span> Wrong (-1)</span>
-                            <span><span style="color: #10B981;">&#9676;</span> Official Key</span>
-                            <span><span style="color: #06B6D4;">&#9679;</span> Roll No</span>
+                            <span><span style="color: #10B981;">&#9676;</span> Key</span>
+                            <span><span style="color: #06B6D4;">&#9679;</span> Roll</span>
                         </div>
-                        <div id="modalCloudInfo" style="color: #64748B;">
-                            Stored on Cloudinary Multi-Account Pool
+                        <div class="omr-zoom-bar">
+                            <span style="font-size: 0.72rem; color: #94A3B8; margin-right: 3px; font-weight: 600;">Zoom:</span>
+                            <button type="button" class="btn-zoom active" id="btnZoom1" onclick="setOmrModalZoom(1, this)">1×</button>
+                            <button type="button" class="btn-zoom" id="btnZoom15" onclick="setOmrModalZoom(1.5, this)">1.5×</button>
+                            <button type="button" class="btn-zoom" id="btnZoom2" onclick="setOmrModalZoom(2, this)">2×</button>
+                        </div>
+                        <div id="modalCloudInfo" style="color: #64748B; font-size: 0.73rem;">
+                            Stored on Cloudinary
                         </div>
                     </div>
                 </div>
 
                 <!-- Right: Comprehensive Performance & Breakdown Dashboard -->
                 <div class="omr-details-pane">
-                    <!-- Hero Banner -->
-                    <div class="omr-hero-banner">
+                    <!-- Collapsible Score & Performance Toggle Bar (Hidden by Default) -->
+                    <div class="scorecard-toggle-wrap">
+                        <button type="button" class="btn-scorecard-toggle" id="btnScorecardToggle" onclick="toggleScorecardVisibility()">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                    <path d="M18 20V10"></path>
+                                    <path d="M12 20V4"></path>
+                                    <path d="M6 20v-6"></path>
+                                </svg>
+                                <span id="scorecardToggleLabel" style="font-weight: 700; font-size: 0.88rem;">Show Score & Subject Performance</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="scorecard-toggle-badge" id="scorecardToggleSummaryBadge">0 / 0</span>
+                                <svg class="scorecard-toggle-chevron" id="scorecardToggleChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Collapsible Scorecard Breakdown Content (HIDDEN BY DEFAULT) -->
+                    <div id="modalScorecardCollapsible" class="omr-scorecard-collapsible" style="display: none;">
+                        <!-- Hero Banner (Adapted to Light Theme) -->
+                        <div class="omr-hero-banner">
+                            <div>
+                                <div class="hero-sublabel">
+                                    Total Obtained Score
+                                </div>
+                                <div class="aggregate-grand-val" id="modalGrandAggregate">
+                                    0 / 0
+                                </div>
+                                <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
+                                    Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="hero-sublabel">
+                                    Overall Accuracy
+                                </div>
+                                <div class="hero-accuracy-val" id="modalAccuracyText">
+                                    0%
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Tiles Grid -->
+                        <div class="omr-kpi-grid">
+                            <div class="omr-kpi-tile">
+                                <span class="kpi-label">Attempted</span>
+                                <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
+                            </div>
+                            <div class="omr-kpi-tile">
+                                <span class="kpi-label">Correct (+4)</span>
+                                <span class="kpi-val" id="kpiCorrect" style="color: #059669;">0</span>
+                            </div>
+                            <div class="omr-kpi-tile">
+                                <span class="kpi-label">Wrong (-1)</span>
+                                <span class="kpi-val" id="kpiWrong" style="color: #DC2626;">0</span>
+                            </div>
+                            <div class="omr-kpi-tile">
+                                <span class="kpi-label">Unattempted</span>
+                                <span class="kpi-val" id="kpiBlank" style="color: #64748B;">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Subject/Section Breakdown Section -->
                         <div>
-                            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; font-weight: 700;">
-                                Total Obtained Score
-                            </div>
-                            <div class="aggregate-grand-val" id="modalGrandAggregate" style="font-size: 2.1rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #FFFFFF; line-height: 1.15; margin-top: 2px;">
-                                0 / 0
-                            </div>
-                            <div style="font-size: 0.78rem; color: #CBD5E1; margin-top: 6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
-                                Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
-                            </div>
+                            <h4 style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                Subject Performance
+                            </h4>
+                            <div id="modalSectionContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; font-weight: 700;">
-                                Overall Accuracy
-                            </div>
-                            <div style="font-size: 1.75rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #34D399; margin-top: 2px;" id="modalAccuracyText">
-                                0%
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- KPI Tiles Grid -->
-                    <div class="omr-kpi-grid">
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Attempted</span>
-                            <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Correct (+4)</span>
-                            <span class="kpi-val" id="kpiCorrect" style="color: #059669;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Wrong (-1)</span>
-                            <span class="kpi-val" id="kpiWrong" style="color: #DC2626;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Unattempted</span>
-                            <span class="kpi-val" id="kpiBlank" style="color: #64748B;">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Subject/Section Breakdown Section -->
-                    <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            Subject Performance
-                        </h4>
-                        <div id="modalSectionContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
                     </div>
 
                     <!-- Question Breakdown Table Section -->
@@ -1480,6 +1709,79 @@
                 V_ROLL_ROW_STEP: 0.018233,
                 ROLL_R: 8.5
             };
+
+            function toggleScorecardVisibility() {
+                const coll = document.getElementById('modalScorecardCollapsible');
+                const lbl = document.getElementById('scorecardToggleLabel');
+                const chev = document.getElementById('scorecardToggleChevron');
+                if (!coll) return;
+                const isHidden = (coll.style.display === 'none' || getComputedStyle(coll).display === 'none');
+                if (isHidden) {
+                    coll.style.display = 'flex';
+                    if (lbl) lbl.textContent = 'Hide Score & Subject Performance';
+                    if (chev) chev.style.transform = 'rotate(180deg)';
+                } else {
+                    coll.style.display = 'none';
+                    if (lbl) lbl.textContent = 'Show Score & Subject Performance';
+                    if (chev) chev.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            let currentMobileModalTab = 'omr';
+            function setMobileModalTab(tab) {
+                currentMobileModalTab = tab;
+                const stage = document.querySelector('#omrModal .omr-stage-pane');
+                const details = document.querySelector('#omrModal .omr-details-pane');
+                const btnOmr = document.getElementById('tabMobileOmr');
+                const btnBrk = document.getElementById('tabMobileBreakdown');
+
+                if (window.innerWidth <= 960) {
+                    if (tab === 'omr') {
+                        if (stage) stage.classList.remove('mobile-tab-hidden');
+                        if (details) details.classList.add('mobile-tab-hidden');
+                        if (btnOmr) btnOmr.classList.add('active');
+                        if (btnBrk) btnBrk.classList.remove('active');
+                    } else {
+                        if (stage) stage.classList.add('mobile-tab-hidden');
+                        if (details) details.classList.remove('mobile-tab-hidden');
+                        if (btnOmr) btnOmr.classList.remove('active');
+                        if (btnBrk) btnBrk.classList.add('active');
+                    }
+                } else {
+                    if (stage) stage.classList.remove('mobile-tab-hidden');
+                    if (details) details.classList.remove('mobile-tab-hidden');
+                }
+            }
+
+            let currentModalZoom = 1;
+            function setOmrModalZoom(scale, btn) {
+                currentModalZoom = scale;
+                const frame = document.querySelector('#omrModal .omr-preview-frame');
+                if (frame) {
+                    frame.style.transform = `scale(${scale})`;
+                    frame.style.transformOrigin = 'center top';
+                    if (scale > 1) {
+                        frame.style.margin = `${Math.round((scale - 1) * 120)}px auto`;
+                    } else {
+                        frame.style.margin = 'auto';
+                    }
+                }
+                const btns = document.querySelectorAll('#omrModal .btn-zoom');
+                btns.forEach(b => b.classList.remove('active'));
+                if (btn) {
+                    btn.classList.add('active');
+                } else {
+                    const defaultBtn = document.getElementById('btnZoom' + (scale === 1.5 ? '15' : (scale === 2 ? '2' : '1')));
+                    if (defaultBtn) defaultBtn.classList.add('active');
+                }
+            }
+
+            window.addEventListener('resize', () => {
+                const dlg = document.getElementById('omrModal');
+                if (dlg && (dlg.open || dlg.hasAttribute('open'))) {
+                    setMobileModalTab(currentMobileModalTab);
+                }
+            });
 
             function toggleCheckingOverlay() {
                 showCheckingOverlay = !showCheckingOverlay;
@@ -2058,6 +2360,33 @@
                 }
                 document.getElementById('modalAccuracyText').textContent = `${pct}%`;
 
+                // Reset Scorecard Collapsible by default (Hidden)
+                const coll = document.getElementById('modalScorecardCollapsible');
+                if (coll) coll.style.display = 'none';
+                const lbl = document.getElementById('scorecardToggleLabel');
+                if (lbl) lbl.textContent = 'Show Score & Subject Performance';
+                const chev = document.getElementById('scorecardToggleChevron');
+                if (chev) chev.style.transform = 'rotate(0deg)';
+
+                const badge = document.getElementById('scorecardToggleSummaryBadge');
+                if (badge) {
+                    badge.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} (${pct}%)`;
+                }
+
+                // Populate KPI tiles with actual submission stats
+                const elAtt = document.getElementById('kpiAttempted');
+                if (elAtt) elAtt.textContent = sumSec.attemptedQuestions;
+                const elCor = document.getElementById('kpiCorrect');
+                if (elCor) elCor.textContent = sumSec.correctCount;
+                const elWro = document.getElementById('kpiWrong');
+                if (elWro) elWro.textContent = sumSec.wrongCount;
+                const elBla = document.getElementById('kpiBlank');
+                if (elBla) elBla.textContent = sumSec.unattemptedQuestions;
+
+                // Reset Mobile Tab and Zoom
+                setMobileModalTab('omr');
+                setOmrModalZoom(1);
+
                 const img = document.getElementById('modalOmrImg');
                 img.src = imgUrl;
                 document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
@@ -2302,6 +2631,7 @@
                 if (omrModalDialog && omrModalDialog.open) {
                     omrModalDialog.close();
                 }
+                setOmrModalZoom(1);
                 currentModalSubmission = null;
             }
 
