@@ -338,44 +338,98 @@ async function regradePaperSubmissions(paper) {
 
     const bulkOps = submissions.map(sub => {
         if (sub.examType === 'jee') {
-            const resps = Array.isArray(sub.responses) ? sub.responses : [];
             let phyScore = 0, phyCorrect = 0, phyWrong = 0, phyBlank = 0;
             let chemScore = 0, chemCorrect = 0, chemWrong = 0, chemBlank = 0;
             let mathScore = 0, mathCorrect = 0, mathWrong = 0, mathBlank = 0;
 
-            // Physics MCQ: Q1..20
-            for (let q = 1; q <= 20; q++) {
-                const m = (resps[q - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[q] || '').trim().toUpperCase();
-                if (!m) phyBlank++;
-                else if (m.includes(',')) { phyWrong++; phyScore -= 1; }
-                else if (k && m === k) { phyCorrect++; phyScore += 4; }
-                else if (k) { phyWrong++; phyScore -= 1; }
-                else phyCorrect++;
-            }
+            let updatedBreakdown = [];
+            const hasBreakdown = Array.isArray(sub.breakdown) && sub.breakdown.length > 0;
 
-            // Chemistry MCQ: OMR Q41..60 (fallback dispQ 26..45)
-            for (let omrQ = 41; omrQ <= 60; omrQ++) {
-                const dQ = 26 + (omrQ - 41);
-                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
-                if (!m) chemBlank++;
-                else if (m.includes(',')) { chemWrong++; chemScore -= 1; }
-                else if (k && m === k) { chemCorrect++; chemScore += 4; }
-                else if (k) { chemWrong++; chemScore -= 1; }
-                else chemCorrect++;
-            }
+            if (hasBreakdown) {
+                updatedBreakdown = sub.breakdown.map(item => {
+                    if (!item) return item;
+                    if (item.isNumerical) return { ...item };
 
-            // Mathematics MCQ: OMR Q81..100 (fallback dispQ 51..70)
-            for (let omrQ = 81; omrQ <= 100; omrQ++) {
-                const dQ = 51 + (omrQ - 81);
-                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
-                if (!m) mathBlank++;
-                else if (m.includes(',')) { mathWrong++; mathScore -= 1; }
-                else if (k && m === k) { mathCorrect++; mathScore += 4; }
-                else if (k) { mathWrong++; mathScore -= 1; }
-                else mathCorrect++;
+                    const omrQ = Number(item.omrQ);
+                    const dispQ = Number(item.displayQ || item.q);
+                    const key = (keyLookup[omrQ] || keyLookup[dispQ] || '').trim().toUpperCase();
+                    const marked = (item.marked || '').trim().toUpperCase();
+
+                    let verdict = 'blank', marks = '0';
+                    if (!marked || item.verdict === 'blank') {
+                        verdict = 'blank';
+                        marks = '0';
+                    } else if (marked.includes(',')) {
+                        verdict = 'multiple';
+                        marks = '-1';
+                    } else if (key && marked === key) {
+                        verdict = 'correct';
+                        marks = '+4';
+                    } else if (key) {
+                        verdict = 'wrong';
+                        marks = '-1';
+                    } else {
+                        verdict = 'marked';
+                        marks = '+4';
+                    }
+
+                    const subKey = item.subKey || (dispQ <= 25 ? 'phy' : (dispQ <= 50 ? 'chem' : 'math'));
+                    if (subKey === 'phy') {
+                        if (verdict === 'correct' || verdict === 'marked') { phyCorrect++; phyScore += 4; }
+                        else if (verdict === 'wrong' || verdict === 'multiple') { phyWrong++; phyScore -= 1; }
+                        else phyBlank++;
+                    } else if (subKey === 'chem') {
+                        if (verdict === 'correct' || verdict === 'marked') { chemCorrect++; chemScore += 4; }
+                        else if (verdict === 'wrong' || verdict === 'multiple') { chemWrong++; chemScore -= 1; }
+                        else chemBlank++;
+                    } else {
+                        if (verdict === 'correct' || verdict === 'marked') { mathCorrect++; mathScore += 4; }
+                        else if (verdict === 'wrong' || verdict === 'multiple') { mathWrong++; mathScore -= 1; }
+                        else mathBlank++;
+                    }
+
+                    return {
+                        ...item,
+                        correctKey: key || '-',
+                        verdict: verdict,
+                        marks: marks
+                    };
+                });
+            } else {
+                // Fallback for legacy submissions without breakdown
+                const resps = Array.isArray(sub.responses) ? sub.responses : [];
+                // Physics: strictly physical OMR Q1..20
+                for (let q = 1; q <= 20; q++) {
+                    const m = (resps[q - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[q] || '').trim().toUpperCase();
+                    if (!m) phyBlank++;
+                    else if (m.includes(',')) { phyWrong++; phyScore -= 1; }
+                    else if (k && m === k) { phyCorrect++; phyScore += 4; }
+                    else if (k) { phyWrong++; phyScore -= 1; }
+                    else phyCorrect++;
+                }
+
+                // Chemistry: strictly physical OMR Q41..60
+                for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                    const m = (resps[omrQ - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[omrQ] || keyLookup[26 + (omrQ - 41)] || '').trim().toUpperCase();
+                    if (!m) chemBlank++;
+                    else if (m.includes(',')) { chemWrong++; chemScore -= 1; }
+                    else if (k && m === k) { chemCorrect++; chemScore += 4; }
+                    else if (k) { chemWrong++; chemScore -= 1; }
+                    else chemCorrect++;
+                }
+
+                // Mathematics: strictly physical OMR Q81..100
+                for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                    const m = (resps[omrQ - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[omrQ] || keyLookup[51 + (omrQ - 81)] || '').trim().toUpperCase();
+                    if (!m) mathBlank++;
+                    else if (m.includes(',')) { mathWrong++; mathScore -= 1; }
+                    else if (k && m === k) { mathCorrect++; mathScore += 4; }
+                    else if (k) { mathWrong++; mathScore -= 1; }
+                    else mathCorrect++;
+                }
             }
 
             const numScores = sub.numericalScores || {};
@@ -407,21 +461,24 @@ async function regradePaperSubmissions(paper) {
                 math: { score: mathScore, correct: mathCorrect, wrong: mathWrong, blank: mathBlank }
             };
 
+            const updateFields = {
+                score: totalScore,
+                totalQuestions: 75,
+                percentage: pct,
+                maxMarks: maxM,
+                correctCount: totalCorrect,
+                wrongCount: totalWrong,
+                blankCount: totalBlank,
+                mcqSubjectScores: updatedMcq
+            };
+            if (hasBreakdown) {
+                updateFields.breakdown = updatedBreakdown;
+            }
+
             return {
                 updateOne: {
                     filter: { _id: sub._id },
-                    update: {
-                        $set: {
-                            score: totalScore,
-                            totalQuestions: 75,
-                            percentage: pct,
-                            maxMarks: maxM,
-                            correctCount: totalCorrect,
-                            wrongCount: totalWrong,
-                            blankCount: totalBlank,
-                            mcqSubjectScores: updatedMcq
-                        }
-                    }
+                    update: { $set: updateFields }
                 }
             };
         }
