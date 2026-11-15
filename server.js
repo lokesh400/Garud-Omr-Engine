@@ -1361,65 +1361,71 @@ function buildGradedSubmissionObj(doc, paper) {
         const mathNvq = sumArr(numScores.math);
         const mcqScores = doc.mcqSubjectScores || {};
 
-        let phyMcq = (mcqScores.phy && mcqScores.phy.score !== undefined) ? mcqScores.phy.score : 0;
-        let chemMcq = (mcqScores.chem && mcqScores.chem.score !== undefined) ? mcqScores.chem.score : 0;
-        let mathMcq = (mcqScores.math && mcqScores.math.score !== undefined) ? mcqScores.math.score : 0;
+        const savedPhy = mcqScores.phy || {};
+        const savedChem = mcqScores.chem || {};
+        const savedMath = mcqScores.math || {};
 
-        let phyCorr = mcqScores.phy ? mcqScores.phy.correct : 0;
-        let phyWrng = mcqScores.phy ? mcqScores.phy.wrong : 0;
-        let phyBlnk = mcqScores.phy ? mcqScores.phy.blank : 0;
+        let phyMcq = (savedPhy.score !== undefined) ? Number(savedPhy.score) : 0;
+        let chemMcq = (savedChem.score !== undefined) ? Number(savedChem.score) : 0;
+        let mathMcq = (savedMath.score !== undefined) ? Number(savedMath.score) : 0;
 
-        let chemCorr = mcqScores.chem ? mcqScores.chem.correct : 0;
-        let chemWrng = mcqScores.chem ? mcqScores.chem.wrong : 0;
-        let chemBlnk = mcqScores.chem ? mcqScores.chem.blank : 0;
+        let phyCorr = Number(savedPhy.correct || 0);
+        let phyWrng = Number(savedPhy.wrong || 0);
+        let phyBlnk = Number(savedPhy.blank || 0);
 
-        let mathCorr = mcqScores.math ? mcqScores.math.correct : 0;
-        let mathWrng = mcqScores.math ? mcqScores.math.wrong : 0;
-        let mathBlnk = mcqScores.math ? mcqScores.math.blank : 0;
+        let chemCorr = Number(savedChem.correct || 0);
+        let chemWrng = Number(savedChem.wrong || 0);
+        let chemBlnk = Number(savedChem.blank || 0);
 
-        // If responses exist and answer keys are configured, recalculate dynamically
-        const resps = Array.isArray(doc.responses) ? doc.responses : [];
-        if (resps.length > 0 && Object.keys(keyLookup).length > 0) {
-            // Physics: Q1..20
-            let pS = 0, pC = 0, pW = 0, pB = 0;
-            for (let q = 1; q <= 20; q++) {
-                const m = (resps[q - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[q] || '').trim().toUpperCase();
-                if (!m) pB++;
-                else if (m.includes(',')) { pW++; pS -= 1; }
-                else if (k && m === k) { pC++; pS += 4; }
-                else if (k) { pW++; pS -= 1; }
-                else pC++;
+        let mathCorr = Number(savedMath.correct || 0);
+        let mathWrng = Number(savedMath.wrong || 0);
+        let mathBlnk = Number(savedMath.blank || 0);
+
+        // Trust authentic scanned marks and breakdown.
+        // ONLY recalculate if mcqSubjectScores is completely empty AND doc.score is not set.
+        const hasSavedScores = (doc.mcqSubjectScores && Object.keys(doc.mcqSubjectScores).length > 0) || (doc.score !== undefined && doc.score !== null);
+        if (!hasSavedScores) {
+            const resps = Array.isArray(doc.responses) ? doc.responses : [];
+            if (resps.length > 0 && Object.keys(keyLookup).length > 0) {
+                // Physics: strictly physical OMR Q1..20
+                let pS = 0, pC = 0, pW = 0, pB = 0;
+                for (let q = 1; q <= 20; q++) {
+                    const m = (resps[q - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[q] || '').trim().toUpperCase();
+                    if (!m) pB++;
+                    else if (m.includes(',')) { pW++; pS -= 1; }
+                    else if (k && m === k) { pC++; pS += 4; }
+                    else if (k) { pW++; pS -= 1; }
+                    else pC++;
+                }
+                phyMcq = pS; phyCorr = pC; phyWrng = pW; phyBlnk = pB;
+
+                // Chemistry: strictly physical OMR Q41..60
+                let cS = 0, cC = 0, cW = 0, cB = 0;
+                for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                    const m = (resps[omrQ - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[omrQ] || keyLookup[26 + (omrQ - 41)] || '').trim().toUpperCase();
+                    if (!m) cB++;
+                    else if (m.includes(',')) { cW++; cS -= 1; }
+                    else if (k && m === k) { cC++; cS += 4; }
+                    else if (k) { cW++; cS -= 1; }
+                    else cC++;
+                }
+                chemMcq = cS; chemCorr = cC; chemWrng = cW; chemBlnk = cB;
+
+                // Mathematics: strictly physical OMR Q81..100
+                let mS = 0, mC = 0, mW = 0, mB = 0;
+                for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                    const m = (resps[omrQ - 1] || '').trim().toUpperCase();
+                    const k = (keyLookup[omrQ] || keyLookup[51 + (omrQ - 81)] || '').trim().toUpperCase();
+                    if (!m) mB++;
+                    else if (m.includes(',')) { mW++; mS -= 1; }
+                    else if (k && m === k) { mC++; mS += 4; }
+                    else if (k) { mW++; mS -= 1; }
+                    else mC++;
+                }
+                mathMcq = mS; mathCorr = mC; mathWrng = mW; mathBlnk = mB;
             }
-            phyMcq = pS; phyCorr = pC; phyWrng = pW; phyBlnk = pB;
-
-            // Chemistry: OMR Q41..60 (fallback dispQ 26..45)
-            let cS = 0, cC = 0, cW = 0, cB = 0;
-            for (let omrQ = 41; omrQ <= 60; omrQ++) {
-                const dQ = 26 + (omrQ - 41);
-                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
-                if (!m) cB++;
-                else if (m.includes(',')) { cW++; cS -= 1; }
-                else if (k && m === k) { cC++; cS += 4; }
-                else if (k) { cW++; cS -= 1; }
-                else cC++;
-            }
-            chemMcq = cS; chemCorr = cC; chemWrng = cW; chemBlnk = cB;
-
-            // Mathematics: OMR Q81..100 (fallback dispQ 51..70)
-            let mS = 0, mC = 0, mW = 0, mB = 0;
-            for (let omrQ = 81; omrQ <= 100; omrQ++) {
-                const dQ = 51 + (omrQ - 81);
-                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
-                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
-                if (!m) mB++;
-                else if (m.includes(',')) { mW++; mS -= 1; }
-                else if (k && m === k) { mC++; mS += 4; }
-                else if (k) { mW++; mS -= 1; }
-                else mC++;
-            }
-            mathMcq = mS; mathCorr = mC; mathWrng = mW; mathBlnk = mB;
         }
 
         const sectionWise = [
@@ -1467,7 +1473,9 @@ function buildGradedSubmissionObj(doc, paper) {
         obj.paperTitle = paper ? paper.title : (doc.paper_id || 'JEE Exam Paper');
         obj.paperSubject = 'JEE Mains';
         obj.maxMarks = 300;
-        obj.aggregateMarks = (phyMcq + phyNvq) + (chemMcq + chemNvq) + (mathMcq + mathNvq);
+        obj.score = (doc.score !== undefined && doc.score !== null) ? Number(doc.score) : ((phyMcq + phyNvq) + (chemMcq + chemNvq) + (mathMcq + mathNvq));
+        obj.aggregateMarks = obj.score;
+        obj.breakdown = doc.breakdown || [];
         obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
         return obj;
     }
@@ -1528,6 +1536,7 @@ function buildGradedSubmissionObj(doc, paper) {
     obj.paperTitle = paper ? paper.title : (doc.paper_id || 'Exam Paper');
     obj.paperSubject = paper ? (paper.subject || 'General') : 'General';
     obj.maxMarks = paper ? (paper.max_marks || (totalQ * 4)) : (doc.maxMarks || (totalQ * 4));
+    obj.breakdown = doc.breakdown || [];
     obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
     return obj;
 }
@@ -1678,7 +1687,8 @@ app.post('/api/paper/:id/save-result', requireAdmin, async (req, res) => {
             maxMarks: paper.max_marks || (totalQ * 4),
             correctCount: graded.correctCount,
             wrongCount: graded.wrongCount,
-            blankCount: graded.blankCount
+            blankCount: graded.blankCount,
+            breakdown: Array.isArray(breakdown) ? breakdown : []
         });
 
         await newSubmission.save();
@@ -1757,7 +1767,7 @@ app.post('/api/paper/:id/jee-save-result', requireAdmin, async (req, res) => {
             };
         }
 
-        // Build 100-length responses array for JEE
+        // Build 100-length responses array strictly at physical OMR positions for JEE
         const responsesArray = new Array(100).fill(null);
         let correctCount = 0;
         let wrongCount = 0;
@@ -1766,19 +1776,16 @@ app.post('/api/paper/:id/jee-save-result', requireAdmin, async (req, res) => {
         if (Array.isArray(breakdown)) {
             breakdown.forEach(item => {
                 if (item) {
-                    const omrQ = Number(item.omrQ || item.q);
-                    const dispQ = Number(item.displayQ || item.q);
-                    const markedVal = (item.marked && typeof item.marked === 'string' && item.marked.trim() !== '' && item.verdict !== 'blank')
+                    const omrQ = Number(item.omrQ);
+                    const isNum = Boolean(item.isNumerical);
+                    const markedVal = (!isNum && item.marked && typeof item.marked === 'string' && item.marked.trim() !== '' && item.verdict !== 'blank')
                         ? item.marked.trim().toUpperCase()
                         : null;
 
-                    // Primary: Save at actual physical OMR question index (1..100 -> 0..99)
+                    // Strictly save at actual physical OMR question index (1..100 -> 0..99)
+                    // NEVER write to dispQ to avoid collision between chemistry/math and unused bubble rows
                     if (omrQ >= 1 && omrQ <= 100 && markedVal) {
                         responsesArray[omrQ - 1] = markedVal;
-                    }
-                    // Secondary fallback: Also store at displayQ index if slot is unused
-                    if (dispQ >= 1 && dispQ <= 100 && markedVal && !responsesArray[dispQ - 1]) {
-                        responsesArray[dispQ - 1] = markedVal;
                     }
 
                     if (item.verdict === 'correct') correctCount++;
@@ -1819,7 +1826,8 @@ app.post('/api/paper/:id/jee-save-result', requireAdmin, async (req, res) => {
             blankCount: blankCount,
             examType: 'jee',
             numericalScores: numericalScores || {},
-            mcqSubjectScores: mcqSubjectScores || {}
+            mcqSubjectScores: mcqSubjectScores || {},
+            breakdown: Array.isArray(breakdown) ? breakdown : []
         });
 
         await newSubmission.save();

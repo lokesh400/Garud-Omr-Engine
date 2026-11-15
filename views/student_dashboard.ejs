@@ -792,7 +792,11 @@
             if (thSub) thSub.style.display = isJee ? '' : 'none';
 
             let list = [];
-            if (isJee) {
+            if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
+                // Priority 1: Use authentic scanned breakdown directly (no re-evaluation or drift)
+                list = data.breakdown;
+            } else if (isJee) {
+                // Fallback for legacy JEE submissions without stored breakdown:
                 // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
                 for (let qNum = 1; qNum <= 20; qNum++) {
                     const resp = resps[qNum - 1] || '';
@@ -829,7 +833,7 @@
                     list.push({
                         q: qNum,
                         displayQ: qNum,
-                        omrQ: qNum,
+                        omrQ: null,
                         subject: '⚛️ Phy',
                         marked: markedText,
                         correctKey: 'NVQ',
@@ -839,10 +843,10 @@
                     });
                 }
 
-                // Section 2: Chemistry Q26-45 (MCQ mapped from OMR Q41-60)
+                // Section 2: Chemistry Q26-45 (MCQ mapped strictly from physical OMR Q41-60)
                 for (let omrQ = 41; omrQ <= 60; omrQ++) {
                     const displayQ = 26 + (omrQ - 41);
-                    const resp = resps[omrQ - 1] || resps[displayQ - 1] || '';
+                    const resp = resps[omrQ - 1] || '';
                     const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
                     let verdict = 'blank';
                     if (resp && String(resp).trim() !== '') {
@@ -876,7 +880,7 @@
                     list.push({
                         q: qNum,
                         displayQ: qNum,
-                        omrQ: qNum,
+                        omrQ: null,
                         subject: '🧪 Chem',
                         marked: markedText,
                         correctKey: 'NVQ',
@@ -886,10 +890,10 @@
                     });
                 }
 
-                // Section 3: Mathematics Q51-70 (MCQ mapped from OMR Q81-100)
+                // Section 3: Mathematics Q51-70 (MCQ mapped strictly from physical OMR Q81-100)
                 for (let omrQ = 81; omrQ <= 100; omrQ++) {
                     const displayQ = 51 + (omrQ - 81);
-                    const resp = resps[omrQ - 1] || resps[displayQ - 1] || '';
+                    const resp = resps[omrQ - 1] || '';
                     const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
                     let verdict = 'blank';
                     if (resp && String(resp).trim() !== '') {
@@ -923,7 +927,7 @@
                     list.push({
                         q: qNum,
                         displayQ: qNum,
-                        omrQ: qNum,
+                        omrQ: null,
                         subject: '📐 Math',
                         marked: markedText,
                         correctKey: 'NVQ',

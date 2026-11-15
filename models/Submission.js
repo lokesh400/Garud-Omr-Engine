@@ -47,7 +47,8 @@ const submissionSchema = new mongoose.Schema({
   blankCount: { type: Number, default: 0 },
   examType: { type: String, default: 'standard' },
   numericalScores: { type: mongoose.Schema.Types.Mixed, default: {} },
-  mcqSubjectScores: { type: mongoose.Schema.Types.Mixed, default: {} }
+  mcqSubjectScores: { type: mongoose.Schema.Types.Mixed, default: {} },
+  breakdown: { type: [mongoose.Schema.Types.Mixed], default: [] }
 }, {
   collection: 'submissions',
   timestamps: { createdAt: 'submitted_at', updatedAt: false },

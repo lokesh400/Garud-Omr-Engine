@@ -914,6 +914,91 @@
             }
         }
 
+        function buildFullJeeBreakdown(mcqBreakdown, numScores) {
+            const list = [];
+            const nums = numScores || { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
+
+            // 1. Physics MCQs (Q1..20)
+            const pMcq = (mcqBreakdown || []).filter(b => b.subKey === 'phy' || b.subject === 'Physics');
+            pMcq.forEach(b => list.push({ ...b, isNumerical: false }));
+
+            // 2. Physics NVQs (Q21..25)
+            const pNvq = nums.phy || [];
+            for (let i = 1; i <= 5; i++) {
+                const qNum = 20 + i;
+                const val = Number(pNvq[i - 1] || 0);
+                let verdict = 'blank', marks = '0', marked = 'Blank';
+                if (val === 4) { verdict = 'correct'; marks = '+4'; marked = '+4 (Correct)'; }
+                else if (val === -1) { verdict = 'wrong'; marks = '-1'; marked = '-1 (Wrong)'; }
+                list.push({
+                    q: qNum,
+                    displayQ: qNum,
+                    omrQ: null,
+                    subject: '⚛️ Phy',
+                    subKey: 'phy',
+                    marked: marked,
+                    correctKey: 'NVQ',
+                    marks: marks,
+                    verdict: verdict,
+                    isNumerical: true
+                });
+            }
+
+            // 3. Chemistry MCQs (Q26..45)
+            const cMcq = (mcqBreakdown || []).filter(b => b.subKey === 'chem' || b.subject === 'Chemistry');
+            cMcq.forEach(b => list.push({ ...b, isNumerical: false }));
+
+            // 4. Chemistry NVQs (Q46..50)
+            const cNvq = nums.chem || [];
+            for (let i = 1; i <= 5; i++) {
+                const qNum = 45 + i;
+                const val = Number(cNvq[i - 1] || 0);
+                let verdict = 'blank', marks = '0', marked = 'Blank';
+                if (val === 4) { verdict = 'correct'; marks = '+4'; marked = '+4 (Correct)'; }
+                else if (val === -1) { verdict = 'wrong'; marks = '-1'; marked = '-1 (Wrong)'; }
+                list.push({
+                    q: qNum,
+                    displayQ: qNum,
+                    omrQ: null,
+                    subject: '🧪 Chem',
+                    subKey: 'chem',
+                    marked: marked,
+                    correctKey: 'NVQ',
+                    marks: marks,
+                    verdict: verdict,
+                    isNumerical: true
+                });
+            }
+
+            // 5. Mathematics MCQs (Q51..70)
+            const mMcq = (mcqBreakdown || []).filter(b => b.subKey === 'math' || b.subject === 'Mathematics');
+            mMcq.forEach(b => list.push({ ...b, isNumerical: false }));
+
+            // 6. Mathematics NVQs (Q71..75)
+            const mNvq = nums.math || [];
+            for (let i = 1; i <= 5; i++) {
+                const qNum = 70 + i;
+                const val = Number(mNvq[i - 1] || 0);
+                let verdict = 'blank', marks = '0', marked = 'Blank';
+                if (val === 4) { verdict = 'correct'; marks = '+4'; marked = '+4 (Correct)'; }
+                else if (val === -1) { verdict = 'wrong'; marks = '-1'; marked = '-1 (Wrong)'; }
+                list.push({
+                    q: qNum,
+                    displayQ: qNum,
+                    omrQ: null,
+                    subject: '📐 Math',
+                    subKey: 'math',
+                    marked: marked,
+                    correctKey: 'NVQ',
+                    marks: marks,
+                    verdict: verdict,
+                    isNumerical: true
+                });
+            }
+
+            return list;
+        }
+
         function updateJeeTotals() {
             const sumArr = (arr) => arr.reduce((acc, v) => acc + v, 0);
             const phyNvq = sumArr(numericalScores.phy);
@@ -965,12 +1050,19 @@
 
             if (window.lastEvaluationData) {
                 window.lastEvaluationData.score = grandTotal;
-                window.lastEvaluationData.numericalScores = numericalScores;
+                window.lastEvaluationData.numericalScores = {
+                    phy: [...numericalScores.phy],
+                    chem: [...numericalScores.chem],
+                    math: [...numericalScores.math]
+                };
                 window.lastEvaluationData.mcqSubjectScores = {
                     phy: { score: phyMcqMarks, correct: mcqScores.phy.correct, wrong: mcqScores.phy.wrong + mcqScores.phy.multiple, blank: mcqScores.phy.blank },
                     chem: { score: chemMcqMarks, correct: mcqScores.chem.correct, wrong: mcqScores.chem.wrong + mcqScores.chem.multiple, blank: mcqScores.chem.blank },
                     math: { score: mathMcqMarks, correct: mcqScores.math.correct, wrong: mcqScores.math.wrong + mcqScores.math.multiple, blank: mcqScores.math.blank }
                 };
+                if (window.lastMcqBreakdown) {
+                    window.lastEvaluationData.breakdown = buildFullJeeBreakdown(window.lastMcqBreakdown, numericalScores);
+                }
             }
         }
 
@@ -2300,18 +2392,25 @@
                 const mathTotal = ((mcqScores.math.correct * 4) - mcqScores.math.wrong - mcqScores.math.multiple) + sumArr(numericalScores.math);
                 const grandTotal = phyTotal + chemTotal + mathTotal;
 
+                window.lastMcqBreakdown = scannerBreakdown;
+                const fullBreakdown = buildFullJeeBreakdown(scannerBreakdown, numericalScores);
+
                 window.lastEvaluationData = {
                     rollNumber: finalRoll,
                     score: grandTotal,
                     totalQuestions: 75,
                     maxMarks: 300,
-                    numericalScores: numericalScores,
+                    numericalScores: {
+                        phy: [...numericalScores.phy],
+                        chem: [...numericalScores.chem],
+                        math: [...numericalScores.math]
+                    },
                     mcqSubjectScores: {
                         phy: { score: (mcqScores.phy.correct * 4) - mcqScores.phy.wrong - mcqScores.phy.multiple, correct: mcqScores.phy.correct, wrong: mcqScores.phy.wrong + mcqScores.phy.multiple, blank: mcqScores.phy.blank },
                         chem: { score: (mcqScores.chem.correct * 4) - mcqScores.chem.wrong - mcqScores.chem.multiple, correct: mcqScores.chem.correct, wrong: mcqScores.chem.wrong + mcqScores.chem.multiple, blank: mcqScores.chem.blank },
                         math: { score: (mcqScores.math.correct * 4) - mcqScores.math.wrong - mcqScores.math.multiple, correct: mcqScores.math.correct, wrong: mcqScores.math.wrong + mcqScores.math.multiple, blank: mcqScores.math.blank }
                     },
-                    breakdown: scannerBreakdown,
+                    breakdown: fullBreakdown,
                     imageData: window.cleanLeveledImageData
                 };
 
@@ -2339,6 +2438,16 @@
             if (!window.lastEvaluationData) {
                 alert('No evaluated sheet available to save.');
                 return;
+            }
+
+            // Sync latest numerical button states and breakdown before transmitting
+            if (window.lastMcqBreakdown) {
+                window.lastEvaluationData.breakdown = buildFullJeeBreakdown(window.lastMcqBreakdown, numericalScores);
+                window.lastEvaluationData.numericalScores = {
+                    phy: [...numericalScores.phy],
+                    chem: [...numericalScores.chem],
+                    math: [...numericalScores.math]
+                };
             }
 
             isSavingSubmission = true;
