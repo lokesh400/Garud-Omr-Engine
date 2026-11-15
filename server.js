@@ -1160,7 +1160,7 @@ async function deletePaperAndAllSubmissions(paperId) {
         if (sub.localPath) {
             try {
                 if (fs.existsSync(sub.localPath)) fs.unlinkSync(sub.localPath);
-            } catch (e) {}
+            } catch (e) { }
         }
     }
 
@@ -1238,9 +1238,9 @@ app.get('/paper/:id', requireAdminOrTeacher, async (req, res) => {
 app.get('/jee', requireAdminOrTeacher, async (req, res) => {
     try {
         const allPapers = await Paper.find({}).sort({ createdAt: -1 });
-        const jeePapers = allPapers.filter(p => 
-            (p.exam_type === 'jee') || 
-            /jee/i.test(p.title || '') || 
+        const jeePapers = allPapers.filter(p =>
+            (p.exam_type === 'jee') ||
+            /jee/i.test(p.title || '') ||
             /jee/i.test(p.subject || '')
         );
 
