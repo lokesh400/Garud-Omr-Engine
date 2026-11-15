@@ -1165,15 +1165,15 @@
         </dialog>
 
         <script>
-            const PAPER_ID = <% - JSON.stringify(String(paper._id)) %>;
-            const PAPER_TITLE = <% - JSON.stringify(String(paper.title || '')) %>;
-            const PAPER_SUBJECT = <% - JSON.stringify(String(paper.subject || '')) %>;
-            const PAPER_EXAM_TYPE = <% - JSON.stringify(String(paper.exam_type || 'standard')) %>;
+            const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
+            const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
+            const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
+            const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
             let currentModalSubmission = null;
             let currentModalList = [];
             let showCheckingOverlay = true;
-            const answerKey = <% - (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
-            const allSubmissionsData = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+            const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
+            const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
             const submissionsMap = {};
             allSubmissionsData.forEach(s => {
                 if (s && s._id) submissionsMap[String(s._id)] = s;
@@ -1357,7 +1357,12 @@
 
             function closeHardRecheckModal() {
                 const modal = document.getElementById('hardRecheckModal');
-                if (modal) modal.close();
+                if (!modal) return;
+                if (typeof modal.close === 'function') {
+                    modal.close();
+                } else {
+                    modal.removeAttribute('open');
+                }
             }
 
             async function confirmHardRecheck() {
@@ -1376,17 +1381,21 @@
                 const spinner = document.getElementById('hardRecheckSpinner');
                 const footerNote = document.getElementById('hardRecheckFooterNote');
 
-                progressBar.style.width = '0%';
-                progressCount.textContent = '0 / 0 Sheets';
-                progressPercent.textContent = '0%';
-                statusMsg.textContent = 'Connecting to server and extracting Cloudinary sheets...';
-                logBox.innerHTML = '';
-                closeBtn.disabled = true;
-                actionBtn.style.display = 'none';
+                if (progressBar) progressBar.style.width = '0%';
+                if (progressCount) progressCount.textContent = '0 / 0 Sheets';
+                if (progressPercent) progressPercent.textContent = '0%';
+                if (statusMsg) statusMsg.textContent = 'Connecting to server and extracting Cloudinary sheets...';
+                if (logBox) logBox.innerHTML = '';
+                if (closeBtn) closeBtn.disabled = true;
+                if (actionBtn) actionBtn.style.display = 'none';
                 if (spinner) spinner.style.display = 'block';
-                footerNote.textContent = 'Please do not close this window during recheck.';
+                if (footerNote) footerNote.textContent = 'Please do not close this window during recheck.';
 
-                modal.showModal();
+                if (modal && typeof modal.showModal === 'function') {
+                    modal.showModal();
+                } else if (modal) {
+                    modal.setAttribute('open', '');
+                }
 
                 try {
                     const response = await fetch('/api/paper/' + encodeURIComponent(PAPER_ID) + '/hard-recheck', {
