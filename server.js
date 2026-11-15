@@ -336,9 +336,96 @@ async function regradePaperSubmissions(paper) {
     const defaultTotalQ = paper.total_questions || paper.numQuestions || 50;
     const paperMaxMarks = paper.max_marks || (defaultTotalQ * 4);
 
-    const bulkOps = submissions
-        .filter(sub => sub.examType !== 'jee')
-        .map(sub => {
+    const bulkOps = submissions.map(sub => {
+        if (sub.examType === 'jee') {
+            const resps = Array.isArray(sub.responses) ? sub.responses : [];
+            let phyScore = 0, phyCorrect = 0, phyWrong = 0, phyBlank = 0;
+            let chemScore = 0, chemCorrect = 0, chemWrong = 0, chemBlank = 0;
+            let mathScore = 0, mathCorrect = 0, mathWrong = 0, mathBlank = 0;
+
+            // Physics MCQ: Q1..20
+            for (let q = 1; q <= 20; q++) {
+                const m = (resps[q - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[q] || '').trim().toUpperCase();
+                if (!m) phyBlank++;
+                else if (m.includes(',')) { phyWrong++; phyScore -= 1; }
+                else if (k && m === k) { phyCorrect++; phyScore += 4; }
+                else if (k) { phyWrong++; phyScore -= 1; }
+                else phyCorrect++;
+            }
+
+            // Chemistry MCQ: OMR Q41..60 (fallback dispQ 26..45)
+            for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                const dQ = 26 + (omrQ - 41);
+                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
+                if (!m) chemBlank++;
+                else if (m.includes(',')) { chemWrong++; chemScore -= 1; }
+                else if (k && m === k) { chemCorrect++; chemScore += 4; }
+                else if (k) { chemWrong++; chemScore -= 1; }
+                else chemCorrect++;
+            }
+
+            // Mathematics MCQ: OMR Q81..100 (fallback dispQ 51..70)
+            for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                const dQ = 51 + (omrQ - 81);
+                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
+                if (!m) mathBlank++;
+                else if (m.includes(',')) { mathWrong++; mathScore -= 1; }
+                else if (k && m === k) { mathCorrect++; mathScore += 4; }
+                else if (k) { mathWrong++; mathScore -= 1; }
+                else mathCorrect++;
+            }
+
+            const numScores = sub.numericalScores || {};
+            const sumArr = arr => Array.isArray(arr) ? arr.reduce((a, b) => a + Number(b || 0), 0) : 0;
+            const phyNvq = sumArr(numScores.phy);
+            const chemNvq = sumArr(numScores.chem);
+            const mathNvq = sumArr(numScores.math);
+
+            let nvqCorrect = 0, nvqWrong = 0, nvqBlank = 0;
+            ['phy', 'chem', 'math'].forEach(subKey => {
+                (numScores[subKey] || []).forEach(v => {
+                    const n = Number(v);
+                    if (n === 4) nvqCorrect++;
+                    else if (n === -1) nvqWrong++;
+                    else nvqBlank++;
+                });
+            });
+
+            const totalScore = phyScore + phyNvq + chemScore + chemNvq + mathScore + mathNvq;
+            const totalCorrect = phyCorrect + chemCorrect + mathCorrect + nvqCorrect;
+            const totalWrong = phyWrong + chemWrong + mathWrong + nvqWrong;
+            const totalBlank = phyBlank + chemBlank + mathBlank + nvqBlank;
+            const maxM = sub.maxMarks || 300;
+            const pct = maxM > 0 ? Math.round((totalScore / maxM) * 100) : 0;
+
+            const updatedMcq = {
+                phy: { score: phyScore, correct: phyCorrect, wrong: phyWrong, blank: phyBlank },
+                chem: { score: chemScore, correct: chemCorrect, wrong: chemWrong, blank: chemBlank },
+                math: { score: mathScore, correct: mathCorrect, wrong: mathWrong, blank: mathBlank }
+            };
+
+            return {
+                updateOne: {
+                    filter: { _id: sub._id },
+                    update: {
+                        $set: {
+                            score: totalScore,
+                            totalQuestions: 75,
+                            percentage: pct,
+                            maxMarks: maxM,
+                            correctCount: totalCorrect,
+                            wrongCount: totalWrong,
+                            blankCount: totalBlank,
+                            mcqSubjectScores: updatedMcq
+                        }
+                    }
+                }
+            };
+        }
+
         const totalQ = sub.totalQuestions || defaultTotalQ;
         const graded = evaluateResponsesAgainstKey(sub.responses, keyLookup, totalQ);
 
@@ -888,7 +975,19 @@ app.get('/jee', requireAdmin, async (req, res) => {
             /jee/i.test(p.title || '') || 
             /jee/i.test(p.subject || '')
         );
-        res.render('jee_dashboard', { papers: jeePapers, allPapers });
+
+        // Fetch submission counts for each JEE paper
+        const paperIds = jeePapers.map(p => String(p._id));
+        const subCounts = {};
+        if (paperIds.length > 0) {
+            const counts = await Submission.aggregate([
+                { $match: { paper_id: { $in: paperIds } } },
+                { $group: { _id: '$paper_id', count: { $sum: 1 } } }
+            ]);
+            counts.forEach(c => { subCounts[String(c._id)] = c.count; });
+        }
+
+        res.render('jee_dashboard', { papers: jeePapers, allPapers, subCounts });
     } catch (error) {
         res.status(500).send('Error loading JEE Mains portal: ' + error.message);
     }
@@ -1262,44 +1361,101 @@ function buildGradedSubmissionObj(doc, paper) {
         const mathNvq = sumArr(numScores.math);
         const mcqScores = doc.mcqSubjectScores || {};
 
-        const phyMcq = (mcqScores.phy && mcqScores.phy.score !== undefined) ? mcqScores.phy.score : 0;
-        const chemMcq = (mcqScores.chem && mcqScores.chem.score !== undefined) ? mcqScores.chem.score : 0;
-        const mathMcq = (mcqScores.math && mcqScores.math.score !== undefined) ? mcqScores.math.score : 0;
+        let phyMcq = (mcqScores.phy && mcqScores.phy.score !== undefined) ? mcqScores.phy.score : 0;
+        let chemMcq = (mcqScores.chem && mcqScores.chem.score !== undefined) ? mcqScores.chem.score : 0;
+        let mathMcq = (mcqScores.math && mcqScores.math.score !== undefined) ? mcqScores.math.score : 0;
+
+        let phyCorr = mcqScores.phy ? mcqScores.phy.correct : 0;
+        let phyWrng = mcqScores.phy ? mcqScores.phy.wrong : 0;
+        let phyBlnk = mcqScores.phy ? mcqScores.phy.blank : 0;
+
+        let chemCorr = mcqScores.chem ? mcqScores.chem.correct : 0;
+        let chemWrng = mcqScores.chem ? mcqScores.chem.wrong : 0;
+        let chemBlnk = mcqScores.chem ? mcqScores.chem.blank : 0;
+
+        let mathCorr = mcqScores.math ? mcqScores.math.correct : 0;
+        let mathWrng = mcqScores.math ? mcqScores.math.wrong : 0;
+        let mathBlnk = mcqScores.math ? mcqScores.math.blank : 0;
+
+        // If responses exist and answer keys are configured, recalculate dynamically
+        const resps = Array.isArray(doc.responses) ? doc.responses : [];
+        if (resps.length > 0 && Object.keys(keyLookup).length > 0) {
+            // Physics: Q1..20
+            let pS = 0, pC = 0, pW = 0, pB = 0;
+            for (let q = 1; q <= 20; q++) {
+                const m = (resps[q - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[q] || '').trim().toUpperCase();
+                if (!m) pB++;
+                else if (m.includes(',')) { pW++; pS -= 1; }
+                else if (k && m === k) { pC++; pS += 4; }
+                else if (k) { pW++; pS -= 1; }
+                else pC++;
+            }
+            phyMcq = pS; phyCorr = pC; phyWrng = pW; phyBlnk = pB;
+
+            // Chemistry: OMR Q41..60 (fallback dispQ 26..45)
+            let cS = 0, cC = 0, cW = 0, cB = 0;
+            for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                const dQ = 26 + (omrQ - 41);
+                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
+                if (!m) cB++;
+                else if (m.includes(',')) { cW++; cS -= 1; }
+                else if (k && m === k) { cC++; cS += 4; }
+                else if (k) { cW++; cS -= 1; }
+                else cC++;
+            }
+            chemMcq = cS; chemCorr = cC; chemWrng = cW; chemBlnk = cB;
+
+            // Mathematics: OMR Q81..100 (fallback dispQ 51..70)
+            let mS = 0, mC = 0, mW = 0, mB = 0;
+            for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                const dQ = 51 + (omrQ - 81);
+                const m = (resps[omrQ - 1] || resps[dQ - 1] || '').trim().toUpperCase();
+                const k = (keyLookup[omrQ] || keyLookup[dQ] || '').trim().toUpperCase();
+                if (!m) mB++;
+                else if (m.includes(',')) { mW++; mS -= 1; }
+                else if (k && m === k) { mC++; mS += 4; }
+                else if (k) { mW++; mS -= 1; }
+                else mC++;
+            }
+            mathMcq = mS; mathCorr = mC; mathWrng = mW; mathBlnk = mB;
+        }
 
         const sectionWise = [
             {
                 sectionName: 'Physics',
                 range: 'Q1–Q25 (MCQ 1–20 + NVQ 21–25)',
-                correct: mcqScores.phy ? mcqScores.phy.correct : 0,
-                wrong: mcqScores.phy ? mcqScores.phy.wrong : 0,
-                blank: mcqScores.phy ? mcqScores.phy.blank : 0,
+                correct: phyCorr,
+                wrong: phyWrng,
+                blank: phyBlnk,
                 totalQuestions: 25,
-                attempted: (mcqScores.phy ? (mcqScores.phy.correct + mcqScores.phy.wrong) : 0),
-                unattempted: mcqScores.phy ? mcqScores.phy.blank : 0,
+                attempted: (phyCorr + phyWrng),
+                unattempted: phyBlnk,
                 marks: phyMcq + phyNvq,
                 maxMarks: 100
             },
             {
                 sectionName: 'Chemistry',
                 range: 'Q26–Q50 (MCQ 26–45 + NVQ 46–50)',
-                correct: mcqScores.chem ? mcqScores.chem.correct : 0,
-                wrong: mcqScores.chem ? mcqScores.chem.wrong : 0,
-                blank: mcqScores.chem ? mcqScores.chem.blank : 0,
+                correct: chemCorr,
+                wrong: chemWrng,
+                blank: chemBlnk,
                 totalQuestions: 25,
-                attempted: (mcqScores.chem ? (mcqScores.chem.correct + mcqScores.chem.wrong) : 0),
-                unattempted: mcqScores.chem ? mcqScores.chem.blank : 0,
+                attempted: (chemCorr + chemWrng),
+                unattempted: chemBlnk,
                 marks: chemMcq + chemNvq,
                 maxMarks: 100
             },
             {
                 sectionName: 'Mathematics',
                 range: 'Q51–Q75 (MCQ 51–70 + NVQ 71–75)',
-                correct: mcqScores.math ? mcqScores.math.correct : 0,
-                wrong: mcqScores.math ? mcqScores.math.wrong : 0,
-                blank: mcqScores.math ? mcqScores.math.blank : 0,
+                correct: mathCorr,
+                wrong: mathWrng,
+                blank: mathBlnk,
                 totalQuestions: 25,
-                attempted: (mcqScores.math ? (mcqScores.math.correct + mcqScores.math.wrong) : 0),
-                unattempted: mcqScores.math ? mcqScores.math.blank : 0,
+                attempted: (mathCorr + mathWrng),
+                unattempted: mathBlnk,
                 marks: mathMcq + mathNvq,
                 maxMarks: 100
             }
@@ -1311,7 +1467,7 @@ function buildGradedSubmissionObj(doc, paper) {
         obj.paperTitle = paper ? paper.title : (doc.paper_id || 'JEE Exam Paper');
         obj.paperSubject = 'JEE Mains';
         obj.maxMarks = 300;
-        obj.aggregateMarks = doc.score !== undefined ? doc.score : 0;
+        obj.aggregateMarks = (phyMcq + phyNvq) + (chemMcq + chemNvq) + (mathMcq + mathNvq);
         obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
         return obj;
     }
@@ -1609,13 +1765,22 @@ app.post('/api/paper/:id/jee-save-result', requireAdmin, async (req, res) => {
 
         if (Array.isArray(breakdown)) {
             breakdown.forEach(item => {
-                if (item && item.q) {
-                    const idx = Number(item.q) - 1;
-                    if (idx >= 0 && idx < 100) {
-                        if (item.marked && typeof item.marked === 'string' && item.marked.trim() !== '' && item.verdict !== 'blank') {
-                            responsesArray[idx] = item.marked.trim().toUpperCase();
-                        }
+                if (item) {
+                    const omrQ = Number(item.omrQ || item.q);
+                    const dispQ = Number(item.displayQ || item.q);
+                    const markedVal = (item.marked && typeof item.marked === 'string' && item.marked.trim() !== '' && item.verdict !== 'blank')
+                        ? item.marked.trim().toUpperCase()
+                        : null;
+
+                    // Primary: Save at actual physical OMR question index (1..100 -> 0..99)
+                    if (omrQ >= 1 && omrQ <= 100 && markedVal) {
+                        responsesArray[omrQ - 1] = markedVal;
                     }
+                    // Secondary fallback: Also store at displayQ index if slot is unused
+                    if (dispQ >= 1 && dispQ <= 100 && markedVal && !responsesArray[dispQ - 1]) {
+                        responsesArray[dispQ - 1] = markedVal;
+                    }
+
                     if (item.verdict === 'correct') correctCount++;
                     else if (item.verdict === 'wrong' || item.verdict === 'multiple') wrongCount++;
                     else blankCount++;

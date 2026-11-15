@@ -758,8 +758,8 @@
             <!-- Left: Evaluated OMR Sheet Image + Live Dynamic Checking Overlay -->
             <div>
                 <div class="omr-preview-frame">
-                    <div style="position: relative; width: 100%; line-height: 0;">
-                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet">
+                    <div style="position: relative; width: 100%; aspect-ratio: 1000 / 1461; line-height: 0; background: #FFFFFF; border-radius: var(--radius-xs); overflow: hidden; box-shadow: inset 0 0 0 1px var(--border-color);">
+                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; display: block;" onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
                         <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
                              style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
                     </div>
@@ -822,6 +822,7 @@
         const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
         const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
         const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
+        const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
         let currentModalSubmission = null;
         let currentModalList = [];
         let showCheckingOverlay = true;
@@ -1169,7 +1170,9 @@
             const tbody = document.getElementById('modalBreakdownBody');
             tbody.innerHTML = '';
 
-            const isJee = (data.examType === 'jee') || 
+            const isJee = (PAPER_EXAM_TYPE === 'jee') ||
+                          (data.examType === 'jee') || 
+                          (data.exam_type === 'jee') ||
                           (data.numericalScores && Object.keys(data.numericalScores).length > 0) || 
                           (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) || 
                           /jee/i.test(PAPER_TITLE) || 
@@ -1182,7 +1185,7 @@
             if (isJee) {
                 // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
                 for (let qNum = 1; qNum <= 20; qNum++) {
-                    const resp = (data.responses && data.responses[qNum - 1]) || '';
+                    const resp = (data.responses && (data.responses[qNum - 1] || '')) || '';
                     const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
                     let verdict = 'blank';
                     if (resp && String(resp).trim() !== '') {
@@ -1229,8 +1232,8 @@
                 // Section 2: Chemistry Q26-45 (MCQ mapped from OMR Q41-60)
                 for (let omrQ = 41; omrQ <= 60; omrQ++) {
                     const displayQ = 26 + (omrQ - 41);
-                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
-                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || '-';
+                    const resp = (data.responses && (data.responses[omrQ - 1] || data.responses[displayQ - 1])) || '';
+                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
                     let verdict = 'blank';
                     if (resp && String(resp).trim() !== '') {
                         const cleaned = String(resp).trim().toUpperCase();
@@ -1276,8 +1279,8 @@
                 // Section 3: Mathematics Q51-70 (MCQ mapped from OMR Q81-100)
                 for (let omrQ = 81; omrQ <= 100; omrQ++) {
                     const displayQ = 51 + (omrQ - 81);
-                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
-                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || '-';
+                    const resp = (data.responses && (data.responses[omrQ - 1] || data.responses[displayQ - 1])) || '';
+                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
                     let verdict = 'blank';
                     if (resp && String(resp).trim() !== '') {
                         const cleaned = String(resp).trim().toUpperCase();

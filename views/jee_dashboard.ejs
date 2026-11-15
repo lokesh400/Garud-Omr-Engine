@@ -7,108 +7,416 @@
     <title>JEE Mains Assessment Portal • Garud OMR</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .jee-portal-hero {
-            background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 50%, #FAF5FF 100%);
-            border: 1px solid #BFDBFE;
+        .jee-container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 1.5rem 1.75rem 3rem 1.75rem;
+        }
+
+        /* Hero Banner */
+        .jee-hero {
+            background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 50%, #2563EB 100%);
             border-radius: var(--radius-lg);
-            padding: 1.5rem 1.75rem;
-            margin-bottom: 1.5rem;
+            padding: 2rem 2.25rem;
+            color: #FFFFFF;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25), 0 8px 10px -6px rgba(37, 99, 235, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .jee-hero::after {
+            content: '';
+            position: absolute;
+            right: -40px;
+            bottom: -50px;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .jee-hero-content {
+            position: relative;
+            z-index: 1;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
-            box-shadow: var(--shadow-xs);
+            gap: 1.5rem;
         }
 
-        .jee-hero-left h1 {
-            font-size: 1.35rem;
+        .jee-hero-text h1 {
+            font-size: 1.65rem;
             font-weight: 800;
+            color: #FFFFFF;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .jee-hero-text p {
+            margin: 0;
+            color: #DBEAFE;
+            font-size: 0.92rem;
+            max-width: 680px;
+            line-height: 1.55;
+        }
+
+        .jee-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #FFFFFF;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
+
+        .jee-hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-jee-hero-primary {
+            background: #FFFFFF;
+            color: #1D4ED8;
+            font-weight: 700;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 180ms ease;
+        }
+
+        .btn-jee-hero-primary:hover {
+            background: #EFF6FF;
             color: #1E3A8A;
-            margin: 0 0 6px 0;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-jee-hero-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            padding: 0.65rem 1.15rem;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
+            transition: all 180ms ease;
+        }
+
+        .btn-jee-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+
+        /* 3-Subject Blueprint Strip */
+        .jee-subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 2rem;
+        }
+
+        .jee-subject-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-xs);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+        }
+
+        .jee-subject-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+            border-color: #93C5FD;
+        }
+
+        .jee-sub-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+
+        .icon-phy { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; }
+        .icon-chem { background: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; }
+        .icon-math { background: #FAF5FF; border: 1px solid #E9D5FF; color: #7E22CE; }
+
+        .jee-sub-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .jee-sub-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .jee-sub-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .jee-sub-marks-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 7px;
+            border-radius: var(--radius-xs);
+        }
+
+        .marks-phy { background: #DBEAFE; color: #1E40AF; }
+        .marks-chem { background: #D1FAE5; color: #065F46; }
+        .marks-math { background: #F3E8FF; color: #6B21A8; }
+
+        .jee-sub-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Filter & Action Bar */
+        .jee-filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .jee-filter-left {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .jee-hero-left p {
+        .jee-section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
             margin: 0;
-            font-size: 0.86rem;
-            color: #475569;
-            max-width: 650px;
-            line-height: 1.45;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .jee-subjects-strip {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-bottom: 1.5rem;
+        .count-pill {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+            padding: 2px 8px;
+            border-radius: var(--radius-xs);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .jee-sub-chip-card {
-            background: #FFFFFF;
+        .jee-search-box {
+            position: relative;
+            min-width: 260px;
+        }
+
+        .jee-search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
-            box-shadow: var(--shadow-xs);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .jee-sub-icon-box {
-            width: 38px;
-            height: 38px;
             border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: inherit;
+            color: var(--text-main);
+            background: #FFFFFF;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+
+        .jee-search-box input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .jee-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
         }
 
-        .paper-list {
+        /* Papers Grid */
+        .jee-papers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.35rem;
         }
 
-        .jee-paper-card {
+        .jee-card {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            padding: 1.35rem;
+            padding: 1.35rem 1.4rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             gap: 1.25rem;
             box-shadow: var(--shadow-xs);
-            transition: border-color 150ms ease, box-shadow 150ms ease;
+            position: relative;
+            transition: all 180ms ease;
             border-top: 4px solid #2563EB;
         }
 
-        .jee-paper-card:hover {
+        .jee-card:hover {
             border-color: #93C5FD;
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .jee-card-top {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
 
         .jee-card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 10px;
-            margin-bottom: 0.5rem;
+            gap: 12px;
         }
 
         .jee-card-title {
-            font-size: 1.1rem;
+            font-size: 1.12rem;
             font-weight: 700;
             color: var(--text-main);
             margin: 0;
             line-height: 1.35;
         }
 
+        .jee-status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-ready {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        .status-pending {
+            background: #FFFBEB;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .status-ready .status-dot { background: #10B981; }
+        .status-pending .status-dot { background: #F59E0B; }
+
+        .jee-meta-chips {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .jee-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            padding: 3px 8px;
+            border-radius: var(--radius-xs);
+            font-size: 0.75rem;
+            color: var(--text-body);
+            font-weight: 500;
+        }
+
+        .jee-chip-highlight {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border-color: #BFDBFE;
+            font-weight: 600;
+        }
+
+        .jee-chip-copies {
+            background: #F0FDF4;
+            color: #15803D;
+            border-color: #BBF7D0;
+            font-weight: 600;
+        }
+
+        .jee-card-id-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding-top: 4px;
+        }
+
+        .jee-id-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #F8FAFC;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* Action Buttons Grid */
         .jee-actions-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -123,19 +431,88 @@
             padding: 0.55rem 0.75rem;
             font-size: 0.825rem;
             font-weight: 600;
+            border-radius: var(--radius-sm);
         }
 
-        .jee-actions-grid .btn-full {
+        .btn-jee-key {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+        }
+
+        .btn-jee-key:hover {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .btn-jee-scan {
+            background: #2563EB;
+            color: #FFFFFF;
+            border: 1px solid #1D4ED8;
+        }
+
+        .btn-jee-scan:hover {
+            background: #1D4ED8;
+        }
+
+        .btn-jee-eval {
+            background: #F0FDF4;
+            color: #15803D;
+            border: 1px solid #BBF7D0;
+        }
+
+        .btn-jee-eval:hover {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .btn-jee-results {
+            background: #FFFFFF;
+            color: var(--text-body);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-jee-results:hover {
+            background: var(--surface-subtle);
+            color: var(--text-main);
+        }
+
+        .btn-jee-print {
             grid-column: 1 / -1;
+            background: #F8FAFC;
+            color: #475569;
+            border: 1px solid #E2E8F0;
         }
 
-        @media (max-width: 640px) {
-            .jee-portal-hero {
-                padding: 1.15rem;
-            }
-            .paper-list {
+        .btn-jee-print:hover {
+            background: #F1F5F9;
+            color: #1E293B;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 980px) {
+            .jee-subjects-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        @media (max-width: 680px) {
+            .jee-container {
+                padding: 1rem 0.85rem 2.5rem 0.85rem;
+            }
+
+            .jee-hero {
+                padding: 1.35rem 1.25rem;
+            }
+
+            .jee-hero-text h1 {
+                font-size: 1.35rem;
+            }
+
+            .jee-papers-grid {
+                grid-template-columns: 1fr;
+            }
+
             .jee-actions-grid {
                 grid-template-columns: 1fr;
             }
@@ -146,117 +523,160 @@
 <body>
     <%- include('partials/sidebar_start', { activeNav: 'jee' }) %>
     <div class="container">
-        <main>
+        <main class="jee-container">
             <!-- Hero Header -->
-            <div class="jee-portal-hero">
-                <div class="jee-hero-left">
-                    <h1>
-                        <span>⚛️ JEE Mains Exam Section</span>
-                        <span class="badge" style="background:#DBEAFE; color:#1D4ED8; font-size:0.75rem; font-weight:700;">300 Max Marks</span>
-                    </h1>
-                    <p>
-                        Dedicated evaluation portal for <strong>JEE Mains Examination Papers</strong>. Evaluates 75 questions divided into 3 subjects (Physics Q1–25, Chemistry Q26–50, Mathematics Q51–75) with automated MCQ grading and single-tap Section B Numerical grading.
-                    </p>
+            <section class="jee-hero">
+                <div class="jee-hero-content">
+                    <div class="jee-hero-text">
+                        <h1>
+                            <span>⚛️ JEE Mains Assessment Portal</span>
+                            <span class="jee-hero-badge">NTA Pattern</span>
+                        </h1>
+                        <p>
+                            Dedicated evaluation portal for National Testing Agency (NTA) JEE Mains examinations.
+                            Evaluates Physics (Q1–25), Chemistry (Q26–50), and Mathematics (Q51–75) across standard 100-Question OMR sheets with Section B manual numerical checking (300 Max Marks).
+                        </p>
+                    </div>
+                    <div class="jee-hero-actions">
+                        <a href="/jee/new" class="btn-jee-hero-primary" id="btnCreateJeeTop">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            + Create JEE Paper
+                        </a>
+                        <a href="/" class="btn-jee-hero-secondary">
+                            &larr; Standard Dashboard
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <a href="/jee/new" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
+            </section>
+
+            <!-- 3-Subject Blueprint Strip -->
+            <section class="jee-subjects-grid">
+                <div class="jee-subject-card">
+                    <div class="jee-sub-icon icon-phy" aria-hidden="true">⚛️</div>
+                    <div class="jee-sub-details">
+                        <div class="jee-sub-title-row">
+                            <span class="jee-sub-title">Physics</span>
+                            <span class="jee-sub-marks-pill marks-phy">100 Marks</span>
+                        </div>
+                        <div class="jee-sub-desc">
+                            <strong>Q1–Q20</strong> MCQ (OMR Q1–20) &middot; <strong>Q21–Q25</strong> Section B Numerical (+4 / -1 / 0)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="jee-subject-card">
+                    <div class="jee-sub-icon icon-chem" aria-hidden="true">🧪</div>
+                    <div class="jee-sub-details">
+                        <div class="jee-sub-title-row">
+                            <span class="jee-sub-title">Chemistry</span>
+                            <span class="jee-sub-marks-pill marks-chem">100 Marks</span>
+                        </div>
+                        <div class="jee-sub-desc">
+                            <strong>Q26–Q45</strong> MCQ (OMR Q41–60) &middot; <strong>Q46–Q50</strong> Section B Numerical (+4 / -1 / 0)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="jee-subject-card">
+                    <div class="jee-sub-icon icon-math" aria-hidden="true">📐</div>
+                    <div class="jee-sub-details">
+                        <div class="jee-sub-title-row">
+                            <span class="jee-sub-title">Mathematics</span>
+                            <span class="jee-sub-marks-pill marks-math">100 Marks</span>
+                        </div>
+                        <div class="jee-sub-desc">
+                            <strong>Q51–Q70</strong> MCQ (OMR Q81–100) &middot; <strong>Q71–Q75</strong> Section B Numerical (+4 / -1 / 0)
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter & Search Bar -->
+            <div class="jee-filter-bar">
+                <div class="jee-filter-left">
+                    <h2 class="jee-section-title">
+                        <span>JEE Examination Papers</span>
+                        <span class="count-pill" id="paperCountBadge"><%= papers ? papers.length : 0 %> Papers</span>
+                    </h2>
+                </div>
+
+                <div class="jee-search-box">
+                    <span class="jee-search-icon" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        + Create JEE Paper
-                    </a>
+                    </span>
+                    <input type="search" id="jeeSearchInput" aria-label="Search JEE Papers" placeholder="Search by paper title or ID..." oninput="filterJeePapers()">
                 </div>
-            </div>
-
-            <!-- 3 Subjects Overview Cards -->
-            <div class="jee-subjects-strip">
-                <div class="jee-sub-chip-card">
-                    <div class="jee-sub-icon-box" style="background:#EFF6FF; color:#2563EB;">⚛️</div>
-                    <div>
-                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 1: Physics</strong>
-                        <span style="font-size:0.75rem; color:#64748B;">Q1–25 &bull; 20 MCQs + 5 NVQs (100 M)</span>
-                    </div>
-                </div>
-                <div class="jee-sub-chip-card">
-                    <div class="jee-sub-icon-box" style="background:#F0FDF4; color:#059669;">🧪</div>
-                    <div>
-                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 2: Chemistry</strong>
-                        <span style="font-size:0.75rem; color:#64748B;">Q26–50 &bull; 20 MCQs + 5 NVQs (100 M)</span>
-                    </div>
-                </div>
-                <div class="jee-sub-chip-card">
-                    <div class="jee-sub-icon-box" style="background:#FAF5FF; color:#7C3AED;">📐</div>
-                    <div>
-                        <strong style="display:block; font-size:0.88rem; color:#1E293B;">Section 3: Mathematics</strong>
-                        <span style="font-size:0.75rem; color:#64748B;">Q51–75 &bull; 20 MCQs + 5 NVQs (100 M)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section Title -->
-            <div class="section-header">
-                <h2 class="section-title">
-                    <span>JEE Mains Papers</span>
-                    <span class="count-badge"><%= papers ? papers.length : 0 %> Papers</span>
-                </h2>
             </div>
 
             <!-- Papers List -->
             <% if (papers && papers.length > 0) { %>
-                <div class="paper-list">
+                <div class="jee-papers-grid" id="jeePapersGrid">
                     <% papers.forEach(paper => { %>
-                        <%
+                        <% 
                             const hasKey = (Array.isArray(paper.answer_key) && paper.answer_key.some(k => k)) ||
                                            (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0));
                             const encodedId = encodeURIComponent(paper._id);
+                            const pIdStr = String(paper._id);
+                            const count = (typeof subCounts !== 'undefined' && subCounts[pIdStr]) ? subCounts[pIdStr] : 0;
+                            const searchStr = `${paper.title || ''} ${pIdStr}`.toLowerCase();
                         %>
-                        <article class="jee-paper-card">
-                            <div>
+                        <article class="jee-card jee-paper-item" data-search="<%= searchStr %>">
+                            <div class="jee-card-top">
                                 <div class="jee-card-header">
                                     <h3 class="jee-card-title"><%= paper.title %></h3>
                                     <% if (hasKey) { %>
-                                        <span class="status-chip status-ready">
-                                            <span class="status-dot-sm"></span> Key Configured
+                                        <span class="jee-status-chip status-ready" title="Answer key has been configured">
+                                            <span class="status-dot"></span> Key Configured
                                         </span>
                                     <% } else { %>
-                                        <span class="status-chip status-pending">
-                                            <span class="status-dot-sm"></span> Key Pending
+                                        <span class="jee-status-chip status-pending" title="Answer key is not yet fully configured">
+                                            <span class="status-dot"></span> Key Pending
                                         </span>
                                     <% } %>
                                 </div>
 
-                                <div class="paper-meta-line">
-                                    <span style="color:#1D4ED8; font-weight:600;">JEE Mains Format</span>
-                                    <span>&middot;</span>
-                                    <span class="paper-id-code"><%= paper._id %></span>
+                                <div class="jee-meta-chips">
+                                    <span class="jee-chip jee-chip-highlight">300 Max Marks</span>
+                                    <span class="jee-chip">75 Qs (60 MCQ + 15 NVQ)</span>
+                                    <span class="jee-chip jee-chip-copies">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        <%= count %> Evaluated
+                                    </span>
                                 </div>
 
-                                <div class="paper-specs">
-                                    <span class="spec-chip">75 Questions (60 MCQ + 15 NVQ)</span>
-                                    <span class="spec-chip" style="color:#1D4ED8; background:#EFF6FF; border-color:#BFDBFE; font-weight:600;">300 Max Marks</span>
+                                <div class="jee-card-id-row">
+                                    <span>ID: <code class="jee-id-code"><%= pIdStr.slice(-8) %></code></span>
+                                    <span><%= paper.createdAt ? new Date(paper.createdAt).toLocaleDateString() : 'NTA Pattern' %></span>
                                 </div>
                             </div>
 
                             <div class="jee-actions-grid">
-                                <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-secondary" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="Configure 3-Section JEE Mains Answer Key">
+                                <a href="/paper/<%= encodedId %>/jee-answerkey" class="btn btn-jee-key" title="Configure 3-Section JEE Mains Answer Key">
                                     ⚛️ JEE Key
                                 </a>
 
-                                <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-primary" title="Launch Live Camera Scanner for JEE Mains">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <a href="/paper/<%= encodedId %>/jee-scan" class="btn btn-jee-scan" title="Launch Live Camera Scanner for JEE Mains">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                                         <circle cx="12" cy="13" r="4"></circle>
                                     </svg>
                                     JEE Scanner
                                 </a>
 
-                                <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-secondary" style="background:#F0FDF4; color:#15803D; border-color:#BBF7D0;" title="Upload and evaluate JEE Mains sheet from image file">
+                                <a href="/paper/<%= encodedId %>/jee-evaluator" class="btn btn-jee-eval" title="Upload and evaluate JEE Mains sheet from image file">
                                     📁 JEE Evaluator
                                 </a>
 
-                                <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary" title="View Evaluated Copies and Breakdown">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <a href="/paper/<%= encodedId %>/results" class="btn btn-jee-results" title="View Evaluated Copies and Breakdown">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <line x1="18" y1="20" x2="18" y2="10"></line>
                                         <line x1="12" y1="20" x2="12" y2="4"></line>
                                         <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -264,7 +684,7 @@
                                     Results &amp; Copies
                                 </a>
 
-                                <a href="/paper/<%= encodedId %>/omr" target="_blank" rel="noopener" class="btn btn-secondary btn-full" title="Open Printable A4 OMR Sheet for JEE Mains">
+                                <a href="/paper/<%= encodedId %>/omr" target="_blank" rel="noopener" class="btn btn-jee-print" title="Open Printable A4 OMR Sheet for JEE Mains">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="6 9 6 2 18 2 18 9"></polyline>
                                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -277,30 +697,49 @@
                     <% }) %>
                 </div>
             <% } else { %>
-                <div class="empty-state">
-                    <div class="empty-state-icon" aria-hidden="true" style="background:#EFF6FF; color:#2563EB;">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <div class="empty-state" style="background:#FFFFFF; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:3rem 1.5rem; text-align:center;">
+                    <div class="empty-state-icon" aria-hidden="true" style="background:#EFF6FF; color:#2563EB; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.25rem auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"></circle>
                             <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
                         </svg>
                     </div>
-                    <h3 style="margin-bottom: 0.4rem;">No JEE Mains papers yet</h3>
-                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.92rem;">
+                    <h3 style="margin: 0 0 0.5rem 0; font-size:1.2rem; font-weight:700;">No JEE Mains papers created yet</h3>
+                    <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 1.75rem; font-size: 0.92rem; line-height:1.5;">
                         Create a dedicated JEE Mains exam paper to evaluate Physics (Q1–25), Chemistry (Q26–50), and Mathematics (Q51–75) with 300 Max Marks.
                     </p>
                     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
-                        <a href="/jee/new" class="btn btn-primary btn-lg">
+                        <a href="/jee/new" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
                             + Create First JEE Mains Paper
                         </a>
                         <a href="/" class="btn btn-secondary btn-lg">
-                            &larr; Return to Standard Dashboard
+                            &larr; Standard Dashboard
                         </a>
                     </div>
                 </div>
             <% } %>
         </main>
     </div>
+
+    <script>
+        function filterJeePapers() {
+            const query = (document.getElementById('jeeSearchInput').value || '').toLowerCase().trim();
+            const items = document.querySelectorAll('.jee-paper-item');
+            let visibleCount = 0;
+            items.forEach(item => {
+                const searchStr = item.getAttribute('data-search') || '';
+                const match = searchStr.includes(query);
+                item.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
+            });
+            const badge = document.getElementById('paperCountBadge');
+            if (badge) {
+                badge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
+            }
+        }
+    </script>
     <%- include('partials/sidebar_end') %>
 </body>
+
 </html>
