@@ -286,7 +286,7 @@
             </div>
 
             <form action="/paper/new" method="POST" id="createPaperForm" onsubmit="prepareSectionsPayload()">
-                <div class="form-row-2">
+                <div class="form-row-3">
                     <div class="form-group">
                         <label for="title">Paper Title <span aria-hidden="true">*</span></label>
                         <input
@@ -310,6 +310,32 @@
                             placeholder="e.g. Mathematics"
                             value="Mathematics"
                         >
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Section / Batch / Folder</label>
+                        <input
+                            type="text"
+                            id="category"
+                            name="category"
+                            class="form-control"
+                            placeholder="e.g. 11th NEET, Foundation"
+                            list="categorySuggestions"
+                            value="11th NEET"
+                        >
+                        <datalist id="categorySuggestions">
+                            <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat %>"></option>
+                                <% }) %>
+                            <% } %>
+                            <option value="11th NEET"></option>
+                            <option value="12th NEET"></option>
+                            <option value="11th JEE"></option>
+                            <option value="12th JEE"></option>
+                            <option value="Foundation"></option>
+                            <option value="General"></option>
+                        </datalist>
+                        <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; display: block;">Papers will be stored and grouped under this section.</span>
                     </div>
                 </div>
 

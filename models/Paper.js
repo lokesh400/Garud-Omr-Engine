@@ -69,6 +69,12 @@ const paperSchema = new mongoose.Schema({
     type: [sectionSchema],
     default: []
   },
+  // Category / Section / Batch for dynamic grouping (e.g. '11th NEET', '12th JEE', 'General')
+  category: {
+    type: String,
+    trim: true,
+    default: 'General'
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -94,6 +100,14 @@ paperSchema.virtual('examType')
   })
   .set(function (val) {
     this.exam_type = val;
+  });
+
+paperSchema.virtual('batch')
+  .get(function () {
+    return this.category || 'General';
+  })
+  .set(function (val) {
+    this.category = val;
   });
 
 paperSchema.virtual('answerKey')

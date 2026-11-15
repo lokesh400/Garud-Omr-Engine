@@ -339,6 +339,10 @@
                             wrongCount: item.wrongCount || 0
                         };
                     %>
+                    <%
+                        const pId = String(item.paper_id || item.paperId || '');
+                        const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats && paperTopperStats[pId]) ? paperTopperStats[pId] : null;
+                    %>
                     <article class="exam-card">
                         <div>
                             <div class="exam-header">
@@ -357,6 +361,12 @@
                                 <div>
                                     <div class="agg-label">All Sections (Sum) Marks</div>
                                     <div class="agg-score"><%= sumSec.obtainedMarks %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= sumSec.totalMarks %></span></div>
+                                    <% if (pStats && pStats.highestOverall !== undefined) { %>
+                                        <div style="font-size: 0.76rem; font-weight: 700; color: #B45309; margin-top: 4px; display: flex; align-items: center; gap: 5px;">
+                                            <span>🏆 Paper Highest:</span>
+                                            <span style="font-family: 'JetBrains Mono', monospace; background: #FEF3C7; color: #92400E; padding: 2px 7px; border-radius: 4px; border: 1px solid #FDE68A;"><%= pStats.highestOverall %> / <%= sumSec.totalMarks %></span>
+                                        </div>
+                                    <% } %>
                                 </div>
                                 <div style="text-align: right; font-size: 0.8rem;">
                                     <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
@@ -377,12 +387,21 @@
                                             const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
                                             const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
                                             const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
+                                            const secHighestObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
+                                            const secHighestVal = secHighestObj ? secHighestObj.highest : null;
                                         %>
                                         <div class="sec-stack-item">
-                                            <div class="sec-stack-name">
-                                                <%= s.sectionName %>
-                                                <% if (s.range) { %>
-                                                    <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                                <div class="sec-stack-name">
+                                                    <%= s.sectionName %>
+                                                    <% if (s.range) { %>
+                                                        <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
+                                                    <% } %>
+                                                </div>
+                                                <% if (secHighestVal !== null && secHighestVal !== undefined) { %>
+                                                    <span style="font-size: 0.72rem; font-weight: 700; color: #065F46; background: #D1FAE5; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;" title="Highest marks scored in <%= s.sectionName %> across all candidates">
+                                                        Top: <%= secHighestVal %>/<%= s.maxMarks %>
+                                                    </span>
                                                 <% } %>
                                             </div>
                                             <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %> marks</span></div>
@@ -394,7 +413,14 @@
                                         </div>
                                     <% }) %>
                                     <div class="sec-stack-item sec-stack-item-total">
-                                        <div class="sec-stack-name" style="color: var(--primary-active);">All Sections (Sum)</div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                            <div class="sec-stack-name" style="color: var(--primary-active);">All Sections (Sum)</div>
+                                            <% if (pStats && pStats.highestOverall !== undefined) { %>
+                                                <span style="font-size: 0.72rem; font-weight: 700; color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
+                                                    🏆 Highest: <%= pStats.highestOverall %>/<%= sumSec.totalMarks %>
+                                                </span>
+                                            <% } %>
+                                        </div>
                                         <div class="sec-stack-marks"><%= sumSec.obtainedMarks %> <span class="sec-stack-max">/ <%= sumSec.totalMarks %> marks</span></div>
                                         <div class="sec-stack-meta" style="color: var(--text-body);">
                                             Total: <strong><%= sumSec.totalQuestions %></strong> &middot;
@@ -516,6 +542,7 @@
 
     <script>
         const studentSubmissions = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+        const paperTopperStats = <%- JSON.stringify(typeof paperTopperStats !== 'undefined' ? paperTopperStats : {}).replace(/</g, '\\u003c') %>;
         const submissionsById = {};
         studentSubmissions.forEach(s => {
             if (s && s._id) submissionsById[String(s._id)] = s;
@@ -723,6 +750,14 @@
             maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
             maxSpan.textContent = `/ ${opts.totalMarks} marks`;
             marksVal.appendChild(maxSpan);
+
+            if (opts.topScore !== undefined && opts.topScore !== null) {
+                const topBadge = document.createElement('span');
+                topBadge.style.cssText = 'font-size:0.72rem; font-weight:700; color:#065F46; background:#D1FAE5; border:1px solid #A7F3D0; padding:1px 6px; border-radius:4px; margin-left:8px; display:inline-block; font-family:"JetBrains Mono",monospace;';
+                topBadge.textContent = `Top: ${opts.topScore}`;
+                marksVal.appendChild(topBadge);
+            }
+
             marksWrap.appendChild(marksVal);
 
             row.appendChild(headWrap);
@@ -739,11 +774,22 @@
             const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
             const sumSec = getSubmissionTotals(data);
             const pct = data.percentage !== undefined ? data.percentage : 0;
+            const pId = String(data.paper_id || data.paperId || '');
+            const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats) ? paperTopperStats[pId] : null;
 
             document.getElementById('modalRollNo').textContent = 'Roll: ' + roll;
             document.getElementById('modalPaperTitle').textContent = data.paperTitle || 'Exam Sheet';
             document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
-            document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+            
+            const grandAggEl = document.getElementById('modalGrandAggregate');
+            if (grandAggEl) {
+                if (pStats && pStats.highestOverall !== undefined) {
+                    grandAggEl.innerHTML = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} <span style="display:inline-block; font-size:0.75rem; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:2px 8px; border-radius:4px; font-weight:700; margin-left:8px;">🏆 Top: ${pStats.highestOverall}</span>`;
+                } else {
+                    grandAggEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                }
+            }
+
             const allStatsEl = document.getElementById('modalAllSectionsStats');
             if (allStatsEl) {
                 allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
@@ -760,12 +806,15 @@
                     const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
                     const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
                     const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                    const secTopObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
+                    const secTopVal = secTopObj ? secTopObj.highest : null;
                     appendSectionSummaryCard(secContainer, {
                         isTotal: false,
                         title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
                         metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
                         obtainedMarks: s.marks || 0,
-                        totalMarks: s.maxMarks || (secTotalQ * 4)
+                        totalMarks: s.maxMarks || (secTotalQ * 4),
+                        topScore: secTopVal
                     });
                 });
                 appendSectionSummaryCard(secContainer, {
@@ -773,7 +822,8 @@
                     title: 'All Sections (Sum)',
                     metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
                     obtainedMarks: sumSec.obtainedMarks,
-                    totalMarks: sumSec.totalMarks
+                    totalMarks: sumSec.totalMarks,
+                    topScore: (pStats && pStats.highestOverall !== undefined) ? pStats.highestOverall : null
                 });
             } else {
                 secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';

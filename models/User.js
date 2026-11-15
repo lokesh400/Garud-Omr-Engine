@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'student'],
+    enum: ['admin', 'teacher', 'student'],
     required: true,
     default: 'student'
   },
@@ -40,6 +40,22 @@ userSchema.index({ rollnumber: 1, role: 1 });
 
 userSchema.virtual('isAdmin').get(function () {
   return this.role === 'admin';
+});
+
+userSchema.virtual('isTeacher').get(function () {
+  return this.role === 'teacher';
+});
+
+userSchema.virtual('isStudent').get(function () {
+  return this.role === 'student';
+});
+
+userSchema.virtual('canManage').get(function () {
+  return this.role === 'admin';
+});
+
+userSchema.virtual('canViewStaff').get(function () {
+  return this.role === 'admin' || this.role === 'teacher';
 });
 
 userSchema.plugin(passportLocalMongoose, {

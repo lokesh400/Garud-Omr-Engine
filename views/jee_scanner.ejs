@@ -553,38 +553,63 @@
 
         /* JEE Specific Styles */
         .jee-nvq-btn {
-            border: 1px solid var(--border-hover);
+            border: 1.5px solid #CBD5E1;
             background: #FFFFFF;
-            color: var(--text-main);
-            border-radius: var(--radius-xs);
-            padding: 4px 0;
-            font-size: 0.74rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
+            color: #64748B;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 800;
             cursor: pointer;
             transition: all 0.12s ease;
+            user-select: none;
+            padding: 0;
+            line-height: 1;
         }
 
         .jee-nvq-btn:hover {
-            filter: brightness(0.95);
+            transform: scale(1.1);
+            border-color: #94A3B8;
+        }
+
+        .jee-nvq-btn.btn-c:hover {
+            border-color: #10B981;
+            color: #10B981;
+        }
+
+        .jee-nvq-btn.btn-w:hover {
+            border-color: #EF4444;
+            color: #EF4444;
+        }
+
+        .jee-nvq-btn.btn-b:hover {
+            border-color: #64748B;
+            color: #64748B;
         }
 
         .jee-nvq-btn.btn-c.active {
             background: #10B981 !important;
             color: #FFFFFF !important;
             border-color: #059669 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
         }
 
         .jee-nvq-btn.btn-w.active {
             background: #EF4444 !important;
             color: #FFFFFF !important;
             border-color: #DC2626 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
         }
 
         .jee-nvq-btn.btn-b.active {
             background: #64748B !important;
             color: #FFFFFF !important;
             border-color: #475569 !important;
+            box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.25);
         }
 
         @media (max-width: 640px) {
@@ -740,7 +765,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
                             <div>
                                 <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-main);">Section B: Numerical Value Questions</h4>
-                                <span style="font-size:0.75rem; color:var(--text-muted);">Single-tap (+4 Correct, -1 Wrong, 0 Blank)</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">Quick-tap bubbles: Right (✓ +4), Wrong (✕ -1), Skipped (○ 0)</span>
                             </div>
                             <span style="font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:var(--radius-full); background:#EFF6FF; color:#1D4ED8;">15 Qs &bull; Max 60 M</span>
                         </div>
@@ -753,12 +778,12 @@
                             </div>
                             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
                                 <% for(let i=1; i<=5; i++) { %>
-                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:5px 3px; text-align:center; background:#FFFFFF;">
-                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:3px;">Q<%= 20 + i %></div>
-                                        <div style="display:flex; flex-direction:column; gap:2px;" id="nvq_phy_<%= i %>">
-                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('phy', <%= i-1 %>, 4, this)">+4</button>
-                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('phy', <%= i-1 %>, -1, this)">-1</button>
-                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('phy', <%= i-1 %>, 0, this)">0</button>
+                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:6px 3px; text-align:center; background:#FFFFFF;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">Q<%= 20 + i %></div>
+                                        <div style="display:flex; justify-content:center; align-items:center; gap:3px;" id="nvq_phy_<%= i %>">
+                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('phy', <%= i-1 %>, 4, this)" title="Right (+4 marks)">&#10003;</button>
+                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('phy', <%= i-1 %>, -1, this)" title="Wrong (-1 mark)">&#10005;</button>
+                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('phy', <%= i-1 %>, 0, this)" title="Skipped (0 marks)">&#9675;</button>
                                         </div>
                                     </div>
                                 <% } %>
@@ -773,12 +798,12 @@
                             </div>
                             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
                                 <% for(let i=1; i<=5; i++) { %>
-                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:5px 3px; text-align:center; background:#FFFFFF;">
-                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:3px;">Q<%= 45 + i %></div>
-                                        <div style="display:flex; flex-direction:column; gap:2px;" id="nvq_chem_<%= i %>">
-                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('chem', <%= i-1 %>, 4, this)">+4</button>
-                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('chem', <%= i-1 %>, -1, this)">-1</button>
-                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('chem', <%= i-1 %>, 0, this)">0</button>
+                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:6px 3px; text-align:center; background:#FFFFFF;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">Q<%= 45 + i %></div>
+                                        <div style="display:flex; justify-content:center; align-items:center; gap:3px;" id="nvq_chem_<%= i %>">
+                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('chem', <%= i-1 %>, 4, this)" title="Right (+4 marks)">&#10003;</button>
+                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('chem', <%= i-1 %>, -1, this)" title="Wrong (-1 mark)">&#10005;</button>
+                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('chem', <%= i-1 %>, 0, this)" title="Skipped (0 marks)">&#9675;</button>
                                         </div>
                                     </div>
                                 <% } %>
@@ -793,12 +818,12 @@
                             </div>
                             <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
                                 <% for(let i=1; i<=5; i++) { %>
-                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:5px 3px; text-align:center; background:#FFFFFF;">
-                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:3px;">Q<%= 70 + i %></div>
-                                        <div style="display:flex; flex-direction:column; gap:2px;" id="nvq_math_<%= i %>">
-                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('math', <%= i-1 %>, 4, this)">+4</button>
-                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('math', <%= i-1 %>, -1, this)">-1</button>
-                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('math', <%= i-1 %>, 0, this)">0</button>
+                                    <div style="border:1px solid var(--border-color); border-radius:var(--radius-xs); padding:6px 3px; text-align:center; background:#FFFFFF;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">Q<%= 70 + i %></div>
+                                        <div style="display:flex; justify-content:center; align-items:center; gap:3px;" id="nvq_math_<%= i %>">
+                                            <button type="button" class="jee-nvq-btn btn-c" onclick="setNvq('math', <%= i-1 %>, 4, this)" title="Right (+4 marks)">&#10003;</button>
+                                            <button type="button" class="jee-nvq-btn btn-w" onclick="setNvq('math', <%= i-1 %>, -1, this)" title="Wrong (-1 mark)">&#10005;</button>
+                                            <button type="button" class="jee-nvq-btn btn-b active" onclick="setNvq('math', <%= i-1 %>, 0, this)" title="Skipped (0 marks)">&#9675;</button>
                                         </div>
                                     </div>
                                 <% } %>

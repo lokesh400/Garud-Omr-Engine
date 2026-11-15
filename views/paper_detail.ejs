@@ -519,13 +519,15 @@
                 <% } %>
             </div>
             <div class="topbar-actions-group">
-                <a href="/paper/<%= encodedId %>/scan" class="btn btn-primary btn-sm" title="Launch Camera Scanner for this paper" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    Live Scanner
-                </a>
+                <% if (currentUser && currentUser.role === 'admin') { %>
+                    <a href="/paper/<%= encodedId %>/scan" class="btn btn-primary btn-sm" title="Launch Camera Scanner for this paper" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        Live Scanner
+                    </a>
+                <% } %>
                 <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Paper Results & Checked OMR Copies" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -534,6 +536,15 @@
                     </svg>
                     Results
                 </a>
+                <% if (currentUser && currentUser.role === 'admin') { %>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteEntirePaper()" title="Permanently delete paper, all submissions and OMR scans" style="padding:6px 12px; font-size:0.82rem; white-space:nowrap;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete Paper
+                    </button>
+                <% } %>
                 <div class="header-pill">
                     <span id="headerCounter"><%= keyCount %>/<%= totalQ %></span>
                 </div>
@@ -625,28 +636,36 @@
             <div class="floating-counter">
                 <span id="floatingCounter"><%= keyCount %></span> / <%= totalQ %> Keyed
             </div>
-            <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                Clear All
-            </button>
-            <button type="button" class="btn-floating-save" onclick="confirmAndSaveKey()" title="Save answer key">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Answer Key
-            </button>
+            <% if (currentUser && currentUser.role === 'admin') { %>
+                <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Clear All
+                </button>
+                <button type="button" class="btn-floating-save" onclick="confirmAndSaveKey()" title="Save answer key">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save Answer Key
+                </button>
+            <% } else { %>
+                <span style="font-size: 0.85rem; font-weight: 600; color: #1D4ED8; padding: 6px 14px; background: #EFF6FF; border-radius: var(--radius-sm); border: 1px solid #BFDBFE;">
+                    👁️ Teacher View &middot; Read-Only Mode
+                </span>
+            <% } %>
         </div>
     </div>
 
     <script>
         const totalQuestions = <%= totalQ %>;
+        const isTeacher = <%= (currentUser && currentUser.role === 'teacher') ? 'true' : 'false' %>;
 
         function selectAnswer(qNum, opt) {
+            if (isTeacher) return;
             const input = document.getElementById('input_q' + qNum);
             const row = document.getElementById('row_q' + qNum);
             const badge = document.getElementById('badge_val_q' + qNum);
@@ -689,6 +708,7 @@
         }
 
         function confirmAndClearAll() {
+            if (isTeacher) return;
             if (confirm("Are you sure you want to clear all marked answers?")) {
                 const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
                 inputs.forEach(inp => { inp.value = ""; });
@@ -703,6 +723,7 @@
         }
 
         function confirmAndSaveKey() {
+            if (isTeacher) return;
             const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
             let filled = 0;
             inputs.forEach(inp => { if (inp.value) filled++; });
@@ -713,6 +734,38 @@
 
             if (confirm(msg)) {
                 document.getElementById('answerKeyForm').submit();
+            }
+        }
+
+        async function deleteEntirePaper() {
+            // Confirmation 1 of 3
+            if (!confirm(`[1/3 CONFIRMATION REQUIRED]\n\nAre you sure you want to permanently DELETE this entire paper: "<%= paper.title %>"?\n\nThis will delete the paper, all graded submissions, and all stored OMR scans.`)) {
+                return;
+            }
+
+            // Confirmation 2 of 3
+            if (!confirm(`[2/3 WARNING: CATASTROPHIC DATA LOSS]\n\nAll student marks, rankings, and Cloudinary OMR image copies will be PERMANENTLY DESTROYED.\n\nAre you sure you want to proceed?`)) {
+                return;
+            }
+
+            // Confirmation 3 of 3
+            if (!confirm(`[3/3 FINAL CONFIRMATION]\n\nFinal check: Type or confirm to permanently delete paper "<%= paper.title %>" and all its data immediately.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/paper/<%= encodedId %>', {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message || 'Paper deleted successfully.');
+                    window.location.href = '<%= (paper.exam_type === "jee" || /jee/i.test(paper.title || "")) ? "/jee" : "/" %>';
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to delete paper'));
+                }
+            } catch (err) {
+                alert('Request failed: ' + err.message);
             }
         }
     </script>

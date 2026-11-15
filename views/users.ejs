@@ -117,7 +117,7 @@
 
         .role-options {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
 
@@ -381,6 +381,12 @@
             border: 1px solid var(--primary-border);
         }
 
+        .role-badge-teacher {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+        }
+
         .role-badge-student {
             background: var(--success-light);
             color: var(--success-hover);
@@ -504,8 +510,12 @@
                                     <span>Student</span>
                                 </label>
                                 <label class="role-option-label">
+                                    <input type="radio" name="role" value="teacher" onchange="toggleRollField()">
+                                    <span>Teacher</span>
+                                </label>
+                                <label class="role-option-label">
                                     <input type="radio" name="role" value="admin" onchange="toggleRollField()">
-                                    <span>Admin / Teacher</span>
+                                    <span>Admin</span>
                                 </label>
                             </div>
                         </fieldset>
@@ -719,6 +729,8 @@
                                         <td>
                                             <% if (u.role === 'admin') { %>
                                                 <span class="role-badge role-badge-admin">Admin</span>
+                                            <% } else if (u.role === 'teacher') { %>
+                                                <span class="role-badge role-badge-teacher">Teacher (Viewer)</span>
                                             <% } else { %>
                                                 <span class="role-badge role-badge-student">Student</span>
                                             <% } %>

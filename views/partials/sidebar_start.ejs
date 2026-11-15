@@ -2,7 +2,9 @@
     const _navActive = (typeof activeNav !== 'undefined' && activeNav) ? activeNav : '';
     const _user = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : null;
     const _isAdmin = _user && _user.role === 'admin';
-    const _homeUrl = _isAdmin ? '/' : '/student';
+    const _isTeacher = _user && _user.role === 'teacher';
+    const _isStaff = _isAdmin || _isTeacher;
+    const _homeUrl = _isStaff ? '/' : '/student';
     const _displayName = _user ? (_user.fullName || _user.username || 'User') : 'Account';
     const _initials = _displayName
         .split(/\s+/)
@@ -32,7 +34,7 @@
                 </span>
                 <span>
                     <span class="sidebar-brand-title" style="display: block;">Garud OMR</span>
-                    <span class="sidebar-brand-sub" style="display: block;"><%= _isAdmin ? 'Admin Portal' : 'Student Portal' %></span>
+                    <span class="sidebar-brand-sub" style="display: block;"><%= _isAdmin ? 'Admin Portal' : (_isTeacher ? 'Teacher (Viewer)' : 'Student Portal') %></span>
                 </span>
             </a>
 
@@ -46,9 +48,9 @@
 
         <nav class="sidebar-nav" aria-label="Primary navigation">
             <div>
-                <div class="sidebar-group-label"><%= _isAdmin ? 'Workspace' : 'Navigation' %></div>
+                <div class="sidebar-group-label"><%= _isStaff ? 'Workspace' : 'Navigation' %></div>
                 <ul class="sidebar-link-list">
-                    <% if (_isAdmin) { %>
+                    <% if (_isStaff) { %>
                         <li>
                             <a href="/" class="sidebar-link" <%- _navActive === 'dashboard' ? 'aria-current="page"' : '' %>>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -60,17 +62,19 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="/paper/new" class="sidebar-link" <%- _navActive === 'new_paper' ? 'aria-current="page"' : '' %>>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                                </svg>
-                                <span>Create Paper</span>
-                            </a>
-                        </li>
+                        <% if (_isAdmin) { %>
+                            <li>
+                                <a href="/paper/new" class="sidebar-link" <%- _navActive === 'new_paper' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                                    </svg>
+                                    <span>Create Paper</span>
+                                </a>
+                            </li>
+                        <% } %>
                         <li>
                             <a href="/jee" class="sidebar-link" <%- _navActive === 'jee' ? 'aria-current="page"' : '' %>>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -81,24 +85,26 @@
                                 <span>JEE Mains Section</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="/users" class="sidebar-link" <%- _navActive === 'users' ? 'aria-current="page"' : '' %>>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="9" cy="7" r="4"></circle>
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                </svg>
-                                <span>User Management</span>
-                            </a>
-                        </li>
+                        <% if (_isAdmin) { %>
+                            <li>
+                                <a href="/users" class="sidebar-link" <%- _navActive === 'users' ? 'aria-current="page"' : '' %>>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                    <span>User Management</span>
+                                </a>
+                            </li>
+                        <% } %>
                         <li>
                             <a href="/student" class="sidebar-link" <%- _navActive === 'student' ? 'aria-current="page"' : '' %>>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
                                     <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                                 </svg>
-                                <span>Student Portal</span>
+                                <span>Student Dashboard</span>
                             </a>
                         </li>
                     <% } else { %>
@@ -126,7 +132,7 @@
                 </ul>
             </div>
 
-            <% if (_isAdmin && _paperCtx) { %>
+            <% if (_isStaff && _paperCtx) { %>
                 <% const _isJeePaper = (_paperCtx.exam_type === 'jee') || (_navActive === 'jee_key') || /jee/i.test(_paperCtx.subject || '') || /jee/i.test(_paperCtx.title || ''); %>
                 <div>
                     <div class="sidebar-group-label" title="<%= _paperCtx.title %>">
@@ -142,24 +148,26 @@
                                     <span>JEE Answer Key</span>
                                 </a>
                             </li>
-                            <li>
-                                <a href="/paper/<%= _paperEncodedId %>/jee-scan" class="sidebar-link">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                        <circle cx="12" cy="13" r="4"></circle>
-                                    </svg>
-                                    <span>JEE Scanner</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/paper/<%= _paperEncodedId %>/jee-evaluator" class="sidebar-link">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                    </svg>
-                                    <span>JEE Evaluator</span>
-                                </a>
-                            </li>
+                            <% if (_isAdmin) { %>
+                                <li>
+                                    <a href="/paper/<%= _paperEncodedId %>/jee-scan" class="sidebar-link">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                        <span>JEE Scanner</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/paper/<%= _paperEncodedId %>/jee-evaluator" class="sidebar-link">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
+                                        <span>JEE Evaluator</span>
+                                    </a>
+                                </li>
+                            <% } %>
                             <li>
                                 <a href="/paper/<%= _paperEncodedId %>/results" class="sidebar-link" <%- _navActive === 'paper_results' ? 'aria-current="page"' : '' %>>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -231,7 +239,7 @@
                     <div class="sidebar-user-meta">
                         <div class="sidebar-user-name" title="<%= _displayName %>"><%= _displayName %></div>
                         <div class="sidebar-user-sub">
-                            <%= _isAdmin ? ('Admin · @' + _user.username) : ('Roll: ' + (_user.rollnumber || _user.username)) %>
+                            <%= _isAdmin ? ('Admin · @' + _user.username) : (_isTeacher ? ('Teacher · @' + _user.username) : ('Roll: ' + (_user.rollnumber || _user.username))) %>
                         </div>
                     </div>
                 </div>
@@ -280,8 +288,8 @@
             </div>
             <div class="mobile-topbar-right">
                 <% if (_user) { %>
-                    <span class="pill <%= _isAdmin ? 'pill-primary' : 'pill-success' %>">
-                        <%= _isAdmin ? 'Admin' : ('Roll: ' + (_user.rollnumber || _user.username)) %>
+                    <span class="pill <%= _isAdmin ? 'pill-primary' : (_isTeacher ? 'pill-primary' : 'pill-success') %>">
+                        <%= _isAdmin ? 'Admin' : (_isTeacher ? 'Teacher' : ('Roll: ' + (_user.rollnumber || _user.username))) %>
                     </span>
                 <% } %>
             </div>

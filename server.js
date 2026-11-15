@@ -215,6 +215,28 @@ function requireAdmin(req, res, next) {
     return next();
 }
 
+function requireAdminOrTeacher(req, res, next) {
+    if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        if (isApiRequest(req)) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        if (req.method === 'GET' && req.session) {
+            const candidate = getSafeReturnTo(req.originalUrl);
+            if (candidate) {
+                req.session.returnTo = candidate;
+            }
+        }
+        return res.redirect('/login');
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+        if (isApiRequest(req)) {
+            return res.status(403).json({ error: 'Staff access required' });
+        }
+        return res.status(403).render('forbidden');
+    }
+    return next();
+}
+
 // Protect uploaded/fallback OMR copies (students can only read fallback copies tied to their own roll)
 app.use('/uploads', requireAuth, (req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -227,7 +249,7 @@ app.use('/uploads', requireAuth, (req, res, next) => {
         return res.status(403).send('Forbidden: Path Traversal Detected');
     }
 
-    if (req.user.role === 'admin') return next();
+    if (req.user.role === 'admin' || req.user.role === 'teacher') return next();
     const roll = String(req.user.rollnumber || req.user.username || '').trim().replace(/[^\w-]/g, '_');
     const basename = path.basename(req.path || '');
     if (roll && basename.toLowerCase().includes(roll.toLowerCase())) {
@@ -516,7 +538,7 @@ async function regradePaperSubmissions(paper) {
 // Authentication Routes (passport-local + passport-local-mongoose)
 app.get('/login', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-        return res.redirect(req.user.role === 'admin' ? '/' : '/student');
+        return res.redirect((req.user.role === 'admin' || req.user.role === 'teacher') ? '/' : '/student');
     }
     const msgMap = {
         signed_out: 'You have been signed out.'
@@ -556,7 +578,8 @@ app.post('/login', loginLimiter.middleware((req) => {
             if (regenErr) return next(regenErr);
             req.logIn(user, (loginErr) => {
                 if (loginErr) return next(loginErr);
-                const dest = user.role === 'admin' ? (savedReturnTo || '/') : '/student';
+                const isStaff = user.role === 'admin' || user.role === 'teacher';
+                const dest = isStaff ? (savedReturnTo || '/') : '/student';
                 return res.redirect(dest);
             });
         });
@@ -849,7 +872,8 @@ app.post('/users/bulk', requireAdmin, handleBulkUploadMiddleware, async (req, re
 
 app.post('/users', requireAdmin, async (req, res) => {
     try {
-        const role = req.body.role === 'admin' ? 'admin' : 'student';
+        const rawRole = String(req.body.role || '').toLowerCase();
+        const role = rawRole === 'admin' ? 'admin' : (rawRole === 'teacher' ? 'teacher' : 'student');
         const username = String(req.body.username || '').trim().toLowerCase();
         const fullName = String(req.body.fullName || '').trim();
         const rollnumber = role === 'student' ? String(req.body.rollnumber || '').trim() : '';
@@ -926,19 +950,32 @@ app.post('/users/:id/delete', requireAdmin, async (req, res) => {
 
 // Dashboard & Paper Routes
 app.get('/', requireAuth, async (req, res) => {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
         return res.redirect('/student');
     }
     try {
-        const papers = await Paper.find().sort({ createdAt: -1 });
-        res.render('index', { papers });
+        const query = {
+            exam_type: { $ne: 'jee' },
+            title: { $not: /jee/i },
+            subject: { $not: /jee/i }
+        };
+        const papers = await Paper.find(query).sort({ createdAt: -1 });
+        const rawCats = await Paper.distinct('category', query);
+        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
+        res.render('index', { papers, categories });
     } catch (e) {
         res.status(500).send('Error loading papers: ' + e.message);
     }
 });
 
-app.get('/paper/new', requireAdmin, (req, res) => {
-    res.render('create_paper');
+app.get('/paper/new', requireAdmin, async (req, res) => {
+    try {
+        const rawCats = await Paper.distinct('category');
+        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
+        res.render('create_paper', { categories });
+    } catch (e) {
+        res.render('create_paper', { categories: [] });
+    }
 });
 
 app.post('/paper/new', requireAdmin, async (req, res) => {
@@ -948,6 +985,9 @@ app.post('/paper/new', requireAdmin, async (req, res) => {
             id,
             title,
             subject,
+            category,
+            batch,
+            section_category,
             total_questions,
             numQuestions,
             max_marks,
@@ -980,9 +1020,12 @@ app.post('/paper/new', requireAdmin, async (req, res) => {
             parsedAnswerKey = answer_key;
         }
 
+        const catVal = (category || batch || section_category || 'General').trim() || 'General';
+
         const paperData = {
             title: title ? title.trim() : 'Untitled Paper',
             subject: subject ? subject.trim() : 'General',
+            category: catVal,
             total_questions: totalQ,
             max_marks: maxM,
             sections: parsedSections,
@@ -1014,7 +1057,103 @@ app.param('id', (req, res, next, id) => {
     next();
 });
 
-app.get('/paper/:id', requireAdmin, async (req, res) => {
+// Helper to delete an entire paper and all its associated submissions and Cloudinary OMR copies
+async function deletePaperAndAllSubmissions(paperId) {
+    const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+    if (!paper) {
+        throw new Error('Paper not found');
+    }
+    const pIdStr = String(paper._id);
+
+    // 1. Find all submissions for this paper
+    const submissions = await Submission.find({
+        $or: [
+            { paper_id: pIdStr },
+            { paperId: pIdStr }
+        ]
+    });
+
+    let deletedFromCloudCount = 0;
+    // 2. Delete all Cloudinary OMR images for these submissions
+    for (const sub of submissions) {
+        const pubId = sub.cloudinary_public_id || sub.cloudinaryPublicId;
+        const acc = sub.cloudinary_account || sub.cloudinaryAccount;
+        if (pubId) {
+            try {
+                await deleteOmrSheet(pubId, acc);
+                deletedFromCloudCount++;
+            } catch (e) {
+                console.warn(`Notice: Could not delete submission ${sub._id} OMR from Cloudinary:`, e.message);
+            }
+        }
+        if (sub.localPath) {
+            try {
+                if (fs.existsSync(sub.localPath)) fs.unlinkSync(sub.localPath);
+            } catch (e) {}
+        }
+    }
+
+    // 3. Delete all submissions from database
+    const subDeleteResult = await Submission.deleteMany({
+        $or: [
+            { paper_id: pIdStr },
+            { paperId: pIdStr }
+        ]
+    });
+
+    // 4. Delete the paper document
+    await Paper.findByIdAndDelete(paper._id);
+
+    return {
+        paperId: pIdStr,
+        title: paper.title,
+        exam_type: paper.exam_type,
+        deletedSubmissionsCount: subDeleteResult.deletedCount || 0,
+        deletedFromCloudCount
+    };
+}
+
+// Delete Entire Paper + All its Submissions & Cloudinary OMR Images
+app.delete('/api/paper/:id', requireAdmin, async (req, res) => {
+    try {
+        const result = await deletePaperAndAllSubmissions(req.params.id);
+        res.json({
+            success: true,
+            message: `Paper "${result.title}" and all ${result.deletedSubmissionsCount} submission(s) deleted successfully.`,
+            ...result
+        });
+    } catch (err) {
+        console.error('Error deleting paper:', err);
+        res.status(err.message === 'Paper not found' ? 404 : 500).json({ error: err.message });
+    }
+});
+
+app.post('/paper/:id/delete', requireAdmin, async (req, res) => {
+    try {
+        const result = await deletePaperAndAllSubmissions(req.params.id);
+        const redirectUrl = (result.exam_type === 'jee' || /jee/i.test(result.title || '')) ? '/jee' : '/';
+        res.redirect(`${redirectUrl}?message=${encodeURIComponent(`Paper "${result.title}" and ${result.deletedSubmissionsCount} submission(s) deleted successfully.`)}`);
+    } catch (err) {
+        console.error('Error deleting paper:', err);
+        res.status(500).send('Error deleting paper: ' + err.message);
+    }
+});
+
+// Update Paper Category / Section / Batch
+app.post('/api/paper/:id/category', requireAdmin, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+        const newCategory = String(req.body.category || 'General').trim() || 'General';
+        paper.category = newCategory;
+        await paper.save();
+        res.json({ success: true, category: newCategory });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/paper/:id', requireAdminOrTeacher, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).send('Paper not found');
@@ -1025,7 +1164,7 @@ app.get('/paper/:id', requireAdmin, async (req, res) => {
 });
 
 // Dedicated JEE Mains Portal Dashboard
-app.get('/jee', requireAdmin, async (req, res) => {
+app.get('/jee', requireAdminOrTeacher, async (req, res) => {
     try {
         const allPapers = await Paper.find({}).sort({ createdAt: -1 });
         const jeePapers = allPapers.filter(p => 
@@ -1045,24 +1184,41 @@ app.get('/jee', requireAdmin, async (req, res) => {
             counts.forEach(c => { subCounts[String(c._id)] = c.count; });
         }
 
-        res.render('jee_dashboard', { papers: jeePapers, allPapers, subCounts });
+        const rawCats = await Paper.distinct('category', {
+            $or: [
+                { exam_type: 'jee' },
+                { title: /jee/i },
+                { subject: /jee/i }
+            ]
+        });
+        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
+
+        res.render('jee_dashboard', { papers: jeePapers, allPapers, subCounts, categories });
     } catch (error) {
         res.status(500).send('Error loading JEE Mains portal: ' + error.message);
     }
 });
 
 // Create New JEE Mains Paper Form
-app.get('/jee/new', requireAdmin, (req, res) => {
-    res.render('create_jee_paper');
+app.get('/jee/new', requireAdmin, async (req, res) => {
+    try {
+        const rawCats = await Paper.distinct('category');
+        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
+        res.render('create_jee_paper', { categories });
+    } catch (e) {
+        res.render('create_jee_paper', { categories: [] });
+    }
 });
 
 // Process New JEE Mains Paper Creation
 app.post('/jee/new', requireAdmin, async (req, res) => {
     try {
         const title = (req.body.title || 'JEE Mains Exam').trim();
+        const category = (req.body.category || req.body.batch || req.body.section_category || '12th JEE').trim() || '12th JEE';
         const paper = new Paper({
             title: title,
             subject: 'JEE Mains',
+            category: category,
             total_questions: 100,
             max_marks: 300,
             exam_type: 'jee',
@@ -1081,7 +1237,7 @@ app.post('/jee/new', requireAdmin, async (req, res) => {
 });
 
 // Dedicated JEE Mains Answer Key Page (Shows only Q1-20, Q41-60, Q81-100 divided into 3 sections)
-app.get('/paper/:id/jee-answerkey', requireAdmin, async (req, res) => {
+app.get('/paper/:id/jee-answerkey', requireAdminOrTeacher, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).send('Paper not found');
@@ -2097,14 +2253,17 @@ app.delete('/api/submission/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// Student Results Portal (scoped strictly to the signed-in student's roll number, or Admin lookup)
+// Student Results Portal (scoped strictly to the signed-in student's roll number, or Admin/Teacher lookup)
 app.get('/student', requireAuth, async (req, res) => {
     try {
-        const targetRoll = req.user.role === 'admin'
+        const isStaff = (req.user.role === 'admin' || req.user.role === 'teacher');
+        const targetRoll = isStaff
             ? String(req.query.roll || '').trim()
             : String(req.user.rollnumber || req.user.username || '').trim();
 
         let results = [];
+        const paperTopperStats = {};
+
         if (targetRoll) {
             const rollVariants = [...new Set([
                 targetRoll,
@@ -2141,11 +2300,49 @@ app.get('/student', requireAuth, async (req, res) => {
                 const paper = papersMap[pid] || null;
                 return buildGradedSubmissionObj(doc, paper);
             });
+
+            // Compute highest marks overall and subject-wise for each paper
+            for (const pid of paperIds) {
+                const paperDocs = await Submission.find({
+                    $or: [
+                        { paper_id: pid },
+                        { paperId: pid }
+                    ]
+                });
+                if (paperDocs.length > 0) {
+                    let highestOverall = -Infinity;
+                    const sectionHighest = {};
+                    paperDocs.forEach(d => {
+                        const graded = buildGradedSubmissionObj(d, papersMap[pid]);
+                        const agg = graded.allSectionsSummary ? graded.allSectionsSummary.obtainedMarks : ((graded.aggregateMarks !== undefined) ? graded.aggregateMarks : (graded.score * 4));
+                        if (agg > highestOverall) highestOverall = agg;
+
+                        if (Array.isArray(graded.sectionWise)) {
+                            graded.sectionWise.forEach(s => {
+                                const sName = s.sectionName || 'Section';
+                                const m = Number(s.marks || 0);
+                                if (!sectionHighest[sName] || m > sectionHighest[sName].highest) {
+                                    sectionHighest[sName] = {
+                                        highest: m,
+                                        maxMarks: s.maxMarks || 100
+                                    };
+                                }
+                            });
+                        }
+                    });
+                    if (highestOverall === -Infinity) highestOverall = 0;
+                    paperTopperStats[pid] = {
+                        highestOverall,
+                        sectionHighest
+                    };
+                }
+            }
         }
 
         res.render('student_dashboard', {
             results,
-            targetRoll
+            targetRoll,
+            paperTopperStats
         });
     } catch (error) {
         console.error('Error loading student dashboard:', error);
@@ -2154,7 +2351,7 @@ app.get('/student', requireAuth, async (req, res) => {
 });
 
 // View All Results & Evaluated OMR Copies for Paper
-app.get('/paper/:id/results', requireAdmin, async (req, res) => {
+app.get('/paper/:id/results', requireAdminOrTeacher, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
@@ -2234,8 +2431,8 @@ app.get('/paper/:id/results', requireAdmin, async (req, res) => {
     }
 });
 
-// Download Detailed Section-Wise Results CSV (Admin Only)
-app.get('/paper/:id/results/export', requireAdmin, async (req, res) => {
+// Download Detailed Section-Wise Results CSV (Admin & Teachers)
+app.get('/paper/:id/results/export', requireAdminOrTeacher, async (req, res) => {
     try {
         const paperId = req.params.id;
         const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
