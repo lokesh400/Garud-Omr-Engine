@@ -285,6 +285,86 @@
             scale: 0.93;
         }
 
+        .omr-bonus-btn {
+            padding: 0 9px;
+            height: 35px;
+            border-radius: var(--radius-sm, 6px);
+            border: 1.5px solid #FCD34D;
+            background: #FFFBEB;
+            color: #B45309;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 120ms ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            white-space: nowrap;
+            margin-left: 4px;
+        }
+        .omr-bonus-btn:hover {
+            background: #FEF3C7;
+            border-color: #F59E0B;
+            color: #92400E;
+            transform: scale(1.04);
+        }
+        .omr-bonus-btn.selected {
+            background: #F59E0B !important;
+            border-color: #D97706 !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+        }
+
+        .omr-mode-btn {
+            padding: 0 8px;
+            height: 35px;
+            border-radius: var(--radius-sm, 6px);
+            border: 1.5px dashed #CBD5E1;
+            background: #F8FAFC;
+            color: #64748B;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 120ms ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            white-space: nowrap;
+            margin-left: 2px;
+        }
+        .omr-mode-btn:hover {
+            border-color: #6366F1;
+            color: #4F46E5;
+            background: #EEF2FF;
+        }
+        .omr-mode-btn.active {
+            background: #EEF2FF !important;
+            border-color: #6366F1 !important;
+            border-style: solid !important;
+            color: #4338CA !important;
+            font-weight: 700;
+            box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .omr-selected-val.val-bonus {
+            min-width: 60px;
+            width: auto;
+            padding: 0 8px;
+            background: #F59E0B !important;
+            color: #FFFFFF !important;
+            border-color: #D97706 !important;
+        }
+        .omr-selected-val.val-multi {
+            min-width: 40px;
+            width: auto;
+            padding: 0 8px;
+            background: #4F46E5 !important;
+            color: #FFFFFF !important;
+            border-color: #4338CA !important;
+        }
+
         /* Clean Light Floating Action Bar */
         .floating-action-bar {
             position: fixed;
@@ -607,24 +687,54 @@
                                 currentVal = paper.answerKey[String(i)] || "";
                             }
                         }
+                        const isBonus = (currentVal === 'BONUS');
+                        let valArray = [];
+                        if (!isBonus && currentVal) {
+                            if (currentVal.includes(',') || currentVal.includes('/') || currentVal.includes(';') || currentVal.includes(' ')) {
+                                valArray = currentVal.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+                            } else if (currentVal.length > 1 && /^[ABCD]+$/.test(currentVal)) {
+                                valArray = currentVal.split('');
+                            } else {
+                                valArray = [currentVal];
+                            }
+                        }
+                        const isMulti = valArray.length > 1;
                     %>
                     <div class="omr-key-row <%= currentVal ? 'has-val' : '' %>" id="row_q<%= i %>">
                         <div class="omr-q-badge">
                             <span class="omr-q-num">Q<%= i %></span>
-                            <span class="omr-selected-val" id="badge_val_q<%= i %>"><%= currentVal || '-' %></span>
+                            <span class="omr-selected-val <%= isBonus ? 'val-bonus' : (isMulti ? 'val-multi' : '') %>" id="badge_val_q<%= i %>">
+                                <%= isBonus ? '★ BONUS' : (currentVal || '-') %>
+                            </span>
                         </div>
                         <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
                             <% ['A','B','C','D'].forEach(opt => { %>
                                 <button type="button"
-                                        class="omr-bubble <%= currentVal === opt ? 'selected' : '' %>"
+                                        class="omr-bubble <%= (!isBonus && valArray.includes(opt)) ? 'selected' : '' %>"
                                         id="btn_q<%= i %>_<%= opt %>"
                                         data-q="<%= i %>"
                                         data-opt="<%= opt %>"
-                                        onclick="selectAnswer('<%= i %>', '<%= opt %>')"
+                                        onclick="selectAnswer('<%= i %>', '<%= opt %>', event)"
                                         title="Select <%= opt %> for Question <%= i %>">
                                     <%= opt %>
                                 </button>
                             <% }) %>
+                            <% if (currentUser && currentUser.role === 'admin') { %>
+                                <button type="button"
+                                        class="omr-mode-btn <%= isMulti ? 'active' : '' %>"
+                                        id="btn_multi_q<%= i %>"
+                                        onclick="toggleMultiMode('<%= i %>')"
+                                        title="Toggle Multi-Correct mode (awards marks if student chooses any of the selected options)">
+                                    ⇄ Multi
+                                </button>
+                                <button type="button"
+                                        class="omr-bonus-btn <%= isBonus ? 'selected' : '' %>"
+                                        id="btn_bonus_q<%= i %>"
+                                        onclick="setBonusAnswer('<%= i %>')"
+                                        title="Mark as Bonus Question (awards marks to all students)">
+                                    ★ Bonus
+                                </button>
+                            <% } %>
                         </div>
                         <input type="hidden" name="q<%= i %>" id="input_q<%= i %>" value="<%= currentVal %>">
                     </div>
@@ -664,42 +774,146 @@
         const totalQuestions = <%= totalQ %>;
         const isTeacher = <%= (currentUser && currentUser.role === 'teacher') ? 'true' : 'false' %>;
 
-        function selectAnswer(qNum, opt) {
+        function parseAnswerVal(val) {
+            if (!val || typeof val !== 'string') return [];
+            val = val.trim().toUpperCase();
+            if (val === 'BONUS' || val === '*' || val === 'ALL') return ['BONUS'];
+            if (val.includes(',') || val.includes('/') || val.includes(';') || val.includes(' ')) {
+                return val.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+            }
+            if (val.length > 1 && /^[ABCD]+$/.test(val)) {
+                return val.split('');
+            }
+            return [val];
+        }
+
+        function selectAnswer(qNum, opt, evt) {
             if (isTeacher) return;
             const input = document.getElementById('input_q' + qNum);
-            const row = document.getElementById('row_q' + qNum);
-            const badge = document.getElementById('badge_val_q' + qNum);
+            const multiBtn = document.getElementById('btn_multi_q' + qNum);
+            const bonusBtn = document.getElementById('btn_bonus_q' + qNum);
             if (!input) return;
 
-            if (input.value === opt) {
-                input.value = '';
-                if (badge) badge.textContent = '-';
-                if (row) row.classList.remove('has-val');
-                ['A', 'B', 'C', 'D'].forEach(o => {
-                    const btn = document.getElementById('btn_q' + qNum + '_' + o);
-                    if (btn) btn.classList.remove('selected');
-                });
-            } else {
-                input.value = opt;
-                if (badge) badge.textContent = opt;
-                if (row) row.classList.add('has-val');
-                ['A', 'B', 'C', 'D'].forEach(o => {
-                    const btn = document.getElementById('btn_q' + qNum + '_' + o);
-                    if (btn) {
-                        if (o === opt) btn.classList.add('selected');
-                        else btn.classList.remove('selected');
-                    }
-                });
+            let isMulti = multiBtn && multiBtn.classList.contains('active');
+            if (evt && (evt.shiftKey || evt.ctrlKey || evt.metaKey)) {
+                isMulti = true;
+                if (multiBtn) multiBtn.classList.add('active');
             }
 
+            let currentOpts = parseAnswerVal(input.value).filter(o => o !== 'BONUS');
+            if (bonusBtn) bonusBtn.classList.remove('selected');
+
+            if (isMulti) {
+                // Multi-choice toggle
+                if (currentOpts.includes(opt)) {
+                    currentOpts = currentOpts.filter(o => o !== opt);
+                } else {
+                    currentOpts.push(opt);
+                    currentOpts.sort();
+                }
+            } else {
+                // Single-choice mode
+                if (currentOpts.length === 1 && currentOpts[0] === opt) {
+                    currentOpts = [];
+                } else {
+                    currentOpts = [opt];
+                }
+            }
+
+            const newVal = currentOpts.join(',');
+            input.value = newVal;
+
+            updateRowUI(qNum, newVal);
             updateKeyProgress();
+        }
+
+        function setBonusAnswer(qNum) {
+            if (isTeacher) return;
+            const input = document.getElementById('input_q' + qNum);
+            if (!input) return;
+
+            if (input.value === 'BONUS') {
+                input.value = '';
+            } else {
+                input.value = 'BONUS';
+            }
+
+            updateRowUI(qNum, input.value);
+            updateKeyProgress();
+        }
+
+        function toggleMultiMode(qNum) {
+            if (isTeacher) return;
+            const multiBtn = document.getElementById('btn_multi_q' + qNum);
+            if (!multiBtn) return;
+            const isNowActive = !multiBtn.classList.contains('active');
+            if (isNowActive) {
+                multiBtn.classList.add('active');
+            } else {
+                multiBtn.classList.remove('active');
+                const input = document.getElementById('input_q' + qNum);
+                if (input && input.value && input.value !== 'BONUS') {
+                    const opts = parseAnswerVal(input.value);
+                    if (opts.length > 1) {
+                        input.value = opts[0];
+                        updateRowUI(qNum, input.value);
+                    }
+                }
+            }
+        }
+
+        function updateRowUI(qNum, val) {
+            const row = document.getElementById('row_q' + qNum);
+            const badge = document.getElementById('badge_val_q' + qNum);
+            const bonusBtn = document.getElementById('btn_bonus_q' + qNum);
+            const multiBtn = document.getElementById('btn_multi_q' + qNum);
+            const opts = parseAnswerVal(val);
+            const isBonus = (val === 'BONUS');
+            const isMulti = opts.length > 1;
+
+            if (bonusBtn) {
+                if (isBonus) bonusBtn.classList.add('selected');
+                else bonusBtn.classList.remove('selected');
+            }
+
+            if (multiBtn && isMulti) {
+                multiBtn.classList.add('active');
+            }
+
+            if (badge) {
+                badge.classList.remove('val-bonus', 'val-multi');
+                if (isBonus) {
+                    badge.textContent = '★ BONUS';
+                    badge.classList.add('val-bonus');
+                } else if (isMulti) {
+                    badge.textContent = opts.join(',');
+                    badge.classList.add('val-multi');
+                } else if (opts.length === 1) {
+                    badge.textContent = opts[0];
+                } else {
+                    badge.textContent = '-';
+                }
+            }
+
+            if (row) {
+                if (val && val.trim() !== '') row.classList.add('has-val');
+                else row.classList.remove('has-val');
+            }
+
+            ['A', 'B', 'C', 'D'].forEach(o => {
+                const btn = document.getElementById('btn_q' + qNum + '_' + o);
+                if (btn) {
+                    if (!isBonus && opts.includes(o)) btn.classList.add('selected');
+                    else btn.classList.remove('selected');
+                }
+            });
         }
 
         function updateKeyProgress() {
             let count = 0;
             const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
             inputs.forEach(inp => {
-                if (inp.value) count++;
+                if (inp.value && inp.value.trim() !== '') count++;
             });
             const headerCounter = document.getElementById('headerCounter');
             const floatingCounter = document.getElementById('floatingCounter');
@@ -715,9 +929,16 @@
                 const rows = document.querySelectorAll('.omr-key-row');
                 rows.forEach(r => r.classList.remove('has-val'));
                 const badges = document.querySelectorAll('.omr-selected-val');
-                badges.forEach(b => b.textContent = '-');
+                badges.forEach(b => {
+                    b.textContent = '-';
+                    b.classList.remove('val-bonus', 'val-multi');
+                });
                 const bubbles = document.querySelectorAll('.omr-bubble');
                 bubbles.forEach(b => b.classList.remove('selected'));
+                const bonusBtns = document.querySelectorAll('.omr-bonus-btn');
+                bonusBtns.forEach(b => b.classList.remove('selected'));
+                const multiBtns = document.querySelectorAll('.omr-mode-btn');
+                multiBtns.forEach(b => b.classList.remove('active'));
                 updateKeyProgress();
             }
         }

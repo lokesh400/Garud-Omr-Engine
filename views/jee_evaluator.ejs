@@ -545,6 +545,112 @@
                 math: { correct: 0, wrong: 0, multiple: 0, blank: 0, score: 0 }
             };
 
+            function parseKeyOptionsClient(keyStr) {
+                if (!keyStr || typeof keyStr !== 'string') return [];
+                const trimmed = keyStr.trim().toUpperCase();
+                if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+                    return ['BONUS'];
+                }
+                if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+                    return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+                }
+                if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+                    return trimmed.split('');
+                }
+                return [trimmed];
+            }
+
+            function evaluateClientQuestionVerdict(marked, officialKey, isJee = true) {
+                const key = (officialKey || '').trim().toUpperCase();
+                const resp = (marked || '').trim().toUpperCase();
+                const posMarks = isJee ? 4 : 1;
+                const posMarksStr = isJee ? '+4' : '+1';
+                const negMarks = isJee ? -1 : 0;
+                const negMarksStr = isJee ? '-1' : '0';
+
+                // 1. Bonus Question: Full positive marks to all students
+                if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+                    return {
+                        verdict: 'bonus',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+                        isBonus: true
+                    };
+                }
+
+                // 2. Blank / Unmarked
+                if (!resp || resp === '-' || resp === 'BLANK') {
+                    return {
+                        verdict: 'blank',
+                        marks: '0',
+                        scoreDelta: 0,
+                        isCorrect: false,
+                        isWrong: false,
+                        isBlank: true,
+                        isBonus: false
+                    };
+                }
+
+                // 3. No Key Set yet
+                if (!key || key === '-') {
+                    return {
+                        verdict: 'marked',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // 4. Multi-option or single-option key check
+                const validKeys = parseKeyOptionsClient(key);
+                const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+                const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+                const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+                if (allMarkedValid || singleMarkedValid) {
+                    return {
+                        verdict: 'correct',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // Student marked multiple bubbles, at least one is wrong
+                if (markedOpts.length > 1) {
+                    return {
+                        verdict: 'multiple',
+                        marks: negMarksStr,
+                        scoreDelta: negMarks,
+                        isCorrect: false,
+                        isWrong: true,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // Single wrong option marked
+                return {
+                    verdict: 'wrong',
+                    marks: negMarksStr,
+                    scoreDelta: negMarks,
+                    isCorrect: false,
+                    isWrong: true,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
             let rawCanvas = document.createElement('canvas');
             let rawCtx = rawCanvas.getContext('2d');
             let leveledCanvas = document.createElement('canvas');
@@ -1475,32 +1581,28 @@
                     const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
                     const correctAns = answerKey[q.toString()] || '';
 
-                    let verdict = 'blank';
+                    const ev = evaluateClientQuestionVerdict(detectedAnswer, correctAns, true);
+                    let verdict = ev.verdict;
 
-                    if (isMultiple) {
+                    if (ev.isBonus) {
+                        correctCount++;
+                        mcqScores[subKey].correct++;
+                    } else if (ev.isBlank) {
+                        blankCount++;
+                        mcqScores[subKey].blank++;
+                    } else if (ev.verdict === 'multiple') {
                         attemptedCount++;
                         wrongCount++;
                         multipleCount++;
-                        verdict = 'multiple';
                         mcqScores[subKey].multiple++;
-                    } else if (filledBubbles.length === 1) {
-                        const singleAns = filledBubbles[0].opt;
+                    } else if (ev.isCorrect) {
                         attemptedCount++;
-                        if (correctAns && singleAns === correctAns) {
-                            correctCount++;
-                            verdict = 'correct';
-                            mcqScores[subKey].correct++;
-                        } else if (correctAns) {
-                            wrongCount++;
-                            verdict = 'wrong';
-                            mcqScores[subKey].wrong++;
-                        } else {
-                            verdict = 'marked';
-                            mcqScores[subKey].correct++;
-                        }
+                        correctCount++;
+                        mcqScores[subKey].correct++;
                     } else {
-                        blankCount++;
-                        mcqScores[subKey].blank++;
+                        attemptedCount++;
+                        wrongCount++;
+                        mcqScores[subKey].wrong++;
                     }
 
                     questionBreakdown.push({
@@ -1540,7 +1642,7 @@
                             ctx.lineTo(stat.x - sz, stat.y + sz);
                             ctx.stroke();
                         } else if (isThisBubbleFilled) {
-                            if (verdict === 'correct') {
+                            if (verdict === 'correct' || verdict === 'bonus') {
                                 ctx.strokeStyle = '#10B981';
                                 ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
                             } else if (verdict === 'wrong') {
@@ -1552,7 +1654,7 @@
                             }
                             ctx.fill();
                             ctx.stroke();
-                        } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                        } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (verdict === 'wrong' || verdict === 'blank')) {
                             ctx.strokeStyle = '#10B981';
                             ctx.setLineDash([3, 3]);
                             ctx.stroke();
@@ -1571,6 +1673,10 @@
                         badgeClass = 'badge-multiple';
                         verdictText = 'Multiple';
                         markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                    } else if (verdict === 'bonus') {
+                        badgeClass = 'badge-correct';
+                        verdictText = '★ BONUS (+4)';
+                        markedCellHtml = '<strong style="color: #D97706; font-size:0.95rem;">' + (detectedAnswer || '★ BONUS') + '</strong>';
                     } else if (verdict === 'correct') {
                         badgeClass = 'badge-correct';
                         verdictText = 'Correct (+4)';
@@ -1578,6 +1684,12 @@
                     } else if (verdict === 'wrong') {
                         badgeClass = 'badge-wrong';
                         verdictText = 'Wrong (-1)';
+                        markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                    } else if (verdict === 'marked') {
+                        badgeClass = 'badge-marked';
+                        verdictText = 'Marked';
+                        markedCellHtml = '<strong style="color: var(--primary); font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                    }
                         markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
                     } else if (verdict === 'marked') {
                         badgeClass = 'badge-marked';

@@ -368,26 +368,54 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            padding: 0.65rem 1.25rem;
+            gap: 8px;
+            padding: 0 12px;
+            height: 44px;
+            min-height: 44px;
+            max-height: 44px;
             background: #0F172A;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             color: #FFFFFF;
             flex-shrink: 0;
             z-index: 10;
+        }
+
+        .omr-modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .omr-modal-header-center {
+            display: none;
+            align-items: center;
+            gap: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px;
+            border-radius: 6px;
+        }
+
+        .omr-modal-header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
         }
 
         .btn-omr-back {
             background: rgba(255, 255, 255, 0.08);
             color: #F8FAFC;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 6px 12px;
+            padding: 4px 10px;
+            height: 28px;
             border-radius: var(--radius-xs);
-            font-size: 0.825rem;
+            font-size: 0.78rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             cursor: pointer;
             transition: var(--transition);
         }
@@ -402,13 +430,14 @@
             background: rgba(255, 255, 255, 0.08);
             color: #E2E8F0;
             border: 1px solid rgba(255, 255, 255, 0.14);
-            padding: 5px 11px;
+            padding: 4px 9px;
+            height: 28px;
             border-radius: var(--radius-xs);
-            font-size: 0.8rem;
+            font-size: 0.76rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             cursor: pointer;
             text-decoration: none;
             transition: var(--transition);
@@ -419,12 +448,31 @@
             color: #FFFFFF;
         }
 
+        .omr-tab-pill {
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            color: #94A3B8;
+            cursor: pointer;
+            transition: var(--transition);
+            line-height: 1.4;
+        }
+
+        .omr-tab-pill.active {
+            background: #2563EB;
+            color: #FFFFFF;
+            box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4);
+        }
+
         .omr-modal-body {
             padding: 0;
             display: grid;
             grid-template-columns: 50% 50%;
-            height: calc(100vh - 56px);
-            max-height: calc(100vh - 56px);
+            height: calc(100vh - 44px);
+            max-height: calc(100vh - 44px);
             overflow: hidden;
             background: #090D16;
         }
@@ -836,45 +884,16 @@
         }
 
         @media (max-width: 960px) {
-            .omr-mobile-nav {
-                display: flex;
-                background: #0F172A;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-                padding: 6px 12px;
-                gap: 8px;
-                flex-shrink: 0;
-            }
-
-            .omr-mobile-nav-btn {
-                flex: 1;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                padding: 8px 12px;
-                border-radius: var(--radius-xs);
-                font-size: 0.82rem;
-                font-weight: 600;
-                background: rgba(255, 255, 255, 0.08);
-                color: #94A3B8;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                transition: var(--transition);
-            }
-
-            .omr-mobile-nav-btn.active {
-                background: #2563EB;
-                color: #FFFFFF;
-                border-color: #3B82F6;
-                box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+            .omr-modal-header-center {
+                display: flex !important;
             }
 
             .omr-modal-body {
                 display: flex;
                 flex-direction: column;
                 grid-template-columns: none;
-                height: calc(100vh - 104px);
-                max-height: calc(100vh - 104px);
+                height: calc(100vh - 44px);
+                max-height: calc(100vh - 44px);
                 overflow: hidden;
             }
 
@@ -887,7 +906,7 @@
             }
 
             .omr-stage-viewport {
-                padding: 10px 8px;
+                padding: 8px 6px;
                 overflow: auto;
                 -webkit-overflow-scrolling: touch;
             }
@@ -912,6 +931,163 @@
             .omr-details-pane.mobile-tab-hidden {
                 display: none !important;
             }
+        }
+
+        /* Mobile Results Cards View (Zero horizontal scrolling on <= 768px) */
+        @media (max-width: 768px) {
+            .data-table-wrap {
+                display: none !important;
+            }
+            .mobile-results-cards {
+                display: flex !important;
+                flex-direction: column;
+                gap: 12px;
+                padding: 0.65rem 0.25rem 1.5rem 0.25rem;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-results-cards {
+                display: none !important;
+            }
+        }
+
+        .mobile-student-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .mobile-student-card:active {
+            transform: scale(0.99);
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .mobile-rank-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: #F1F5F9;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+            flex-shrink: 0;
+        }
+
+        .mobile-card-score {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #059669;
+            line-height: 1.1;
+            flex-shrink: 0;
+        }
+
+        .mobile-card-score .max-score {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .mobile-sec-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .mobile-sec-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 6px 8px;
+            text-align: center;
+        }
+
+        .mobile-sec-name {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mobile-sec-marks {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text-main);
+        }
+
+        .mobile-sec-marks .mobile-sec-max {
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .mobile-sec-stats {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .mobile-card-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #FAFAFA;
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .mobile-card-summary-row strong {
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mobile-card-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .mobile-btn-view {
+            flex: 1;
+            justify-content: center;
+            height: 36px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            gap: 6px;
         }
 
         @media (max-width: 640px) {
@@ -940,7 +1116,7 @@
             }
 
             .results-table-card {
-                padding: 1rem 0.85rem;
+                padding: 0.85rem 0.65rem;
             }
 
             .search-box {
@@ -955,8 +1131,15 @@
             }
 
             .omr-modal-header {
-                padding: 0.5rem 0.75rem;
+                padding: 0 8px;
+                height: 42px;
+                min-height: 42px;
+                max-height: 42px;
                 gap: 6px;
+            }
+
+            .btn-omr-back .back-text {
+                display: none;
             }
 
             .omr-kpi-grid {
@@ -1410,6 +1593,84 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- Mobile Responsive Student Cards (< 768px screens: Zero horizontal scroll) -->
+                            <div class="mobile-results-cards" id="mobileResultsCards">
+                                <% results.forEach((r, idx) => { %>
+                                    <% const studentRoll = r.rollnumber || r.rollNumber || 'UNKNOWN';
+                                       const studentName = r.studentName || '';
+                                       const scannedTime = r.submitted_at || r.scannedAt || new Date();
+                                       const sumSec = r.allSectionsSummary || {
+                                           totalMarks: r.maxMarks || ((r.totalQuestions || 50) * 4),
+                                           obtainedMarks: (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4),
+                                           totalQuestions: r.totalQuestions || 0,
+                                           attemptedQuestions: Math.max(0, (r.totalQuestions || 0) - (r.blankCount || 0)),
+                                           unattemptedQuestions: r.blankCount || 0,
+                                           correctCount: r.correctCount || 0,
+                                           wrongCount: r.wrongCount || 0
+                                       };
+                                       const searchStr = `${studentRoll} ${studentName}`.toLowerCase();
+                                    %>
+                                    <div class="mobile-student-card" data-roll="<%= studentRoll.toLowerCase() %>" data-search="<%= searchStr %>" id="mcard-<%= r._id %>">
+                                        <div class="mobile-card-header">
+                                            <div class="mobile-card-meta">
+                                                <span class="mobile-rank-badge">#<%= idx + 1 %></span>
+                                                <span class="roll-badge"><%= studentRoll %></span>
+                                                <% if (studentName) { %>
+                                                    <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);"><%= studentName %></span>
+                                                <% } %>
+                                            </div>
+                                            <div class="mobile-card-score">
+                                                <%= sumSec.obtainedMarks %> <span class="max-score">/ <%= sumSec.totalMarks %></span>
+                                            </div>
+                                        </div>
+
+                                        <% if (r.sectionWise && r.sectionWise.length > 0) { %>
+                                            <div class="mobile-sec-grid">
+                                                <% r.sectionWise.forEach(s => { %>
+                                                    <% const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
+                                                       const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
+                                                       const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
+                                                    %>
+                                                    <div class="mobile-sec-box">
+                                                        <div class="mobile-sec-name"><%= s.sectionName %></div>
+                                                        <div class="mobile-sec-marks"><%= s.marks %> <span class="mobile-sec-max">/ <%= s.maxMarks %></span></div>
+                                                        <div class="mobile-sec-stats">
+                                                            <span style="color: var(--success-hover);"><%= s.correct || 0 %>C</span> · 
+                                                            <span style="color: var(--danger);"><%= s.wrong || 0 %>W</span> · 
+                                                            <span style="color: var(--text-muted);"><%= secUnatt %>U</span>
+                                                        </div>
+                                                    </div>
+                                                <% }) %>
+                                            </div>
+                                        <% } %>
+
+                                        <div class="mobile-card-summary-row">
+                                            <span>Att: <strong><%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %></strong></span>
+                                            <span>Acc: <strong style="color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;"><%= r.percentage %>%</strong></span>
+                                            <span><%= new Date(scannedTime).toLocaleDateString() %></span>
+                                        </div>
+
+                                        <div class="mobile-card-actions">
+                                            <button type="button" class="btn btn-primary btn-sm mobile-btn-view" onclick="openOmrModalById('<%= r._id %>')">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                    <circle cx="12" cy="12" r="3"></circle>
+                                                </svg>
+                                                View OMR Sheet
+                                            </button>
+                                            <% if (currentUser && currentUser.role === 'admin') { %>
+                                                <button type="button" class="btn btn-danger btn-sm btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete copy" style="height: 36px; padding: 0 12px;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
                             <% } else { %>
                                 <div class="empty-state">
                                     <div class="empty-state-icon" aria-hidden="true">
@@ -1444,67 +1705,41 @@
         </div>
 
         <!-- Checked OMR Copy Full-Page Dialog -->
-        <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalScoreText">
+        <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalRollNo">
             <header class="omr-modal-header">
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div class="omr-modal-header-left">
                     <button type="button" class="btn-omr-back" onclick="closeOmrModalDirect()" title="Return to Paper Results">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
                         </svg>
-                        <span>Back</span>
+                        <span class="back-text">Back</span>
                     </button>
-                    <div style="width: 1px; height: 22px; background: rgba(255, 255, 255, 0.15);"></div>
-                    <span class="roll-badge" id="modalRollNo" style="font-size: 0.88rem; padding: 4px 10px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; letter-spacing: 0.5px;">ROLL NO</span>
-                    <span style="font-size: 0.92rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
-                    <span style="font-size: 0.76rem; padding: 3px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: #94A3B8; font-weight: 600;">
-                        <%= paper.exam_type === 'jee' ? 'JEE Mains Paper' : (paper.title || 'OMR Paper') %>
-                    </span>
+                    <span class="roll-badge" id="modalRollNo" style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
+                    <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0 / 0</span>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.95rem; padding: 4px 12px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px;">Marks: 0</span>
-                    <span style="font-weight: 500; font-size: 0.82rem; color: #94A3B8;" id="modalScoreText">0 / 0 Questions</span>
+                <div class="omr-modal-header-center" id="omrMobileNav">
+                    <button type="button" class="omr-tab-pill active" id="tabMobileOmr" onclick="setMobileModalTab('omr')">Sheet</button>
+                    <button type="button" class="omr-tab-pill" id="tabMobileBreakdown" onclick="setMobileModalTab('breakdown')">Marks</button>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()">
-                        Live Marks: ON
+                <div class="omr-modal-header-right">
+                    <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()" title="Toggle live check marks overlay">
+                        Marks: ON
                     </button>
                     <a id="modalOpenFullBtn" href="#" target="_blank" class="btn-omr-tool" title="Open full resolution photo in new tab">
-                        Full Photo &#8599;
+                        Photo &#8599;
                     </a>
                     <% if (currentUser && currentUser.role === 'admin') { %>
-                        <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
-                            Delete Copy
+                        <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary" style="padding: 2px 8px; font-size: 0.75rem; height: 28px;">
+                            Delete
                         </button>
                     <% } %>
                     <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()" aria-label="Close modal">&times;</button>
                 </div>
             </header>
-
-            <!-- Mobile Navigation Tab Bar (Visible on mobile/tablet <= 960px) -->
-            <nav class="omr-mobile-nav" id="omrMobileNav" aria-label="Modal View Tabs">
-                <button type="button" class="omr-mobile-nav-btn active" id="tabMobileOmr" onclick="setMobileModalTab('omr')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                    <span>OMR Sheet Copy</span>
-                </button>
-                <button type="button" class="omr-mobile-nav-btn" id="tabMobileBreakdown" onclick="setMobileModalTab('breakdown')">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"></line>
-                        <line x1="8" y1="12" x2="21" y2="12"></line>
-                        <line x1="8" y1="18" x2="21" y2="18"></line>
-                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                    </svg>
-                    <span>Questions & Marks</span>
-                </button>
-            </nav>
 
             <div class="omr-modal-body">
                 <!-- Left: Full-Height OMR Sheet Stage with Centered Canvas & Live Checking Overlay -->
@@ -1757,6 +1992,112 @@
                 if (s && s._id) submissionsMap[String(s._id)] = s;
             });
 
+            function parseKeyOptionsClient(keyStr) {
+                if (!keyStr || typeof keyStr !== 'string') return [];
+                const trimmed = keyStr.trim().toUpperCase();
+                if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+                    return ['BONUS'];
+                }
+                if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+                    return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+                }
+                if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+                    return trimmed.split('');
+                }
+                return [trimmed];
+            }
+
+            function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
+                const key = (officialKey || '').trim().toUpperCase();
+                const resp = (marked || '').trim().toUpperCase();
+                const posMarks = isJee ? 4 : 1;
+                const posMarksStr = isJee ? '+4' : '+1';
+                const negMarks = isJee ? -1 : 0;
+                const negMarksStr = isJee ? '-1' : '0';
+
+                // 1. Bonus Question: Full positive marks to all students
+                if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+                    return {
+                        verdict: 'bonus',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+                        isBonus: true
+                    };
+                }
+
+                // 2. Blank / Unmarked
+                if (!resp || resp === '-' || resp === 'BLANK') {
+                    return {
+                        verdict: 'blank',
+                        marks: '0',
+                        scoreDelta: 0,
+                        isCorrect: false,
+                        isWrong: false,
+                        isBlank: true,
+                        isBonus: false
+                    };
+                }
+
+                // 3. No Key Set yet
+                if (!key || key === '-') {
+                    return {
+                        verdict: 'marked',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // 4. Multi-option or single-option key check
+                const validKeys = parseKeyOptionsClient(key);
+                const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+                const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+                const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+                if (allMarkedValid || singleMarkedValid) {
+                    return {
+                        verdict: 'correct',
+                        marks: posMarksStr,
+                        scoreDelta: posMarks,
+                        isCorrect: true,
+                        isWrong: false,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // Student marked multiple bubbles, at least one is wrong
+                if (markedOpts.length > 1) {
+                    return {
+                        verdict: 'multiple',
+                        marks: negMarksStr,
+                        scoreDelta: negMarks,
+                        isCorrect: false,
+                        isWrong: true,
+                        isBlank: false,
+                        isBonus: false
+                    };
+                }
+
+                // Single wrong option marked
+                return {
+                    verdict: 'wrong',
+                    marks: negMarksStr,
+                    scoreDelta: negMarks,
+                    isCorrect: false,
+                    isWrong: true,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
             const omrModalDialog = document.getElementById('omrModal');
             if (omrModalDialog) {
                 omrModalDialog.addEventListener('close', () => {
@@ -1962,14 +2303,14 @@
                             l2.setAttribute('stroke-width', '2');
                             svg.appendChild(l2);
                         } else if (isMarked) {
-                            if (b.verdict === 'correct') {
+                            if (b.verdict === 'correct' || b.verdict === 'bonus') {
                                 addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
                             } else if (b.verdict === 'wrong') {
                                 addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
                             } else {
                                 addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
                             }
-                        } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
+                        } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
                             addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
                         } else {
                             addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
@@ -2337,7 +2678,7 @@
                         else if (val === -1) v = 'wrong';
                         else v = 'blank';
                     }
-                    if (v === 'correct' || v === 'marked') corCount++;
+                    if (v === 'correct' || v === 'marked' || v === 'bonus') corCount++;
                     else if (v === 'wrong' || v === 'multiple') wrnCount++;
                     else blkCount++;
                 });
@@ -2381,7 +2722,7 @@
                         else v = 'blank';
                     }
                     if (currentFilterVerdict === 'all') return true;
-                    if (currentFilterVerdict === 'correct') return v === 'correct' || v === 'marked';
+                    if (currentFilterVerdict === 'correct') return v === 'correct' || v === 'marked' || v === 'bonus';
                     if (currentFilterVerdict === 'wrong') return v === 'wrong' || v === 'multiple';
                     if (currentFilterVerdict === 'blank') return v === 'blank' || v === 'unmarked';
                     return true;
@@ -2412,17 +2753,21 @@
                                 qMarksText = '0'; qMarksColor = '#64748B';
                             }
                         } else {
-                            if (b.verdict === 'correct') {
+                            if (b.verdict === 'bonus') {
+                                vColor = '#92400E'; vBg = '#FEF3C7'; vText = '★ BONUS';
+                                if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1';
+                                qMarksColor = '#D97706';
+                            } else if (b.verdict === 'correct') {
                                 vColor = '#065F46'; vBg = '#D1FAE5'; vText = 'Correct';
-                                if (b.marks === undefined) qMarksText = '+4';
+                                if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1';
                                 qMarksColor = '#059669';
                             } else if (b.verdict === 'wrong') {
                                 vColor = '#991B1B'; vBg = '#FEE2E2'; vText = 'Wrong';
-                                if (b.marks === undefined) qMarksText = '-1';
+                                if (b.marks === undefined) qMarksText = isJee ? '-1' : '0';
                                 qMarksColor = '#DC2626';
                             } else if (b.verdict === 'multiple') {
                                 vColor = '#9A3412'; vBg = '#FFEDD5'; vText = 'Multiple';
-                                if (b.marks === undefined) qMarksText = '-1';
+                                if (b.marks === undefined) qMarksText = isJee ? '-1' : '0';
                                 qMarksColor = '#EA580C';
                             } else if (b.verdict === 'marked') {
                                 vColor = '#1E40AF'; vBg = '#DBEAFE'; vText = 'Recorded';
@@ -2479,7 +2824,7 @@
                                 `;
                             }
                         } else if (b.marked && b.marked !== '-' && b.marked !== 'Blank') {
-                            const isCorr = b.verdict === 'correct' || b.verdict === 'marked';
+                            const isCorr = b.verdict === 'correct' || b.verdict === 'marked' || b.verdict === 'bonus';
                             tdMarked.innerHTML = `<span style="padding: 2px 8px; border-radius: 4px; background: ${isCorr ? '#DCFCE7; color: #15803D;' : '#FEE2E2; color: #B91C1C;'} border: 1px solid currentColor;">${escapeText(b.marked)}</span>`;
                         } else {
                             tdMarked.innerHTML = `<span style="color:#94A3B8;">—</span>`;
@@ -2490,7 +2835,12 @@
                         if (b.isNumerical) {
                             tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #FAF5FF; border: 1px solid #E9D5FF; color: #7E22CE; font-weight:700;">NVQ</span>`;
                         } else {
-                            tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #EFF6FF; border: 1px solid #BFDBFE;">${escapeText(b.correctKey || '-')}</span>`;
+                            const cKeyStr = String(b.correctKey || '-').trim();
+                            if (cKeyStr.toUpperCase() === 'BONUS') {
+                                tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #FEF3C7; border: 1px solid #FCD34D; color: #B45309; font-weight:800;">★ BONUS</span>`;
+                            } else {
+                                tdKey.innerHTML = `<span style="padding: 2px 7px; border-radius: 4px; background: #EFF6FF; border: 1px solid #BFDBFE;">${escapeText(cKeyStr)}</span>`;
+                            }
                         }
 
                         const tdMarks = document.createElement('td');
@@ -2767,8 +3117,14 @@
                         nameEl.style.display = 'none';
                     }
                 }
-                document.getElementById('modalScoreText').textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
-                document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                const scoreTextEl = document.getElementById('modalScoreText');
+                if (scoreTextEl) {
+                    scoreTextEl.textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
+                }
+                const aggTextEl = document.getElementById('modalAggregateText');
+                if (aggTextEl) {
+                    aggTextEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                }
                 document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
                 const allStatsEl = document.getElementById('modalAllSectionsStats');
                 if (allStatsEl) {
@@ -2860,21 +3216,27 @@
 
                 let list = [];
                 if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
-                    // Priority 1: Use authentic scanned breakdown directly (no re-evaluation or drift)
-                    list = data.breakdown;
+                    // Map stored breakdown with live answerKey to evaluate bonus and multi-correct options dynamically
+                    list = data.breakdown.map(item => {
+                        if (!item || item.isNumerical) return item;
+                        const omrQ = Number(item.omrQ);
+                        const dispQ = Number(item.displayQ || item.q);
+                        const activeKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[dispQ] || answerKey[String(dispQ)] || item.correctKey;
+                        const ev = evaluateClientQuestionVerdict(item.marked, activeKey, isJee);
+                        return {
+                            ...item,
+                            correctKey: activeKey || item.correctKey || '-',
+                            verdict: ev.verdict,
+                            marks: ev.marks
+                        };
+                    });
                 } else if (isJee) {
                     // Fallback for legacy JEE submissions without stored breakdown:
                     // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
                     for (let qNum = 1; qNum <= 20; qNum++) {
                         const resp = (data.responses && (data.responses[qNum - 1] || '')) || '';
                         const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
-                        let verdict = 'blank';
-                        if (resp && String(resp).trim() !== '') {
-                            const cleaned = String(resp).trim().toUpperCase();
-                            if (cleaned.includes(',')) verdict = 'multiple';
-                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                            else verdict = 'marked';
-                        }
+                        const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
                         list.push({
                             q: qNum,
                             displayQ: qNum,
@@ -2882,7 +3244,8 @@
                             subject: '⚛️ Phy',
                             marked: resp || '',
                             correctKey: correctKey,
-                            verdict: verdict,
+                            marks: ev.marks,
+                            verdict: ev.verdict,
                             isNumerical: false
                         });
                     }
@@ -2915,13 +3278,7 @@
                         const displayQ = 26 + (omrQ - 41);
                         const resp = (data.responses && data.responses[omrQ - 1]) || '';
                         const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
-                        let verdict = 'blank';
-                        if (resp && String(resp).trim() !== '') {
-                            const cleaned = String(resp).trim().toUpperCase();
-                            if (cleaned.includes(',')) verdict = 'multiple';
-                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                            else verdict = 'marked';
-                        }
+                        const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
                         list.push({
                             q: displayQ,
                             displayQ: displayQ,
@@ -2929,7 +3286,8 @@
                             subject: '🧪 Chem',
                             marked: resp || '',
                             correctKey: correctKey,
-                            verdict: verdict,
+                            marks: ev.marks,
+                            verdict: ev.verdict,
                             isNumerical: false
                         });
                     }
@@ -2962,13 +3320,7 @@
                         const displayQ = 51 + (omrQ - 81);
                         const resp = (data.responses && data.responses[omrQ - 1]) || '';
                         const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
-                        let verdict = 'blank';
-                        if (resp && String(resp).trim() !== '') {
-                            const cleaned = String(resp).trim().toUpperCase();
-                            if (cleaned.includes(',')) verdict = 'multiple';
-                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                            else verdict = 'marked';
-                        }
+                        const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
                         list.push({
                             q: displayQ,
                             displayQ: displayQ,
@@ -2976,7 +3328,8 @@
                             subject: '📐 Math',
                             marked: resp || '',
                             correctKey: correctKey,
-                            verdict: verdict,
+                            marks: ev.marks,
+                            verdict: ev.verdict,
                             isNumerical: false
                         });
                     }
@@ -3009,23 +3362,14 @@
                         const qNum = i + 1;
                         const resp = data.responses[i];
                         const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
-                        let verdict = 'blank';
-                        if (resp && String(resp).trim() !== '') {
-                            const cleaned = String(resp).trim().toUpperCase();
-                            if (cleaned.includes(',')) {
-                                verdict = 'multiple';
-                            } else if (correctKey !== '-') {
-                                verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                            } else {
-                                verdict = 'marked';
-                            }
-                        }
+                        const ev = evaluateClientQuestionVerdict(resp, correctKey, false);
                         list.push({
                             q: qNum,
                             displayQ: qNum,
                             marked: resp || '',
                             correctKey: correctKey,
-                            verdict: verdict
+                            marks: ev.marks,
+                            verdict: ev.verdict
                         });
                     }
                 }
@@ -3125,6 +3469,11 @@
                 rows.forEach(row => {
                     const haystack = row.getAttribute('data-search') || row.getAttribute('data-roll') || '';
                     row.style.display = haystack.includes(query) ? '' : 'none';
+                });
+                const cards = document.querySelectorAll('.mobile-student-card');
+                cards.forEach(card => {
+                    const haystack = card.getAttribute('data-search') || card.getAttribute('data-roll') || '';
+                    card.style.display = haystack.includes(query) ? '' : 'none';
                 });
             }
 

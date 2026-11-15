@@ -54,6 +54,128 @@ function buildKeyLookup(paper) {
 }
 
 /**
+ * Parse an official answer key string into normalized options array
+ * e.g. "A,B" -> ["A", "B"], "A/C" -> ["A", "C"], "BONUS" -> ["BONUS"]
+ */
+function parseKeyOptions(keyStr) {
+    if (!keyStr || typeof keyStr !== 'string') return [];
+    const trimmed = keyStr.trim().toUpperCase();
+    if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+        return ['BONUS'];
+    }
+    if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+        return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+    }
+    if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+        return trimmed.split('');
+    }
+    return [trimmed];
+}
+
+/**
+ * Evaluate a student's response against an official answer key
+ * Handles:
+ *  - Bonus questions: awards full marks to all students regardless of response
+ *  - Multiple correct options: awards full marks if student selected ANY ONE of the valid options
+ *  - Single correct option
+ *  - Blank / unmarked
+ *  - Multiple bubbles shaded on physical OMR: treated as invalid/wrong
+ */
+function evaluateQuestionVerdict(marked, officialKey, examType = 'jee') {
+    const key = (officialKey || '').trim().toUpperCase();
+    const resp = (marked || '').trim().toUpperCase();
+    const isJee = (examType === 'jee' || examType === true);
+    const posMarks = isJee ? 4 : 1;
+    const posMarksStr = isJee ? '+4' : '+1';
+    const negMarks = isJee ? -1 : 0;
+    const negMarksStr = isJee ? '-1' : '0';
+
+    // 1. Bonus Question: Full positive marks to all students
+    if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+        return {
+            verdict: 'bonus',
+            marks: posMarksStr,
+            scoreDelta: posMarks,
+            isCorrect: true,
+            isWrong: false,
+            isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+            isBonus: true
+        };
+    }
+
+    // 2. Blank / Unmarked
+    if (!resp || resp === '-' || resp === 'BLANK') {
+        return {
+            verdict: 'blank',
+            marks: '0',
+            scoreDelta: 0,
+            isCorrect: false,
+            isWrong: false,
+            isBlank: true,
+            isBonus: false
+        };
+    }
+
+    // 3. No Key Set yet
+    if (!key || key === '-') {
+        return {
+            verdict: 'marked',
+            marks: posMarksStr,
+            scoreDelta: posMarks,
+            isCorrect: true,
+            isWrong: false,
+            isBlank: false,
+            isBonus: false
+        };
+    }
+
+    // 4. Multi-option or single-option key check
+    const validKeys = parseKeyOptions(key);
+    const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+    // Case A: All marked options are valid (e.g. student shaded "B,C" when key is "B,C", or "B" when key is "B,C")
+    const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+    // Case B: Single marked option is in validKeys (e.g. student marked "B" or "C" when key is "B,C")
+    const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+    if (allMarkedValid || singleMarkedValid) {
+        return {
+            verdict: 'correct',
+            marks: posMarksStr,
+            scoreDelta: posMarks,
+            isCorrect: true,
+            isWrong: false,
+            isBlank: false,
+            isBonus: false
+        };
+    }
+
+    // Case C: Student marked multiple bubbles and at least one is NOT a valid key
+    if (markedOpts.length > 1) {
+        return {
+            verdict: 'multiple',
+            marks: negMarksStr,
+            scoreDelta: negMarks,
+            isCorrect: false,
+            isWrong: true,
+            isBlank: false,
+            isBonus: false
+        };
+    }
+
+    // Case D: Single wrong option marked
+    return {
+        verdict: 'wrong',
+        marks: negMarksStr,
+        scoreDelta: negMarks,
+        isCorrect: false,
+        isWrong: true,
+        isBlank: false,
+        isBonus: false
+    };
+}
+
+/**
  * Core image buffer evaluation using ring-moat computer vision bubble detection
  */
 function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
@@ -250,17 +372,15 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
             if (markedStr) responsesArray[omrQ - 1] = markedStr;
 
             const key = (keyLookup[omrQ] || keyLookup[dispQ] || '').trim().toUpperCase();
-            let verdict = 'blank', marks = '0';
-            if (!markedStr) {
-                verdict = 'blank'; marks = '0'; phyBlank++;
-            } else if (filled.length > 1) {
-                verdict = 'multiple'; marks = '-1'; phyWrong++; phyScore -= 1;
-            } else if (key && markedStr === key) {
-                verdict = 'correct'; marks = '+4'; phyCorrect++; phyScore += 4;
-            } else if (key) {
-                verdict = 'wrong'; marks = '-1'; phyWrong++; phyScore -= 1;
-            } else {
-                verdict = 'marked'; marks = '+4'; phyCorrect++; phyScore += 4;
+            const evalRes = evaluateQuestionVerdict(markedStr, key, 'jee');
+            if (evalRes.isBonus) {
+                phyCorrect++; phyScore += 4;
+            } else if (evalRes.isBlank) {
+                phyBlank++;
+            } else if (evalRes.isCorrect) {
+                phyCorrect++; phyScore += 4;
+            } else if (evalRes.isWrong) {
+                phyWrong++; phyScore -= 1;
             }
 
             breakdown.push({
@@ -272,8 +392,8 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
                 section: 'A',
                 marked: markedStr || '-',
                 correctKey: key || '-',
-                verdict,
-                marks,
+                verdict: evalRes.verdict,
+                marks: evalRes.marks,
                 isNumerical: false
             });
         }
@@ -313,17 +433,15 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
             if (markedStr) responsesArray[omrQ - 1] = markedStr;
 
             const key = (keyLookup[omrQ] || keyLookup[dispQ] || '').trim().toUpperCase();
-            let verdict = 'blank', marks = '0';
-            if (!markedStr) {
-                verdict = 'blank'; marks = '0'; chemBlank++;
-            } else if (filled.length > 1) {
-                verdict = 'multiple'; marks = '-1'; chemWrong++; chemScore -= 1;
-            } else if (key && markedStr === key) {
-                verdict = 'correct'; marks = '+4'; chemCorrect++; chemScore += 4;
-            } else if (key) {
-                verdict = 'wrong'; marks = '-1'; chemWrong++; chemScore -= 1;
-            } else {
-                verdict = 'marked'; marks = '+4'; chemCorrect++; chemScore += 4;
+            const evalRes = evaluateQuestionVerdict(markedStr, key, 'jee');
+            if (evalRes.isBonus) {
+                chemCorrect++; chemScore += 4;
+            } else if (evalRes.isBlank) {
+                chemBlank++;
+            } else if (evalRes.isCorrect) {
+                chemCorrect++; chemScore += 4;
+            } else if (evalRes.isWrong) {
+                chemWrong++; chemScore -= 1;
             }
 
             breakdown.push({
@@ -335,8 +453,8 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
                 section: 'A',
                 marked: markedStr || '-',
                 correctKey: key || '-',
-                verdict,
-                marks,
+                verdict: evalRes.verdict,
+                marks: evalRes.marks,
                 isNumerical: false
             });
         }
@@ -376,17 +494,15 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
             if (markedStr) responsesArray[omrQ - 1] = markedStr;
 
             const key = (keyLookup[omrQ] || keyLookup[dispQ] || '').trim().toUpperCase();
-            let verdict = 'blank', marks = '0';
-            if (!markedStr) {
-                verdict = 'blank'; marks = '0'; mathBlank++;
-            } else if (filled.length > 1) {
-                verdict = 'multiple'; marks = '-1'; mathWrong++; mathScore -= 1;
-            } else if (key && markedStr === key) {
-                verdict = 'correct'; marks = '+4'; mathCorrect++; mathScore += 4;
-            } else if (key) {
-                verdict = 'wrong'; marks = '-1'; mathWrong++; mathScore -= 1;
-            } else {
-                verdict = 'marked'; marks = '+4'; mathCorrect++; mathScore += 4;
+            const evalRes = evaluateQuestionVerdict(markedStr, key, 'jee');
+            if (evalRes.isBonus) {
+                mathCorrect++; mathScore += 4;
+            } else if (evalRes.isBlank) {
+                mathBlank++;
+            } else if (evalRes.isCorrect) {
+                mathCorrect++; mathScore += 4;
+            } else if (evalRes.isWrong) {
+                mathWrong++; mathScore -= 1;
             }
 
             breakdown.push({
@@ -398,8 +514,8 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
                 section: 'A',
                 marked: markedStr || '-',
                 correctKey: key || '-',
-                verdict,
-                marks,
+                verdict: evalRes.verdict,
+                marks: evalRes.marks,
                 isNumerical: false
             });
         }
@@ -488,17 +604,15 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
         if (markedStr) responsesArray[q - 1] = markedStr;
 
         const key = (keyLookup[q] || '').trim().toUpperCase();
-        let verdict = 'blank', marks = '0';
-        if (!markedStr) {
-            verdict = 'blank'; marks = '0'; blankCount++;
-        } else if (filled.length > 1) {
-            verdict = 'multiple'; marks = '-1'; wrongCount++;
-        } else if (key && markedStr === key) {
-            verdict = 'correct'; marks = '+1'; score++; correctCount++;
-        } else if (key) {
-            verdict = 'wrong'; marks = '-1'; wrongCount++;
-        } else {
-            verdict = 'marked'; marks = '+1'; score++; correctCount++;
+        const evalRes = evaluateQuestionVerdict(markedStr, key, 'standard');
+        if (evalRes.isBonus) {
+            score++; correctCount++;
+        } else if (evalRes.isBlank) {
+            blankCount++;
+        } else if (evalRes.isCorrect) {
+            score++; correctCount++;
+        } else if (evalRes.isWrong) {
+            wrongCount++;
         }
 
         breakdown.push({
@@ -507,8 +621,8 @@ function evaluateOmrBuffer(imageBuffer, paper, existingSubmission = null) {
             omrQ: q,
             marked: markedStr || '-',
             correctKey: key || '-',
-            verdict,
-            marks
+            verdict: evalRes.verdict,
+            marks: evalRes.marks
         });
     }
 
@@ -603,5 +717,7 @@ module.exports = {
     evaluateOmrBuffer,
     fetchSheetImageBuffer,
     recheckSubmissionFromCloudinary,
-    buildKeyLookup
-}
+    buildKeyLookup,
+    parseKeyOptions,
+    evaluateQuestionVerdict
+};

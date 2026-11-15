@@ -367,6 +367,112 @@
     <script>
         const answerKey = <%- answerKey || '{}' %>;
         const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+
+        function parseKeyOptionsClient(keyStr) {
+            if (!keyStr || typeof keyStr !== 'string') return [];
+            const trimmed = keyStr.trim().toUpperCase();
+            if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+                return ['BONUS'];
+            }
+            if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+                return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+            }
+            if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+                return trimmed.split('');
+            }
+            return [trimmed];
+        }
+
+        function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
+            const key = (officialKey || '').trim().toUpperCase();
+            const resp = (marked || '').trim().toUpperCase();
+            const posMarks = isJee ? 4 : 1;
+            const posMarksStr = isJee ? '+4' : '+1';
+            const negMarks = isJee ? -1 : 0;
+            const negMarksStr = isJee ? '-1' : '0';
+
+            // 1. Bonus Question: Full positive marks to all students
+            if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+                return {
+                    verdict: 'bonus',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+                    isBonus: true
+                };
+            }
+
+            // 2. Blank / Unmarked
+            if (!resp || resp === '-' || resp === 'BLANK') {
+                return {
+                    verdict: 'blank',
+                    marks: '0',
+                    scoreDelta: 0,
+                    isCorrect: false,
+                    isWrong: false,
+                    isBlank: true,
+                    isBonus: false
+                };
+            }
+
+            // 3. No Key Set yet
+            if (!key || key === '-') {
+                return {
+                    verdict: 'marked',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // 4. Multi-option or single-option key check
+            const validKeys = parseKeyOptionsClient(key);
+            const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+            const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+            const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+            if (allMarkedValid || singleMarkedValid) {
+                return {
+                    verdict: 'correct',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // Student marked multiple bubbles, at least one is wrong
+            if (markedOpts.length > 1) {
+                return {
+                    verdict: 'multiple',
+                    marks: negMarksStr,
+                    scoreDelta: negMarks,
+                    isCorrect: false,
+                    isWrong: true,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // Single wrong option marked
+            return {
+                verdict: 'wrong',
+                marks: negMarksStr,
+                scoreDelta: negMarks,
+                isCorrect: false,
+                isWrong: true,
+                isBlank: false,
+                isBonus: false
+            };
+        }
         const img = document.getElementById('uploadedImage');
         const canvas = document.getElementById('canvasOutput');
         const ctx = canvas.getContext('2d');
@@ -1187,26 +1293,27 @@
                 let verdict = 'unmarked';
                 if (correctAns) evaluatedKeyCount++;
 
-                if (isMultiple) {
+                const ev = evaluateClientQuestionVerdict(detectedAnswer, correctAns, false);
+                verdict = ev.verdict;
+
+                if (ev.isBonus) {
+                    score++;
+                    correctCount++;
+                } else if (ev.isBlank) {
+                    blankCount++;
+                } else if (ev.verdict === 'multiple') {
                     attemptedCount++;
                     wrongCount++;
                     multipleCount++;
-                    verdict = 'multiple';
-                } else if (filledBubbles.length === 1) {
-                    const singleAns = filledBubbles[0].opt;
+                } else if (ev.isCorrect) {
                     attemptedCount++;
-                    if (correctAns && singleAns === correctAns) {
-                        score++;
-                        correctCount++;
-                        verdict = 'correct';
-                    } else if (correctAns) {
-                        wrongCount++;
-                        verdict = 'wrong';
-                    } else {
-                        verdict = 'marked';
-                    }
+                    score++;
+                    correctCount++;
+                } else if (ev.verdict === 'marked') {
+                    attemptedCount++;
                 } else {
-                    blankCount++;
+                    attemptedCount++;
+                    wrongCount++;
                 }
 
                 questionBreakdown.push({
@@ -1242,7 +1349,7 @@
                         ctx.lineTo(stat.x - sz, stat.y + sz);
                         ctx.stroke();
                     } else if (isThisBubbleFilled) {
-                        if (verdict === 'correct') {
+                        if (verdict === 'correct' || verdict === 'bonus') {
                             ctx.strokeStyle = '#10B981';
                             ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
                         } else if (verdict === 'wrong') {
@@ -1254,7 +1361,7 @@
                         }
                         ctx.fill();
                         ctx.stroke();
-                    } else if (correctAns && opt === correctAns && verdict === 'wrong') {
+                    } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (verdict === 'wrong' || verdict === 'blank' || verdict === 'unmarked')) {
                         ctx.strokeStyle = '#10B981';
                         ctx.setLineDash([3, 3]);
                         ctx.stroke();
@@ -1273,6 +1380,10 @@
                     badgeClass = 'badge-multiple';
                     verdictText = 'Multiple (Invalid)';
                     markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#B91C1C; font-weight:600;">(Multi)</span>';
+                } else if (verdict === 'bonus') {
+                    badgeClass = 'badge-correct';
+                    verdictText = '★ BONUS';
+                    markedCellHtml = '<strong style="color: #D97706; font-size:0.95rem;">' + (detectedAnswer || '★ BONUS') + '</strong>';
                 } else if (verdict === 'correct') {
                     badgeClass = 'badge-correct';
                     verdictText = 'Correct';
@@ -1287,10 +1398,16 @@
                     markedCellHtml = '<strong style="color: #1D4ED8; font-size:0.95rem;">' + detectedAnswer + '</strong>';
                 }
 
+                const keyDisplayHtml = correctAns
+                    ? (correctAns === 'BONUS'
+                        ? '<span style="font-weight:700; color:#D97706;">★ BONUS</span>'
+                        : '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>')
+                    : '<span style="color:#64748B;">None</span>';
+
                 rowsHtml += '<tr>' +
                     '<td style="font-weight:600; color:#475569;">Q' + q + '</td>' +
                     '<td>' + markedCellHtml + '</td>' +
-                    '<td>' + (correctAns ? '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>' : '<span style="color:#64748B;">None</span>') + '</td>' +
+                    '<td>' + keyDisplayHtml + '</td>' +
                     '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
                 '</tr>';
             }
