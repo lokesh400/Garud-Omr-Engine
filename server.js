@@ -23,6 +23,7 @@ const {
     extractFirst3
 } = require('./utils/bulkStudents');
 const { summarizeSections, buildDetailedResultsCsv } = require('./utils/resultsExport');
+const { recheckSubmissionFromCloudinary, evaluateOmrBuffer } = require('./utils/omrEvaluator');
 const {
     loginLimiter,
     apiLimiter,
@@ -1193,6 +1194,157 @@ app.post('/api/paper/:id/recheck', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error rechecking submissions:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Hard Recheck Endpoint: extracts OMR sheets from Cloudinary one by one and re-evaluates them from scratch
+app.post('/api/paper/:id/hard-recheck', requireAdmin, async (req, res) => {
+    try {
+        const paperId = req.params.id;
+        const paper = await Paper.findById(paperId) || await Paper.findOne({ _id: decodeURIComponent(paperId) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        const paperIdStr = String(paper._id);
+        const submissions = await Submission.find({
+            $or: [
+                { paper_id: paperIdStr },
+                { paper_id: paper._id },
+                { paperId: paper._id }
+            ]
+        }).sort({ submitted_at: 1 });
+
+        const isStream = req.headers.accept && req.headers.accept.includes('text/event-stream');
+
+        if (isStream) {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache, no-transform');
+            res.setHeader('Connection', 'keep-alive');
+            if (typeof res.flushHeaders === 'function') {
+                res.flushHeaders();
+            }
+
+            const sendEvent = (data) => {
+                res.write(`data: ${JSON.stringify(data)}\n\n`);
+            };
+
+            sendEvent({
+                type: 'start',
+                total: submissions.length,
+                paperTitle: paper.title
+            });
+
+            if (submissions.length === 0) {
+                sendEvent({ type: 'done', total: 0, processed: 0, results: [] });
+                return res.end();
+            }
+
+            const results = [];
+            for (let i = 0; i < submissions.length; i++) {
+                const sub = submissions[i];
+                const roll = sub.rollnumber || sub.rollNumber || 'UNKNOWN';
+
+                sendEvent({
+                    type: 'progress',
+                    current: i + 1,
+                    total: submissions.length,
+                    roll: roll,
+                    status: `Extracting OMR sheet ${i + 1} of ${submissions.length} from Cloudinary (Roll: ${roll})...`
+                });
+
+                try {
+                    const outcome = await recheckSubmissionFromCloudinary(sub, paper);
+                    const resItem = {
+                        id: sub._id,
+                        roll: outcome.evaluated.rollnumber,
+                        score: outcome.evaluated.score,
+                        maxMarks: outcome.evaluated.maxMarks,
+                        correctCount: outcome.evaluated.correctCount,
+                        wrongCount: outcome.evaluated.wrongCount,
+                        blankCount: outcome.evaluated.blankCount,
+                        mcqSubjectScores: outcome.evaluated.mcqSubjectScores,
+                        success: true
+                    };
+                    results.push(resItem);
+
+                    sendEvent({
+                        type: 'sheet_done',
+                        current: i + 1,
+                        total: submissions.length,
+                        roll: outcome.evaluated.rollnumber,
+                        score: outcome.evaluated.score,
+                        maxMarks: outcome.evaluated.maxMarks,
+                        correctCount: outcome.evaluated.correctCount,
+                        wrongCount: outcome.evaluated.wrongCount,
+                        blankCount: outcome.evaluated.blankCount,
+                        mcqSubjectScores: outcome.evaluated.mcqSubjectScores,
+                        status: `✓ Sheet ${i + 1}/${submissions.length} re-scanned: Roll ${outcome.evaluated.rollnumber} → ${outcome.evaluated.score}/${outcome.evaluated.maxMarks} Marks`
+                    });
+                } catch (subErr) {
+                    console.error(`[Hard Recheck Error] Failed to re-scan submission ${sub._id}:`, subErr);
+                    results.push({
+                        id: sub._id,
+                        roll: roll,
+                        error: subErr.message,
+                        success: false
+                    });
+                    sendEvent({
+                        type: 'sheet_error',
+                        current: i + 1,
+                        total: submissions.length,
+                        roll: roll,
+                        error: subErr.message,
+                        status: `⚠ Sheet ${i + 1}/${submissions.length} (Roll ${roll}) failed: ${subErr.message}`
+                    });
+                }
+            }
+
+            sendEvent({
+                type: 'done',
+                total: submissions.length,
+                processed: results.filter(r => r.success).length,
+                results
+            });
+
+            return res.end();
+        }
+
+        // Standard JSON response fallback
+        const results = [];
+        for (const sub of submissions) {
+            try {
+                const outcome = await recheckSubmissionFromCloudinary(sub, paper);
+                results.push({
+                    id: sub._id,
+                    roll: outcome.evaluated.rollnumber,
+                    score: outcome.evaluated.score,
+                    maxMarks: outcome.evaluated.maxMarks,
+                    success: true
+                });
+            } catch (err) {
+                results.push({
+                    id: sub._id,
+                    roll: sub.rollnumber,
+                    error: err.message,
+                    success: false
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            total: submissions.length,
+            processed: results.filter(r => r.success).length,
+            results
+        });
+
+    } catch (error) {
+        console.error('Hard recheck error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+            res.end();
+        }
     }
 });
 

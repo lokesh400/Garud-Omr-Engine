@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= paper.title %> • Results &amp; Evaluated OMR Copies</title>
+    <title>
+        <%= paper.title %> • Results &amp; Evaluated OMR Copies
+    </title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .results-container {
@@ -414,6 +416,126 @@
             color: var(--text-main);
         }
 
+        /* Hard Recheck Dialog Styles */
+        dialog.hard-recheck-dialog {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            width: min(600px, calc(100vw - 24px));
+            background: #FFFFFF;
+            color: var(--text-body);
+            box-shadow: var(--shadow-2xl);
+            margin: auto;
+        }
+
+        dialog.hard-recheck-dialog[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        dialog.hard-recheck-dialog::backdrop {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+        }
+
+        .recheck-modal-header {
+            padding: 1.15rem 1.35rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-subtle);
+        }
+
+        .recheck-modal-body {
+            padding: 1.35rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .recheck-progress-track {
+            height: 10px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .recheck-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #F59E0B, #10B981);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .recheck-status-card {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.9rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .recheck-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid var(--border-hover);
+            border-top-color: #D97706;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .recheck-log-box {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: #FAFAFA;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .recheck-log-item {
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.825rem;
+            border-left: 3px solid transparent;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+        }
+
+        .recheck-log-item.success {
+            border-left-color: #10B981;
+            background: #F0FDF4;
+        }
+
+        .recheck-log-item.error {
+            border-left-color: #EF4444;
+            background: #FEF2F2;
+        }
+
+        .recheck-modal-footer {
+            padding: 0.9rem 1.35rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--surface-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         /* Responsive */
         @media (max-width: 1180px) {
             .results-stats-grid {
@@ -431,36 +553,45 @@
             .results-container {
                 padding: 1rem 0.75rem 3rem 0.75rem;
             }
+
             .results-topbar {
                 padding: 1rem;
                 flex-direction: column;
                 align-items: stretch;
             }
+
             .results-topbar-actions {
                 width: 100%;
             }
+
             .results-topbar-actions .btn {
                 flex: 1 1 calc(50% - 4px);
                 justify-content: center;
             }
+
             .results-stats-grid {
                 grid-template-columns: 1fr;
                 gap: 0.75rem;
             }
+
             .results-table-card {
                 padding: 1rem 0.85rem;
             }
+
             .search-box {
                 width: 100%;
                 min-width: 0;
             }
+
             dialog.omr-modal-dialog {
                 width: calc(100vw - 16px);
                 max-height: 94vh;
             }
+
             .omr-modal-header {
                 padding: 0.85rem 1rem;
             }
+
             .omr-modal-body {
                 padding: 1rem;
             }
@@ -469,1017 +600,1392 @@
 </head>
 
 <body>
-    <%- include('partials/sidebar_start', { activeNav: 'paper_results', paper: paper }) %>
-    <div class="results-container">
-        <header class="results-topbar">
-            <div class="results-topbar-left">
-                <div>
-                    <h1 style="font-size: 1.25rem; margin: 0 0 2px 0; font-weight: 700;">
-                        <%= paper.title %>
-                    </h1>
-                    <div style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">
-                        Evaluation Results &middot; <%= paper.numQuestions %> Questions &middot; <%= results.length %> Evaluated Copies
-                    </div>
-                </div>
-            </div>
-
-            <div class="results-topbar-actions">
-                <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm" title="Configure or Update Question Answer Key">
-                    Answer Key
-                </a>
-                <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn" onclick="recheckAllSubmissions()" title="Recalculate all OMR scores against the latest Answer Key">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                    Recheck All
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()" title="Download Detailed Section-Wise Results CSV">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Export CSV
-                </button>
-                <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
-                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-scan" class="btn btn-secondary btn-sm" style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="Launch JEE Mains Scanner">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                        JEE Scanner
-                    </a>
-                <% } %>
-                <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan" class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    Live Scanner
-                </a>
-            </div>
-        </header>
-
-        <!-- Stats Overview Cards -->
-        <div class="results-stats-grid">
-            <div class="res-stat-card">
-                <div class="res-stat-lbl">Sheets Evaluated</div>
-                <div class="res-stat-val"><%= results.length %></div>
-            </div>
-            <div class="res-stat-card">
-                <div class="res-stat-lbl">Highest Aggregate Marks</div>
-                <div class="res-stat-val" style="color: var(--success-hover);">
-                    <%= stats.highestAggregate %> <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">/ <%= stats.maxMarks %></span>
-                </div>
-            </div>
-            <div class="res-stat-card">
-                <div class="res-stat-lbl">Class Average Marks</div>
-                <div class="res-stat-val" style="color: var(--primary);">
-                    <%= stats.averageAggregate %> <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">avg</span>
-                </div>
-            </div>
-            <div class="res-stat-card">
-                <div class="res-stat-lbl">Average Accuracy</div>
-                <div class="res-stat-val"><%= stats.averageAccuracy %>%</div>
-            </div>
-        </div>
-
-        <!-- Section-wise Performance Cards -->
-        <% if (stats.sectionAverages && stats.sectionAverages.length > 0) { %>
-            <h3 class="section-heading-row">Section-Wise Average Performance</h3>
-            <div class="section-cards-row">
-                <% stats.sectionAverages.forEach(sec => { %>
-                    <div class="sec-card">
-                        <div>
-                            <div class="sec-title"><%= sec.sectionName %></div>
-                            <div class="sec-range"><%= sec.range %></div>
-                        </div>
-                        <div class="sec-marks">
-                            <div class="sec-marks-val"><%= sec.avgMarks %> <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%= sec.maxMarks %></span></div>
-                            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Avg Marks</div>
-                        </div>
-                    </div>
-                <% }) %>
-            </div>
-        <% } %>
-
-        <!-- Results Master Table -->
-        <div class="results-table-card">
-            <div class="table-filter-bar">
-                <div>
-                    <h2 style="font-size: 1.15rem; margin: 0 0 2px 0; font-weight: 700;">Student Results</h2>
-                    <span style="font-size: 0.825rem; color: var(--text-muted);">Section-wise marks, question attempts, and sum of all sections. Click View OMR to inspect a sheet.</span>
-                </div>
-                <search class="search-box">
-                    <span class="search-icon" aria-hidden="true">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </span>
-                    <input type="search" id="searchInput" aria-label="Search by Roll Number or Name" placeholder="Search Roll No. or Name..." oninput="filterResultsTable()">
-                </search>
-            </div>
-
-            <% if (results && results.length > 0) { %>
-                <div class="data-table-wrap" tabindex="0" role="region" aria-label="Student Results Table">
-                    <table class="results-table" id="resultsTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 56px;">Rank</th>
-                                <th>Student / Roll No.</th>
-                                <th>Section-Wise Breakdown</th>
-                                <th>All Sections (Sum)</th>
-                                <th>Questions Summary</th>
-                                <th>Accuracy</th>
-                                <th>Scanned</th>
-                                <th style="text-align: right;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% results.forEach((r, idx) => { %>
-                                <%
-                                    const studentRoll = r.rollnumber || r.rollNumber || 'UNKNOWN';
-                                    const studentName = r.studentName || '';
-                                    const scannedTime = r.submitted_at || r.scannedAt || new Date();
-                                    const sumSec = r.allSectionsSummary || {
-                                        totalMarks: r.maxMarks || ((r.totalQuestions || 50) * 4),
-                                        obtainedMarks: (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4),
-                                        totalQuestions: r.totalQuestions || 0,
-                                        attemptedQuestions: Math.max(0, (r.totalQuestions || 0) - (r.blankCount || 0)),
-                                        unattemptedQuestions: r.blankCount || 0,
-                                        correctCount: r.correctCount || 0,
-                                        wrongCount: r.wrongCount || 0
-                                    };
-                                    const searchStr = `${studentRoll} ${studentName}`.toLowerCase();
-                                %>
-                                <tr class="result-row" data-roll="<%= studentRoll.toLowerCase() %>" data-search="<%= searchStr %>" id="row-<%= r._id %>">
-                                    <td style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
-                                        #<%= idx + 1 %>
-                                    </td>
-                                    <td>
-                                        <span class="roll-badge"><%= studentRoll %></span>
-                                        <% if (studentName) { %>
-                                            <div style="font-size: 0.78rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">
-                                                <%= studentName %>
-                                            </div>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <% if (r.sectionWise && r.sectionWise.length > 0) { %>
-                                            <div class="sec-stack-list">
-                                                <% r.sectionWise.forEach(s => { %>
-                                                    <%
-                                                        const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
-                                                        const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
-                                                        const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
-                                                    %>
-                                                    <div class="sec-stack-item">
-                                                        <div class="sec-stack-name">
-                                                            <%= s.sectionName %>
-                                                            <% if (s.range) { %>
-                                                                <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
-                                                            <% } %>
-                                                        </div>
-                                                        <div class="sec-stack-marks">
-                                                            <%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %> marks</span>
-                                                        </div>
-                                                        <div class="sec-stack-meta">
-                                                            Total: <strong><%= secTotalQ %></strong> &middot;
-                                                            Att: <strong><%= secAtt %></strong> &middot;
-                                                            Unatt: <strong><%= secUnatt %></strong>
-                                                        </div>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        <% } else { %>
-                                            <span style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <span class="aggregate-badge">
-                                            <%= sumSec.obtainedMarks %> <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/ <%= sumSec.totalMarks %></span>
-                                        </span>
-                                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">
-                                            Obtained / Total Marks
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
-                                            <%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %> <span style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">Att</span>
-                                        </div>
-                                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
-                                            Unattempted: <strong style="color: var(--text-body);"><%= sumSec.unattemptedQuestions %></strong>
-                                        </div>
-                                        <div style="font-size: 0.73rem; color: var(--text-muted); margin-top: 1px;">
-                                            <span style="color: var(--success-hover); font-weight: 600;"><%= sumSec.correctCount %>C</span> &middot;
-                                            <span style="color: var(--danger); font-weight: 600;"><%= sumSec.wrongCount %>W</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;">
-                                            <%= r.percentage %>%
-                                        </span>
-                                    </td>
-                                    <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
-                                        <%= new Date(scannedTime).toLocaleDateString() %><br>
-                                        <span style="font-size: 0.74rem;"><%= new Date(scannedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
-                                    </td>
-                                    <td style="text-align: right; white-space: nowrap;">
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="openOmrModalById('<%= r._id %>')">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                <circle cx="12" cy="12" r="3"></circle>
-                                            </svg>
-                                            View OMR
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete copy from database and Cloudinary" aria-label="Delete submission for <%= studentRoll %>">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
-                </div>
-            <% } else { %>
-                <div class="empty-state">
-                    <div class="empty-state-icon" aria-hidden="true">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                    </div>
-                    <h3 style="margin-bottom: 0.4rem;">No OMR copies evaluated yet</h3>
-                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem;">
-                        Scan student OMR sheets with the Live Camera Scanner to grade responses against the answer key and archive checked copies.
-                    </p>
-                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan" class="btn btn-primary btn-lg">
-                            Launch Live Scanner
-                        </a>
-                        <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-lg">
-                            Configure Answer Key
-                        </a>
-                    </div>
-                </div>
-            <% } %>
-        </div>
-    </div>
-
-    <!-- Checked OMR Copy Modal Dialog -->
-    <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalScoreText">
-        <div class="omr-modal-header">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span class="roll-badge" id="modalRollNo">ROLL NO</span>
-                <span style="font-size: 0.86rem; font-weight: 600; color: var(--text-main); display: none;" id="modalStudentName"></span>
-                <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-body);" id="modalScoreText">0 / 0 Questions</span>
-                <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm" title="Open full resolution photo in new tab">
-                    Full Photo &#8599;
-                </a>
-                <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
-                    Delete Copy
-                </button>
-                <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()" aria-label="Close modal">&times;</button>
-            </div>
-        </div>
-
-        <div class="omr-modal-body">
-            <!-- Left: Evaluated OMR Sheet Image + Live Dynamic Checking Overlay -->
-            <div>
-                <div class="omr-preview-frame">
-                    <div style="position: relative; width: 100%; aspect-ratio: 1000 / 1461; line-height: 0; background: #FFFFFF; border-radius: var(--radius-xs); overflow: hidden; box-shadow: inset 0 0 0 1px var(--border-color);">
-                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; display: block;" onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
-                        <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
-                             style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
-                    <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm" onclick="toggleCheckingOverlay()">
-                        Live Marks: ON
-                    </button>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.76rem; font-weight:600; color:var(--text-muted);">
-                        <span><span style="color:#16A34A;">&#9679;</span> Correct</span>
-                        <span><span style="color:#DC2626;">&#9679;</span> Wrong / Multi</span>
-                        <span><span style="color:#16A34A;">&#9676;</span> True Key</span>
-                    </div>
-                </div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;" id="modalCloudInfo">
-                    Stored on Cloudinary Multi-Account Pool
-                </div>
-            </div>
-
-            <!-- Right: Section-wise & Question Breakdown -->
-            <div>
-                <div class="aggregate-grand-card">
+    <%- include('partials/sidebar_start', { activeNav: 'paper_results' , paper: paper }) %>
+        <div class="results-container">
+            <header class="results-topbar">
+                <div class="results-topbar-left">
                     <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">All Sections (Sum) Marks</div>
-                        <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
-                        <div style="font-size:0.76rem; color:var(--text-body); margin-top:6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
-                            Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                        <h1 style="font-size: 1.25rem; margin: 0 0 2px 0; font-weight: 700;">
+                            <%= paper.title %>
+                        </h1>
+                        <div style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">
+                            Evaluation Results &middot; <%= paper.numQuestions %> Questions &middot; <%= results.length
+                                    %> Evaluated Copies
                         </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Accuracy</div>
-                        <div style="font-size:1.3rem; font-weight:700; font-family:'JetBrains Mono',monospace; color: var(--text-main); margin-top:2px;" id="modalAccuracyText">0%</div>
+                </div>
+
+                <div class="results-topbar-actions">
+                    <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject || '' ) || /jee/i.test(paper.title || ''
+                        )) { %>
+                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-answerkey"
+                            class="btn btn-secondary btn-sm" title="Configure or Update JEE Mains Answer Key">
+                            JEE Key
+                        </a>
+                        <% } else { %>
+                            <a href="/paper/<%= encodeURIComponent(paper._id) %>" class="btn btn-secondary btn-sm"
+                                title="Configure or Update Question Answer Key">
+                                Answer Key
+                            </a>
+                            <% } %>
+
+                                <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn"
+                                    onclick="recheckAllSubmissions()"
+                                    title="Recalculate all OMR scores against the latest Answer Key">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                                        </path>
+                                    </svg>
+                                    Recheck All
+                                </button>
+
+                                <button type="button" class="btn btn-warning btn-sm" id="hardRecheckBtn"
+                                    onclick="confirmHardRecheck()"
+                                    style="background: #FFFBEB; color: #B45309; border-color: #FCD34D; font-weight: 600;"
+                                    title="Download original OMR sheets from Cloudinary and re-scan all bubbles from scratch with Computer Vision">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <path
+                                            d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                    </svg>
+                                    Hard Recheck
+                                </button>
+
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsToCsv()"
+                                    title="Download Detailed Section-Wise Results CSV">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                        aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Export CSV
+                                </button>
+                                <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject || '' ) ||
+                                    /jee/i.test(paper.title || '' )) { %>
+                                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-scan"
+                                        class="btn btn-secondary btn-sm"
+                                        style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;"
+                                        title="Launch JEE Mains Scanner">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <path
+                                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                            </path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                        JEE Scanner
+                                    </a>
+                                    <% } else{ %>
+                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
+                                            class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                stroke-linejoin="round" aria-hidden="true">
+                                                <path
+                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                </path>
+                                                <circle cx="12" cy="13" r="4"></circle>
+                                            </svg>
+                                            Live Scanner
+                                        </a>
+                                        <% } %>
+
+                </div>
+            </header>
+
+            <!-- Stats Overview Cards -->
+            <div class="results-stats-grid">
+                <div class="res-stat-card">
+                    <div class="res-stat-lbl">Sheets Evaluated</div>
+                    <div class="res-stat-val">
+                        <%= results.length %>
+                    </div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-lbl">Highest Aggregate Marks</div>
+                    <div class="res-stat-val" style="color: var(--success-hover);">
+                        <%= stats.highestAggregate %> <span
+                                style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">/ <%=
+                                    stats.maxMarks %></span>
+                    </div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-lbl">Class Average Marks</div>
+                    <div class="res-stat-val" style="color: var(--primary);">
+                        <%= stats.averageAggregate %> <span
+                                style="font-size: 0.95rem; font-weight: 500; color: var(--text-muted);">avg</span>
+                    </div>
+                </div>
+                <div class="res-stat-card">
+                    <div class="res-stat-lbl">Average Accuracy</div>
+                    <div class="res-stat-val">
+                        <%= stats.averageAccuracy %>%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section-wise Performance Cards -->
+            <% if (stats.sectionAverages && stats.sectionAverages.length> 0) { %>
+                <h3 class="section-heading-row">Section-Wise Average Performance</h3>
+                <div class="section-cards-row">
+                    <% stats.sectionAverages.forEach(sec=> { %>
+                        <div class="sec-card">
+                            <div>
+                                <div class="sec-title">
+                                    <%= sec.sectionName %>
+                                </div>
+                                <div class="sec-range">
+                                    <%= sec.range %>
+                                </div>
+                            </div>
+                            <div class="sec-marks">
+                                <div class="sec-marks-val">
+                                    <%= sec.avgMarks %> <span
+                                            style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%=
+                                                sec.maxMarks %></span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Avg Marks
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                </div>
+                <% } %>
+
+                    <!-- Results Master Table -->
+                    <div class="results-table-card">
+                        <div class="table-filter-bar">
+                            <div>
+                                <h2 style="font-size: 1.15rem; margin: 0 0 2px 0; font-weight: 700;">Student Results
+                                </h2>
+                                <span style="font-size: 0.825rem; color: var(--text-muted);">Section-wise marks,
+                                    question attempts, and sum of all sections. Click View OMR to inspect a
+                                    sheet.</span>
+                            </div>
+                            <search class="search-box">
+                                <span class="search-icon" aria-hidden="true">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </span>
+                                <input type="search" id="searchInput" aria-label="Search by Roll Number or Name"
+                                    placeholder="Search Roll No. or Name..." oninput="filterResultsTable()">
+                            </search>
+                        </div>
+
+                        <% if (results && results.length> 0) { %>
+                            <div class="data-table-wrap" tabindex="0" role="region" aria-label="Student Results Table">
+                                <table class="results-table" id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 56px;">Rank</th>
+                                            <th>Student / Roll No.</th>
+                                            <th>Section-Wise Breakdown</th>
+                                            <th>All Sections (Sum)</th>
+                                            <th>Questions Summary</th>
+                                            <th>Accuracy</th>
+                                            <th>Scanned</th>
+                                            <th style="text-align: right;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% results.forEach((r, idx)=> { %>
+                                            <% const studentRoll=r.rollnumber || r.rollNumber || 'UNKNOWN' ; const
+                                                studentName=r.studentName || '' ; const scannedTime=r.submitted_at ||
+                                                r.scannedAt || new Date(); const sumSec=r.allSectionsSummary || {
+                                                totalMarks: r.maxMarks || ((r.totalQuestions || 50) * 4), obtainedMarks:
+                                                (r.aggregateMarks !==undefined) ? r.aggregateMarks : (r.score * 4),
+                                                totalQuestions: r.totalQuestions || 0, attemptedQuestions: Math.max(0,
+                                                (r.totalQuestions || 0) - (r.blankCount || 0)), unattemptedQuestions:
+                                                r.blankCount || 0, correctCount: r.correctCount || 0, wrongCount:
+                                                r.wrongCount || 0 }; const searchStr=`${studentRoll}
+                                                ${studentName}`.toLowerCase(); %>
+                                                <tr class="result-row" data-roll="<%= studentRoll.toLowerCase() %>"
+                                                    data-search="<%= searchStr %>" id="row-<%= r._id %>">
+                                                    <td
+                                                        style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
+                                                        #<%= idx + 1 %>
+                                                    </td>
+                                                    <td>
+                                                        <span class="roll-badge">
+                                                            <%= studentRoll %>
+                                                        </span>
+                                                        <% if (studentName) { %>
+                                                            <div
+                                                                style="font-size: 0.78rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">
+                                                                <%= studentName %>
+                                                            </div>
+                                                            <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <% if (r.sectionWise && r.sectionWise.length> 0) { %>
+                                                            <div class="sec-stack-list">
+                                                                <% r.sectionWise.forEach(s=> { %>
+                                                                    <% const secUnatt=s.unattempted !==undefined ?
+                                                                        s.unattempted : (s.blank || 0); const
+                                                                        secTotalQ=s.totalQuestions !==undefined ?
+                                                                        s.totalQuestions : ((s.correct || 0) + (s.wrong
+                                                                        || 0) + secUnatt); const secAtt=s.attempted
+                                                                        !==undefined ? s.attempted : Math.max(0,
+                                                                        secTotalQ - secUnatt); %>
+                                                                        <div class="sec-stack-item">
+                                                                            <div class="sec-stack-name">
+                                                                                <%= s.sectionName %>
+                                                                                    <% if (s.range) { %>
+                                                                                        <span
+                                                                                            style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
+                                                                                            <%= s.range %>)
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                            </div>
+                                                                            <div class="sec-stack-marks">
+                                                                                <%= s.marks %> <span
+                                                                                        class="sec-stack-max">/ <%=
+                                                                                            s.maxMarks %> marks</span>
+                                                                            </div>
+                                                                            <div class="sec-stack-meta">
+                                                                                Total: <strong>
+                                                                                    <%= secTotalQ %>
+                                                                                </strong> &middot;
+                                                                                Att: <strong>
+                                                                                    <%= secAtt %>
+                                                                                </strong> &middot;
+                                                                                Unatt: <strong>
+                                                                                    <%= secUnatt %>
+                                                                                </strong>
+                                                                            </div>
+                                                                        </div>
+                                                                        <% }) %>
+                                                            </div>
+                                                            <% } else { %>
+                                                                <span
+                                                                    style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
+                                                                <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <span class="aggregate-badge">
+                                                            <%= sumSec.obtainedMarks %> <span
+                                                                    style="font-size: 0.78rem; font-weight: 500; opacity: 0.8;">/
+                                                                    <%= sumSec.totalMarks %>
+                                                                </span>
+                                                        </span>
+                                                        <div
+                                                            style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">
+                                                            Obtained / Total Marks
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div
+                                                            style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
+                                                            <%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions
+                                                                    %> <span
+                                                                        style="font-weight: 500; font-size: 0.75rem; color: var(--text-muted);">Att</span>
+                                                        </div>
+                                                        <div
+                                                            style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+                                                            Unattempted: <strong style="color: var(--text-body);">
+                                                                <%= sumSec.unattemptedQuestions %>
+                                                            </strong>
+                                                        </div>
+                                                        <div
+                                                            style="font-size: 0.73rem; color: var(--text-muted); margin-top: 1px;">
+                                                            <span
+                                                                style="color: var(--success-hover); font-weight: 600;">
+                                                                <%= sumSec.correctCount %>C
+                                                            </span> &middot;
+                                                            <span style="color: var(--danger); font-weight: 600;">
+                                                                <%= sumSec.wrongCount %>W
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span
+                                                            style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;">
+                                                            <%= r.percentage %>%
+                                                        </span>
+                                                    </td>
+                                                    <td
+                                                        style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                                                        <%= new Date(scannedTime).toLocaleDateString() %><br>
+                                                            <span style="font-size: 0.74rem;">
+                                                                <%= new Date(scannedTime).toLocaleTimeString([], {
+                                                                    hour: '2-digit' , minute: '2-digit' }) %>
+                                                            </span>
+                                                    </td>
+                                                    <td style="text-align: right; white-space: nowrap;">
+                                                        <button type="button" class="btn btn-primary btn-sm"
+                                                            onclick="openOmrModalById('<%= r._id %>')">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                aria-hidden="true">
+                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                                                                </path>
+                                                                <circle cx="12" cy="12" r="3"></circle>
+                                                            </svg>
+                                                            View OMR
+                                                        </button>
+                                                        <button type="button"
+                                                            class="btn btn-danger btn-sm btn-delete-sub"
+                                                            onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')"
+                                                            title="Delete copy from database and Cloudinary"
+                                                            aria-label="Delete submission for <%= studentRoll %>">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                aria-hidden="true">
+                                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                                <path
+                                                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                                </path>
+                                                            </svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <div class="empty-state-icon" aria-hidden="true">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        </svg>
+                                    </div>
+                                    <h3 style="margin-bottom: 0.4rem;">No OMR copies evaluated yet</h3>
+                                    <p
+                                        style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem;">
+                                        Scan student OMR sheets with the Live Camera Scanner to grade responses against
+                                        the answer key and archive checked copies.
+                                    </p>
+                                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
+                                            class="btn btn-primary btn-lg">
+                                            Launch Live Scanner
+                                        </a>
+                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>"
+                                            class="btn btn-secondary btn-lg">
+                                            Configure Answer Key
+                                        </a>
+                                    </div>
+                                </div>
+                                <% } %>
+                    </div>
+        </div>
+
+        <!-- Checked OMR Copy Modal Dialog -->
+        <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalScoreText">
+            <div class="omr-modal-header">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span class="roll-badge" id="modalRollNo">ROLL NO</span>
+                    <span style="font-size: 0.86rem; font-weight: 600; color: var(--text-main); display: none;"
+                        id="modalStudentName"></span>
+                    <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-body);" id="modalScoreText">0 /
+                        0 Questions</span>
+                    <span class="aggregate-badge" id="modalAggregateText">Marks: 0</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <a id="modalOpenFullBtn" href="#" target="_blank" class="btn btn-secondary btn-sm"
+                        title="Open full resolution photo in new tab">
+                        Full Photo &#8599;
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn"
+                        onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary">
+                        Delete Copy
+                    </button>
+                    <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()"
+                        aria-label="Close modal">&times;</button>
+                </div>
+            </div>
+
+            <div class="omr-modal-body">
+                <!-- Left: Evaluated OMR Sheet Image + Live Dynamic Checking Overlay -->
+                <div>
+                    <div class="omr-preview-frame">
+                        <div
+                            style="position: relative; width: 100%; aspect-ratio: 1000 / 1461; line-height: 0; background: #FFFFFF; border-radius: var(--radius-xs); overflow: hidden; box-shadow: inset 0 0 0 1px var(--border-color);">
+                            <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
+                                style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; display: block;"
+                                onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
+                            <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"
+                                style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></svg>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                        <button type="button" id="toggleOverlayBtn" class="btn btn-secondary btn-sm"
+                            onclick="toggleCheckingOverlay()">
+                            Live Marks: ON
+                        </button>
+                        <div
+                            style="display:flex; gap:12px; flex-wrap:wrap; font-size:0.76rem; font-weight:600; color:var(--text-muted);">
+                            <span><span style="color:#16A34A;">&#9679;</span> Correct</span>
+                            <span><span style="color:#DC2626;">&#9679;</span> Wrong / Multi</span>
+                            <span><span style="color:#16A34A;">&#9676;</span> True Key</span>
+                        </div>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-align:center;"
+                        id="modalCloudInfo">
+                        Stored on Cloudinary Multi-Account Pool
                     </div>
                 </div>
 
-                <h4 style="margin: 0 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">Section-Wise Performance</h4>
-                <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.15rem;"></div>
+                <!-- Right: Section-wise & Question Breakdown -->
+                <div>
+                    <div class="aggregate-grand-card">
+                        <div>
+                            <div
+                                style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">
+                                All Sections (Sum) Marks</div>
+                            <div class="aggregate-grand-val" id="modalGrandAggregate">0 / 0</div>
+                            <div style="font-size:0.76rem; color:var(--text-body); margin-top:6px; font-variant-numeric: tabular-nums;"
+                                id="modalAllSectionsStats">
+                                Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div
+                                style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">
+                                Accuracy</div>
+                            <div style="font-size:1.3rem; font-weight:700; font-family:'JetBrains Mono',monospace; color: var(--text-main); margin-top:2px;"
+                                id="modalAccuracyText">0%</div>
+                        </div>
+                    </div>
 
-                <h4 style="margin: 1rem 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">Question Breakdown</h4>
-                <div style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
-                        <thead>
-                            <tr style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
-                                <th style="padding: 8px; font-weight: 600;" id="thSubjectCol">Subject</th>
-                                <th style="padding: 8px; font-weight: 600;">#</th>
-                                <th style="padding: 8px; font-weight: 600;">Response</th>
-                                <th style="padding: 8px; font-weight: 600;">Key</th>
-                                <th style="padding: 8px; font-weight: 600;">Marks</th>
-                                <th style="padding: 8px; font-weight: 600;">Verdict</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modalBreakdownBody"></tbody>
-                    </table>
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">
+                        Section-Wise Performance</h4>
+                    <div id="modalSectionContainer" style="display: grid; gap: 8px; margin-bottom: 1.15rem;"></div>
+
+                    <h4 style="margin: 1rem 0 8px 0; font-size: 0.92rem; font-weight: 700; color:var(--text-main);">
+                        Question Breakdown</h4>
+                    <div
+                        style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                        <table
+                            style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: center; font-variant-numeric: tabular-nums;">
+                            <thead>
+                                <tr
+                                    style="background: var(--surface-subtle); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase;">
+                                    <th style="padding: 8px; font-weight: 600;" id="thSubjectCol">Subject</th>
+                                    <th style="padding: 8px; font-weight: 600;">#</th>
+                                    <th style="padding: 8px; font-weight: 600;">Response</th>
+                                    <th style="padding: 8px; font-weight: 600;">Key</th>
+                                    <th style="padding: 8px; font-weight: 600;">Marks</th>
+                                    <th style="padding: 8px; font-weight: 600;">Verdict</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalBreakdownBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-    </dialog>
+        </dialog>
 
-    <script>
-        const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
-        const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
-        const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
-        const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
-        let currentModalSubmission = null;
-        let currentModalList = [];
-        let showCheckingOverlay = true;
-        const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
-        const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
-        const submissionsMap = {};
-        allSubmissionsData.forEach(s => {
-            if (s && s._id) submissionsMap[String(s._id)] = s;
-        });
+        <!-- Hard Recheck Progress Modal -->
+        <dialog id="hardRecheckModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="hardRecheckTitle">
+            <div class="recheck-modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="hardRecheckTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">
+                            Hard Recheck (Cloudinary Extraction)
+                        </h3>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+                            Computer vision re-evaluation of original student sheets
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-modal-close" id="hardRecheckCloseBtn" onclick="closeHardRecheckModal()" aria-label="Close dialog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
 
-        const omrModalDialog = document.getElementById('omrModal');
-        if (omrModalDialog) {
-            omrModalDialog.addEventListener('close', () => {
-                currentModalSubmission = null;
+            <div class="recheck-modal-body">
+                <div style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.45;">
+                    Extracting original student OMR sheet scans from Cloudinary one by one and re-running the bubble detection engine. Section B numerical answers will be preserved.
+                </div>
+
+                <div>
+                    <div class="recheck-progress-track">
+                        <div id="hardRecheckProgressBar" class="recheck-progress-fill"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
+                        <span id="hardRecheckProgressCount" style="color: var(--text-main);">0 / 0 Sheets</span>
+                        <span id="hardRecheckProgressPercent" style="color: #D97706; font-family: monospace;">0%</span>
+                    </div>
+                </div>
+
+                <div class="recheck-status-card">
+                    <div class="recheck-spinner" id="hardRecheckSpinner"></div>
+                    <div id="hardRecheckCurrentStatus" style="font-size: 0.84rem; font-weight: 500; color: var(--text-body);">
+                        Ready to extract sheets...
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: -4px;">
+                    Re-scanned Sheets Activity
+                </div>
+                <div class="recheck-log-box" id="hardRecheckLogBox">
+                    <div style="padding: 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                        Awaiting process start...
+                    </div>
+                </div>
+            </div>
+
+            <div class="recheck-modal-footer">
+                <div id="hardRecheckFooterNote" style="font-size: 0.77rem; color: var(--text-muted);">
+                    Please do not close this window during recheck.
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="hardRecheckActionBtn" style="display: none;" onclick="window.location.reload()">
+                    Reload Results Now
+                </button>
+            </div>
+        </dialog>
+
+        <script>
+            const PAPER_ID = <% - JSON.stringify(String(paper._id)) %>;
+            const PAPER_TITLE = <% - JSON.stringify(String(paper.title || '')) %>;
+            const PAPER_SUBJECT = <% - JSON.stringify(String(paper.subject || '')) %>;
+            const PAPER_EXAM_TYPE = <% - JSON.stringify(String(paper.exam_type || 'standard')) %>;
+            let currentModalSubmission = null;
+            let currentModalList = [];
+            let showCheckingOverlay = true;
+            const answerKey = <% - (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
+            const allSubmissionsData = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+            const submissionsMap = {};
+            allSubmissionsData.forEach(s => {
+                if (s && s._id) submissionsMap[String(s._id)] = s;
             });
-            // Progressive enhancement light-dismiss for Safari / browsers without dialog.closedBy
-            if (!('closedBy' in HTMLDialogElement.prototype)) {
-                const outside = (e, dialog) => {
-                    const r = dialog.getBoundingClientRect();
-                    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-                };
-                let pressedOutside = false;
-                omrModalDialog.addEventListener('pointerdown', (e) => {
-                    pressedOutside = outside(e, omrModalDialog);
+
+            const omrModalDialog = document.getElementById('omrModal');
+            if (omrModalDialog) {
+                omrModalDialog.addEventListener('close', () => {
+                    currentModalSubmission = null;
                 });
-                omrModalDialog.addEventListener('pointerup', (e) => {
-                    if (pressedOutside && outside(e, omrModalDialog)) omrModalDialog.close();
-                });
-            }
-        }
-
-        // Standardized Rectified OMR Sheet Geometry (must match scanner.ejs & evaluator.ejs)
-        const OMR_GEOMETRY = {
-            TARGET_W: 1000,
-            TARGET_H: 1461,
-            U_START: 0.061846,
-            V_START: 0.256331,
-            U_BUBBLE_STEP: 0.028042,
-            V_ROW_STEP: 0.018233,
-            U_COL_STEP: 0.201332,
-            QUESTIONS_PER_COL: 40,
-            OPTIONS: ['A', 'B', 'C', 'D'],
-            BUBBLE_R: 9.0,
-            U_ROLL_START: 0.619879,
-            V_ROLL_START: 0.058644,
-            U_ROLL_COL_STEP: 0.026640,
-            V_ROLL_ROW_STEP: 0.018233,
-            ROLL_R: 8.5
-        };
-
-        function toggleCheckingOverlay() {
-            showCheckingOverlay = !showCheckingOverlay;
-            const btn = document.getElementById('toggleOverlayBtn');
-            if (btn) {
-                btn.textContent = showCheckingOverlay ? 'Live Marks: ON' : 'Live Marks: OFF (Clean)';
-            }
-            if (currentModalSubmission) {
-                renderOmrOverlay(currentModalSubmission, currentModalList);
-            }
-        }
-
-        function renderOmrOverlay(data, list) {
-            const svg = document.getElementById('modalOmrOverlay');
-            if (!svg) return;
-            svg.innerHTML = '';
-
-            if (!showCheckingOverlay) {
-                svg.style.display = 'none';
-                return;
-            }
-            svg.style.display = 'block';
-
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const G = OMR_GEOMETRY;
-
-            function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
-                const c = document.createElementNS(SVG_NS, 'circle');
-                c.setAttribute('cx', cx.toFixed(1));
-                c.setAttribute('cy', cy.toFixed(1));
-                c.setAttribute('r', String(r));
-                c.setAttribute('fill', fill);
-                c.setAttribute('stroke', stroke);
-                c.setAttribute('stroke-width', String(strokeWidth));
-                if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
-                svg.appendChild(c);
-            }
-
-            // 1. Highlight detected roll number digits
-            const rollStr = String(data.rollnumber || data.rollNumber || '');
-            if (/^[0-9-]{8}$/.test(rollStr)) {
-                for (let c = 0; c < 8; c++) {
-                    const ch = rollStr[c];
-                    if (ch >= '0' && ch <= '9') {
-                        const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
-                        const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
-                        addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
-                    }
+                // Progressive enhancement light-dismiss for Safari / browsers without dialog.closedBy
+                if (!('closedBy' in HTMLDialogElement.prototype)) {
+                    const outside = (e, dialog) => {
+                        const r = dialog.getBoundingClientRect();
+                        return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+                    };
+                    let pressedOutside = false;
+                    omrModalDialog.addEventListener('pointerdown', (e) => {
+                        pressedOutside = outside(e, omrModalDialog);
+                    });
+                    omrModalDialog.addEventListener('pointerup', (e) => {
+                        if (pressedOutside && outside(e, omrModalDialog)) omrModalDialog.close();
+                    });
                 }
             }
 
-            // 2. Highlight evaluated question bubbles dynamically against current answer key
-            list.forEach(b => {
-                if (b.isNumerical) return;
-                const q = Number(b.omrQ || b.q);
-                if (!q || q < 1) return;
+            // Standardized Rectified OMR Sheet Geometry (must match scanner.ejs & evaluator.ejs)
+            const OMR_GEOMETRY = {
+                TARGET_W: 1000,
+                TARGET_H: 1461,
+                U_START: 0.061846,
+                V_START: 0.256331,
+                U_BUBBLE_STEP: 0.028042,
+                V_ROW_STEP: 0.018233,
+                U_COL_STEP: 0.201332,
+                QUESTIONS_PER_COL: 40,
+                OPTIONS: ['A', 'B', 'C', 'D'],
+                BUBBLE_R: 9.0,
+                U_ROLL_START: 0.619879,
+                V_ROLL_START: 0.058644,
+                U_ROLL_COL_STEP: 0.026640,
+                V_ROLL_ROW_STEP: 0.018233,
+                ROLL_R: 8.5
+            };
 
-                const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
-                const row = (q - 1) % G.QUESTIONS_PER_COL;
-                const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
-                const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
+            function toggleCheckingOverlay() {
+                showCheckingOverlay = !showCheckingOverlay;
+                const btn = document.getElementById('toggleOverlayBtn');
+                if (btn) {
+                    btn.textContent = showCheckingOverlay ? 'Live Marks: ON' : 'Live Marks: OFF (Clean)';
+                }
+                if (currentModalSubmission) {
+                    renderOmrOverlay(currentModalSubmission, currentModalList);
+                }
+            }
 
-                const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-                const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
+            function renderOmrOverlay(data, list) {
+                const svg = document.getElementById('modalOmrOverlay');
+                if (!svg) return;
+                svg.innerHTML = '';
 
-                for (let bi = 0; bi < 4; bi++) {
-                    const opt = G.OPTIONS[bi];
-                    const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
-                    const isMarked = markedOpts.includes(opt);
+                if (!showCheckingOverlay) {
+                    svg.style.display = 'none';
+                    return;
+                }
+                svg.style.display = 'block';
 
-                    if (b.verdict === 'multiple' && isMarked) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
-                        const sz = Math.round(G.BUBBLE_R * 0.5);
-                        const l1 = document.createElementNS(SVG_NS, 'line');
-                        l1.setAttribute('x1', (bx - sz).toFixed(1));
-                        l1.setAttribute('y1', (rowY - sz).toFixed(1));
-                        l1.setAttribute('x2', (bx + sz).toFixed(1));
-                        l1.setAttribute('y2', (rowY + sz).toFixed(1));
-                        l1.setAttribute('stroke', '#FFFFFF');
-                        l1.setAttribute('stroke-width', '2');
-                        svg.appendChild(l1);
+                const SVG_NS = 'http://www.w3.org/2000/svg';
+                const G = OMR_GEOMETRY;
 
-                        const l2 = document.createElementNS(SVG_NS, 'line');
-                        l2.setAttribute('x1', (bx + sz).toFixed(1));
-                        l2.setAttribute('y1', (rowY - sz).toFixed(1));
-                        l2.setAttribute('x2', (bx - sz).toFixed(1));
-                        l2.setAttribute('y2', (rowY + sz).toFixed(1));
-                        l2.setAttribute('stroke', '#FFFFFF');
-                        l2.setAttribute('stroke-width', '2');
-                        svg.appendChild(l2);
-                    } else if (isMarked) {
-                        if (b.verdict === 'correct') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
-                        } else if (b.verdict === 'wrong') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
-                        } else {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
+                function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
+                    const c = document.createElementNS(SVG_NS, 'circle');
+                    c.setAttribute('cx', cx.toFixed(1));
+                    c.setAttribute('cy', cy.toFixed(1));
+                    c.setAttribute('r', String(r));
+                    c.setAttribute('fill', fill);
+                    c.setAttribute('stroke', stroke);
+                    c.setAttribute('stroke-width', String(strokeWidth));
+                    if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
+                    svg.appendChild(c);
+                }
+
+                // 1. Highlight detected roll number digits
+                const rollStr = String(data.rollnumber || data.rollNumber || '');
+                if (/^[0-9-]{8}$/.test(rollStr)) {
+                    for (let c = 0; c < 8; c++) {
+                        const ch = rollStr[c];
+                        if (ch >= '0' && ch <= '9') {
+                            const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
+                            const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
+                            addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
                         }
-                    } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
-                    } else {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
                     }
                 }
-            });
-        }
 
-        async function recheckAllSubmissions() {
-            const btn = document.getElementById('recheckAllBtn');
-            const origHtml = btn ? btn.innerHTML : 'Recheck All';
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Rechecking...';
-            }
-            try {
-                const res = await fetch('/api/paper/' + encodeURIComponent(PAPER_ID) + '/recheck', {
-                    method: 'POST'
+                // 2. Highlight evaluated question bubbles dynamically against current answer key
+                list.forEach(b => {
+                    if (b.isNumerical) return;
+                    const q = Number(b.omrQ || b.q);
+                    if (!q || q < 1) return;
+
+                    const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
+                    const row = (q - 1) % G.QUESTIONS_PER_COL;
+                    const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
+                    const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
+
+                    const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                    const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
+
+                    for (let bi = 0; bi < 4; bi++) {
+                        const opt = G.OPTIONS[bi];
+                        const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
+                        const isMarked = markedOpts.includes(opt);
+
+                        if (b.verdict === 'multiple' && isMarked) {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
+                            const sz = Math.round(G.BUBBLE_R * 0.5);
+                            const l1 = document.createElementNS(SVG_NS, 'line');
+                            l1.setAttribute('x1', (bx - sz).toFixed(1));
+                            l1.setAttribute('y1', (rowY - sz).toFixed(1));
+                            l1.setAttribute('x2', (bx + sz).toFixed(1));
+                            l1.setAttribute('y2', (rowY + sz).toFixed(1));
+                            l1.setAttribute('stroke', '#FFFFFF');
+                            l1.setAttribute('stroke-width', '2');
+                            svg.appendChild(l1);
+
+                            const l2 = document.createElementNS(SVG_NS, 'line');
+                            l2.setAttribute('x1', (bx + sz).toFixed(1));
+                            l2.setAttribute('y1', (rowY - sz).toFixed(1));
+                            l2.setAttribute('x2', (bx - sz).toFixed(1));
+                            l2.setAttribute('y2', (rowY + sz).toFixed(1));
+                            l2.setAttribute('stroke', '#FFFFFF');
+                            l2.setAttribute('stroke-width', '2');
+                            svg.appendChild(l2);
+                        } else if (isMarked) {
+                            if (b.verdict === 'correct') {
+                                addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
+                            } else if (b.verdict === 'wrong') {
+                                addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
+                            } else {
+                                addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
+                            }
+                        } else if (correctAns && opt === correctAns && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
+                        } else {
+                            addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
+                        }
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert('Recheck failed: ' + (data.error || 'Unknown error'));
+            }
+
+            async function recheckAllSubmissions() {
+                const btn = document.getElementById('recheckAllBtn');
+                const origHtml = btn ? btn.innerHTML : 'Recheck All';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Rechecking...';
+                }
+                try {
+                    const res = await fetch('/api/paper/' + encodeURIComponent(PAPER_ID) + '/recheck', {
+                        method: 'POST'
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Recheck failed: ' + (data.error || 'Unknown error'));
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = origHtml;
+                        }
+                    }
+                } catch (err) {
+                    alert('Recheck request failed: ' + err.message);
                     if (btn) {
                         btn.disabled = false;
                         btn.innerHTML = origHtml;
                     }
                 }
-            } catch (err) {
-                alert('Recheck request failed: ' + err.message);
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = origHtml;
+            }
+
+            function closeHardRecheckModal() {
+                const modal = document.getElementById('hardRecheckModal');
+                if (modal) modal.close();
+            }
+
+            async function confirmHardRecheck() {
+                if (!confirm('Hard Recheck will download the original OMR sheet photos from Cloudinary for all student submissions and completely re-scan every bubble using computer vision.\n\nSection B numerical marks are preserved.\n\nDo you want to proceed?')) {
+                    return;
                 }
-            }
-        }
 
-        function openOmrModalById(id) {
-            const data = submissionsMap[String(id)];
-            if (!data) {
-                console.error('Submission not found for ID:', id);
-                alert('Could not load OMR copy details.');
-                return;
-            }
-            openOmrModal(data);
-        }
+                const modal = document.getElementById('hardRecheckModal');
+                const progressBar = document.getElementById('hardRecheckProgressBar');
+                const progressCount = document.getElementById('hardRecheckProgressCount');
+                const progressPercent = document.getElementById('hardRecheckProgressPercent');
+                const statusMsg = document.getElementById('hardRecheckCurrentStatus');
+                const logBox = document.getElementById('hardRecheckLogBox');
+                const closeBtn = document.getElementById('hardRecheckCloseBtn');
+                const actionBtn = document.getElementById('hardRecheckActionBtn');
+                const spinner = document.getElementById('hardRecheckSpinner');
+                const footerNote = document.getElementById('hardRecheckFooterNote');
 
-        function getSubmissionTotals(data) {
-            if (data && data.allSectionsSummary) {
-                return data.allSectionsSummary;
-            }
-            const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
-            if (secs.length > 0) {
-                return secs.reduce((acc, s) => {
-                    const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
-                    const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
-                    const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
-                    acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
-                    acc.obtainedMarks += Number(s.marks) || 0;
-                    acc.totalQuestions += totQ;
-                    acc.attemptedQuestions += att;
-                    acc.unattemptedQuestions += unatt;
-                    acc.correctCount += Number(s.correct) || 0;
-                    acc.wrongCount += Number(s.wrong) || 0;
-                    return acc;
-                }, {
-                    totalMarks: 0,
-                    obtainedMarks: 0,
-                    totalQuestions: 0,
-                    attemptedQuestions: 0,
-                    unattemptedQuestions: 0,
-                    correctCount: 0,
-                    wrongCount: 0
-                });
-            }
-            const totQ = Number(data && data.totalQuestions) || 0;
-            const blank = Number(data && data.blankCount) || 0;
-            const correct = Number(data && data.correctCount) || 0;
-            const wrong = Number(data && data.wrongCount) || 0;
-            return {
-                totalMarks: (data && data.maxMarks) || (totQ * 4),
-                obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
-                totalQuestions: totQ,
-                attemptedQuestions: Math.max(0, totQ - blank),
-                unattemptedQuestions: blank,
-                correctCount: correct,
-                wrongCount: wrong
-            };
-        }
+                progressBar.style.width = '0%';
+                progressCount.textContent = '0 / 0 Sheets';
+                progressPercent.textContent = '0%';
+                statusMsg.textContent = 'Connecting to server and extracting Cloudinary sheets...';
+                logBox.innerHTML = '';
+                closeBtn.disabled = true;
+                actionBtn.style.display = 'none';
+                if (spinner) spinner.style.display = 'block';
+                footerNote.textContent = 'Please do not close this window during recheck.';
 
-        function appendSectionSummaryCard(container, opts) {
-            const row = document.createElement('div');
-            row.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
-            row.style.padding = '10px 14px';
-            row.style.gap = '8px';
+                modal.showModal();
 
-            const headWrap = document.createElement('div');
-            const titleEl = document.createElement('div');
-            titleEl.className = 'sec-title';
-            titleEl.style.fontSize = '0.88rem';
-            if (opts.isTotal) titleEl.style.color = 'var(--primary-active)';
-            titleEl.textContent = opts.title;
-
-            const rangeEl = document.createElement('div');
-            rangeEl.className = 'sec-range';
-            rangeEl.textContent = opts.metaText;
-
-            headWrap.appendChild(titleEl);
-            headWrap.appendChild(rangeEl);
-
-            const marksWrap = document.createElement('div');
-            marksWrap.className = 'sec-marks';
-            marksWrap.style.paddingTop = '6px';
-
-            const marksVal = document.createElement('div');
-            marksVal.className = 'sec-marks-val';
-            marksVal.style.fontSize = '1.02rem';
-            marksVal.textContent = `${opts.obtainedMarks} `;
-
-            const maxSpan = document.createElement('span');
-            maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
-            maxSpan.textContent = `/ ${opts.totalMarks} marks`;
-
-            marksVal.appendChild(maxSpan);
-            marksWrap.appendChild(marksVal);
-
-            row.appendChild(headWrap);
-            row.appendChild(marksWrap);
-            container.appendChild(row);
-        }
-
-        function openOmrModal(data) {
-            currentModalSubmission = data;
-            const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
-            const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
-            const sumSec = getSubmissionTotals(data);
-            const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
-
-            document.getElementById('modalRollNo').textContent = roll;
-            const nameEl = document.getElementById('modalStudentName');
-            if (nameEl) {
-                if (data.studentName) {
-                    nameEl.textContent = data.studentName;
-                    nameEl.style.display = 'inline';
-                } else {
-                    nameEl.textContent = '';
-                    nameEl.style.display = 'none';
-                }
-            }
-            document.getElementById('modalScoreText').textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
-            document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
-            document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
-            const allStatsEl = document.getElementById('modalAllSectionsStats');
-            if (allStatsEl) {
-                allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
-            }
-            document.getElementById('modalAccuracyText').textContent = `${pct}%`;
-
-            const img = document.getElementById('modalOmrImg');
-            img.src = imgUrl;
-            document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
-
-            const accName = data.cloudinary_account || data.cloudinaryAccount;
-            document.getElementById('modalCloudInfo').textContent = accName
-                ? `Stored on Cloudinary (${accName}) • Live Checking Overlay`
-                : 'Stored on Cloudinary Multi-Account Pool';
-
-            // Populate Sections + Sum of All Sections
-            const secContainer = document.getElementById('modalSectionContainer');
-            secContainer.innerHTML = '';
-            if (data.sectionWise && data.sectionWise.length > 0) {
-                data.sectionWise.forEach(s => {
-                    const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
-                    const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
-                    const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
-                    appendSectionSummaryCard(secContainer, {
-                        isTotal: false,
-                        title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
-                        metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
-                        obtainedMarks: s.marks || 0,
-                        totalMarks: s.maxMarks || (secTotalQ * 4)
+                try {
+                    const response = await fetch('/api/paper/' + encodeURIComponent(PAPER_ID) + '/hard-recheck', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'text/event-stream'
+                        }
                     });
-                });
-                appendSectionSummaryCard(secContainer, {
-                    isTotal: true,
-                    title: 'All Sections (Sum)',
-                    metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
-                    obtainedMarks: sumSec.obtainedMarks,
-                    totalMarks: sumSec.totalMarks
-                });
-            } else {
-                secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
-            }
 
-            // Populate Breakdown Table
-            const tbody = document.getElementById('modalBreakdownBody');
-            tbody.innerHTML = '';
-
-            const isJee = (PAPER_EXAM_TYPE === 'jee') ||
-                          (data.examType === 'jee') || 
-                          (data.exam_type === 'jee') ||
-                          (data.numericalScores && Object.keys(data.numericalScores).length > 0) || 
-                          (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) || 
-                          /jee/i.test(PAPER_TITLE) || 
-                          /jee/i.test(PAPER_SUBJECT);
-
-            const thSub = document.getElementById('thSubjectCol');
-            if (thSub) thSub.style.display = isJee ? '' : 'none';
-
-            let list = [];
-            if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
-                // Priority 1: Use authentic scanned breakdown directly (no re-evaluation or drift)
-                list = data.breakdown;
-            } else if (isJee) {
-                // Fallback for legacy JEE submissions without stored breakdown:
-                // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
-                for (let qNum = 1; qNum <= 20; qNum++) {
-                    const resp = (data.responses && (data.responses[qNum - 1] || '')) || '';
-                    const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
-                    let verdict = 'blank';
-                    if (resp && String(resp).trim() !== '') {
-                        const cleaned = String(resp).trim().toUpperCase();
-                        if (cleaned.includes(',')) verdict = 'multiple';
-                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                        else verdict = 'marked';
+                    if (!response.ok) {
+                        throw new Error('Server returned HTTP ' + response.status);
                     }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: qNum,
-                        subject: '⚛️ Phy',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        verdict: verdict,
-                        isNumerical: false
-                    });
-                }
 
-                // Section 1: Physics Q21-25 (NVQ Section B)
-                const phyNvq = (data.numericalScores && data.numericalScores.phy) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 20 + i;
-                    const val = Number(phyNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '⚛️ Phy',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
 
-                // Section 2: Chemistry Q26-45 (MCQ mapped strictly from physical OMR Q41-60)
-                for (let omrQ = 41; omrQ <= 60; omrQ++) {
-                    const displayQ = 26 + (omrQ - 41);
-                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
-                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
-                    let verdict = 'blank';
-                    if (resp && String(resp).trim() !== '') {
-                        const cleaned = String(resp).trim().toUpperCase();
-                        if (cleaned.includes(',')) verdict = 'multiple';
-                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                        else verdict = 'marked';
-                    }
-                    list.push({
-                        q: displayQ,
-                        displayQ: displayQ,
-                        omrQ: omrQ,
-                        subject: '🧪 Chem',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        verdict: verdict,
-                        isNumerical: false
-                    });
-                }
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
 
-                // Section 2: Chemistry Q46-50 (NVQ Section B)
-                const chemNvq = (data.numericalScores && data.numericalScores.chem) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 45 + i;
-                    const val = Number(chemNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '🧪 Chem',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
 
-                // Section 3: Mathematics Q51-70 (MCQ mapped strictly from physical OMR Q81-100)
-                for (let omrQ = 81; omrQ <= 100; omrQ++) {
-                    const displayQ = 51 + (omrQ - 81);
-                    const resp = (data.responses && data.responses[omrQ - 1]) || '';
-                    const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
-                    let verdict = 'blank';
-                    if (resp && String(resp).trim() !== '') {
-                        const cleaned = String(resp).trim().toUpperCase();
-                        if (cleaned.includes(',')) verdict = 'multiple';
-                        else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                        else verdict = 'marked';
-                    }
-                    list.push({
-                        q: displayQ,
-                        displayQ: displayQ,
-                        omrQ: omrQ,
-                        subject: '📐 Math',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        verdict: verdict,
-                        isNumerical: false
-                    });
-                }
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (!trimmed || !trimmed.startsWith('data:')) continue;
+                            const jsonStr = trimmed.slice(5).trim();
+                            if (!jsonStr) continue;
 
-                // Section 3: Mathematics Q71-75 (NVQ Section B)
-                const mathNvq = (data.numericalScores && data.numericalScores.math) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 70 + i;
-                    const val = Number(mathNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '📐 Math',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
-            } else if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
-                const qTotal = Math.max(data.responses.length, data.totalQuestions || 0);
-                for (let i = 0; i < qTotal; i++) {
-                    const qNum = i + 1;
-                    const resp = data.responses[i];
-                    const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
-                    let verdict = 'blank';
-                    if (resp && String(resp).trim() !== '') {
-                        const cleaned = String(resp).trim().toUpperCase();
-                        if (cleaned.includes(',')) {
-                            verdict = 'multiple';
-                        } else if (correctKey !== '-') {
-                            verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
-                        } else {
-                            verdict = 'marked';
+                            try {
+                                const data = JSON.parse(jsonStr);
+                                handleHardRecheckEvent(data);
+                            } catch (e) {
+                                console.error('Failed to parse SSE event:', e, jsonStr);
+                            }
                         }
                     }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        verdict: verdict
+                } catch (err) {
+                    console.error('Hard recheck error:', err);
+                    statusMsg.textContent = 'Error during hard recheck: ' + err.message;
+                    closeBtn.disabled = false;
+                    actionBtn.style.display = 'inline-block';
+                    actionBtn.textContent = 'Close';
+                    actionBtn.onclick = () => modal.close();
+                    if (spinner) spinner.style.display = 'none';
+                    footerNote.textContent = 'Process halted due to an error.';
+                }
+            }
+
+            function handleHardRecheckEvent(data) {
+                const progressBar = document.getElementById('hardRecheckProgressBar');
+                const progressCount = document.getElementById('hardRecheckProgressCount');
+                const progressPercent = document.getElementById('hardRecheckProgressPercent');
+                const statusMsg = document.getElementById('hardRecheckCurrentStatus');
+                const logBox = document.getElementById('hardRecheckLogBox');
+                const closeBtn = document.getElementById('hardRecheckCloseBtn');
+                const actionBtn = document.getElementById('hardRecheckActionBtn');
+                const spinner = document.getElementById('hardRecheckSpinner');
+                const footerNote = document.getElementById('hardRecheckFooterNote');
+
+                if (data.type === 'start') {
+                    progressCount.textContent = `0 / ${data.total} Sheets`;
+                    statusMsg.textContent = `Found ${data.total} submission(s). Extracting from Cloudinary...`;
+                } else if (data.type === 'progress') {
+                    const pct = Math.max(5, Math.round(((data.current - 1) / data.total) * 100));
+                    progressBar.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressCount.textContent = `${data.current} / ${data.total} Sheets`;
+                    statusMsg.textContent = data.status || `Extracting sheet ${data.current} of ${data.total}...`;
+                } else if (data.type === 'sheet_done') {
+                    const pct = Math.round((data.current / data.total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressCount.textContent = `${data.current} / ${data.total} Sheets`;
+                    statusMsg.textContent = data.status;
+
+                    let extraDetails = '';
+                    if (data.mcqSubjectScores) {
+                        const m = data.mcqSubjectScores;
+                        extraDetails = ` (Phy: ${m.phy ? m.phy.score : 0}, Chem: ${m.chem ? m.chem.score : 0}, Math: ${m.math ? m.math.score : 0})`;
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = 'recheck-log-item success';
+                    item.innerHTML = `
+                        <div style="font-weight: 600; color: #065F46; display: flex; justify-content: space-between;">
+                            <span>✓ Roll: ${escapeText(data.roll)}</span>
+                            <span style="font-family: monospace; font-size: 0.85rem; font-weight: 700;">Score: ${data.score}/${data.maxMarks}</span>
+                        </div>
+                        <div style="font-size: 0.74rem; color: #047857; margin-top: 3px;">
+                            Correct: ${data.correctCount} &middot; Wrong: ${data.wrongCount} &middot; Blank: ${data.blankCount}${extraDetails}
+                        </div>
+                    `;
+                    logBox.appendChild(item);
+                    logBox.scrollTop = logBox.scrollHeight;
+                } else if (data.type === 'sheet_error') {
+                    const item = document.createElement('div');
+                    item.className = 'recheck-log-item error';
+                    item.innerHTML = `
+                        <div style="font-weight: 600; color: #991B1B;">⚠ Roll: ${escapeText(data.roll)}</div>
+                        <div style="font-size: 0.74rem; color: #B91C1C; margin-top: 2px;">${escapeText(data.error)}</div>
+                    `;
+                    logBox.appendChild(item);
+                    logBox.scrollTop = logBox.scrollHeight;
+                } else if (data.type === 'done') {
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    if (spinner) spinner.style.display = 'none';
+                    statusMsg.innerHTML = `<strong style="color: #059669;">Hard Recheck Complete!</strong> ${data.processed} of ${data.total} sheet(s) re-scanned.`;
+                    closeBtn.disabled = false;
+                    actionBtn.style.display = 'inline-block';
+                    actionBtn.textContent = 'Reload Results Now';
+                    actionBtn.onclick = () => window.location.reload();
+                    footerNote.textContent = 'All sheets successfully re-evaluated from Cloudinary.';
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2200);
+                }
+            }
+
+            function escapeText(str) {
+                if (!str) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            function openOmrModalById(id) {
+                const data = submissionsMap[String(id)];
+                if (!data) {
+                    console.error('Submission not found for ID:', id);
+                    alert('Could not load OMR copy details.');
+                    return;
+                }
+                openOmrModal(data);
+            }
+
+            function getSubmissionTotals(data) {
+                if (data && data.allSectionsSummary) {
+                    return data.allSectionsSummary;
+                }
+                const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
+                if (secs.length > 0) {
+                    return secs.reduce((acc, s) => {
+                        const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                        const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
+                        const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
+                        acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
+                        acc.obtainedMarks += Number(s.marks) || 0;
+                        acc.totalQuestions += totQ;
+                        acc.attemptedQuestions += att;
+                        acc.unattemptedQuestions += unatt;
+                        acc.correctCount += Number(s.correct) || 0;
+                        acc.wrongCount += Number(s.wrong) || 0;
+                        return acc;
+                    }, {
+                        totalMarks: 0,
+                        obtainedMarks: 0,
+                        totalQuestions: 0,
+                        attemptedQuestions: 0,
+                        unattemptedQuestions: 0,
+                        correctCount: 0,
+                        wrongCount: 0
                     });
                 }
+                const totQ = Number(data && data.totalQuestions) || 0;
+                const blank = Number(data && data.blankCount) || 0;
+                const correct = Number(data && data.correctCount) || 0;
+                const wrong = Number(data && data.wrongCount) || 0;
+                return {
+                    totalMarks: (data && data.maxMarks) || (totQ * 4),
+                    obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
+                    totalQuestions: totQ,
+                    attemptedQuestions: Math.max(0, totQ - blank),
+                    unattemptedQuestions: blank,
+                    correctCount: correct,
+                    wrongCount: wrong
+                };
             }
 
-            currentModalList = list;
-            renderOmrOverlay(data, list);
+            function appendSectionSummaryCard(container, opts) {
+                const row = document.createElement('div');
+                row.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
+                row.style.padding = '10px 14px';
+                row.style.gap = '8px';
 
-            if (list.length > 0) {
-                list.forEach(b => {
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid #F1F5F9';
-                    let vColor = '#64748B';
-                    let vText = 'Blank';
-                    let qMarksText = (b.marks !== undefined) ? b.marks : '0';
-                    let qMarksColor = '#64748B';
+                const headWrap = document.createElement('div');
+                const titleEl = document.createElement('div');
+                titleEl.className = 'sec-title';
+                titleEl.style.fontSize = '0.88rem';
+                if (opts.isTotal) titleEl.style.color = 'var(--primary-active)';
+                titleEl.textContent = opts.title;
 
-                    if (b.verdict === 'correct') {
-                        vColor = '#15803D'; vText = 'Correct'; if (b.marks === undefined) qMarksText = '+4'; qMarksColor = '#15803D';
-                    } else if (b.verdict === 'wrong') {
-                        vColor = '#DC2626'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#DC2626';
-                    } else if (b.verdict === 'multiple') {
-                        vColor = '#B91C1C'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#B91C1C';
-                    } else if (b.verdict === 'marked') {
-                        vColor = '#1D4ED8'; vText = 'Recorded';
-                    }
+                const rangeEl = document.createElement('div');
+                rangeEl.className = 'sec-range';
+                rangeEl.textContent = opts.metaText;
 
-                    if (isJee) {
-                        const tdSub = document.createElement('td');
-                        tdSub.style.cssText = 'padding: 7px; font-weight:700; font-size:0.75rem; color:#475569;';
-                        tdSub.textContent = b.subject || '-';
-                        tr.appendChild(tdSub);
-                    }
+                headWrap.appendChild(titleEl);
+                headWrap.appendChild(rangeEl);
 
-                    const tdQ = document.createElement('td');
-                    tdQ.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
-                    tdQ.textContent = 'Q' + (b.displayQ || b.q);
+                const marksWrap = document.createElement('div');
+                marksWrap.className = 'sec-marks';
+                marksWrap.style.paddingTop = '6px';
 
-                    const tdMarked = document.createElement('td');
-                    tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
-                    if (b.marked) {
-                        tdMarked.textContent = b.marked;
+                const marksVal = document.createElement('div');
+                marksVal.className = 'sec-marks-val';
+                marksVal.style.fontSize = '1.02rem';
+                marksVal.textContent = `${opts.obtainedMarks} `;
+
+                const maxSpan = document.createElement('span');
+                maxSpan.style.cssText = 'font-size:0.78rem; font-weight:500; color:var(--text-muted);';
+                maxSpan.textContent = `/ ${opts.totalMarks} marks`;
+
+                marksVal.appendChild(maxSpan);
+                marksWrap.appendChild(marksVal);
+
+                row.appendChild(headWrap);
+                row.appendChild(marksWrap);
+                container.appendChild(row);
+            }
+
+            function openOmrModal(data) {
+                currentModalSubmission = data;
+                const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
+                const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
+                const sumSec = getSubmissionTotals(data);
+                const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
+
+                document.getElementById('modalRollNo').textContent = roll;
+                const nameEl = document.getElementById('modalStudentName');
+                if (nameEl) {
+                    if (data.studentName) {
+                        nameEl.textContent = data.studentName;
+                        nameEl.style.display = 'inline';
                     } else {
-                        const dash = document.createElement('span');
-                        dash.style.color = '#CBD5E1';
-                        dash.textContent = '—';
-                        tdMarked.appendChild(dash);
+                        nameEl.textContent = '';
+                        nameEl.style.display = 'none';
+                    }
+                }
+                document.getElementById('modalScoreText').textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
+                document.getElementById('modalAggregateText').textContent = `Marks: ${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                document.getElementById('modalGrandAggregate').textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                const allStatsEl = document.getElementById('modalAllSectionsStats');
+                if (allStatsEl) {
+                    allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
+                }
+                document.getElementById('modalAccuracyText').textContent = `${pct}%`;
+
+                const img = document.getElementById('modalOmrImg');
+                img.src = imgUrl;
+                document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
+
+                const accName = data.cloudinary_account || data.cloudinaryAccount;
+                document.getElementById('modalCloudInfo').textContent = accName
+                    ? `Stored on Cloudinary (${accName}) • Live Checking Overlay`
+                    : 'Stored on Cloudinary Multi-Account Pool';
+
+                // Populate Sections + Sum of All Sections
+                const secContainer = document.getElementById('modalSectionContainer');
+                secContainer.innerHTML = '';
+                if (data.sectionWise && data.sectionWise.length > 0) {
+                    data.sectionWise.forEach(s => {
+                        const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                        const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
+                        const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                        appendSectionSummaryCard(secContainer, {
+                            isTotal: false,
+                            title: `${s.sectionName || ''}${s.range ? ' (' + s.range + ')' : ''}`,
+                            metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
+                            obtainedMarks: s.marks || 0,
+                            totalMarks: s.maxMarks || (secTotalQ * 4)
+                        });
+                    });
+                    appendSectionSummaryCard(secContainer, {
+                        isTotal: true,
+                        title: 'All Sections (Sum)',
+                        metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
+                        obtainedMarks: sumSec.obtainedMarks,
+                        totalMarks: sumSec.totalMarks
+                    });
+                } else {
+                    secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
+                }
+
+                // Populate Breakdown Table
+                const tbody = document.getElementById('modalBreakdownBody');
+                tbody.innerHTML = '';
+
+                const isJee = (PAPER_EXAM_TYPE === 'jee') ||
+                    (data.examType === 'jee') ||
+                    (data.exam_type === 'jee') ||
+                    (data.numericalScores && Object.keys(data.numericalScores).length > 0) ||
+                    (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) ||
+                    /jee/i.test(PAPER_TITLE) ||
+                    /jee/i.test(PAPER_SUBJECT);
+
+                const thSub = document.getElementById('thSubjectCol');
+                if (thSub) thSub.style.display = isJee ? '' : 'none';
+
+                let list = [];
+                if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
+                    // Priority 1: Use authentic scanned breakdown directly (no re-evaluation or drift)
+                    list = data.breakdown;
+                } else if (isJee) {
+                    // Fallback for legacy JEE submissions without stored breakdown:
+                    // Section 1: Physics Q1-20 (MCQ from OMR Q1-20)
+                    for (let qNum = 1; qNum <= 20; qNum++) {
+                        const resp = (data.responses && (data.responses[qNum - 1] || '')) || '';
+                        const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
+                        let verdict = 'blank';
+                        if (resp && String(resp).trim() !== '') {
+                            const cleaned = String(resp).trim().toUpperCase();
+                            if (cleaned.includes(',')) verdict = 'multiple';
+                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                            else verdict = 'marked';
+                        }
+                        list.push({
+                            q: qNum,
+                            displayQ: qNum,
+                            omrQ: qNum,
+                            subject: '⚛️ Phy',
+                            marked: resp || '',
+                            correctKey: correctKey,
+                            verdict: verdict,
+                            isNumerical: false
+                        });
                     }
 
-                    const tdKey = document.createElement('td');
-                    tdKey.style.cssText = 'padding: 7px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
-                    tdKey.textContent = b.correctKey || '-';
+                    // Section 1: Physics Q21-25 (NVQ Section B)
+                    const phyNvq = (data.numericalScores && data.numericalScores.phy) || [];
+                    for (let i = 1; i <= 5; i++) {
+                        const qNum = 20 + i;
+                        const val = Number(phyNvq[i - 1] || 0);
+                        let verdict = 'blank';
+                        let marks = '0';
+                        let markedText = 'Blank';
+                        if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                        else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                        list.push({
+                            q: qNum,
+                            displayQ: qNum,
+                            omrQ: null,
+                            subject: '⚛️ Phy',
+                            marked: markedText,
+                            correctKey: 'NVQ',
+                            marks: marks,
+                            verdict: verdict,
+                            isNumerical: true
+                        });
+                    }
 
-                    const tdMarks = document.createElement('td');
-                    tdMarks.style.cssText = `padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
-                    tdMarks.textContent = qMarksText;
+                    // Section 2: Chemistry Q26-45 (MCQ mapped strictly from physical OMR Q41-60)
+                    for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                        const displayQ = 26 + (omrQ - 41);
+                        const resp = (data.responses && data.responses[omrQ - 1]) || '';
+                        const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
+                        let verdict = 'blank';
+                        if (resp && String(resp).trim() !== '') {
+                            const cleaned = String(resp).trim().toUpperCase();
+                            if (cleaned.includes(',')) verdict = 'multiple';
+                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                            else verdict = 'marked';
+                        }
+                        list.push({
+                            q: displayQ,
+                            displayQ: displayQ,
+                            omrQ: omrQ,
+                            subject: '🧪 Chem',
+                            marked: resp || '',
+                            correctKey: correctKey,
+                            verdict: verdict,
+                            isNumerical: false
+                        });
+                    }
 
-                    const tdVerdict = document.createElement('td');
-                    tdVerdict.style.cssText = `padding: 7px; font-weight:600; font-size:0.78rem; color:${vColor};`;
-                    tdVerdict.textContent = vText;
+                    // Section 2: Chemistry Q46-50 (NVQ Section B)
+                    const chemNvq = (data.numericalScores && data.numericalScores.chem) || [];
+                    for (let i = 1; i <= 5; i++) {
+                        const qNum = 45 + i;
+                        const val = Number(chemNvq[i - 1] || 0);
+                        let verdict = 'blank';
+                        let marks = '0';
+                        let markedText = 'Blank';
+                        if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                        else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                        list.push({
+                            q: qNum,
+                            displayQ: qNum,
+                            omrQ: null,
+                            subject: '🧪 Chem',
+                            marked: markedText,
+                            correctKey: 'NVQ',
+                            marks: marks,
+                            verdict: verdict,
+                            isNumerical: true
+                        });
+                    }
 
-                    tr.appendChild(tdQ);
-                    tr.appendChild(tdMarked);
-                    tr.appendChild(tdKey);
-                    tr.appendChild(tdMarks);
-                    tr.appendChild(tdVerdict);
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
-            }
+                    // Section 3: Mathematics Q51-70 (MCQ mapped strictly from physical OMR Q81-100)
+                    for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                        const displayQ = 51 + (omrQ - 81);
+                        const resp = (data.responses && data.responses[omrQ - 1]) || '';
+                        const correctKey = answerKey[omrQ] || answerKey[String(omrQ)] || answerKey[displayQ] || answerKey[String(displayQ)] || '-';
+                        let verdict = 'blank';
+                        if (resp && String(resp).trim() !== '') {
+                            const cleaned = String(resp).trim().toUpperCase();
+                            if (cleaned.includes(',')) verdict = 'multiple';
+                            else if (correctKey !== '-') verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                            else verdict = 'marked';
+                        }
+                        list.push({
+                            q: displayQ,
+                            displayQ: displayQ,
+                            omrQ: omrQ,
+                            subject: '📐 Math',
+                            marked: resp || '',
+                            correctKey: correctKey,
+                            verdict: verdict,
+                            isNumerical: false
+                        });
+                    }
 
-            if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
-                omrModalDialog.showModal();
-            }
-        }
-
-        function closeOmrModalDirect() {
-            if (omrModalDialog && omrModalDialog.open) {
-                omrModalDialog.close();
-            }
-            currentModalSubmission = null;
-        }
-
-        async function deleteSubmission(id, rollNumber) {
-            if (!confirm(`Are you sure you want to permanently delete OMR copy for student "${rollNumber}"?\n\nThis will remove the evaluation record from MongoDB and delete the image from Cloudinary.`)) {
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/submission/' + encodeURIComponent(id), {
-                    method: 'DELETE'
-                });
-                const data = await res.json();
-                if (data.success) {
-                    const row = document.getElementById('row-' + id);
-                    if (row) row.remove();
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to delete'));
+                    // Section 3: Mathematics Q71-75 (NVQ Section B)
+                    const mathNvq = (data.numericalScores && data.numericalScores.math) || [];
+                    for (let i = 1; i <= 5; i++) {
+                        const qNum = 70 + i;
+                        const val = Number(mathNvq[i - 1] || 0);
+                        let verdict = 'blank';
+                        let marks = '0';
+                        let markedText = 'Blank';
+                        if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                        else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                        list.push({
+                            q: qNum,
+                            displayQ: qNum,
+                            omrQ: null,
+                            subject: '📐 Math',
+                            marked: markedText,
+                            correctKey: 'NVQ',
+                            marks: marks,
+                            verdict: verdict,
+                            isNumerical: true
+                        });
+                    }
+                } else if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
+                    const qTotal = Math.max(data.responses.length, data.totalQuestions || 0);
+                    for (let i = 0; i < qTotal; i++) {
+                        const qNum = i + 1;
+                        const resp = data.responses[i];
+                        const correctKey = answerKey[qNum] || answerKey[String(qNum)] || '-';
+                        let verdict = 'blank';
+                        if (resp && String(resp).trim() !== '') {
+                            const cleaned = String(resp).trim().toUpperCase();
+                            if (cleaned.includes(',')) {
+                                verdict = 'multiple';
+                            } else if (correctKey !== '-') {
+                                verdict = (cleaned === correctKey.toUpperCase()) ? 'correct' : 'wrong';
+                            } else {
+                                verdict = 'marked';
+                            }
+                        }
+                        list.push({
+                            q: qNum,
+                            displayQ: qNum,
+                            marked: resp || '',
+                            correctKey: correctKey,
+                            verdict: verdict
+                        });
+                    }
                 }
-            } catch (err) {
-                alert('Request failed: ' + err.message);
+
+                currentModalList = list;
+                renderOmrOverlay(data, list);
+
+                if (list.length > 0) {
+                    list.forEach(b => {
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid #F1F5F9';
+                        let vColor = '#64748B';
+                        let vText = 'Blank';
+                        let qMarksText = (b.marks !== undefined) ? b.marks : '0';
+                        let qMarksColor = '#64748B';
+
+                        if (b.verdict === 'correct') {
+                            vColor = '#15803D'; vText = 'Correct'; if (b.marks === undefined) qMarksText = '+4'; qMarksColor = '#15803D';
+                        } else if (b.verdict === 'wrong') {
+                            vColor = '#DC2626'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#DC2626';
+                        } else if (b.verdict === 'multiple') {
+                            vColor = '#B91C1C'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = '-1'; qMarksColor = '#B91C1C';
+                        } else if (b.verdict === 'marked') {
+                            vColor = '#1D4ED8'; vText = 'Recorded';
+                        }
+
+                        if (isJee) {
+                            const tdSub = document.createElement('td');
+                            tdSub.style.cssText = 'padding: 7px; font-weight:700; font-size:0.75rem; color:#475569;';
+                            tdSub.textContent = b.subject || '-';
+                            tr.appendChild(tdSub);
+                        }
+
+                        const tdQ = document.createElement('td');
+                        tdQ.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
+                        tdQ.textContent = 'Q' + (b.displayQ || b.q);
+
+                        const tdMarked = document.createElement('td');
+                        tdMarked.style.cssText = 'padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
+                        if (b.marked) {
+                            tdMarked.textContent = b.marked;
+                        } else {
+                            const dash = document.createElement('span');
+                            dash.style.color = '#CBD5E1';
+                            dash.textContent = '—';
+                            tdMarked.appendChild(dash);
+                        }
+
+                        const tdKey = document.createElement('td');
+                        tdKey.style.cssText = 'padding: 7px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
+                        tdKey.textContent = b.correctKey || '-';
+
+                        const tdMarks = document.createElement('td');
+                        tdMarks.style.cssText = `padding: 7px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
+                        tdMarks.textContent = qMarksText;
+
+                        const tdVerdict = document.createElement('td');
+                        tdVerdict.style.cssText = `padding: 7px; font-weight:600; font-size:0.78rem; color:${vColor};`;
+                        tdVerdict.textContent = vText;
+
+                        tr.appendChild(tdQ);
+                        tr.appendChild(tdMarked);
+                        tr.appendChild(tdKey);
+                        tr.appendChild(tdMarks);
+                        tr.appendChild(tdVerdict);
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; color:var(--text-muted);">No question response details available.</td></tr>';
+                }
+
+                if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
+                    omrModalDialog.showModal();
+                }
             }
-        }
 
-        function deleteCurrentModalSubmission() {
-            if (!currentModalSubmission) return;
-            const id = currentModalSubmission._id;
-            const roll = currentModalSubmission.rollnumber || currentModalSubmission.rollNumber || 'STUDENT';
-            closeOmrModalDirect();
-            deleteSubmission(id, roll);
-        }
-
-        function filterResultsTable() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const rows = document.querySelectorAll('.result-row');
-            rows.forEach(row => {
-                const haystack = row.getAttribute('data-search') || row.getAttribute('data-roll') || '';
-                row.style.display = haystack.includes(query) ? '' : 'none';
-            });
-        }
-
-        function exportResultsToCsv() {
-            if (!Array.isArray(allSubmissionsData) || allSubmissionsData.length === 0) {
-                alert("No results to export.");
-                return;
+            function closeOmrModalDirect() {
+                if (omrModalDialog && omrModalDialog.open) {
+                    omrModalDialog.close();
+                }
+                currentModalSubmission = null;
             }
-            window.location.assign('/paper/' + encodeURIComponent(PAPER_ID) + '/results/export');
-        }
-    </script>
-    <%- include('partials/sidebar_end') %>
+
+            async function deleteSubmission(id, rollNumber) {
+                if (!confirm(`Are you sure you want to permanently delete OMR copy for student "${rollNumber}"?\n\nThis will remove the evaluation record from MongoDB and delete the image from Cloudinary.`)) {
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/submission/' + encodeURIComponent(id), {
+                        method: 'DELETE'
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const row = document.getElementById('row-' + id);
+                        if (row) row.remove();
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to delete'));
+                    }
+                } catch (err) {
+                    alert('Request failed: ' + err.message);
+                }
+            }
+
+            function deleteCurrentModalSubmission() {
+                if (!currentModalSubmission) return;
+                const id = currentModalSubmission._id;
+                const roll = currentModalSubmission.rollnumber || currentModalSubmission.rollNumber || 'STUDENT';
+                closeOmrModalDirect();
+                deleteSubmission(id, roll);
+            }
+
+            function filterResultsTable() {
+                const query = document.getElementById('searchInput').value.toLowerCase().trim();
+                const rows = document.querySelectorAll('.result-row');
+                rows.forEach(row => {
+                    const haystack = row.getAttribute('data-search') || row.getAttribute('data-roll') || '';
+                    row.style.display = haystack.includes(query) ? '' : 'none';
+                });
+            }
+
+            function exportResultsToCsv() {
+                if (!Array.isArray(allSubmissionsData) || allSubmissionsData.length === 0) {
+                    alert("No results to export.");
+                    return;
+                }
+                window.location.assign('/paper/' + encodeURIComponent(PAPER_ID) + '/results/export');
+            }
+        </script>
+        <%- include('partials/sidebar_end') %>
 </body>
 
 </html>

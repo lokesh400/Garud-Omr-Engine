@@ -21,6 +21,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Scratch & Temporary Testing
+scratch/
+
 # OS Generated Files
 .DS_Store
 .DS_Store?
