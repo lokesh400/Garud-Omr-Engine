@@ -1140,21 +1140,26 @@
                 const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
                 const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
 
+                const sortedDesc = [...bubbleStats].sort((a, b) => b.fillScore - a.fillScore);
+                const maxOption = sortedDesc[0];
+                const isRowBlank = (maxOption.fillScore < 34 && maxOption.midDarkness < 30 && maxOption.midDarkRatio < 0.35);
+
                 function isOptionFilled(s) {
+                    if (isRowBlank) return false;
                     const contrast = s.fillScore - rowBase;
                     // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
-                    if (s.midDarkness >= 36 && contrast >= 16) return true;
-                    // Rule 2: Faint HB pencil fill with clear relative contrast
-                    if (s.midDarkness >= 26 && contrast >= 14 && s.midDarkRatio >= 0.28) return true;
-                    // Rule 3: Heavy dark pen fill with confirmed contrast
-                    if (s.fillScore >= 48 && contrast >= 16) return true;
+                    if (s.midDarkness >= 38 && s.midDarkRatio >= 0.38 && contrast >= 20) return true;
+                    // Rule 2: Heavy dark pen fill with confirmed contrast
+                    if (s.fillScore >= 50 && s.midDarkRatio >= 0.35 && contrast >= 20) return true;
+                    // Rule 3: Faint HB pencil fill with clear relative contrast
+                    if (s.midDarkness >= 30 && s.midDarkRatio >= 0.42 && s.fillScore >= 35 && contrast >= 18) return true;
                     // Rule 4: Deliberate multiple marking where student shaded multiple bubbles
-                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.50 && s.fullDarkness >= 45) return true;
+                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.55 && s.fullDarkness >= 50 && s.fillScore >= 55) return true;
                     return false;
                 }
 
                 // Filter filled candidates using annular metric
-                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                const filledCandidates = isRowBlank ? [] : bubbleStats.filter(b => isOptionFilled(b));
                 let filledBubbles = [];
 
                 if (filledCandidates.length === 0) {

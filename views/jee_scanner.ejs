@@ -1927,61 +1927,49 @@
                 return count > 0 ? (sum / count) : 255;
             }
 
+            // High-Precision Annular Moat & Interior Bubble Feature Sampler
+            // Strictly samples inside r <= 5.0 to NEVER touch the printed circle border (r >= 6.2)
             function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
-                const offsets = [
-                    [0, 0], [-1.0, 0], [1.0, 0], [0, -1.0], [0, 1.0]
-                ];
-                let bestStat = null;
+                let midSum = 0, midCount = 0, darkMidCount = 0;
+                let fullSum = 0, fullCount = 0;
 
-                for (let k = 0; k < offsets.length; k++) {
-                    const cx = nominalX + offsets[k][0];
-                    const cy = nominalY + offsets[k][1];
-                    let midSum = 0, midCount = 0, darkMidCount = 0;
-                    let fullSum = 0, fullCount = 0;
+                for (let dy = -5; dy <= 5; dy++) {
+                    for (let dx = -5; dx <= 5; dx++) {
+                        const d2 = dx * dx + dy * dy;
+                        const d = Math.sqrt(d2);
+                        if (d > 5.0) continue; // Safe inner boundary away from printed border
 
-                    for (let dy = -6; dy <= 6; dy++) {
-                        for (let dx = -6; dx <= 6; dx++) {
-                            const d2 = dx * dx + dy * dy;
-                            const d = Math.sqrt(d2);
-                            if (d > 5.8) continue;
+                        const g = getGray(Math.round(nominalX + dx), Math.round(nominalY + dy));
+                        fullSum += g;
+                        fullCount++;
 
-                            const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
-                            fullSum += g;
-                            fullCount++;
-
-                            if (d >= 2.5 && d <= 5.8) {
-                                midSum += g;
-                                midCount++;
-                                if (g < (paperVal - 22)) darkMidCount++;
-                            }
+                        // Annular moat: between central printed letter (r <= 2.2) and outer border (r >= 6.2)
+                        // In an empty bubble, this moat is pure white paper.
+                        // In a shaded bubble, pencil or pen covers this moat.
+                        if (d >= 2.2 && d <= 5.0) {
+                            midSum += g;
+                            midCount++;
+                            if (g < (paperVal - 25)) darkMidCount++;
                         }
-                    }
-
-                    if (midCount === 0 || fullCount === 0) continue;
-
-                    const midMean = midSum / midCount;
-                    const fullMean = fullSum / fullCount;
-                    const midDarkness = Math.max(0, paperVal - midMean);
-                    const fullDarkness = Math.max(0, paperVal - fullMean);
-                    const midDarkRatio = darkMidCount / midCount;
-
-                    const fillScore = midDarkness * 0.70 + fullDarkness * 0.30;
-
-                    if (!bestStat || fillScore > bestStat.fillScore) {
-                        bestStat = {
-                            midDarkness,
-                            fullDarkness,
-                            midDarkRatio,
-                            fillScore
-                        };
                     }
                 }
 
-                return bestStat || {
-                    midDarkness: 0,
-                    fullDarkness: 0,
-                    midDarkRatio: 0,
-                    fillScore: 0
+                if (midCount === 0 || fullCount === 0) {
+                    return { midDarkness: 0, fullDarkness: 0, midDarkRatio: 0, fillScore: 0 };
+                }
+
+                const midMean = midSum / midCount;
+                const fullMean = fullSum / fullCount;
+                const midDarkness = Math.max(0, paperVal - midMean);
+                const fullDarkness = Math.max(0, paperVal - fullMean);
+                const midDarkRatio = darkMidCount / midCount;
+                const fillScore = midDarkness * 0.70 + fullDarkness * 0.30;
+
+                return {
+                    midDarkness,
+                    fullDarkness,
+                    midDarkRatio,
+                    fillScore
                 };
             }
 
@@ -2110,7 +2098,7 @@
                 const optD_X = colX + 3 * U_BUBBLE_STEP * markerW;
                 const gutterSampleX = Math.min(W - 14, optD_X + 16);
                 const paperVal1 = sampleDisk(gutterSampleX, rowY, 3.5);
-                const paperVal2 = sampleDisk(Math.max(14, colX - 16), rowY, 3.5);
+                const paperVal2 = sampleDisk(colX + U_BUBBLE_STEP * markerW, Math.max(10, rowY - 10), 3.5);
                 const paperVal = Math.max(paperVal1, paperVal2);
 
                 let bubbleStats = [];
@@ -2128,16 +2116,27 @@
                 const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
                 const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
 
+                const sortedDesc = [...bubbleStats].sort((a, b) => b.fillScore - a.fillScore);
+                const maxOption = sortedDesc[0];
+
+                // Row-level blank guard: if darkest option is faint or empty, entire question is unattempted!
+                const isRowBlank = (maxOption.fillScore < 34 && maxOption.midDarkness < 30 && maxOption.midDarkRatio < 0.35);
+
                 function isOptionFilled(s) {
+                    if (isRowBlank) return false;
                     const contrast = s.fillScore - rowBase;
-                    if (s.midDarkness >= 36 && contrast >= 16) return true;
-                    if (s.midDarkness >= 26 && contrast >= 14 && s.midDarkRatio >= 0.28) return true;
-                    if (s.fillScore >= 48 && contrast >= 16) return true;
-                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.50 && s.fullDarkness >= 45) return true;
+                    // Rule 1: Solid pen / pencil shading (high darkness + clear moat coverage + contrast)
+                    if (s.midDarkness >= 38 && s.midDarkRatio >= 0.38 && contrast >= 20) return true;
+                    // Rule 2: Heavy dark pen fill (strong fillScore + clear moat coverage + contrast)
+                    if (s.fillScore >= 50 && s.midDarkRatio >= 0.35 && contrast >= 20) return true;
+                    // Rule 3: Faint pencil shading (requires consistent moat coverage + verified contrast)
+                    if (s.midDarkness >= 30 && s.midDarkRatio >= 0.42 && s.fillScore >= 35 && contrast >= 18) return true;
+                    // Rule 4: Deliberate multiple marking (both bubbles very dark and filled)
+                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.55 && s.fullDarkness >= 50 && s.fillScore >= 55) return true;
                     return false;
                 }
 
-                const filledCandidates = bubbleStats.filter(b => isOptionFilled(b));
+                const filledCandidates = isRowBlank ? [] : bubbleStats.filter(b => isOptionFilled(b));
                 let filledBubbles = [];
 
                 if (filledCandidates.length === 0) {
