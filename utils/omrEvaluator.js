@@ -604,4 +604,4 @@ module.exports = {
     fetchSheetImageBuffer,
     recheckSubmissionFromCloudinary,
     buildKeyLookup
-};
+}
