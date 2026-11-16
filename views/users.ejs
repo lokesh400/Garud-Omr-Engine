@@ -7,949 +7,1513 @@
     <title>User Management • Garud OMR</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .users-container {
-            max-width: 1180px;
+        :root {
+            --um-primary: #2563EB;
+            --um-primary-hover: #1D4ED8;
+            --um-primary-light: #EFF6FF;
+            --um-text-dark: #0F172A;
+            --um-text-muted: #64748B;
+            --um-border: #E2E8F0;
+            --um-surface: #FFFFFF;
+            --um-bg-subtle: #F8FAFC;
+        }
+
+        .users-page-wrap {
+            max-width: 1240px;
             margin: 0 auto;
-            padding: 1.75rem 1.5rem 4rem 1.5rem;
+            padding: 1.5rem 1.25rem 4rem 1.25rem;
         }
 
-        .users-grid {
-            display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 1.5rem;
-            align-items: start;
-        }
-
-        .users-grid.bulk-active {
-            grid-template-columns: 1fr;
-        }
-
-        @media (max-width: 1200px) {
-            .users-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .alert-banner {
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 1.25rem;
-            border: 1px solid transparent;
-        }
-
-        .alert-error {
-            background: var(--danger-light);
-            color: var(--danger-hover);
-            border-color: var(--danger-border);
-        }
-
-        .alert-success {
-            background: var(--success-light);
-            color: var(--success-hover);
-            border-color: var(--success-border);
-        }
-
-        /* Accessible Tabs inside Account Creation card */
-        .acct-tablist {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1.25rem;
-            overflow-x: auto;
-        }
-
-        .acct-tab {
-            position: relative;
-            background: transparent;
-            border: 0;
-            padding: 0.6rem 0.9rem;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            white-space: nowrap;
-            flex: none;
-            transition: color 150ms ease;
-        }
-
-        .acct-tab:hover {
-            color: var(--text-main);
-        }
-
-        .acct-tab[aria-selected="true"] {
-            color: var(--primary);
-        }
-
-        .acct-tab[aria-selected="true"]::after {
-            content: "";
-            position: absolute;
-            inset: auto 0 0;
-            border-block-end: 2.5px solid var(--primary);
-        }
-
-        .acct-tab:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: -2px;
-            border-radius: var(--radius-xs);
-        }
-
-        .tab-panel[hidden] {
-            display: none;
-        }
-
-        fieldset.role-fieldset {
-            border: 0;
-            padding: 0;
-            margin: 0 0 1.25rem 0;
-        }
-
-        fieldset.role-fieldset legend {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 0.45rem;
-            padding: 0;
-        }
-
-        .role-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .role-option-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0.65rem 0.85rem;
-            border: 1px solid var(--border-hover);
-            border-radius: var(--radius-sm);
-            background: #FFFFFF;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-body);
-            transition: var(--transition);
-        }
-
-        .role-option-label:has(input:checked) {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            color: var(--primary-active);
-        }
-
-        .role-option-label input {
-            margin: 0;
-            accent-color: var(--primary);
-        }
-
-        .hint-text {
-            display: block;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-top: 0.35rem;
-            line-height: 1.35;
-        }
-
-        .password-label-row {
+        /* Top Header Strip */
+        .um-header-strip {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0.4rem;
-        }
-
-        .password-label-row label {
-            margin-bottom: 0;
-        }
-
-        .btn-toggle-pw {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-xs);
-            padding: 2px 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-body);
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-toggle-pw:hover {
-            background: var(--surface-subtle);
-            border-color: var(--border-hover);
-        }
-
-        .visually-hidden {
-            position: absolute;
-            clip-path: inset(50%);
-            overflow: hidden;
-            width: 1px;
-            height: 1px;
-            margin: -1px;
-            padding: 0;
-            border: 0;
-            white-space: nowrap;
-        }
-
-        /* Bulk Upload Panel */
-        .bulk-rule-box {
-            background: var(--primary-light);
-            border: 1px solid var(--primary-border);
-            border-radius: var(--radius-sm);
-            padding: 0.85rem 1rem;
-            font-size: 0.83rem;
-            color: var(--text-body);
-            margin-bottom: 1.1rem;
-            line-height: 1.5;
-        }
-
-        .bulk-rule-box strong {
-            color: var(--text-main);
-        }
-
-        .bulk-rule-code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--primary-active);
-            background: #FFFFFF;
-            border: 1px solid var(--primary-border);
-            padding: 1px 6px;
-            border-radius: 4px;
-        }
-
-        .bulk-input-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-            align-items: start;
-        }
-
-        @media (max-width: 800px) {
-            .bulk-input-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .upload-dropzone {
-            border: 1.5px dashed var(--border-hover);
-            border-radius: var(--radius-md);
-            background: var(--surface-subtle);
-            padding: 1.25rem 1rem;
-            text-align: center;
-            transition: border-color 150ms ease, background 150ms ease;
-            cursor: pointer;
-        }
-
-        .upload-dropzone:hover,
-        .upload-dropzone.is-dragover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
-
-        .upload-dropzone-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .upload-dropzone-sub {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-        }
-
-        .bulk-textarea {
-            width: 100%;
-            min-height: 128px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            line-height: 1.45;
-            resize: vertical;
-        }
-
-        .bulk-preview-card {
-            margin-top: 1.25rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            background: #FFFFFF;
-            overflow: hidden;
-        }
-
-        .bulk-preview-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             flex-wrap: wrap;
+            gap: 1rem;
+            background: var(--um-surface);
+            border: 1px solid var(--um-border);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+
+        .um-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .um-header-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #EFF6FF;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .um-header-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--um-text-dark);
+            margin: 0 0 3px 0;
+            letter-spacing: -0.01em;
+        }
+
+        .um-header-sub {
+            font-size: 0.85rem;
+            color: var(--um-text-muted);
+            margin: 0;
+        }
+
+        .um-header-actions {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            padding: 0.85rem 1rem;
-            background: var(--surface-subtle);
-            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
         }
 
-        .bulk-preview-scroll {
-            max-height: 310px;
-            overflow-y: auto;
-        }
-
-        .bulk-status-pill {
+        .btn-um-primary {
             display: inline-flex;
             align-items: center;
-            padding: 2px 8px;
-            border-radius: var(--radius-full);
-            font-size: 0.72rem;
+            gap: 7px;
+            background: #2563EB;
+            color: #FFFFFF;
+            font-size: 0.84rem;
             font-weight: 600;
-            white-space: nowrap;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #1D4ED8;
+            cursor: pointer;
+            transition: all 140ms ease;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+            font-family: inherit;
         }
 
-        .bulk-status-ready {
-            background: var(--success-light);
-            color: var(--success-hover);
-            border: 1px solid var(--success-border);
+        .btn-um-primary:hover {
+            background: #1D4ED8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
         }
 
-        .bulk-status-skip {
-            background: var(--warning-light);
-            color: var(--warning-hover);
-            border: 1px solid var(--warning-border);
-        }
-
-        .bulk-status-error {
-            background: var(--danger-light);
-            color: var(--danger-hover);
-            border: 1px solid var(--danger-border);
-        }
-
-        .table-header-row {
-            display: flex;
-            justify-content: space-between;
+        .btn-um-secondary {
+            display: inline-flex;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .search-box {
-            position: relative;
-            min-width: 220px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 7px 12px 7px 32px;
-            border: 1px solid var(--border-hover);
-            border-radius: var(--radius-sm);
-            font-size: 0.85rem;
-            font-family: 'Inter', sans-serif;
+            gap: 7px;
             background: #FFFFFF;
-            color: var(--text-main);
+            color: #334155;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #CBD5E1;
+            cursor: pointer;
+            transition: all 140ms ease;
+            text-decoration: none;
+            font-family: inherit;
         }
 
-        .search-box input:focus {
+        .btn-um-secondary:hover {
+            background: #F8FAFC;
+            border-color: #94A3B8;
+            color: #0F172A;
+        }
+
+        /* Metric Stats Cards Strip */
+        .um-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .um-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .um-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .um-stat-card {
+            background: var(--um-surface);
+            border: 1px solid var(--um-border);
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            transition: transform 140ms ease, box-shadow 140ms ease;
+        }
+
+        .um-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+        }
+
+        .um-stat-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .um-stat-icon.total { background: #EFF6FF; color: #2563EB; }
+        .um-stat-icon.student { background: #ECFDF5; color: #059669; }
+        .um-stat-icon.teacher { background: #FAF5FF; color: #7E22CE; }
+        .um-stat-icon.admin { background: #FEF3C7; color: #D97706; }
+
+        .um-stat-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--um-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+        }
+
+        .um-stat-value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--um-text-dark);
+            line-height: 1.2;
+        }
+
+        /* Filter & Search Bar */
+        .um-filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: var(--um-surface);
+            border: 1px solid var(--um-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+        }
+
+        .um-role-pills {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .um-pill-btn {
+            background: #F1F5F9;
+            border: 1px solid transparent;
+            color: #475569;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 130ms ease;
+            font-family: inherit;
+        }
+
+        .um-pill-btn:hover {
+            background: #E2E8F0;
+            color: #0F172A;
+        }
+
+        .um-pill-btn.active {
+            background: #2563EB;
+            color: #FFFFFF;
+            border-color: #1D4ED8;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+        }
+
+        .um-search-wrap {
+            position: relative;
+            min-width: 260px;
+            flex: 1;
+            max-width: 360px;
+        }
+
+        .um-search-wrap input {
+            width: 100%;
+            padding: 7px 12px 7px 34px;
+            border: 1px solid var(--um-border);
+            border-radius: 8px;
+            font-size: 0.84rem;
+            color: var(--um-text-dark);
+            background: #FFFFFF;
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+            transition: all 130ms ease;
+            font-family: inherit;
         }
 
-        .search-icon {
+        .um-search-wrap input:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .um-search-icon {
             position: absolute;
             left: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-muted);
+            color: #94A3B8;
             pointer-events: none;
             display: flex;
-        }
-
-        .role-badge {
-            display: inline-flex;
             align-items: center;
-            padding: 2px 9px;
-            border-radius: var(--radius-full);
+        }
+
+        /* Modern Elevated Table */
+        .um-table-card {
+            background: var(--um-surface);
+            border: 1px solid var(--um-border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+
+        .um-table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .um-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        .um-table thead {
+            background: #F8FAFC;
+            border-bottom: 1px solid var(--um-border);
+        }
+
+        .um-table th {
+            padding: 12px 18px;
             font-size: 0.74rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
         }
 
-        .role-badge-admin {
-            background: var(--primary-light);
-            color: var(--primary-active);
-            border: 1px solid var(--primary-border);
+        .um-table td {
+            padding: 13px 18px;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
         }
 
-        .role-badge-teacher {
+        .um-table tbody tr:hover {
+            background: #F8FAFC;
+        }
+
+        .um-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* User Profile in Table */
+        .um-user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .um-user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .um-user-avatar.admin { background: #EEF2FF; color: #4F46E5; border: 1.5px solid #C7D2FE; }
+        .um-user-avatar.teacher { background: #FAF5FF; color: #7E22CE; border: 1.5px solid #E9D5FF; }
+        .um-user-avatar.student { background: #ECFDF5; color: #059669; border: 1.5px solid #A7F3D0; }
+
+        .um-user-name {
+            font-weight: 700;
+            color: var(--um-text-dark);
+            line-height: 1.3;
+        }
+
+        .um-user-handle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.76rem;
+            color: #64748B;
+        }
+
+        .um-badge-you {
             background: #EFF6FF;
-            color: #1D4ED8;
+            color: #2563EB;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
             border: 1px solid #BFDBFE;
         }
 
-        .role-badge-student {
-            background: var(--success-light);
-            color: var(--success-hover);
-            border: 1px solid var(--success-border);
+        /* Role Badges */
+        .um-role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
-        .roll-code {
+        .um-role-badge.admin {
+            background: #EEF2FF;
+            color: #4338CA;
+            border: 1px solid #C7D2FE;
+        }
+
+        .um-role-badge.teacher {
+            background: #FAF5FF;
+            color: #7E22CE;
+            border: 1px solid #E9D5FF;
+        }
+
+        .um-role-badge.student {
+            background: #ECFDF5;
+            color: #047857;
+            border: 1px solid #A7F3D0;
+        }
+
+        .um-role-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .um-roll-tag {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.8rem;
             font-weight: 600;
-            background: var(--surface-subtle);
-            border: 1px solid var(--border-color);
-            padding: 2px 7px;
-            border-radius: var(--radius-xs);
-            color: var(--text-main);
+            background: #F1F5F9;
+            color: #1E293B;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #E2E8F0;
+            display: inline-block;
         }
 
-        dialog.user-dialog {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
+        /* Action Buttons */
+        .um-actions-cell {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .btn-act {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 130ms ease;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            font-family: inherit;
+        }
+
+        .btn-act-edit {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border-color: #BFDBFE;
+        }
+
+        .btn-act-edit:hover {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .btn-act-pw {
+            background: #FFFBEB;
+            color: #B45309;
+            border-color: #FDE68A;
+        }
+
+        .btn-act-pw:hover {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .btn-act-del {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border-color: #FECACA;
+        }
+
+        .btn-act-del:hover {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* Empty State */
+        .um-empty-state {
+            padding: 3.5rem 1.5rem;
+            text-align: center;
+        }
+
+        .um-empty-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #EFF6FF;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+        }
+
+        /* Alerts */
+        .alert-banner {
+            border-radius: 10px;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+
+        .alert-success {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        /* Modals & Dialogs */
+        dialog.um-modal {
+            border: none;
+            border-radius: 16px;
             padding: 0;
-            width: min(440px, calc(100vw - 24px));
+            width: min(520px, calc(100vw - 32px));
             background: #FFFFFF;
-            box-shadow: var(--shadow-2xl);
+            box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.25);
             margin: auto;
             overflow: hidden;
+            font-family: inherit;
         }
 
-        dialog.user-dialog[open] {
+        dialog.um-modal::backdrop {
+            background: rgba(15, 23, 42, 0.48);
+            backdrop-filter: blur(4px);
+        }
+
+        dialog.um-modal[open] {
             display: block;
         }
 
-        .dialog-header {
+        dialog.um-modal-wide {
+            width: min(840px, calc(100vw - 32px));
+        }
+
+        .um-modal-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.25rem;
-            background: var(--surface-subtle);
-            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+            padding: 1.15rem 1.5rem;
+            background: #F8FAFC;
+            border-bottom: 1px solid #E2E8F0;
         }
 
-        .dialog-body {
-            padding: 1.25rem;
+        .um-modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .report-list {
-            margin: 0.5rem 0 0 0;
-            padding-left: 1.15rem;
-            font-size: 0.8rem;
-            max-height: 140px;
+        .um-modal-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .um-modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0;
+        }
+
+        .um-modal-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.4rem;
+            line-height: 1;
+            color: #94A3B8;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 120ms ease;
+        }
+
+        .um-modal-close-btn:hover {
+            color: #0F172A;
+            background: #E2E8F0;
+        }
+
+        .um-modal-body {
+            padding: 1.5rem;
+            max-height: calc(85vh - 120px);
             overflow-y: auto;
+        }
+
+        .um-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 1rem 1.5rem;
+            background: #F8FAFC;
+            border-top: 1px solid #E2E8F0;
+        }
+
+        /* Role Selector in Modal */
+        .um-role-picker {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        .um-role-label {
+            border: 1.5px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 140ms ease;
+            background: #FFFFFF;
+        }
+
+        .um-role-label:hover {
+            border-color: #93C5FD;
+            background: #F8FAFC;
+        }
+
+        .um-role-label:has(input:checked) {
+            border-color: #2563EB;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .um-role-label input {
+            display: none;
+        }
+
+        .um-role-label span {
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .um-form-group {
+            margin-bottom: 1.15rem;
+        }
+
+        .um-form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .um-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            color: #0F172A;
+            background: #FFFFFF;
+            outline: none;
+            transition: all 130ms ease;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .um-input:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .um-input-desc {
+            font-size: 0.76rem;
+            color: #64748B;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .um-pw-wrap {
+            position: relative;
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-gen-pw {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #475569;
+            padding: 0 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 130ms ease;
+            font-family: inherit;
+        }
+
+        .btn-gen-pw:hover {
+            background: #E2E8F0;
+            color: #0F172A;
+        }
+
+        .btn-toggle-view {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            color: #475569;
+            padding: 0 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 130ms ease;
+            font-family: inherit;
+        }
+
+        .btn-toggle-view:hover {
+            background: #F8FAFC;
+            color: #0F172A;
+        }
+
+        /* Bulk Upload Specific */
+        .bulk-rule-alert {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            font-size: 0.82rem;
+            color: #1E3A8A;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+        }
+
+        .bulk-rule-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #FFFFFF;
+            border: 1px solid #BFDBFE;
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: #1D4ED8;
+            font-weight: 700;
+        }
+
+        .bulk-input-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .bulk-input-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .um-dropzone {
+            border: 2px dashed #CBD5E1;
+            border-radius: 12px;
+            background: #F8FAFC;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 140ms ease;
+        }
+
+        .um-dropzone:hover, .um-dropzone.is-dragover {
+            border-color: #2563EB;
+            background: #EFF6FF;
+        }
+
+        .um-textarea {
+            width: 100%;
+            height: 140px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 8px 10px;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 130ms ease;
+        }
+
+        .um-textarea:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .preview-table-wrap {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            margin-top: 1rem;
         }
     </style>
 </head>
 
 <body>
     <%- include('partials/sidebar_start', { activeNav: 'users' }) %>
-    <div class="users-container">
-        <header class="app-header">
-            <div>
-                <h1 style="font-size: 1.25rem; margin: 0 0 2px 0;">User Management</h1>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Create and manage Admin &amp; Student login accounts</p>
+    <div class="users-page-wrap">
+
+        <!-- Top Header Strip -->
+        <header class="um-header-strip">
+            <div class="um-header-left">
+                <div class="um-header-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="um-header-title">User Management</h1>
+                    <p class="um-header-sub">Manage student and staff credentials, reset passwords, and bulk import accounts.</p>
+                </div>
             </div>
-            <span class="pill pill-primary"><%= users ? users.length : 0 %> Accounts</span>
+
+            <div class="um-header-actions">
+                <button type="button" class="btn-um-secondary" onclick="openBulkUploadModal()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Bulk Upload Students
+                </button>
+
+                <button type="button" class="btn-um-primary" onclick="openCreateUserModal()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New User
+                </button>
+            </div>
         </header>
 
+        <!-- Notification Alerts -->
         <% if (typeof error !== 'undefined' && error) { %>
-            <div class="alert-banner alert-error" role="alert"><%= error %></div>
+            <div class="alert-banner alert-error" role="alert">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span><%= error %></span>
+            </div>
         <% } %>
         <% if (typeof message !== 'undefined' && message) { %>
-            <div class="alert-banner alert-success" role="status"><%= message %></div>
-        <% } %>
-
-        <% if (typeof bulkReport !== 'undefined' && bulkReport && bulkReport.summary) { %>
-            <div class="alert-banner <%= bulkReport.summary.createdCount > 0 ? 'alert-success' : 'alert-error' %>" role="status">
-                <strong>Bulk Import Summary:</strong>
-                Created <%= bulkReport.summary.createdCount %>,
-                Skipped <%= bulkReport.summary.skippedCount %>,
-                Failed <%= bulkReport.summary.failedCount %>.
-                <% if (bulkReport.skipped && bulkReport.skipped.length > 0) { %>
-                    <ul class="report-list">
-                        <% bulkReport.skipped.forEach(item => { %>
-                            <li>Skipped <code><%= item.rollnumber %></code> (<%= item.name %>): <%= item.reason %></li>
-                        <% }) %>
-                    </ul>
-                <% } %>
-                <% if (bulkReport.failed && bulkReport.failed.length > 0) { %>
-                    <ul class="report-list">
-                        <% bulkReport.failed.forEach(item => { %>
-                            <li>Row <%= item.rowNumber %> (<code><%= item.rollnumber || 'blank' %></code>): <%= item.reason %></li>
-                        <% }) %>
-                    </ul>
-                <% } %>
+            <div class="alert-banner alert-success" role="status">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span><%= message %></span>
             </div>
         <% } %>
 
-        <div class="users-grid" id="usersLayoutGrid">
-            <!-- Account Creation Card (Single + Bulk Upload Tabs) -->
-            <div class="card">
-                <div class="card-header-styled" style="border-bottom: none; padding-bottom: 0.35rem; margin-bottom: 0.5rem;">
-                    <h2 style="font-size: 1.1rem; margin: 0;">Account Creation</h2>
+        <%
+            const totalCount = users ? users.length : 0;
+            const studentCount = users ? users.filter(u => u.role === 'student').length : 0;
+            const teacherCount = users ? users.filter(u => u.role === 'teacher').length : 0;
+            const adminCount = users ? users.filter(u => u.role === 'admin').length : 0;
+        %>
+
+        <!-- Metric Stats Cards Strip -->
+        <section class="um-stats-grid">
+            <div class="um-stat-card">
+                <div class="um-stat-icon total">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
                 </div>
-
-                <div class="acct-tablist" role="tablist" aria-label="Account creation mode" id="acctTablist">
-                    <button type="button" class="acct-tab" role="tab" id="tabSingle" aria-selected="true">
-                        Single Account
-                    </button>
-                    <button type="button" class="acct-tab" role="tab" id="tabBulk" aria-selected="false" tabindex="-1">
-                        Bulk Upload Students
-                    </button>
-                </div>
-
-                <!-- Tab Panel 1: Single Account Form -->
-                <div role="tabpanel" id="panelSingle" aria-labelledby="tabSingle" class="tab-panel">
-                    <form action="/users" method="POST" id="createUserForm">
-                        <fieldset class="role-fieldset">
-                            <legend>Account Role</legend>
-                            <div class="role-options">
-                                <label class="role-option-label">
-                                    <input type="radio" name="role" value="student" checked onchange="toggleRollField()">
-                                    <span>Student</span>
-                                </label>
-                                <label class="role-option-label">
-                                    <input type="radio" name="role" value="teacher" onchange="toggleRollField()">
-                                    <span>Teacher</span>
-                                </label>
-                                <label class="role-option-label">
-                                    <input type="radio" name="role" value="admin" onchange="toggleRollField()">
-                                    <span>Admin</span>
-                                </label>
-                            </div>
-                        </fieldset>
-
-                        <div class="form-group">
-                            <label for="newFullName">Full Name</label>
-                            <input type="text"
-                                   id="newFullName"
-                                   name="fullName"
-                                   class="form-control"
-                                   placeholder="e.g. Aarav Sharma"
-                                   autocomplete="name">
-                        </div>
-
-                        <div class="form-group" id="rollNumberGroup">
-                            <label for="newRollnumber">Student Roll Number <span style="color: var(--danger);">*</span></label>
-                            <input type="text"
-                                   id="newRollnumber"
-                                   name="rollnumber"
-                                   class="form-control"
-                                   placeholder="e.g. 01234567"
-                                   autocorrect="off"
-                                   autocapitalize="none"
-                                   spellcheck="false"
-                                   required>
-                            <span class="hint-text">Must match the roll number marked on the OMR sheet so the student sees their results.</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="newUsername">Login Username <span style="color: var(--danger);">*</span></label>
-                            <input type="text"
-                                   id="newUsername"
-                                   name="username"
-                                   class="form-control"
-                                   placeholder="e.g. 01234567 or aarav.sharma"
-                                   autocomplete="off"
-                                   autocorrect="off"
-                                   autocapitalize="none"
-                                   spellcheck="false"
-                                   required>
-                            <span class="hint-text">Lowercase letters, numbers, dots, underscores, or hyphens.</span>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="password-label-row">
-                                <label for="newPassword">Initial Password <span style="color: var(--danger);">*</span></label>
-                                <button type="button"
-                                        id="toggleCreatePw"
-                                        class="btn-toggle-pw"
-                                        aria-pressed="false"
-                                        aria-label="Show password">
-                                    Show
-                                </button>
-                            </div>
-                            <input type="password"
-                                   id="newPassword"
-                                   name="password"
-                                   class="form-control"
-                                   placeholder="Minimum 6 characters"
-                                   autocomplete="new-password"
-                                   minlength="6"
-                                   required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            Create User Account
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Tab Panel 2: Bulk Upload Students -->
-                <div role="tabpanel" id="panelBulk" aria-labelledby="tabBulk" class="tab-panel" hidden>
-                    <div class="bulk-rule-box">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
-                            <div>
-                                <strong>Bulk Student Import Rules:</strong><br>
-                                &bull; Columns required: <strong>Roll Number</strong>, <strong>Name</strong>, <strong>Father's Name</strong>, <strong>Mother's Name</strong>.<br>
-                                &bull; Database stores <strong>only Name &amp; Roll Number</strong> (father's &amp; mother's names are never saved in the DB).<br>
-                                &bull; Password formula (lowercase): first 3 letters of <strong>Name</strong> + <strong>Father's Name</strong> + <strong>Mother's Name</strong>
-                                (e.g. Aarav + Rajesh + Sunita &rarr; <span class="bulk-rule-code">aarrajsun</span>). Existing roll numbers are skipped.
-                            </div>
-                            <a href="/users/bulk-template" class="btn btn-secondary btn-sm">Download CSV Template</a>
-                        </div>
-                    </div>
-
-                    <form id="bulkUploadForm" action="/users/bulk" method="POST" enctype="multipart/form-data">
-                        <div class="bulk-input-grid">
-                            <div>
-                                <label style="display: block; margin-bottom: 0.45rem;">Upload Spreadsheet (.xlsx or .csv)</label>
-                                <div class="upload-dropzone" id="bulkDropzone" role="button" tabindex="0" aria-label="Upload student CSV or Excel file">
-                                    <input type="file"
-                                           id="bulkFileInput"
-                                           name="studentFile"
-                                           accept=".xlsx,.csv,.tsv,.txt"
-                                           style="display: none;">
-                                    <div class="upload-dropzone-title" id="dropzoneFileName">Drop .xlsx or .csv file here, or click to browse</div>
-                                    <div class="upload-dropzone-sub">Maximum 5 MB &middot; Headers in any column order</div>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="browseFileBtn">Choose File</button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="bulkPasteArea" style="display: block; margin-bottom: 0.45rem;">Or Paste Rows from Excel / Google Sheets</label>
-                                <textarea id="bulkPasteArea"
-                                          name="rawText"
-                                          class="form-control bulk-textarea"
-                                          placeholder="roll_number,name,fathers_name,mothers_name&#10;01234567,Aarav Sharma,Rajesh Sharma,Sunita Sharma&#10;01234568,Priya Verma,Vikram Verma,Meena Verma"
-                                          spellcheck="false"></textarea>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 1rem;">
-                            <button type="button" id="previewBulkBtn" class="btn btn-primary">
-                                Preview &amp; Validate Rows
-                            </button>
-                            <button type="button" id="clearBulkBtn" class="btn btn-secondary">
-                                Clear
-                            </button>
-                            <span id="bulkInlineStatus" style="font-size: 0.82rem; color: var(--text-muted);" role="status"></span>
-                        </div>
-                    </form>
-
-                    <!-- Inline error / result notifications for Bulk Upload -->
-                    <div id="bulkClientAlert" class="alert-banner alert-error" style="display: none; margin-top: 1rem;" role="alert"></div>
-                    <div id="bulkResultPanel" class="alert-banner alert-success" style="display: none; margin-top: 1rem;" role="status"></div>
-
-                    <!-- Preview Table before DB creation -->
-                    <div id="bulkPreviewSection" class="bulk-preview-card" style="display: none;">
-                        <div class="bulk-preview-bar">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">Import Preview</span>
-                                <span class="bulk-status-pill bulk-status-ready" id="previewReadyBadge">0 Ready</span>
-                                <span class="bulk-status-pill bulk-status-skip" id="previewSkipBadge" style="display: none;">0 Exists / Duplicate</span>
-                                <span class="bulk-status-pill bulk-status-error" id="previewInvalidBadge" style="display: none;">0 Invalid</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <button type="button" id="toggleBulkPwBtn" class="btn btn-secondary btn-sm" aria-pressed="false">
-                                    Show Passwords
-                                </button>
-                                <button type="button" id="confirmBulkImportBtn" class="btn btn-primary btn-sm">
-                                    Create Accounts
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="data-table-wrap bulk-preview-scroll">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 56px;">Row</th>
-                                        <th>Roll No. / Username</th>
-                                        <th>Student Name (Saved)</th>
-                                        <th>Father's Name (Pw only)</th>
-                                        <th>Mother's Name (Pw only)</th>
-                                        <th>Generated Password</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bulkPreviewBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div>
+                    <div class="um-stat-label">Total Accounts</div>
+                    <div class="um-stat-value" id="statTotalUsers"><%= totalCount %></div>
                 </div>
             </div>
 
-            <!-- Users Directory Card -->
-            <div class="card">
-                <div class="table-header-row">
-                    <div>
-                        <h2 style="font-size: 1.1rem; margin: 0 0 2px 0;">Registered Accounts (<span id="usersCountNum"><%= users ? users.length : 0 %></span>)</h2>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">Admins manage papers and scans; Students view only their own checked copies.</span>
-                    </div>
-                    <search class="search-box">
-                        <span class="search-icon" aria-hidden="true">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </span>
-                        <input type="search" id="userSearchInput" placeholder="Search users or roll..." aria-label="Search accounts" oninput="filterUsersTable()">
-                    </search>
+            <div class="um-stat-card">
+                <div class="um-stat-icon student">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                        <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
                 </div>
+                <div>
+                    <div class="um-stat-label">Students</div>
+                    <div class="um-stat-value" id="statStudentUsers"><%= studentCount %></div>
+                </div>
+            </div>
 
-                <div class="data-table-wrap" id="usersTableWrap" style="<%= users && users.length > 0 ? '' : 'display: none;' %>">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Role</th>
-                                <th>Roll Number</th>
-                                <th style="text-align: right;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersDirectoryBody">
-                            <% if (users && users.length > 0) { %>
-                                <% users.forEach(u => { %>
-                                    <%
-                                        const isSelf = currentUser && String(currentUser._id) === String(u._id);
-                                        const searchStr = `${u.username} ${u.fullName || ''} ${u.rollnumber || ''} ${u.role}`.toLowerCase();
-                                    %>
-                                    <tr class="user-row" data-search="<%= searchStr %>">
-                                        <td>
-                                            <div style="font-weight: 600; color: var(--text-main);">
-                                                <%= u.fullName || u.username %>
-                                                <% if (isSelf) { %>
-                                                    <span style="font-size: 0.72rem; color: var(--primary); font-weight: 600; margin-left: 4px;">(You)</span>
-                                                <% } %>
+            <div class="um-stat-card">
+                <div class="um-stat-icon teacher">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="um-stat-label">Teachers (Viewers)</div>
+                    <div class="um-stat-value" id="statTeacherUsers"><%= teacherCount %></div>
+                </div>
+            </div>
+
+            <div class="um-stat-card">
+                <div class="um-stat-icon admin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="um-stat-label">Admins</div>
+                    <div class="um-stat-value" id="statAdminUsers"><%= adminCount %></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter & Search Bar -->
+        <div class="um-filter-bar">
+            <div class="um-role-pills">
+                <button type="button" class="um-pill-btn active" onclick="setRoleFilter('all', this)">
+                    All (<span id="pillCountAll"><%= totalCount %></span>)
+                </button>
+                <button type="button" class="um-pill-btn" onclick="setRoleFilter('student', this)">
+                    Students (<span id="pillCountStudent"><%= studentCount %></span>)
+                </button>
+                <button type="button" class="um-pill-btn" onclick="setRoleFilter('teacher', this)">
+                    Teachers (<span id="pillCountTeacher"><%= teacherCount %></span>)
+                </button>
+                <button type="button" class="um-pill-btn" onclick="setRoleFilter('admin', this)">
+                    Admins (<span id="pillCountAdmin"><%= adminCount %></span>)
+                </button>
+            </div>
+
+            <div class="um-search-wrap">
+                <span class="um-search-icon" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="search" id="umUserSearch" placeholder="Search by name, roll, or username..." oninput="filterUsersTable()">
+            </div>
+        </div>
+
+        <!-- Users Table Card -->
+        <div class="um-table-card">
+            <div class="um-table-responsive">
+                <table class="um-table">
+                    <thead>
+                        <tr>
+                            <th>User Account</th>
+                            <th>Role</th>
+                            <th>Roll Number</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="umUsersTbody">
+                        <% if (users && users.length > 0) { %>
+                            <% users.forEach(u => { %>
+                                <%
+                                    const isSelf = currentUser && String(currentUser._id) === String(u._id);
+                                    const roleStr = (u.role || 'student').toLowerCase();
+                                    const nameStr = (u.fullName || '').trim();
+                                    const rollStr = (u.rollnumber || '').trim();
+                                    const userStr = (u.username || '').trim();
+                                    const searchContent = `${userStr} ${nameStr} ${rollStr} ${roleStr}`.toLowerCase();
+                                    const initials = (nameStr || userStr)
+                                        .split(/\s+/)
+                                        .filter(Boolean)
+                                        .slice(0, 2)
+                                        .map(w => w[0])
+                                        .join('')
+                                        .toUpperCase() || 'U';
+                                %>
+                                <tr class="user-row" data-role="<%= roleStr %>" data-search="<%= searchContent %>" id="row-<%= u._id %>">
+                                    <td>
+                                        <div class="um-user-cell">
+                                            <div class="um-user-avatar <%= roleStr %>">
+                                                <%= initials %>
                                             </div>
-                                            <div style="font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">@<%= u.username %></div>
-                                        </td>
-                                        <td>
-                                            <% if (u.role === 'admin') { %>
-                                                <span class="role-badge role-badge-admin">Admin</span>
-                                            <% } else if (u.role === 'teacher') { %>
-                                                <span class="role-badge role-badge-teacher">Teacher (Viewer)</span>
-                                            <% } else { %>
-                                                <span class="role-badge role-badge-student">Student</span>
-                                            <% } %>
-                                        </td>
-                                        <td>
-                                            <% if (u.role === 'student' && u.rollnumber) { %>
-                                                <span class="roll-code"><%= u.rollnumber %></span>
-                                            <% } else if (u.role === 'student') { %>
-                                                <span style="color: var(--text-muted); font-size: 0.8rem;">Not set</span>
-                                            <% } else { %>
-                                                <span style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
-                                            <% } %>
-                                        </td>
-                                        <td style="text-align: right; white-space: nowrap;">
+                                            <div>
+                                                <div class="um-user-name">
+                                                    <span class="user-fullname-display"><%= nameStr || userStr %></span>
+                                                    <% if (isSelf) { %>
+                                                        <span class="um-badge-you">You</span>
+                                                    <% } %>
+                                                </div>
+                                                <div class="um-user-handle">@<%= userStr %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="um-role-badge <%= roleStr %>">
+                                            <span class="um-role-dot"></span>
+                                            <%= roleStr === 'admin' ? 'Admin' : (roleStr === 'teacher' ? 'Teacher (Viewer)' : 'Student') %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (roleStr === 'student' && rollStr) { %>
+                                            <span class="um-roll-tag"><%= rollStr %></span>
+                                        <% } else if (roleStr === 'student') { %>
+                                            <span style="color: #94A3B8; font-size: 0.8rem;">Not assigned</span>
+                                        <% } else { %>
+                                            <span style="color: #94A3B8; font-size: 0.8rem;">&mdash;</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="um-actions-cell">
+                                            <!-- Edit Name Button -->
                                             <button type="button"
-                                                    class="btn btn-secondary btn-sm"
-                                                    style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600;"
-                                                    onclick="openEditNameModal('<%= u._id %>', '<%= (u.fullName || '').replace(/'/g, "\\'") %>', '<%= u.username.replace(/'/g, "\\'") %>')">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    class="btn-act btn-act-edit"
+                                                    title="Edit user display name"
+                                                    onclick="openEditNameModal('<%= u._id %>', '<%= nameStr.replace(/'/g, "\\'") %>', '<%= userStr.replace(/'/g, "\\'") %>')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                 </svg>
                                                 Edit Name
                                             </button>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
 
-                <% if (!users || users.length === 0) { %>
-                    <div class="empty-state" id="usersEmptyState">
-                        <p style="color: var(--text-muted); margin: 0;">No users found.</p>
-                    </div>
-                <% } %>
+                                            <!-- Reset Password Button (Requested) -->
+                                            <button type="button"
+                                                    class="btn-act btn-act-pw"
+                                                    title="Reset password for this user"
+                                                    onclick="openResetPasswordModal('<%= u._id %>', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 2l-2 2m-1.5 1.5L14 9M3 13a6 6 0 1 0 12 0 6 6 0 0 0-12 0z"></path>
+                                                    <circle cx="9" cy="13" r="1"></circle>
+                                                </svg>
+                                                Reset Password
+                                            </button>
+
+                                            <!-- Delete Button (Admin only, safety guarded) -->
+                                            <% if (!isSelf) { %>
+                                                <button type="button"
+                                                        class="btn-act btn-act-del"
+                                                        title="Delete account"
+                                                        onclick="confirmDeleteUser('<%= u._id %>', '<%= userStr.replace(/'/g, "\\'") %>')">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="umEmptySearchState" style="display: none;" class="um-empty-state">
+                <div class="um-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <h3 style="margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;">No matching users found</h3>
+                <p style="margin: 0; font-size: 0.85rem; color: #64748B;">Try adjusting your search query or role filter.</p>
             </div>
         </div>
     </div>
 
-    <!-- Edit Name Native Dialog -->
-    <dialog id="editNameDialog" class="user-dialog" closedby="any" aria-labelledby="editNameTitle" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-flex; align-items: center; color: #2563EB;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <!-- ============================================================ -->
+    <!-- 1. CREATE NEW USER MODAL                                      -->
+    <!-- ============================================================ -->
+    <dialog id="createUserModal" class="um-modal" aria-labelledby="modalCreateTitle">
+        <div class="um-modal-header">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #EFF6FF; color: #2563EB;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
+                <h3 id="modalCreateTitle" class="um-modal-title">Create New Account</h3>
+            </div>
+            <button type="button" class="um-modal-close-btn" onclick="closeCreateUserModal()">&times;</button>
+        </div>
+
+        <form action="/users" method="POST" id="createUserForm">
+            <div class="um-modal-body">
+                <!-- Role Picker -->
+                <div class="um-form-group">
+                    <label>Account Role *</label>
+                    <div class="um-role-picker">
+                        <label class="um-role-label">
+                            <input type="radio" name="role" value="student" checked onchange="toggleModalRollField()">
+                            <span>Student</span>
+                        </label>
+                        <label class="um-role-label">
+                            <input type="radio" name="role" value="teacher" onchange="toggleModalRollField()">
+                            <span>Teacher</span>
+                        </label>
+                        <label class="um-role-label">
+                            <input type="radio" name="role" value="admin" onchange="toggleModalRollField()">
+                            <span>Admin</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="um-form-group">
+                    <label for="newFullName">Full Name *</label>
+                    <input type="text" id="newFullName" name="fullName" class="um-input" placeholder="e.g. Aarav Sharma" required autocomplete="name">
+                </div>
+
+                <div class="um-form-group" id="modalRollNumberGroup">
+                    <label for="newRollnumber">Student Roll Number <span style="color: #DC2626;">*</span></label>
+                    <input type="text" id="newRollnumber" name="rollnumber" class="um-input" placeholder="e.g. 01234567" required autocorrect="off" autocapitalize="none">
+                    <span class="um-input-desc">Must match the roll number marked on student OMR sheets to view test results.</span>
+                </div>
+
+                <div class="um-form-group">
+                    <label for="newUsername">Login Username <span style="color: #DC2626;">*</span></label>
+                    <input type="text" id="newUsername" name="username" class="um-input" placeholder="e.g. 01234567 or aarav.sharma" required autocorrect="off" autocapitalize="none">
+                    <span class="um-input-desc">2-40 characters: lowercase letters, numbers, dots, hyphens.</span>
+                </div>
+
+                <div class="um-form-group">
+                    <label for="newPassword">Initial Password <span style="color: #DC2626;">*</span></label>
+                    <div class="um-pw-wrap">
+                        <input type="password" id="newPassword" name="password" class="um-input" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
+                        <button type="button" class="btn-toggle-view" onclick="togglePasswordVisibility('newPassword', this)">Show</button>
+                        <button type="button" class="btn-gen-pw" onclick="generateRandomPassword('newPassword')">Generate</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="um-modal-footer">
+                <button type="button" class="btn-um-secondary" onclick="closeCreateUserModal()">Cancel</button>
+                <button type="submit" class="btn-um-primary">Create User Account</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ============================================================ -->
+    <!-- 2. BULK UPLOAD MODAL                                          -->
+    <!-- ============================================================ -->
+    <dialog id="bulkUploadModal" class="um-modal um-modal-wide" aria-labelledby="modalBulkTitle">
+        <div class="um-modal-header">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #ECFDF5; color: #059669;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <h3 id="modalBulkTitle" class="um-modal-title">Bulk Student Account Import</h3>
+            </div>
+            <button type="button" class="um-modal-close-btn" onclick="closeBulkUploadModal()">&times;</button>
+        </div>
+
+        <div class="um-modal-body">
+            <div class="bulk-rule-alert">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
+                    <div>
+                        <strong>Bulk Import Format &amp; Rules:</strong><br>
+                        &bull; Columns: <strong>Roll Number</strong>, <strong>Name</strong>, <strong>Father's Name</strong>, <strong>Mother's Name</strong>.<br>
+                        &bull; Automatic password formula: first 3 letters of (Name + Father + Mother) (e.g. Aarav + Rajesh + Sunita &rarr; <span class="bulk-rule-code">aarrajsun</span>).<br>
+                        &bull; Existing roll numbers are safely skipped.
+                    </div>
+                    <a href="/users/bulk-template" class="btn-um-secondary" style="font-size: 0.78rem; padding: 5px 12px; background: #FFFFFF;">
+                        Download CSV Template
+                    </a>
+                </div>
+            </div>
+
+            <form id="modalBulkForm" enctype="multipart/form-data">
+                <div class="bulk-input-columns">
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                            Option A: Upload Spreadsheet (.xlsx or .csv)
+                        </label>
+                        <div class="um-dropzone" id="bulkModalDropzone">
+                            <input type="file" id="bulkModalFileInput" name="studentFile" accept=".xlsx,.csv,.tsv,.txt" style="display: none;">
+                            <div style="font-weight: 600; font-size: 0.88rem; color: #0F172A; margin-bottom: 4px;" id="dropzoneText">
+                                Drop .xlsx or .csv file here, or click to browse
+                            </div>
+                            <div style="font-size: 0.76rem; color: #64748B; margin-bottom: 10px;">Max 5 MB &middot; Excel or CSV</div>
+                            <button type="button" class="btn-um-secondary" style="font-size: 0.8rem; padding: 4px 12px;" onclick="document.getElementById('bulkModalFileInput').click()">
+                                Choose File
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="bulkModalPasteArea" style="display: block; font-size: 0.82rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                            Option B: Or Paste Rows directly
+                        </label>
+                        <textarea id="bulkModalPasteArea" class="um-textarea" placeholder="roll_number,name,fathers_name,mothers_name&#10;01234567,Aarav Sharma,Rajesh Sharma,Sunita Sharma&#10;01234568,Priya Verma,Vikram Verma,Meena Verma" spellcheck="false"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" id="btnPreviewBulk" class="btn-um-primary" onclick="runBulkParsePreview()">
+                        Preview &amp; Validate Rows
+                    </button>
+                    <button type="button" class="btn-um-secondary" onclick="clearBulkModalInputs()">
+                        Clear
+                    </button>
+                    <span id="bulkStatusMsg" style="font-size: 0.82rem; color: #64748B;"></span>
+                </div>
+            </form>
+
+            <div id="bulkErrorBanner" class="alert-banner alert-error" style="display: none; margin-top: 1rem;"></div>
+            <div id="bulkSuccessBanner" class="alert-banner alert-success" style="display: none; margin-top: 1rem;"></div>
+
+            <!-- Preview Section -->
+            <div id="bulkPreviewCard" style="display: none; margin-top: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+                        <span>Validated Rows:</span>
+                        <span class="um-role-badge student" id="badgeReadyRows">0 Ready</span>
+                        <span class="um-role-badge admin" id="badgeSkipRows" style="display: none;">0 Skipped</span>
+                        <span class="um-role-badge" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; display: none;" id="badgeInvalidRows">0 Invalid</span>
+                    </div>
+                    <button type="button" class="btn-um-secondary" style="font-size: 0.78rem; padding: 4px 10px;" id="btnToggleBulkPw" onclick="toggleBulkPasswordVisibility()">
+                        Show Passwords
+                    </button>
+                </div>
+
+                <div class="preview-table-wrap">
+                    <table class="um-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Roll Number</th>
+                                <th>Student Name</th>
+                                <th>Generated Password</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkPreviewTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="um-modal-footer">
+            <button type="button" class="btn-um-secondary" onclick="closeBulkUploadModal()">Cancel</button>
+            <button type="button" class="btn-um-primary" id="btnConfirmBulkImport" onclick="submitConfirmedBulkImport()" disabled>
+                Import Valid Students
+            </button>
+        </div>
+    </dialog>
+
+    <!-- ============================================================ -->
+    <!-- 3. RESET PASSWORD MODAL                                       -->
+    <!-- ============================================================ -->
+    <dialog id="resetPwModal" class="um-modal" aria-labelledby="modalResetTitle">
+        <div class="um-modal-header">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #FFFBEB; color: #D97706;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2l-2 2m-1.5 1.5L14 9M3 13a6 6 0 1 0 12 0 6 6 0 0 0-12 0z"></path>
+                        <circle cx="9" cy="13" r="1"></circle>
+                    </svg>
+                </div>
+                <h3 id="modalResetTitle" class="um-modal-title">Reset User Password</h3>
+            </div>
+            <button type="button" class="um-modal-close-btn" onclick="closeResetModal()">&times;</button>
+        </div>
+
+        <form id="resetPwForm" onsubmit="submitResetPassword(event)">
+            <input type="hidden" id="resetUserId">
+            <div class="um-modal-body">
+                <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 1.25rem 0;">
+                    Reset credentials for <strong id="resetTargetNameLabel" style="color: #0F172A;"></strong> (<span id="resetTargetUserLabel" style="font-family: 'JetBrains Mono', monospace;"></span>).
+                </p>
+
+                <div class="um-form-group">
+                    <label for="resetPasswordInput">New Password *</label>
+                    <div class="um-pw-wrap">
+                        <input type="password"
+                               id="resetPasswordInput"
+                               name="password"
+                               class="um-input"
+                               placeholder="Minimum 6 characters"
+                               minlength="6"
+                               required
+                               autocomplete="new-password">
+                        <button type="button" class="btn-toggle-view" onclick="togglePasswordVisibility('resetPasswordInput', this)">Show</button>
+                        <button type="button" class="btn-gen-pw" onclick="generateRandomPassword('resetPasswordInput')">Generate</button>
+                    </div>
+                    <span class="um-input-desc">The user will use this new password immediately to sign in.</span>
+                </div>
+            </div>
+
+            <div class="um-modal-footer">
+                <button type="button" class="btn-um-secondary" onclick="closeResetModal()">Cancel</button>
+                <button type="submit" class="btn-um-primary" id="btnSubmitResetPw" style="background: #D97706; border-color: #B45309;">
+                    Update Password
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- ============================================================ -->
+    <!-- 4. EDIT NAME MODAL                                            -->
+    <!-- ============================================================ -->
+    <dialog id="editNameModal" class="um-modal" aria-labelledby="modalEditNameTitle">
+        <div class="um-modal-header">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #EFF6FF; color: #2563EB;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                </span>
-                <h3 id="editNameTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Edit Student / User Name</h3>
+                </div>
+                <h3 id="modalEditNameTitle" class="um-modal-title">Edit User Name</h3>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditNameModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;" aria-label="Close modal">&times;</button>
+            <button type="button" class="um-modal-close-btn" onclick="closeEditNameModal()">&times;</button>
         </div>
-        <div class="dialog-body" style="padding: 20px;">
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                Set a new display name for <strong id="editNameUsernameLabel" style="color: var(--text-main);"></strong>.
-            </p>
-            <form id="editNameForm" onsubmit="submitEditName(event)">
-                <input type="hidden" id="editNameUserId">
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                    <label for="editNameInput" style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
-                    <input type="text"
-                           id="editNameInput"
-                           name="fullName"
-                           class="form-control"
-                           placeholder="Enter full name"
-                           required
-                           style="width: 100%;">
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditNameModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveUserName">Save Name</button>
-                </div>
-            </form>
-        </div>
-    </dialog>
 
-    <!-- Reset Password Native Dialog -->
-    <dialog id="resetPwDialog" class="user-dialog" closedby="any" aria-labelledby="resetPwTitle">
-        <div class="dialog-header">
-            <h3 id="resetPwTitle" style="margin: 0; font-size: 1rem;">Reset Password</h3>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeResetModal()" aria-label="Close modal">&times;</button>
-        </div>
-        <div class="dialog-body">
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
-                Set a new password for <strong id="resetUsernameLabel" style="color: var(--text-main);"></strong>.
-            </p>
-            <form id="resetPwForm" method="POST" action="">
-                <div class="form-group">
-                    <label for="resetPasswordInput">New Password</label>
-                    <input type="password"
-                           id="resetPasswordInput"
-                           name="password"
-                           class="form-control"
-                           placeholder="Minimum 6 characters"
-                           autocomplete="new-password"
-                           minlength="6"
-                           required>
+        <form id="editNameForm" onsubmit="submitEditName(event)">
+            <input type="hidden" id="editNameUserId">
+            <div class="um-modal-body">
+                <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 1.25rem 0;">
+                    Update the official display name for <strong id="editNameUsernameLabel" style="color: #0F172A; font-family: 'JetBrains Mono', monospace;"></strong>.
+                </p>
+
+                <div class="um-form-group">
+                    <label for="editNameInput">Full Name *</label>
+                    <input type="text" id="editNameInput" name="fullName" class="um-input" placeholder="e.g. Aarav Sharma" required>
+                    <span class="um-input-desc">This name will appear on scorecards, leaderboard, and OMR reports.</span>
                 </div>
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeResetModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Password</button>
-                </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="um-modal-footer">
+                <button type="button" class="btn-um-secondary" onclick="closeEditNameModal()">Cancel</button>
+                <button type="submit" class="btn-um-primary" id="btnSaveUserName">
+                    Save Name
+                </button>
+            </div>
+        </form>
     </dialog>
 
     <script>
-        // Accessible Tab Switcher (Single Account vs Bulk Upload Students)
-        const usersGridEl = document.getElementById('usersLayoutGrid');
-        const tabSingle = document.getElementById('tabSingle');
-        const tabBulk = document.getElementById('tabBulk');
-        const panelSingle = document.getElementById('panelSingle');
-        const panelBulk = document.getElementById('panelBulk');
-        const tabs = [tabSingle, tabBulk];
-        const panels = [panelSingle, panelBulk];
+        let currentRoleFilter = 'all';
 
-        function selectAccountTab(idx) {
-            tabs.forEach((t, i) => {
-                const active = i === idx;
-                t.setAttribute('aria-selected', String(active));
-                t.tabIndex = active ? 0 : -1;
-                if (panels[i]) {
-                    panels[i].hidden = !active;
-                }
-            });
-            if (usersGridEl) {
-                usersGridEl.classList.toggle('bulk-active', idx === 1);
-            }
+        // 1. Role and Search Filtering
+        function setRoleFilter(role, btnEl) {
+            currentRoleFilter = role;
+            document.querySelectorAll('.um-pill-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            filterUsersTable();
         }
 
-        tabs.forEach((t, idx) => {
-            t.addEventListener('click', () => selectAccountTab(idx));
-            t.addEventListener('keydown', (e) => {
-                let nextIdx = null;
-                if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
-                else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
-                else if (e.key === 'Home') nextIdx = 0;
-                else if (e.key === 'End') nextIdx = tabs.length - 1;
-                if (nextIdx !== null) {
-                    e.preventDefault();
-                    selectAccountTab(nextIdx);
-                    tabs[nextIdx].focus();
-                }
-            });
-        });
-
-        // Single Account Form Controls
-        function toggleRollField() {
-            const selectedRole = document.querySelector('input[name="role"]:checked');
-            const isStudent = !selectedRole || selectedRole.value === 'student';
-            const group = document.getElementById('rollNumberGroup');
-            const input = document.getElementById('newRollnumber');
-            if (group && input) {
-                group.style.display = isStudent ? 'block' : 'none';
-                input.required = isStudent;
-                if (!isStudent) input.value = '';
-            }
-        }
-
-        const rollInput = document.getElementById('newRollnumber');
-        const userInput = document.getElementById('newUsername');
-        let usernameEdited = false;
-        if (userInput) {
-            userInput.addEventListener('input', () => {
-                usernameEdited = userInput.value.trim().length > 0;
-            });
-        }
-        if (rollInput && userInput) {
-            rollInput.addEventListener('input', () => {
-                if (!usernameEdited) {
-                    userInput.value = rollInput.value.trim().toLowerCase();
-                }
-            });
-        }
-
-        const createPwInput = document.getElementById('newPassword');
-        const toggleCreatePw = document.getElementById('toggleCreatePw');
-        if (createPwInput && toggleCreatePw) {
-            toggleCreatePw.addEventListener('click', () => {
-                const isHidden = createPwInput.type === 'password';
-                createPwInput.type = isHidden ? 'text' : 'password';
-                toggleCreatePw.setAttribute('aria-pressed', String(isHidden));
-                toggleCreatePw.textContent = isHidden ? 'Hide' : 'Show';
-            });
-        }
-
-        // Directory Search Filter
         function filterUsersTable() {
-            const q = document.getElementById('userSearchInput').value.toLowerCase().trim();
-            document.querySelectorAll('.user-row').forEach(row => {
-                const hay = row.getAttribute('data-search') || '';
-                row.style.display = hay.includes(q) ? '' : 'none';
+            const query = (document.getElementById('umUserSearch').value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('.user-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const searchStr = row.getAttribute('data-search') || '';
+                const roleStr = row.getAttribute('data-role') || '';
+                const matchesRole = (currentRoleFilter === 'all') || (roleStr === currentRoleFilter);
+                const matchesQuery = !query || searchStr.includes(query);
+
+                const show = matchesRole && matchesQuery;
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            const emptyBox = document.getElementById('umEmptySearchState');
+            if (emptyBox) {
+                emptyBox.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+        }
+
+        // 2. Modal Controls
+        function openCreateUserModal() {
+            const m = document.getElementById('createUserModal');
+            document.getElementById('newFullName').value = '';
+            document.getElementById('newRollnumber').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            toggleModalRollField();
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+        }
+
+        function closeCreateUserModal() {
+            const m = document.getElementById('createUserModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
+        }
+
+        function toggleModalRollField() {
+            const selected = document.querySelector('input[name="role"]:checked');
+            const isStudent = !selected || selected.value === 'student';
+            const group = document.getElementById('modalRollNumberGroup');
+            const rollInp = document.getElementById('newRollnumber');
+            if (group && rollInp) {
+                group.style.display = isStudent ? 'block' : 'none';
+                rollInp.required = isStudent;
+                if (!isStudent) rollInp.value = '';
+            }
+        }
+
+        // Auto sync roll number to username if student
+        const newRollInp = document.getElementById('newRollnumber');
+        const newUsernameInp = document.getElementById('newUsername');
+        let usernameManuallyChanged = false;
+        if (newUsernameInp) {
+            newUsernameInp.addEventListener('input', () => {
+                usernameManuallyChanged = newUsernameInp.value.trim().length > 0;
+            });
+        }
+        if (newRollInp && newUsernameInp) {
+            newRollInp.addEventListener('input', () => {
+                if (!usernameManuallyChanged) {
+                    newUsernameInp.value = newRollInp.value.trim().toLowerCase();
+                }
             });
         }
 
-        // Edit Name Modal
-        const editNameDialog = document.getElementById('editNameDialog');
+        // 3. Reset Password Modal
+        function openResetPasswordModal(userId, username, fullName) {
+            document.getElementById('resetUserId').value = userId;
+            document.getElementById('resetTargetNameLabel').textContent = fullName || username;
+            document.getElementById('resetTargetUserLabel').textContent = '@' + username;
+            document.getElementById('resetPasswordInput').value = '';
+            const m = document.getElementById('resetPwModal');
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+            setTimeout(() => {
+                const inp = document.getElementById('resetPasswordInput');
+                if (inp) inp.focus();
+            }, 60);
+        }
+
+        function closeResetModal() {
+            const m = document.getElementById('resetPwModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
+        }
+
+        async function submitResetPassword(e) {
+            e.preventDefault();
+            const userId = document.getElementById('resetUserId').value;
+            const password = document.getElementById('resetPasswordInput').value;
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            const btn = document.getElementById('btnSubmitResetPw');
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            try {
+                const res = await fetch('/users/' + encodeURIComponent(userId) + '/password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to update password');
+                }
+                closeResetModal();
+                alert(data.message || 'Password updated successfully!');
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Update Password';
+            }
+        }
+
+        // 4. Edit Name Modal
         function openEditNameModal(userId, currentName, username) {
             document.getElementById('editNameUserId').value = userId;
             document.getElementById('editNameInput').value = currentName || '';
             document.getElementById('editNameUsernameLabel').textContent = '@' + username;
-            if (editNameDialog) {
-                if (typeof editNameDialog.showModal === 'function') editNameDialog.showModal();
-                else editNameDialog.setAttribute('open', '');
-                setTimeout(() => {
-                    const inp = document.getElementById('editNameInput');
-                    if (inp) inp.focus();
-                }, 50);
-            }
+            const m = document.getElementById('editNameModal');
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+            setTimeout(() => {
+                const inp = document.getElementById('editNameInput');
+                if (inp) inp.focus();
+            }, 60);
         }
 
         function closeEditNameModal() {
-            if (editNameDialog) {
-                if (typeof editNameDialog.close === 'function') editNameDialog.close();
-                else editNameDialog.removeAttribute('open');
-            }
+            const m = document.getElementById('editNameModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
         }
 
         async function submitEditName(e) {
@@ -970,8 +1534,15 @@
                 if (!res.ok || !data.success) {
                     throw new Error(data.error || 'Failed to update name');
                 }
+                const row = document.getElementById('row-' + userId);
+                if (row) {
+                    const disp = row.querySelector('.user-fullname-display');
+                    if (disp) disp.textContent = newName;
+                    const oldSearch = row.getAttribute('data-search') || '';
+                    row.setAttribute('data-search', oldSearch + ' ' + newName.toLowerCase());
+                }
                 closeEditNameModal();
-                window.location.reload();
+                alert(`Name updated to "${newName}" successfully!`);
             } catch (err) {
                 alert(err.message);
             } finally {
@@ -980,84 +1551,107 @@
             }
         }
 
-        if (editNameDialog && !('closedBy' in HTMLDialogElement.prototype)) {
-            const outside = (e, d) => {
-                const r = d.getBoundingClientRect();
-                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-            };
-            let downOutside = false;
-            editNameDialog.addEventListener('pointerdown', e => { downOutside = outside(e, editNameDialog); });
-            editNameDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, editNameDialog)) editNameDialog.close(); });
-        }
-
-        // Reset Password Modal
-        const resetDialog = document.getElementById('resetPwDialog');
-        function openResetPasswordModal(userId, username) {
-            const form = document.getElementById('resetPwForm');
-            const label = document.getElementById('resetUsernameLabel');
-            const pw = document.getElementById('resetPasswordInput');
-            if (form) form.action = '/users/' + encodeURIComponent(userId) + '/password';
-            if (label) label.textContent = '@' + username;
-            if (pw) pw.value = '';
-            if (resetDialog && typeof resetDialog.showModal === 'function') {
-                resetDialog.showModal();
+        // 5. Delete User
+        async function confirmDeleteUser(userId, username) {
+            const ok = confirm(`Are you sure you want to permanently delete account @${username}?`);
+            if (!ok) return;
+            try {
+                const res = await fetch('/users/' + encodeURIComponent(userId) + '/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Could not delete user');
+                }
+                const row = document.getElementById('row-' + userId);
+                if (row) row.remove();
+                alert(data.message || 'Account deleted.');
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
             }
         }
-        function closeResetModal() {
-            if (resetDialog && resetDialog.open) resetDialog.close();
-        }
-        if (resetDialog && !('closedBy' in HTMLDialogElement.prototype)) {
-            const outside = (e, d) => {
-                const r = d.getBoundingClientRect();
-                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-            };
-            let downOutside = false;
-            resetDialog.addEventListener('pointerdown', e => { downOutside = outside(e, resetDialog); });
-            resetDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, resetDialog)) resetDialog.close(); });
+
+        // 6. Password Utilities
+        function togglePasswordVisibility(inputId, btnEl) {
+            const inp = document.getElementById(inputId);
+            if (!inp) return;
+            const isHidden = inp.type === 'password';
+            inp.type = isHidden ? 'text' : 'password';
+            btnEl.textContent = isHidden ? 'Hide' : 'Show';
         }
 
-        // Bulk Student Upload & Live Preview
-        const bulkDropzone = document.getElementById('bulkDropzone');
-        const bulkFileInput = document.getElementById('bulkFileInput');
-        const browseFileBtn = document.getElementById('browseFileBtn');
-        const dropzoneFileName = document.getElementById('dropzoneFileName');
-        const bulkPasteArea = document.getElementById('bulkPasteArea');
-        const previewBulkBtn = document.getElementById('previewBulkBtn');
-        const clearBulkBtn = document.getElementById('clearBulkBtn');
-        const bulkInlineStatus = document.getElementById('bulkInlineStatus');
-        const bulkClientAlert = document.getElementById('bulkClientAlert');
-        const bulkResultPanel = document.getElementById('bulkResultPanel');
-        const bulkPreviewSection = document.getElementById('bulkPreviewSection');
-        const bulkPreviewBody = document.getElementById('bulkPreviewBody');
-        const toggleBulkPwBtn = document.getElementById('toggleBulkPwBtn');
-        const confirmBulkImportBtn = document.getElementById('confirmBulkImportBtn');
+        function generateRandomPassword(inputId) {
+            const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%';
+            let pw = '';
+            for (let i = 0; i < 10; i++) {
+                pw += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const inp = document.getElementById(inputId);
+            if (inp) {
+                inp.type = 'text';
+                inp.value = pw;
+            }
+        }
+
+        // 7. Bulk Upload Modal logic
+        function openBulkUploadModal() {
+            clearBulkModalInputs();
+            const m = document.getElementById('bulkUploadModal');
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+        }
+
+        function closeBulkUploadModal() {
+            const m = document.getElementById('bulkUploadModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
+        }
+
+        function clearBulkModalInputs() {
+            const fileInp = document.getElementById('bulkModalFileInput');
+            const pasteArea = document.getElementById('bulkModalPasteArea');
+            const dropText = document.getElementById('dropzoneText');
+            const errBanner = document.getElementById('bulkErrorBanner');
+            const succBanner = document.getElementById('bulkSuccessBanner');
+            const previewCard = document.getElementById('bulkPreviewCard');
+            const statusMsg = document.getElementById('bulkStatusMsg');
+            const importBtn = document.getElementById('btnConfirmBulkImport');
+
+            if (fileInp) fileInp.value = '';
+            if (pasteArea) pasteArea.value = '';
+            if (dropText) dropText.textContent = 'Drop .xlsx or .csv file here, or click to browse';
+            if (errBanner) { errBanner.style.display = 'none'; errBanner.textContent = ''; }
+            if (succBanner) { succBanner.style.display = 'none'; succBanner.textContent = ''; }
+            if (previewCard) previewCard.style.display = 'none';
+            if (statusMsg) statusMsg.textContent = '';
+            if (importBtn) { importBtn.disabled = true; importBtn.textContent = 'Import Valid Students'; }
+            parsedBulkRows = [];
+        }
 
         let parsedBulkRows = [];
         let showBulkPasswords = false;
 
-        function showBulkError(msg) {
-            if (bulkResultPanel) bulkResultPanel.style.display = 'none';
-            if (bulkClientAlert) {
-                bulkClientAlert.textContent = msg;
-                bulkClientAlert.style.display = 'block';
-            }
-        }
-
-        function clearBulkFeedback() {
-            if (bulkClientAlert) bulkClientAlert.style.display = 'none';
-            if (bulkResultPanel) bulkResultPanel.style.display = 'none';
-            if (bulkInlineStatus) bulkInlineStatus.textContent = '';
+        function toggleBulkPasswordVisibility() {
+            showBulkPasswords = !showBulkPasswords;
+            const btn = document.getElementById('btnToggleBulkPw');
+            if (btn) btn.textContent = showBulkPasswords ? 'Hide Passwords' : 'Show Passwords';
+            renderBulkPreviewTable();
         }
 
         function renderBulkPreviewTable() {
-            if (!bulkPreviewSection || !bulkPreviewBody) return;
+            const tbody = document.getElementById('bulkPreviewTbody');
+            const previewCard = document.getElementById('bulkPreviewCard');
+            if (!tbody || !previewCard) return;
+
             if (!parsedBulkRows || parsedBulkRows.length === 0) {
-                bulkPreviewSection.style.display = 'none';
+                previewCard.style.display = 'none';
                 return;
             }
 
-            bulkPreviewSection.style.display = 'block';
-            bulkPreviewBody.innerHTML = '';
+            previewCard.style.display = 'block';
+            tbody.innerHTML = '';
 
             let readyCount = 0;
             let skipCount = 0;
@@ -1071,88 +1665,80 @@
                 const tr = document.createElement('tr');
 
                 const tdRow = document.createElement('td');
-                tdRow.style.cssText = 'font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--text-muted);';
+                tdRow.style.color = '#64748B';
+                tdRow.style.fontSize = '0.78rem';
                 tdRow.textContent = String(row.rowNumber);
 
                 const tdRoll = document.createElement('td');
-                const rollSpan = document.createElement('span');
-                rollSpan.className = 'roll-code';
-                rollSpan.textContent = row.rollnumber || '—';
-                tdRoll.appendChild(rollSpan);
+                tdRoll.innerHTML = `<span class="um-roll-tag">${row.rollnumber || '—'}</span>`;
 
                 const tdName = document.createElement('td');
                 tdName.style.fontWeight = '600';
                 tdName.textContent = row.name || '—';
 
-                const tdFather = document.createElement('td');
-                tdFather.style.color = 'var(--text-muted)';
-                tdFather.textContent = row.fatherName || '—';
-
-                const tdMother = document.createElement('td');
-                tdMother.style.color = 'var(--text-muted)';
-                tdMother.textContent = row.motherName || '—';
-
                 const tdPw = document.createElement('td');
-                tdPw.style.cssText = 'font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--primary-active);';
+                tdPw.style.fontFamily = "'JetBrains Mono', monospace";
+                tdPw.style.fontWeight = '700';
+                tdPw.style.color = '#2563EB';
                 if (row.generatedPassword) {
-                    tdPw.textContent = showBulkPasswords
-                        ? row.generatedPassword
-                        : '\u2022'.repeat(row.generatedPassword.length);
+                    tdPw.textContent = showBulkPasswords ? row.generatedPassword : '\u2022'.repeat(row.generatedPassword.length);
                 } else {
                     tdPw.textContent = '—';
                 }
 
                 const tdStatus = document.createElement('td');
-                const pill = document.createElement('span');
                 if (row.status === 'ready') {
-                    pill.className = 'bulk-status-pill bulk-status-ready';
-                    pill.textContent = 'Ready';
+                    tdStatus.innerHTML = '<span class="um-role-badge student">Ready</span>';
                 } else if (row.status === 'exists' || row.status === 'duplicate_in_file') {
-                    pill.className = 'bulk-status-pill bulk-status-skip';
-                    pill.textContent = row.reason || 'Skipped';
+                    tdStatus.innerHTML = `<span class="um-role-badge admin">${row.reason || 'Skipped'}</span>`;
                 } else {
-                    pill.className = 'bulk-status-pill bulk-status-error';
-                    pill.textContent = row.reason || 'Invalid';
+                    tdStatus.innerHTML = `<span class="um-role-badge" style="background: #FEE2E2; color: #991B1B;">${row.reason || 'Invalid'}</span>`;
                 }
-                tdStatus.appendChild(pill);
 
                 tr.appendChild(tdRow);
                 tr.appendChild(tdRoll);
                 tr.appendChild(tdName);
-                tr.appendChild(tdFather);
-                tr.appendChild(tdMother);
                 tr.appendChild(tdPw);
                 tr.appendChild(tdStatus);
-                bulkPreviewBody.appendChild(tr);
+                tbody.appendChild(tr);
             });
 
-            document.getElementById('previewReadyBadge').textContent = `${readyCount} Ready`;
-            const skipBadge = document.getElementById('previewSkipBadge');
-            skipBadge.textContent = `${skipCount} Skipped`;
-            skipBadge.style.display = skipCount > 0 ? 'inline-flex' : 'none';
+            document.getElementById('badgeReadyRows').textContent = `${readyCount} Ready`;
+            const badgeSkip = document.getElementById('badgeSkipRows');
+            badgeSkip.textContent = `${skipCount} Skipped`;
+            badgeSkip.style.display = skipCount > 0 ? 'inline-flex' : 'none';
 
-            const invalidBadge = document.getElementById('previewInvalidBadge');
-            invalidBadge.textContent = `${invalidCount} Invalid`;
-            invalidBadge.style.display = invalidCount > 0 ? 'inline-flex' : 'none';
+            const badgeInvalid = document.getElementById('badgeInvalidRows');
+            badgeInvalid.textContent = `${invalidCount} Invalid`;
+            badgeInvalid.style.display = invalidCount > 0 ? 'inline-flex' : 'none';
 
-            confirmBulkImportBtn.disabled = readyCount === 0;
-            confirmBulkImportBtn.textContent = readyCount > 0
-                ? `Import ${readyCount} Student${readyCount === 1 ? '' : 's'}`
-                : 'No Valid Rows to Import';
+            const importBtn = document.getElementById('btnConfirmBulkImport');
+            importBtn.disabled = readyCount === 0;
+            importBtn.textContent = readyCount > 0 ? `Import ${readyCount} Student${readyCount === 1 ? '' : 's'}` : 'No Valid Students to Import';
         }
 
         async function runBulkParsePreview() {
-            clearBulkFeedback();
-            const file = bulkFileInput && bulkFileInput.files && bulkFileInput.files[0];
-            const rawText = bulkPasteArea ? bulkPasteArea.value.trim() : '';
+            const fileInp = document.getElementById('bulkModalFileInput');
+            const pasteArea = document.getElementById('bulkModalPasteArea');
+            const errBanner = document.getElementById('bulkErrorBanner');
+            const statusMsg = document.getElementById('bulkStatusMsg');
+            const previewBtn = document.getElementById('btnPreviewBulk');
+
+            if (errBanner) { errBanner.style.display = 'none'; errBanner.textContent = ''; }
+
+            const file = fileInp && fileInp.files && fileInp.files[0];
+            const rawText = pasteArea ? pasteArea.value.trim() : '';
 
             if (!file && !rawText) {
-                showBulkError('Select a .xlsx/.csv file or paste student rows first.');
+                if (errBanner) {
+                    errBanner.textContent = 'Please choose a spreadsheet file or paste student rows first.';
+                    errBanner.style.display = 'flex';
+                }
                 return;
             }
 
-            if (bulkInlineStatus) bulkInlineStatus.textContent = 'Parsing & validating rows...';
-            previewBulkBtn.disabled = true;
+            if (statusMsg) statusMsg.textContent = 'Validating rows...';
+            previewBtn.disabled = true;
 
             try {
                 const formData = new FormData();
@@ -1166,89 +1752,23 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    throw new Error(data.error || 'Could not parse input.');
+                    throw new Error(data.error || 'Failed to parse file or text.');
                 }
-
                 parsedBulkRows = data.rows || [];
                 renderBulkPreviewTable();
-                if (bulkInlineStatus) {
-                    bulkInlineStatus.textContent = `Parsed ${data.summary.total} row(s): ${data.summary.readyCount} ready, ${data.summary.existsCount} skipped, ${data.summary.invalidCount} invalid.`;
+                if (statusMsg) {
+                    statusMsg.textContent = `Validated ${data.summary.total} row(s): ${data.summary.readyCount} ready to import.`;
                 }
             } catch (err) {
                 parsedBulkRows = [];
                 renderBulkPreviewTable();
-                showBulkError(err.message);
-                if (bulkInlineStatus) bulkInlineStatus.textContent = '';
+                if (errBanner) {
+                    errBanner.textContent = err.message;
+                    errBanner.style.display = 'flex';
+                }
+                if (statusMsg) statusMsg.textContent = '';
             } finally {
-                previewBulkBtn.disabled = false;
-            }
-        }
-
-        function prependCreatedUsersToDirectory(createdItems) {
-            if (!Array.isArray(createdItems) || createdItems.length === 0) return;
-            const tbody = document.getElementById('usersDirectoryBody');
-            const tableWrap = document.getElementById('usersTableWrap');
-            const emptyState = document.getElementById('usersEmptyState');
-            const countNum = document.getElementById('usersCountNum');
-            if (!tbody) return;
-
-            if (tableWrap) tableWrap.style.display = 'block';
-            if (emptyState) emptyState.style.display = 'none';
-
-            createdItems.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'user-row';
-                tr.setAttribute('data-search', `${item.username} ${item.name} ${item.rollnumber} student`.toLowerCase());
-
-                const tdUser = document.createElement('td');
-                const nameDiv = document.createElement('div');
-                nameDiv.style.cssText = 'font-weight: 600; color: var(--text-main);';
-                nameDiv.textContent = item.name || item.username;
-                const handleDiv = document.createElement('div');
-                handleDiv.style.cssText = 'font-size: 0.78rem; color: var(--text-muted); font-family: "JetBrains Mono", monospace;';
-                handleDiv.textContent = '@' + item.username;
-                tdUser.appendChild(nameDiv);
-                tdUser.appendChild(handleDiv);
-
-                const tdRole = document.createElement('td');
-                const roleSpan = document.createElement('span');
-                roleSpan.className = 'role-badge role-badge-student';
-                roleSpan.textContent = 'Student';
-                tdRole.appendChild(roleSpan);
-
-                const tdRoll = document.createElement('td');
-                const rollSpan = document.createElement('span');
-                rollSpan.className = 'roll-code';
-                rollSpan.textContent = item.rollnumber;
-                tdRoll.appendChild(rollSpan);
-
-                const tdActions = document.createElement('td');
-                tdActions.style.cssText = 'text-align: right; white-space: nowrap;';
-
-                const editBtn = document.createElement('button');
-                editBtn.type = 'button';
-                editBtn.className = 'btn btn-secondary btn-sm';
-                editBtn.style.cssText = 'display: inline-flex; align-items: center; gap: 5px; font-weight: 600;';
-                editBtn.innerHTML = `
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Edit Name
-                `;
-                editBtn.addEventListener('click', () => openEditNameModal(item._id, item.name || '', item.username));
-                tdActions.appendChild(editBtn);
-
-                tr.appendChild(tdUser);
-                tr.appendChild(tdRole);
-                tr.appendChild(tdRoll);
-                tr.appendChild(tdActions);
-                tbody.insertBefore(tr, tbody.firstChild);
-            });
-
-            if (countNum) {
-                const currentCount = parseInt(countNum.textContent || '0', 10) || 0;
-                countNum.textContent = String(currentCount + createdItems.length);
+                previewBtn.disabled = false;
             }
         }
 
@@ -1256,17 +1776,17 @@
             const readyRows = parsedBulkRows.filter(r => r.status === 'ready');
             if (readyRows.length === 0) return;
 
-            confirmBulkImportBtn.disabled = true;
-            confirmBulkImportBtn.textContent = `Importing ${readyRows.length}...`;
-            clearBulkFeedback();
+            const importBtn = document.getElementById('btnConfirmBulkImport');
+            const succBanner = document.getElementById('bulkSuccessBanner');
+            const errBanner = document.getElementById('bulkErrorBanner');
+
+            importBtn.disabled = true;
+            importBtn.textContent = `Importing ${readyRows.length}...`;
 
             try {
                 const res = await fetch('/users/bulk', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({
                         students: parsedBulkRows.map(r => ({
                             rowNumber: r.rowNumber,
@@ -1279,130 +1799,46 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    throw new Error(data.error || 'Bulk import failed.');
+                    throw new Error(data.error || 'Bulk import failed');
                 }
 
-                prependCreatedUsersToDirectory(data.created);
-
-                // Refresh preview rows status after import
-                const createdRolls = new Set((data.created || []).map(c => c.username));
-                parsedBulkRows = parsedBulkRows.map(r => (
-                    createdRolls.has(r.username)
-                        ? { ...r, status: 'exists', reason: 'Created just now' }
-                        : r
-                ));
-                renderBulkPreviewTable();
-
-                if (bulkResultPanel) {
-                    bulkResultPanel.innerHTML = '';
-                    const strong = document.createElement('strong');
-                    strong.textContent = 'Bulk Import Complete: ';
-                    const summaryText = document.createTextNode(
-                        `Created ${data.summary.createdCount} student account(s), skipped ${data.summary.skippedCount}, failed ${data.summary.failedCount}.`
-                    );
-                    bulkResultPanel.appendChild(strong);
-                    bulkResultPanel.appendChild(summaryText);
-
-                    if ((data.skipped && data.skipped.length > 0) || (data.failed && data.failed.length > 0)) {
-                        const ul = document.createElement('ul');
-                        ul.className = 'report-list';
-                        (data.skipped || []).forEach(s => {
-                            const li = document.createElement('li');
-                            li.textContent = `Skipped ${s.rollnumber} (${s.name}): ${s.reason}`;
-                            ul.appendChild(li);
-                        });
-                        (data.failed || []).forEach(f => {
-                            const li = document.createElement('li');
-                            li.textContent = `Row ${f.rowNumber} (${f.rollnumber || 'blank'}): ${f.reason}`;
-                            ul.appendChild(li);
-                        });
-                        bulkResultPanel.appendChild(ul);
-                    }
-                    bulkResultPanel.className = 'alert-banner ' + (data.summary.createdCount > 0 ? 'alert-success' : 'alert-error');
-                    bulkResultPanel.style.display = 'block';
-                }
+                alert(`Bulk import successful: Created ${data.summary.createdCount} student account(s)!`);
+                window.location.reload();
             } catch (err) {
-                showBulkError(err.message);
-            } finally {
-                confirmBulkImportBtn.disabled = false;
-                renderBulkPreviewTable();
+                if (errBanner) {
+                    errBanner.textContent = err.message;
+                    errBanner.style.display = 'flex';
+                }
+                importBtn.disabled = false;
             }
         }
 
-        if (browseFileBtn && bulkFileInput) {
-            browseFileBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                bulkFileInput.click();
-            });
-        }
+        // File dropzone events
+        const dropzone = document.getElementById('bulkModalDropzone');
+        const fileInput = document.getElementById('bulkModalFileInput');
+        const dropText = document.getElementById('dropzoneText');
 
-        if (bulkDropzone && bulkFileInput) {
-            bulkDropzone.addEventListener('click', () => bulkFileInput.click());
-            bulkDropzone.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    bulkFileInput.click();
-                }
-            });
-            bulkDropzone.addEventListener('dragover', (e) => {
+        if (dropzone && fileInput) {
+            dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                bulkDropzone.classList.add('is-dragover');
+                dropzone.classList.add('is-dragover');
             });
-            bulkDropzone.addEventListener('dragleave', () => {
-                bulkDropzone.classList.remove('is-dragover');
-            });
-            bulkDropzone.addEventListener('drop', (e) => {
+            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('is-dragover'));
+            dropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                bulkDropzone.classList.remove('is-dragover');
+                dropzone.classList.remove('is-dragover');
                 if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    bulkFileInput.files = e.dataTransfer.files;
-                    if (dropzoneFileName) dropzoneFileName.textContent = e.dataTransfer.files[0].name;
+                    fileInput.files = e.dataTransfer.files;
+                    if (dropText) dropText.textContent = e.dataTransfer.files[0].name;
                     runBulkParsePreview();
                 }
             });
-            bulkFileInput.addEventListener('change', () => {
-                if (bulkFileInput.files && bulkFileInput.files[0]) {
-                    if (dropzoneFileName) dropzoneFileName.textContent = bulkFileInput.files[0].name;
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    if (dropText) dropText.textContent = fileInput.files[0].name;
                     runBulkParsePreview();
                 }
             });
-        }
-
-        if (previewBulkBtn) {
-            previewBulkBtn.addEventListener('click', runBulkParsePreview);
-        }
-
-        if (bulkPasteArea) {
-            bulkPasteArea.addEventListener('input', () => {
-                if (bulkPasteArea.value.trim() && bulkFileInput && bulkFileInput.value) {
-                    bulkFileInput.value = '';
-                    if (dropzoneFileName) dropzoneFileName.textContent = 'Drop .xlsx or .csv file here, or click to browse';
-                }
-            });
-        }
-
-        if (clearBulkBtn) {
-            clearBulkBtn.addEventListener('click', () => {
-                if (bulkFileInput) bulkFileInput.value = '';
-                if (bulkPasteArea) bulkPasteArea.value = '';
-                if (dropzoneFileName) dropzoneFileName.textContent = 'Drop .xlsx or .csv file here, or click to browse';
-                parsedBulkRows = [];
-                renderBulkPreviewTable();
-                clearBulkFeedback();
-            });
-        }
-
-        if (toggleBulkPwBtn) {
-            toggleBulkPwBtn.addEventListener('click', () => {
-                showBulkPasswords = !showBulkPasswords;
-                toggleBulkPwBtn.setAttribute('aria-pressed', String(showBulkPasswords));
-                toggleBulkPwBtn.textContent = showBulkPasswords ? 'Hide Passwords' : 'Show Passwords';
-                renderBulkPreviewTable();
-            });
-        }
-
-        if (confirmBulkImportBtn) {
-            confirmBulkImportBtn.addEventListener('click', submitConfirmedBulkImport);
         }
     </script>
     <%- include('partials/sidebar_end') %>

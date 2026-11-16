@@ -1008,48 +1008,97 @@ app.post('/users', requireAdmin, async (req, res) => {
     }
 });
 
+app.post('/users/:id/name', requireAdmin, async (req, res) => {
+    try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (!isValidMongoId(req.params.id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Invalid user identifier.' });
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
+        const fullName = String((req.body && req.body.fullName) || '').trim();
+        if (!fullName) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Name cannot be empty.' });
+            return res.redirect('/users?error=' + encodeURIComponent('Name cannot be empty.'));
+        }
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+        targetUser.fullName = fullName;
+        await targetUser.save();
+        if (wantsJson) {
+            return res.json({ success: true, message: `Name updated for @${targetUser.username}.`, user: { _id: targetUser._id, fullName: targetUser.fullName, username: targetUser.username } });
+        }
+        return res.redirect('/users?message=' + encodeURIComponent(`Name updated for @${targetUser.username}.`));
+    } catch (err) {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (wantsJson) return res.status(500).json({ success: false, error: err.message || 'Could not update name.' });
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update name.'));
+    }
+});
+
 app.post('/users/:id/password', requireAdmin, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
         if (!isValidMongoId(req.params.id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Invalid user identifier.' });
             return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
         }
         const password = String((req.body && req.body.password) || '');
         if (password.length < 6) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long.' });
             return res.redirect('/users?error=' + encodeURIComponent('Password must be at least 6 characters long.'));
         }
         const targetUser = await User.findById(req.params.id);
         if (!targetUser) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
             return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
         }
         await targetUser.setPassword(password);
         await targetUser.save();
+        if (wantsJson) {
+            return res.json({ success: true, message: `Password updated for @${targetUser.username}.` });
+        }
         return res.redirect('/users?message=' + encodeURIComponent(`Password updated for @${targetUser.username}.`));
     } catch (err) {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (wantsJson) return res.status(500).json({ success: false, error: err.message || 'Could not update password.' });
         return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update password.'));
     }
 });
 
 app.post('/users/:id/delete', requireAdmin, async (req, res) => {
     try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
         if (!isValidMongoId(req.params.id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Invalid user identifier.' });
             return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
         }
         const targetUser = await User.findById(req.params.id);
         if (!targetUser) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
             return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
         }
         if (String(targetUser._id) === String(req.user._id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'You cannot delete your own signed-in account.' });
             return res.redirect('/users?error=' + encodeURIComponent('You cannot delete your own signed-in account.'));
         }
         if (targetUser.role === 'admin') {
             const adminCount = await User.countDocuments({ role: 'admin' });
             if (adminCount <= 1) {
+                if (wantsJson) return res.status(400).json({ success: false, error: 'Cannot delete the last remaining Admin account.' });
                 return res.redirect('/users?error=' + encodeURIComponent('Cannot delete the last remaining Admin account.'));
             }
         }
         await User.findByIdAndDelete(targetUser._id);
+        if (wantsJson) {
+            return res.json({ success: true, message: `Account @${targetUser.username} deleted.` });
+        }
         return res.redirect('/users?message=' + encodeURIComponent(`Account @${targetUser.username} deleted.`));
     } catch (err) {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (wantsJson) return res.status(500).json({ success: false, error: err.message || 'Could not delete user.' });
         return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not delete user.'));
     }
 });
