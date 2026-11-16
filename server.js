@@ -1055,7 +1055,7 @@ app.post('/users/:id/delete', requireAdmin, async (req, res) => {
 });
 
 // Helper to retrieve and ensure all Section / Batch / Folders are synchronized
-async function getAllFolders() {
+async function getAllFolders(filterType = 'all') {
     let folders = [];
     try {
         folders = await Folder.find({}).sort({ name: 1 }).lean();
@@ -1066,11 +1066,23 @@ async function getAllFolders() {
     const existingNames = new Set(folders.map(f => (f.name || '').trim().toLowerCase()));
 
     // Seed standard initial folders if empty or missing
-    const defaultSeed = ['General', '11th NEET', '12th NEET', '11th JEE', '12th JEE', 'Foundation'];
-    for (const def of defaultSeed) {
+    const standardSeed = ['General', '11th NEET', '12th NEET', 'Foundation'];
+    for (const def of standardSeed) {
         if (!existingNames.has(def.toLowerCase())) {
             try {
-                const created = await Folder.create({ name: def });
+                const created = await Folder.create({ name: def, examType: 'standard' });
+                folders.push(created.toObject ? created.toObject() : created);
+                existingNames.add(def.toLowerCase());
+            } catch (err) {}
+        }
+    }
+
+    // Seed JEE initial folders if empty or missing
+    const jeeSeed = ['11th JEE', '12th JEE'];
+    for (const def of jeeSeed) {
+        if (!existingNames.has(def.toLowerCase())) {
+            try {
+                const created = await Folder.create({ name: def, examType: 'jee' });
                 folders.push(created.toObject ? created.toObject() : created);
                 existingNames.add(def.toLowerCase());
             } catch (err) {}
@@ -1082,14 +1094,29 @@ async function getAllFolders() {
         const paperCats = await Paper.distinct('category');
         for (const cat of paperCats) {
             if (cat && typeof cat === 'string' && cat.trim() && !existingNames.has(cat.trim().toLowerCase())) {
+                const isJee = /jee/i.test(cat);
                 try {
-                    const created = await Folder.create({ name: cat.trim() });
+                    const created = await Folder.create({ name: cat.trim(), examType: isJee ? 'jee' : 'standard' });
                     folders.push(created.toObject ? created.toObject() : created);
                     existingNames.add(cat.trim().toLowerCase());
                 } catch (err) {}
             }
         }
     } catch (err) {}
+
+    // Ensure examType is categorized correctly
+    folders.forEach(f => {
+        if (!f.examType || f.examType === 'all') {
+            f.examType = /jee/i.test(f.name) ? 'jee' : 'standard';
+        }
+    });
+
+    // Filter by exam type: standard (normal) vs jee
+    if (filterType === 'jee') {
+        folders = folders.filter(f => f.examType === 'jee' || /jee/i.test(f.name));
+    } else if (filterType === 'standard' || filterType === 'normal') {
+        folders = folders.filter(f => f.examType !== 'jee' && !/jee/i.test(f.name));
+    }
 
     return folders.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 }
@@ -1106,7 +1133,7 @@ app.get('/', requireAuth, async (req, res) => {
             subject: { $not: /jee/i }
         };
         const papers = await Paper.find(query).sort({ createdAt: -1 });
-        const allFolders = await getAllFolders();
+        const allFolders = await getAllFolders('standard');
 
         const folderCounts = {};
         papers.forEach(p => {
@@ -1131,7 +1158,7 @@ app.get('/', requireAuth, async (req, res) => {
 
 app.get('/paper/new', requireAdmin, async (req, res) => {
     try {
-        const allFolders = await getAllFolders();
+        const allFolders = await getAllFolders('standard');
         const categories = allFolders.map(f => f.name);
         const selectedFolder = (req.query.category || req.query.folder || '').trim();
         res.render('create_paper', { categories, folders: allFolders, selectedFolder });
@@ -1304,7 +1331,8 @@ app.post('/paper/:id/delete', requireAdmin, async (req, res) => {
 // Section / Batch / Folder APIs
 app.get('/api/folders', requireAuth, async (req, res) => {
     try {
-        const allFolders = await getAllFolders();
+        const filterType = (req.query.examType || req.query.type || 'all').toLowerCase();
+        const allFolders = await getAllFolders(filterType);
         const counts = await Paper.aggregate([
             { $group: { _id: '$category', count: { $sum: 1 } } }
         ]);
@@ -1316,6 +1344,7 @@ app.get('/api/folders', requireAuth, async (req, res) => {
             _id: f._id,
             name: f.name,
             description: f.description || '',
+            examType: f.examType || (/jee/i.test(f.name) ? 'jee' : 'standard'),
             count: countMap[f.name.toLowerCase()] || 0
         }));
         res.json({ success: true, folders: result });
@@ -1333,8 +1362,29 @@ app.post('/api/folders', requireAdmin, async (req, res) => {
         if (existing) {
             return res.status(400).json({ error: `Section / Batch / Folder "${existing.name}" already exists.` });
         }
-        const folder = await Folder.create({ name, description: String(req.body.description || '').trim() });
-        res.json({ success: true, folder: { _id: folder._id, name: folder.name, description: folder.description, count: 0 } });
+        const examType = req.body.examType ? String(req.body.examType).trim() : (/jee/i.test(name) ? 'jee' : 'standard');
+        const folder = await Folder.create({
+            name,
+            description: String(req.body.description || '').trim(),
+            examType
+        });
+        res.json({ success: true, folder: { _id: folder._id, name: folder.name, description: folder.description, examType: folder.examType, count: 0 } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete Section / Batch / Folder
+app.delete('/api/folders/:id', requireAdmin, async (req, res) => {
+    try {
+        const folder = await Folder.findById(req.params.id) || await Folder.findOne({ _id: req.params.id });
+        if (!folder) return res.status(404).json({ error: 'Folder not found' });
+        const papersCount = await Paper.countDocuments({ category: folder.name });
+        if (papersCount > 0) {
+            return res.status(400).json({ error: `Cannot delete folder "${folder.name}" because it contains ${papersCount} paper(s). Please migrate papers first.` });
+        }
+        await Folder.findByIdAndDelete(folder._id);
+        res.json({ success: true, message: `Folder "${folder.name}" deleted.` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1437,7 +1487,7 @@ app.get('/jee', requireAdminOrTeacher, async (req, res) => {
             counts.forEach(c => { subCounts[String(c._id)] = c.count; });
         }
 
-        const allFolders = await getAllFolders();
+        const allFolders = await getAllFolders('jee');
         const folderCounts = {};
         jeePapers.forEach(p => {
             const cat = (p.category || p.batch || '12th JEE').trim().toLowerCase();
@@ -1463,7 +1513,7 @@ app.get('/jee', requireAdminOrTeacher, async (req, res) => {
 // Create New JEE Mains Paper Form
 app.get('/jee/new', requireAdmin, async (req, res) => {
     try {
-        const allFolders = await getAllFolders();
+        const allFolders = await getAllFolders('jee');
         const categories = allFolders.map(f => f.name);
         const selectedFolder = (req.query.category || req.query.folder || '12th JEE').trim();
         res.render('create_jee_paper', { categories, folders: allFolders, selectedFolder });

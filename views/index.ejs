@@ -120,14 +120,22 @@
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: thin;
+            padding: 4px 2px 6px 2px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .folder-chips-row::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
         }
 
         .folder-chip {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
             background: #F8FAFC;
             border: 1.5px solid #E2E8F0;
             border-radius: 999px;
@@ -156,11 +164,18 @@
             box-shadow: 0 1px 4px rgba(37,99,235,0.15);
         }
 
+        .folder-chip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+        }
+
         .folder-chip-badge {
             background: #E2E8F0;
             color: #475569;
             border-radius: 999px;
-            padding: 1px 6px;
+            padding: 1px 7px;
             font-size: 0.72rem;
             font-weight: 700;
         }
@@ -192,7 +207,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
             flex-shrink: 0;
         }
 
@@ -208,37 +222,42 @@
             color: var(--text-muted);
         }
 
-        .btn-act-migrate {
-            background: #F0FDF4;
-            color: #15803D;
-            border-color: #BBF7D0;
-        }
-        .btn-act-migrate:hover { background: #DCFCE7; color: #166534; border-color: #86EFAC; }
-
         /* Compact Attractive Cards Grid */
         .paper-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-            gap: 1.15rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
         }
 
         .paper-card {
             background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-top: 3.5px solid var(--primary);
-            border-radius: var(--radius-md);
-            padding: 1rem 1.15rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 1.15rem 1.2rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            gap: 0.85rem;
-            box-shadow: var(--shadow-xs);
-            transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+            gap: 0.95rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+            transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .paper-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3.5px;
+            background: linear-gradient(90deg, #2563EB, #3B82F6);
+            border-radius: 14px 14px 0 0;
         }
 
         .paper-card:hover {
-            border-color: var(--border-hover);
-            box-shadow: 0 6px 16px -3px rgba(15, 23, 42, 0.08);
+            border-color: #CBD5E1;
+            box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 6px 12px -4px rgba(15, 23, 42, 0.04);
             transform: translateY(-2px);
         }
 
@@ -251,19 +270,20 @@
         }
 
         .paper-card-title {
-            font-size: 0.98rem;
+            font-size: 1.02rem;
             font-weight: 700;
-            color: var(--text-main);
+            color: #0F172A;
             margin: 0;
             line-height: 1.35;
+            letter-spacing: -0.01em;
         }
 
         .status-chip {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 2px 7px;
-            border-radius: var(--radius-full);
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 999px;
             font-size: 0.7rem;
             font-weight: 700;
             white-space: nowrap;
@@ -283,30 +303,32 @@
         }
 
         .status-dot-sm {
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: currentColor;
         }
+        .status-ready .status-dot-sm { background: #10B981; }
+        .status-pending .status-dot-sm { background: #F59E0B; }
 
         .paper-specs {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 4px;
+            gap: 6px;
+            margin: 8px 0;
         }
 
         .spec-chip {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: var(--surface-subtle);
-            border: 1px solid var(--border-color);
-            padding: 2px 7px;
-            border-radius: var(--radius-xs);
-            font-size: 0.72rem;
-            color: var(--text-body);
+            gap: 5px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            color: #475569;
             font-weight: 600;
         }
 
@@ -321,31 +343,42 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.7rem;
-            color: var(--text-muted);
+            font-size: 0.74rem;
+            color: #64748B;
+            padding-top: 4px;
+        }
+
+        .paper-id-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #F1F5F9;
+            color: #334155;
+            padding: 1px 6px;
+            border-radius: 4px;
+            border: 1px solid #E2E8F0;
+            font-size: 0.72rem;
         }
 
         /* Action Buttons Row: Side by Side */
         .paper-actions-row {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             flex-wrap: wrap;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--border-color);
+            padding-top: 0.85rem;
+            border-top: 1px solid #F1F5F9;
         }
 
         .btn-action-pill {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 5px 9px;
-            border-radius: var(--radius-sm);
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 7px;
             font-size: 0.78rem;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
-            transition: all 130ms ease;
+            transition: all 130ms cubic-bezier(0.16, 1, 0.3, 1);
             white-space: nowrap;
             border: 1px solid transparent;
             font-family: inherit;
@@ -356,7 +389,7 @@
             color: #1D4ED8;
             border-color: #BFDBFE;
         }
-        .btn-act-key:hover { background: #DBEAFE; }
+        .btn-act-key:hover { background: #DBEAFE; color: #1E40AF; }
 
         .btn-act-scan {
             background: var(--primary);
@@ -367,17 +400,24 @@
 
         .btn-act-results {
             background: #FFFFFF;
-            color: var(--text-body);
-            border-color: var(--border-hover);
+            color: #334155;
+            border-color: #CBD5E1;
         }
-        .btn-act-results:hover { background: var(--surface-subtle); color: var(--text-main); }
+        .btn-act-results:hover { background: #F8FAFC; color: #0F172A; border-color: #94A3B8; }
 
         .btn-act-print {
             background: #F8FAFC;
             color: #475569;
             border-color: #E2E8F0;
         }
-        .btn-act-print:hover { background: #F1F5F9; color: #1E293B; }
+        .btn-act-print:hover { background: #F1F5F9; color: #1E293B; border-color: #CBD5E1; }
+
+        .btn-act-migrate {
+            background: #F0FDF4;
+            color: #15803D;
+            border-color: #BBF7D0;
+        }
+        .btn-act-migrate:hover { background: #DCFCE7; color: #166534; border-color: #86EFAC; }
 
         .btn-act-delete {
             background: #FEF2F2;
@@ -385,7 +425,7 @@
             border-color: #FECACA;
             margin-left: auto;
         }
-        .btn-act-delete:hover { background: #FEE2E2; color: #991B1B; }
+        .btn-act-delete:hover { background: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
 
         @media (max-width: 680px) {
             .dashboard-container { padding: 1rem 0.85rem 2.5rem 0.85rem; }
@@ -430,8 +470,13 @@
                         </a>
                     <% } %>
 
-                    <a href="/jee" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap;">
-                        ⚛️ JEE Mains Section &rarr;
+                    <a href="/jee" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse>
+                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse>
+                        </svg>
+                        JEE Mains Section &rarr;
                     </a>
                 </div>
             </header>
@@ -440,26 +485,44 @@
             <div class="folder-browser-section">
                 <div class="folder-browser-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 1.15rem;">📁</span>
+                        <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </span>
                         <h2 style="font-size: 1rem; font-weight: 700; margin: 0; color: var(--text-main);">Sections / Batches / Folders</h2>
                     </div>
                     <% if (currentUser && currentUser.role === 'admin') { %>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="font-size: 0.8rem; padding: 5px 12px; font-weight: 600;">
-                            + New Folder
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="font-size: 0.8rem; padding: 5px 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Folder
                         </button>
                     <% } %>
                 </div>
 
                 <div class="folder-chips-row" id="folderChipsRow">
                     <button type="button" class="folder-chip <%= (!activeFolder || activeFolder === 'all') ? 'active' : '' %>" data-cat="all" onclick="setCategoryFilter('all', this)">
-                        <span class="folder-chip-icon">🌐</span>
+                        <span class="folder-chip-icon">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                        </span>
                         <span class="folder-chip-name">All Papers</span>
                         <span class="folder-chip-badge" id="badge-all"><%= papers.length %></span>
                     </button>
                     <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
                         <% folders.forEach(f => { %>
                             <button type="button" class="folder-chip <%= (activeFolder && activeFolder.toLowerCase() === f.name.toLowerCase()) ? 'active' : '' %>" data-cat="<%= f.name.toLowerCase() %>" onclick="setCategoryFilter('<%= f.name.toLowerCase() %>', this)">
-                                <span class="folder-chip-icon">📁</span>
+                                <span class="folder-chip-icon">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                </span>
                                 <span class="folder-chip-name"><%= f.name %></span>
                                 <span class="folder-chip-badge"><%= f.count || 0 %></span>
                             </button>
@@ -471,7 +534,11 @@
             <!-- Active Folder Banner (Visible when a specific folder is clicked) -->
             <div class="active-folder-banner" id="activeFolderBanner" style="display: none;">
                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-                    <div class="folder-banner-avatar">📁</div>
+                    <div class="folder-banner-avatar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
                     <div style="min-width: 0;">
                         <h3 class="folder-banner-title" id="activeFolderName">Folder</h3>
                         <span class="folder-banner-sub" id="activeFolderMeta">Showing papers in this folder</span>
@@ -479,8 +546,12 @@
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <% if (currentUser && currentUser.role === 'admin') { %>
-                        <a href="/paper/new" id="btnCreateInFolder" class="btn btn-primary btn-sm" style="font-weight: 600;">
-                            + Create Paper in this Folder
+                        <a href="/paper/new" id="btnCreateInFolder" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Create Paper in this Folder
                         </a>
                     <% } %>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="setCategoryFilter('all')">
@@ -517,30 +588,61 @@
                                 </div>
 
                                 <div class="paper-specs">
-                                    <span class="spec-chip spec-chip-cat">📁 <%= paperCat %></span>
-                                    <span class="spec-chip"><%= totalQ %> Questions</span>
+                                    <span class="spec-chip spec-chip-cat">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                        </svg>
+                                        <%= paperCat %>
+                                    </span>
+                                    <span class="spec-chip">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                        </svg>
+                                        <%= totalQ %> Qs
+                                    </span>
                                     <% if (paper.sections && paper.sections.length > 0) { %>
-                                        <span class="spec-chip"><%= paper.sections.length %> Sections</span>
+                                        <span class="spec-chip">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                                            </svg>
+                                            <%= paper.sections.length %> Sec
+                                        </span>
                                     <% } %>
                                     <% if (paper.max_marks) { %>
-                                        <span class="spec-chip"><%= paper.max_marks %> Max Marks</span>
+                                        <span class="spec-chip">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <circle cx="12" cy="8" r="6"></circle>
+                                                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+                                            </svg>
+                                            <%= paper.max_marks %> M
+                                        </span>
                                     <% } %>
                                 </div>
 
                                 <div class="paper-card-footer-info">
                                     <span>Subject: <strong><%= paper.subject || 'General' %></strong></span>
-                                    <span>ID: <code style="font-family:'JetBrains Mono',monospace;"><%= pIdStr.slice(-8) %></code></span>
+                                    <span>ID: <code class="paper-id-code"><%= pIdStr.slice(-8) %></code></span>
                                 </div>
                             </div>
 
                             <!-- Buttons Side-by-Side in Horizontal Row -->
                             <div class="paper-actions-row">
                                 <a href="/paper/<%= encodedId %>" class="btn-action-pill btn-act-key" title="View or edit answer key">
-                                    Answer Key
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="8" cy="15" r="4"></circle>
+                                        <line x1="10.85" y1="12.15" x2="19" y2="4"></line>
+                                        <line x1="18" y1="5" x2="20" y2="7"></line>
+                                        <line x1="15" y1="8" x2="17" y2="10"></line>
+                                    </svg>
+                                    Key
                                 </a>
 
                                 <a href="/paper/<%= encodedId %>/results" class="btn-action-pill btn-act-results" title="View Results and Checked OMR Copies">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <line x1="18" y1="20" x2="18" y2="10"></line>
                                         <line x1="12" y1="20" x2="12" y2="4"></line>
                                         <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -550,7 +652,7 @@
 
                                 <% if (currentUser && currentUser.role === 'admin') { %>
                                     <a href="/paper/<%= encodedId %>/omr" target="_blank" class="btn-action-pill btn-act-print" title="Open Printable A4 OMR Sheet">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <polyline points="6 9 6 2 18 2 18 9"></polyline>
                                             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                                             <rect x="6" y="14" width="12" height="8"></rect>
@@ -559,7 +661,7 @@
                                     </a>
 
                                     <a href="/paper/<%= encodedId %>/scan" class="btn-action-pill btn-act-scan" title="Scan OMR Sheet with Camera">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                                             <circle cx="12" cy="13" r="4"></circle>
                                         </svg>
@@ -567,7 +669,7 @@
                                     </a>
 
                                     <button type="button" class="btn-action-pill btn-act-migrate" onclick="openMigrateModal('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>', '<%= paperCat.replace(/'/g, "\\'") %>')" title="Move / Migrate this paper to another Section / Batch / Folder">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                             <polyline points="12 11 12 17"></polyline>
                                             <polyline points="9 14 12 17 15 14"></polyline>
@@ -576,7 +678,7 @@
                                     </button>
 
                                     <button type="button" class="btn-action-pill btn-act-delete" onclick="deleteStandardPaper('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>')" title="Delete this paper and all its student submissions and OMR images">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <polyline points="3 6 5 6 21 6"></polyline>
                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                         </svg>
@@ -612,7 +714,14 @@
     <!-- Create Folder Modal Dialog -->
     <dialog id="createFolderModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
         <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">📁 Create Section / Batch / Folder</h3>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </span>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Create Section / Batch / Folder</h3>
+            </div>
             <button type="button" onclick="document.getElementById('createFolderModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
         </div>
         <form onsubmit="submitCreateFolder(event)" style="padding: 20px;">
@@ -634,7 +743,16 @@
     <!-- Migrate Paper Modal Dialog -->
     <dialog id="migratePaperModal" class="folder-modal-dialog" closedby="any" style="max-width: 440px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
         <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">📁 Migrate Paper to Folder</h3>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; color: #059669;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        <polyline points="12 11 12 17"></polyline>
+                        <polyline points="9 14 12 17 15 14"></polyline>
+                    </svg>
+                </span>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Migrate Paper to Folder</h3>
+            </div>
             <button type="button" onclick="document.getElementById('migratePaperModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
         </div>
         <form onsubmit="submitMigratePaper(event)" style="padding: 20px;">
@@ -649,11 +767,11 @@
                 <select id="migrateTargetSelect" class="form-control" style="width: 100%; font-weight: 600;" required>
                     <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
                         <% folders.forEach(f => { %>
-                            <option value="<%= f.name %>">📁 <%= f.name %></option>
+                            <option value="<%= f.name %>"><%= f.name %></option>
                         <% }) %>
                     <% } else if (typeof categories !== 'undefined' && categories.length > 0) { %>
                         <% categories.forEach(cat => { %>
-                            <option value="<%= cat %>">📁 <%= cat %></option>
+                            <option value="<%= cat %>"><%= cat %></option>
                         <% }) %>
                     <% } %>
                 </select>
@@ -745,7 +863,7 @@
                 const res = await fetch('/api/folders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description: desc })
+                    body: JSON.stringify({ name, description: desc, examType: 'standard' })
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) {
@@ -803,7 +921,9 @@
                 if (card) {
                     card.setAttribute('data-category', targetFolder.toLowerCase());
                     const catBadge = card.querySelector('.spec-chip-cat');
-                    if (catBadge) catBadge.textContent = '📁 ' + targetFolder;
+                    if (catBadge) {
+                        catBadge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> ${targetFolder}`;
+                    }
                 }
                 document.getElementById('migratePaperModal').close();
                 alert(`Paper migrated to "${targetFolder}" successfully!`);

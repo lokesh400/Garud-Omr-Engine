@@ -592,7 +592,7 @@
                 const res = await fetch('/api/folders', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description: desc })
+                    body: JSON.stringify({ name, description: desc, examType: 'standard' })
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) {

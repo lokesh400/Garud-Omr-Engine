@@ -110,23 +110,33 @@ body {
   outline-offset: 2px;
 }
 
-/* Scrollbar */
+/* Scrollbar: cleanly hidden while keeping full scrolling ability */
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
+.hide-scrollbar,
+.folder-chips-row,
+.table-responsive,
+.custom-table-wrapper {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+.hide-scrollbar::-webkit-scrollbar,
+.folder-chips-row::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+.custom-table-wrapper::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Container */
