@@ -93,6 +93,38 @@ async function ensureDefaultAdmin() {
     }
 }
 
+// Built-in 10-Second Keep-Alive Self-Ping
+function startSelfPing(port) {
+    const PING_INTERVAL_MS = 10000; // 10 seconds
+    const targetUrl = process.env.PING_URL ||
+        (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/ping` : `http://127.0.0.1:${port}/ping`);
+
+    console.log(`[Ping] Built-in keep-alive self-ping active (every 10s -> ${targetUrl})`);
+
+    let pingCount = 0;
+    const interval = setInterval(async () => {
+        try {
+            const res = await fetch(targetUrl, {
+                headers: { 'User-Agent': 'OMR-Checker-Self-Ping/1.0' },
+                signal: AbortSignal.timeout(5000)
+            });
+            pingCount++;
+            if (pingCount === 1 || pingCount % 6 === 0 || process.env.VERBOSE_PING === 'true') {
+                console.log(`[Ping] Heartbeat #${pingCount} OK (${res.status}) - ${new Date().toLocaleTimeString()}`);
+            }
+        } catch (err) {
+            if (targetUrl !== `http://127.0.0.1:${port}/ping`) {
+                try {
+                    await fetch(`http://127.0.0.1:${port}/ping`, { signal: AbortSignal.timeout(3000) });
+                } catch (e) { }
+            }
+            console.warn(`[Ping] Keep-alive attempt warning: ${err.message}`);
+        }
+    }, PING_INTERVAL_MS);
+
+    return interval;
+}
+
 // Setup mongoose connection & MongoDB-backed session store
 const mongoConnectPromise = mongoose.connect(process.env.MONGO_URL);
 const sessionStore = MongoStore.create({
@@ -107,6 +139,7 @@ mongoConnectPromise
         await ensureDefaultAdmin();
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`[Security Hardened] Server running on http://0.0.0.0:${PORT} (PORT=${PORT})`);
+            startSelfPing(PORT);
         });
     })
     .catch(err => console.error('MongoDB connection error:', err));
@@ -114,6 +147,7 @@ mongoConnectPromise
 // Public Cloud Uptime & Health Check Endpoints (Bypasses auth/session)
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/ping', (req, res) => res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: Date.now() }));
 
 // Global Security Headers (CSP, FrameGuard, NoSniff, ReferrerPolicy, PermissionsPolicy)
 app.use(securityHeaders);
