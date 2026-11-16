@@ -216,6 +216,29 @@
             border: 1px solid #E2E8F0;
         }
 
+        .btn-card-del-folder {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 130ms ease;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-card-del-folder:hover {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #F87171;
+            transform: scale(1.08);
+        }
+
         .folder-card-body {
             display: flex;
             flex-direction: column;
@@ -645,16 +668,26 @@
 
                     <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
                         <% folders.forEach(f => { %>
-                            <div class="folder-card-item" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '').toLowerCase() %>">
+                            <div class="folder-card-item" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-id="<%= f._id %>" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '').toLowerCase() %>">
                                 <div class="folder-card-top">
                                     <div class="folder-icon-avatar">
                                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                         </svg>
                                     </div>
-                                    <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
-                                        <%= f.count || 0 %> <%= (f.count === 1) ? 'Paper' : 'Papers' %>
-                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
+                                            <%= f.count || 0 %> <%= (f.count === 1) ? 'Paper' : 'Papers' %>
+                                        </span>
+                                        <% if (currentUser && currentUser.role === 'admin') { %>
+                                            <button type="button" class="btn-card-del-folder" onclick="event.stopPropagation(); deleteFolder('<%= f._id %>', '<%= f.name.replace(/'/g, "\\'") %>')" title="Delete this folder">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                            </button>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 <div class="folder-card-body">
                                     <h3 class="folder-card-title"><%= f.name %></h3>
@@ -668,6 +701,23 @@
                                 </div>
                             </div>
                         <% }) %>
+                    <% } else { %>
+                        <div style="grid-column: 1 / -1; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 16px; padding: 2.25rem 1.5rem; text-align: center;">
+                            <div style="width: 46px; height: 46px; border-radius: 12px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;">No Custom Folders Created Yet</h3>
+                            <p style="color: #64748B; font-size: 0.85rem; max-width: 440px; margin: 0 auto 1.25rem auto; line-height: 1.5;">
+                                You haven't created any batches or folders yet. Click the button below to create your first Section / Batch / Folder.
+                            </p>
+                            <% if (currentUser && currentUser.role === 'admin') { %>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openCreateFolderModal()" style="font-weight: 600; padding: 7px 16px; font-size: 0.85rem;">
+                                    + Create Your First Folder
+                                </button>
+                            <% } %>
+                        </div>
                     <% } %>
                 </div>
 
@@ -709,6 +759,13 @@
                                 </svg>
                                 + Create Paper in this Folder
                             </a>
+                            <button type="button" id="btnDeleteActiveFolder" class="btn btn-secondary btn-sm" onclick="deleteCurrentActiveFolder()" style="color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center; gap: 5px;" title="Delete this folder">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Delete Folder
+                            </button>
                         <% } %>
                     </div>
                 </div>
@@ -1119,6 +1176,35 @@
                 btn.disabled = false;
                 btn.textContent = 'Create Folder';
             }
+        }
+
+        async function deleteFolder(folderId, folderName) {
+            const ok = confirm(`Are you sure you want to permanently delete folder "${folderName}"?`);
+            if (!ok) return;
+            try {
+                const res = await fetch('/api/folders/' + encodeURIComponent(folderId), {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`Folder "${folderName}" deleted successfully.`);
+                    window.location.href = '/';
+                } else {
+                    alert(data.error || 'Failed to delete folder');
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function deleteCurrentActiveFolder() {
+            if (!currentActiveFolder || currentActiveFolder === 'all') {
+                alert('Cannot delete this view.');
+                return;
+            }
+            const card = document.querySelector(`.folder-card-item[data-folder-name="${currentActiveFolder.toLowerCase()}"]`);
+            const folderId = card ? card.getAttribute('data-folder-id') : currentActiveFolder;
+            await deleteFolder(folderId, currentActiveFolder);
         }
 
         function openMigrateModal(pId, title, currentCat) {

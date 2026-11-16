@@ -1008,45 +1008,6 @@ app.post('/users', requireAdmin, async (req, res) => {
     }
 });
 
-app.post('/users/:id/name', requireAdmin, async (req, res) => {
-    try {
-        if (!isValidMongoId(req.params.id)) {
-            if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
-                return res.status(400).json({ error: 'Invalid user identifier.' });
-            }
-            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
-        }
-        const fullName = String((req.body && req.body.fullName) || '').trim();
-        const targetUser = await User.findById(req.params.id);
-        if (!targetUser) {
-            if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
-                return res.status(404).json({ error: 'User not found.' });
-            }
-            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
-        }
-        targetUser.fullName = fullName;
-        await targetUser.save();
-
-        // If the user has a rollnumber, also sync with Submissions
-        if (targetUser.rollnumber) {
-            await Submission.updateMany(
-                { rollnumber: targetUser.rollnumber },
-                { $set: { studentName: fullName } }
-            );
-        }
-
-        if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
-            return res.json({ success: true, fullName, message: `Name updated for @${targetUser.username}.` });
-        }
-        return res.redirect('/users?message=' + encodeURIComponent(`Name updated for @${targetUser.username}.`));
-    } catch (err) {
-        if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
-            return res.status(500).json({ error: err.message || 'Could not update name.' });
-        }
-        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update name.'));
-    }
-});
-
 app.post('/users/:id/password', requireAdmin, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
         if (!isValidMongoId(req.params.id)) {
@@ -1093,71 +1054,21 @@ app.post('/users/:id/delete', requireAdmin, async (req, res) => {
     }
 });
 
-// Helper to retrieve and ensure all Section / Batch / Folders are synchronized
+// Helper to retrieve Section / Batch / Folders (Admin creates them - no default auto-seeding)
 async function getAllFolders(filterType = 'all') {
     let folders = [];
     try {
-        folders = await Folder.find({}).sort({ name: 1 }).lean();
+        let query = {};
+        if (filterType === 'jee') {
+            query = { $or: [{ examType: 'jee' }, { name: /jee/i }] };
+        } else if (filterType === 'standard' || filterType === 'normal') {
+            query = { examType: { $ne: 'jee' }, name: { $not: /jee/i } };
+        }
+        folders = await Folder.find(query).sort({ name: 1 }).lean();
     } catch (e) {
         folders = [];
     }
-
-    const existingNames = new Set(folders.map(f => (f.name || '').trim().toLowerCase()));
-
-    // Seed standard initial folders if empty or missing
-    const standardSeed = ['General', '11th NEET', '12th NEET', 'Foundation'];
-    for (const def of standardSeed) {
-        if (!existingNames.has(def.toLowerCase())) {
-            try {
-                const created = await Folder.create({ name: def, examType: 'standard' });
-                folders.push(created.toObject ? created.toObject() : created);
-                existingNames.add(def.toLowerCase());
-            } catch (err) {}
-        }
-    }
-
-    // Seed JEE initial folders if empty or missing
-    const jeeSeed = ['11th JEE', '12th JEE'];
-    for (const def of jeeSeed) {
-        if (!existingNames.has(def.toLowerCase())) {
-            try {
-                const created = await Folder.create({ name: def, examType: 'jee' });
-                folders.push(created.toObject ? created.toObject() : created);
-                existingNames.add(def.toLowerCase());
-            } catch (err) {}
-        }
-    }
-
-    // Sync any existing paper categories that may not be in the Folder collection
-    try {
-        const paperCats = await Paper.distinct('category');
-        for (const cat of paperCats) {
-            if (cat && typeof cat === 'string' && cat.trim() && !existingNames.has(cat.trim().toLowerCase())) {
-                const isJee = /jee/i.test(cat);
-                try {
-                    const created = await Folder.create({ name: cat.trim(), examType: isJee ? 'jee' : 'standard' });
-                    folders.push(created.toObject ? created.toObject() : created);
-                    existingNames.add(cat.trim().toLowerCase());
-                } catch (err) {}
-            }
-        }
-    } catch (err) {}
-
-    // Ensure examType is categorized correctly
-    folders.forEach(f => {
-        if (!f.examType || f.examType === 'all') {
-            f.examType = /jee/i.test(f.name) ? 'jee' : 'standard';
-        }
-    });
-
-    // Filter by exam type: standard (normal) vs jee
-    if (filterType === 'jee') {
-        folders = folders.filter(f => f.examType === 'jee' || /jee/i.test(f.name));
-    } else if (filterType === 'standard' || filterType === 'normal') {
-        folders = folders.filter(f => f.examType !== 'jee' && !/jee/i.test(f.name));
-    }
-
-    return folders.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return folders;
 }
 
 // Dashboard & Paper Routes
@@ -1184,6 +1095,7 @@ app.get('/', requireAuth, async (req, res) => {
             _id: f._id,
             name: f.name,
             description: f.description || '',
+            examType: f.examType || 'standard',
             count: folderCounts[f.name.toLowerCase()] || 0
         }));
 
@@ -1383,7 +1295,7 @@ app.get('/api/folders', requireAuth, async (req, res) => {
             _id: f._id,
             name: f.name,
             description: f.description || '',
-            examType: f.examType || (/jee/i.test(f.name) ? 'jee' : 'standard'),
+            examType: f.examType || 'standard',
             count: countMap[f.name.toLowerCase()] || 0
         }));
         res.json({ success: true, folders: result });
@@ -1392,7 +1304,7 @@ app.get('/api/folders', requireAuth, async (req, res) => {
     }
 });
 
-// Create New Section / Batch / Folder
+// Create New Section / Batch / Folder (Admin only)
 app.post('/api/folders', requireAdmin, async (req, res) => {
     try {
         const name = String(req.body.name || '').trim();
@@ -1413,15 +1325,12 @@ app.post('/api/folders', requireAdmin, async (req, res) => {
     }
 });
 
-// Delete Section / Batch / Folder
+// Delete a Section / Batch / Folder (Admin only)
 app.delete('/api/folders/:id', requireAdmin, async (req, res) => {
     try {
-        const folder = await Folder.findById(req.params.id) || await Folder.findOne({ _id: req.params.id });
+        const id = req.params.id;
+        const folder = await Folder.findById(id) || await Folder.findOne({ _id: id }) || await Folder.findOne({ name: id });
         if (!folder) return res.status(404).json({ error: 'Folder not found' });
-        const papersCount = await Paper.countDocuments({ category: folder.name });
-        if (papersCount > 0) {
-            return res.status(400).json({ error: `Cannot delete folder "${folder.name}" because it contains ${papersCount} paper(s). Please migrate papers first.` });
-        }
         await Folder.findByIdAndDelete(folder._id);
         res.json({ success: true, message: `Folder "${folder.name}" deleted.` });
     } catch (err) {
