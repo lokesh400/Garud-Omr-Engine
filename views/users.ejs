@@ -747,17 +747,14 @@
                                         <td style="text-align: right; white-space: nowrap;">
                                             <button type="button"
                                                     class="btn btn-secondary btn-sm"
-                                                    onclick="openResetPasswordModal('<%= u._id %>', '<%= u.username %>')">
-                                                Reset Password
+                                                    style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600;"
+                                                    onclick="openEditNameModal('<%= u._id %>', '<%= (u.fullName || '').replace(/'/g, "\\'") %>', '<%= u.username.replace(/'/g, "\\'") %>')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                </svg>
+                                                Edit Name
                                             </button>
-                                            <% if (!isSelf) { %>
-                                                <form action="/users/<%= encodeURIComponent(u._id) %>/delete"
-                                                      method="POST"
-                                                      style="display: inline; margin-left: 4px;"
-                                                      onsubmit="return confirm('Delete account @<%= u.username %>? This action cannot be undone.');">
-                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                                </form>
-                                            <% } %>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -774,6 +771,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit Name Native Dialog -->
+    <dialog id="editNameDialog" class="user-dialog" closedby="any" aria-labelledby="editNameTitle" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </span>
+                <h3 id="editNameTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Edit Student / User Name</h3>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditNameModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="dialog-body" style="padding: 20px;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Set a new display name for <strong id="editNameUsernameLabel" style="color: var(--text-main);"></strong>.
+            </p>
+            <form id="editNameForm" onsubmit="submitEditName(event)">
+                <input type="hidden" id="editNameUserId">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="editNameInput" style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Full Name *</label>
+                    <input type="text"
+                           id="editNameInput"
+                           name="fullName"
+                           class="form-control"
+                           placeholder="Enter full name"
+                           required
+                           style="width: 100%;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeEditNameModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveUserName">Save Name</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
 
     <!-- Reset Password Native Dialog -->
     <dialog id="resetPwDialog" class="user-dialog" closedby="any" aria-labelledby="resetPwTitle">
@@ -892,6 +927,67 @@
                 const hay = row.getAttribute('data-search') || '';
                 row.style.display = hay.includes(q) ? '' : 'none';
             });
+        }
+
+        // Edit Name Modal
+        const editNameDialog = document.getElementById('editNameDialog');
+        function openEditNameModal(userId, currentName, username) {
+            document.getElementById('editNameUserId').value = userId;
+            document.getElementById('editNameInput').value = currentName || '';
+            document.getElementById('editNameUsernameLabel').textContent = '@' + username;
+            if (editNameDialog) {
+                if (typeof editNameDialog.showModal === 'function') editNameDialog.showModal();
+                else editNameDialog.setAttribute('open', '');
+                setTimeout(() => {
+                    const inp = document.getElementById('editNameInput');
+                    if (inp) inp.focus();
+                }, 50);
+            }
+        }
+
+        function closeEditNameModal() {
+            if (editNameDialog) {
+                if (typeof editNameDialog.close === 'function') editNameDialog.close();
+                else editNameDialog.removeAttribute('open');
+            }
+        }
+
+        async function submitEditName(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editNameUserId').value;
+            const newName = document.getElementById('editNameInput').value.trim();
+            if (!newName) return;
+            const btn = document.getElementById('btnSaveUserName');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            try {
+                const res = await fetch('/users/' + encodeURIComponent(userId) + '/name', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ fullName: newName })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to update name');
+                }
+                closeEditNameModal();
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Name';
+            }
+        }
+
+        if (editNameDialog && !('closedBy' in HTMLDialogElement.prototype)) {
+            const outside = (e, d) => {
+                const r = d.getBoundingClientRect();
+                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+            };
+            let downOutside = false;
+            editNameDialog.addEventListener('pointerdown', e => { downOutside = outside(e, editNameDialog); });
+            editNameDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, editNameDialog)) editNameDialog.close(); });
         }
 
         // Reset Password Modal
@@ -1129,28 +1225,19 @@
                 const tdActions = document.createElement('td');
                 tdActions.style.cssText = 'text-align: right; white-space: nowrap;';
 
-                const resetBtn = document.createElement('button');
-                resetBtn.type = 'button';
-                resetBtn.className = 'btn btn-secondary btn-sm';
-                resetBtn.textContent = 'Reset Password';
-                resetBtn.addEventListener('click', () => openResetPasswordModal(item._id, item.username));
-                tdActions.appendChild(resetBtn);
-
-                const delForm = document.createElement('form');
-                delForm.action = '/users/' + encodeURIComponent(item._id) + '/delete';
-                delForm.method = 'POST';
-                delForm.style.cssText = 'display: inline; margin-left: 4px;';
-                delForm.addEventListener('submit', (e) => {
-                    if (!confirm(`Delete account @${item.username}? This action cannot be undone.`)) {
-                        e.preventDefault();
-                    }
-                });
-                const delBtn = document.createElement('button');
-                delBtn.type = 'submit';
-                delBtn.className = 'btn btn-danger btn-sm';
-                delBtn.textContent = 'Delete';
-                delForm.appendChild(delBtn);
-                tdActions.appendChild(delForm);
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn btn-secondary btn-sm';
+                editBtn.style.cssText = 'display: inline-flex; align-items: center; gap: 5px; font-weight: 600;';
+                editBtn.innerHTML = `
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit Name
+                `;
+                editBtn.addEventListener('click', () => openEditNameModal(item._id, item.name || '', item.username));
+                tdActions.appendChild(editBtn);
 
                 tr.appendChild(tdUser);
                 tr.appendChild(tdRole);

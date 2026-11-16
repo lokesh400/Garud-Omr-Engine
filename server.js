@@ -1008,6 +1008,45 @@ app.post('/users', requireAdmin, async (req, res) => {
     }
 });
 
+app.post('/users/:id/name', requireAdmin, async (req, res) => {
+    try {
+        if (!isValidMongoId(req.params.id)) {
+            if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+                return res.status(400).json({ error: 'Invalid user identifier.' });
+            }
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
+        const fullName = String((req.body && req.body.fullName) || '').trim();
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+                return res.status(404).json({ error: 'User not found.' });
+            }
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+        targetUser.fullName = fullName;
+        await targetUser.save();
+
+        // If the user has a rollnumber, also sync with Submissions
+        if (targetUser.rollnumber) {
+            await Submission.updateMany(
+                { rollnumber: targetUser.rollnumber },
+                { $set: { studentName: fullName } }
+            );
+        }
+
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+            return res.json({ success: true, fullName, message: `Name updated for @${targetUser.username}.` });
+        }
+        return res.redirect('/users?message=' + encodeURIComponent(`Name updated for @${targetUser.username}.`));
+    } catch (err) {
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('json'))) {
+            return res.status(500).json({ error: err.message || 'Could not update name.' });
+        }
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update name.'));
+    }
+});
+
 app.post('/users/:id/password', requireAdmin, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
         if (!isValidMongoId(req.params.id)) {
