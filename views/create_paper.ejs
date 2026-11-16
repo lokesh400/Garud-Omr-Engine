@@ -313,29 +313,28 @@
                     </div>
                     <div class="form-group">
                         <label for="category">Section / Batch / Folder</label>
-                        <input
-                            type="text"
-                            id="category"
-                            name="category"
-                            class="form-control"
-                            placeholder="e.g. 11th NEET, Foundation"
-                            list="categorySuggestions"
-                            value="11th NEET"
-                        >
-                        <datalist id="categorySuggestions">
-                            <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
-                                <% categories.forEach(cat => { %>
-                                    <option value="<%= cat %>"></option>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="category" name="category" class="form-control" style="flex: 1; font-weight: 600;" required>
+                                <%
+                                    const folderList = (typeof folders !== 'undefined' && folders.length > 0)
+                                        ? folders
+                                        : (typeof categories !== 'undefined' && categories.length > 0)
+                                            ? categories.map(c => ({ name: c }))
+                                            : [{ name: 'General' }, { name: '11th NEET' }, { name: '12th NEET' }, { name: 'Foundation' }];
+                                    const currentSel = (typeof selectedFolder !== 'undefined' && selectedFolder) ? selectedFolder.trim().toLowerCase() : '11th neet';
+                                %>
+                                <% folderList.forEach(f => { %>
+                                    <% const fName = (typeof f === 'string') ? f : f.name; %>
+                                    <option value="<%= fName %>" <%= (currentSel === fName.toLowerCase()) ? 'selected' : '' %>>
+                                        📁 <%= fName %>
+                                    </option>
                                 <% }) %>
-                            <% } %>
-                            <option value="11th NEET"></option>
-                            <option value="12th NEET"></option>
-                            <option value="11th JEE"></option>
-                            <option value="12th JEE"></option>
-                            <option value="Foundation"></option>
-                            <option value="General"></option>
-                        </datalist>
-                        <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; display: block;">Papers will be stored and grouped under this section.</span>
+                            </select>
+                            <button type="button" class="btn btn-secondary" onclick="openCreateFolderModal()" style="white-space: nowrap; padding: 9px 12px; font-size: 0.84rem; font-weight: 600;" title="Create a new Section / Batch / Folder">
+                                + New
+                            </button>
+                        </div>
+                        <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; display: block;">Select the Section / Batch / Folder this paper belongs to.</span>
                     </div>
                 </div>
 
@@ -570,7 +569,75 @@
         }
 
         resetToStandardSections();
+
+        function openCreateFolderModal() {
+            const m = document.getElementById('createFolderModal');
+            if (m) {
+                document.getElementById('newFolderNameInput').value = '';
+                document.getElementById('newFolderDescInput').value = '';
+                if (typeof m.showModal === 'function') m.showModal();
+                else m.setAttribute('open', '');
+            }
+        }
+
+        async function submitCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('newFolderNameInput').value.trim();
+            const desc = document.getElementById('newFolderDescInput').value.trim();
+            if (!name) return;
+            const btn = document.getElementById('btnSubmitCreateFolder');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            try {
+                const res = await fetch('/api/folders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description: desc })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to create folder');
+                }
+                const sel = document.getElementById('category');
+                if (sel) {
+                    const opt = document.createElement('option');
+                    opt.value = data.folder.name;
+                    opt.textContent = '📁 ' + data.folder.name;
+                    opt.selected = true;
+                    sel.appendChild(opt);
+                }
+                document.getElementById('createFolderModal').close();
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Folder';
+            }
+        }
     </script>
+
+    <!-- Create Folder Modal Dialog -->
+    <dialog id="createFolderModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #FFFFFF;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">📁 Create Section / Batch / Folder</h3>
+            <button type="button" onclick="document.getElementById('createFolderModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
+        </div>
+        <form onsubmit="submitCreateFolder(event)" style="padding: 20px;">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Folder Name *</label>
+                <input type="text" id="newFolderNameInput" class="form-control" placeholder="e.g. 11th NEET, Target 2026, Foundation" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Description (Optional)</label>
+                <input type="text" id="newFolderDescInput" class="form-control" placeholder="e.g. Morning Batch" style="width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('createFolderModal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitCreateFolder">Create Folder</button>
+            </div>
+        </form>
+    </dialog>
+
     <%- include('partials/sidebar_end') %>
 </body>
 </html>

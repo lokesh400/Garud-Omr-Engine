@@ -232,6 +232,26 @@
             font-size: 0.825rem;
         }
 
+        .btn-edit-student-name {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #94A3B8;
+            border-radius: 4px;
+            padding: 2px 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 120ms ease;
+            line-height: 1;
+            font-family: inherit;
+        }
+        .btn-edit-student-name:hover {
+            background: #EFF6FF;
+            color: #2563EB;
+            border-color: #BFDBFE;
+        }
+
         .sec-stack-list {
             display: flex;
             flex-direction: column;
@@ -1452,15 +1472,23 @@
                                                         #<%= idx + 1 %>
                                                     </td>
                                                     <td>
-                                                        <span class="roll-badge">
-                                                            <%= studentRoll %>
-                                                        </span>
-                                                        <% if (studentName) { %>
-                                                            <div
-                                                                style="font-size: 0.78rem; font-weight: 600; color: var(--text-main); margin-top: 4px;">
-                                                                <%= studentName %>
+                                                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                                                            <span class="roll-badge">
+                                                                <%= studentRoll %>
+                                                            </span>
+                                                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                                                <span class="student-name-text" id="name-display-<%= r._id %>" style="font-size: 0.78rem; font-weight: 600; color: var(--text-main);">
+                                                                    <%= studentName || '' %>
+                                                                </span>
+                                                                <% if (currentUser && currentUser.role === 'admin') { %>
+                                                                    <button type="button" class="btn-edit-student-name" onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "\\'") %>')" title="Edit Student Name" aria-label="Edit Student Name">
+                                                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                <% } %>
                                                             </div>
-                                                            <% } %>
+                                                        </div>
                                                     </td>
                                                     <td>
                                                         <% if (r.sectionWise && r.sectionWise.length> 0) { %>
@@ -1616,9 +1644,16 @@
                                             <div class="mobile-card-meta">
                                                 <span class="mobile-rank-badge">#<%= idx + 1 %></span>
                                                 <span class="roll-badge"><%= studentRoll %></span>
-                                                <% if (studentName) { %>
-                                                    <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);"><%= studentName %></span>
-                                                <% } %>
+                                                <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                                    <span id="mob-name-display-<%= r._id %>" style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);"><%= studentName || '' %></span>
+                                                    <% if (currentUser && currentUser.role === 'admin') { %>
+                                                        <button type="button" class="btn-edit-student-name" onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "\\'") %>')" title="Edit Student Name" style="padding: 1px 4px;">
+                                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                            </svg>
+                                                        </button>
+                                                    <% } %>
+                                                </div>
                                             </div>
                                             <div class="mobile-card-score">
                                                 <%= sumSec.obtainedMarks %> <span class="max-score">/ <%= sumSec.totalMarks %></span>
@@ -1719,7 +1754,14 @@
                     </button>
                     <span class="roll-badge" id="modalRollNo" style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
                     <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0 / 0</span>
-                    <span style="font-size: 0.82rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
+                    <div style="display: inline-flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.82rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
+                        <% if (currentUser && currentUser.role === 'admin') { %>
+                            <button type="button" id="modalEditNameBtn" class="btn-omr-tool" onclick="openEditCurrentModalStudentName()" title="Edit Student Name" style="padding: 2px 6px; font-size: 0.72rem; height: 24px; display: none;">
+                                ✏️ Edit
+                            </button>
+                        <% } %>
+                    </div>
                 </div>
 
                 <div class="omr-modal-header-center" id="omrMobileNav">
@@ -3112,6 +3154,7 @@
 
                 document.getElementById('modalRollNo').textContent = roll;
                 const nameEl = document.getElementById('modalStudentName');
+                const editNameBtn = document.getElementById('modalEditNameBtn');
                 if (nameEl) {
                     if (data.studentName) {
                         nameEl.textContent = data.studentName;
@@ -3120,6 +3163,9 @@
                         nameEl.textContent = '';
                         nameEl.style.display = 'none';
                     }
+                }
+                if (editNameBtn) {
+                    editNameBtn.style.display = 'inline-flex';
                 }
                 const scoreTextEl = document.getElementById('modalScoreText');
                 if (scoreTextEl) {
@@ -3488,7 +3534,105 @@
                 }
                 window.location.assign('/paper/' + encodeURIComponent(PAPER_ID) + '/results/export');
             }
+
+            function openEditStudentNameModal(subId, roll, currentName) {
+                document.getElementById('editStudentSubId').value = subId;
+                document.getElementById('editStudentRoll').value = roll;
+                document.getElementById('editStudentRollDisplay').textContent = roll;
+                document.getElementById('editStudentNameInput').value = currentName || '';
+                const m = document.getElementById('editStudentNameModal');
+                if (m) {
+                    if (typeof m.showModal === 'function') m.showModal();
+                    else m.setAttribute('open', '');
+                    setTimeout(() => document.getElementById('editStudentNameInput').focus(), 50);
+                }
+            }
+
+            function openEditCurrentModalStudentName() {
+                if (!currentModalSubmission) return;
+                const subId = currentModalSubmission._id;
+                const roll = currentModalSubmission.rollnumber || currentModalSubmission.rollNumber || '';
+                const name = currentModalSubmission.studentName || '';
+                openEditStudentNameModal(subId, roll, name);
+            }
+
+            async function submitEditStudentName(e) {
+                e.preventDefault();
+                const subId = document.getElementById('editStudentSubId').value;
+                const newName = document.getElementById('editStudentNameInput').value.trim();
+                const roll = document.getElementById('editStudentRoll').value;
+                const btn = document.getElementById('btnSaveStudentName');
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+                try {
+                    const res = await fetch(`/api/submission/${encodeURIComponent(subId)}/student-name`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ studentName: newName })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update student name');
+                    }
+                    // Update table display
+                    const nameEl = document.getElementById('name-display-' + subId);
+                    if (nameEl) nameEl.textContent = newName || '—';
+                    // Update mobile card display
+                    const mobEl = document.getElementById('mob-name-display-' + subId);
+                    if (mobEl) mobEl.textContent = newName || '';
+                    // Update modal display if open
+                    const modalName = document.getElementById('modalStudentName');
+                    if (modalName) {
+                        modalName.textContent = newName;
+                        modalName.style.display = newName ? 'inline-block' : 'none';
+                    }
+                    // Update cached submission data
+                    if (submissionsMap[subId]) submissionsMap[subId].studentName = newName;
+                    if (currentModalSubmission && String(currentModalSubmission._id) === String(subId)) {
+                        currentModalSubmission.studentName = newName;
+                    }
+                    // Update data-search on table row and mobile card
+                    const row = document.getElementById('row-' + subId);
+                    if (row) {
+                        row.setAttribute('data-search', `${roll} ${newName}`.toLowerCase());
+                    }
+                    const mcard = document.getElementById('mcard-' + subId);
+                    if (mcard) {
+                        mcard.setAttribute('data-search', `${roll} ${newName}`.toLowerCase());
+                    }
+                    document.getElementById('editStudentNameModal').close();
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Save Name';
+                }
+            }
         </script>
+
+        <!-- Edit Student Name Modal Dialog -->
+        <dialog id="editStudentNameModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">✏️ Edit Student Name</h3>
+                <button type="button" onclick="document.getElementById('editStudentNameModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
+            </div>
+            <form onsubmit="submitEditStudentName(event)" style="padding: 20px;">
+                <input type="hidden" id="editStudentSubId">
+                <input type="hidden" id="editStudentRoll">
+                <div style="margin-bottom: 12px; font-size: 0.85rem; color: #64748B;">
+                    Roll Number: <strong id="editStudentRollDisplay" style="color: #1E293B; font-family: 'JetBrains Mono', monospace;"></strong>
+                </div>
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Student Full Name *</label>
+                    <input type="text" id="editStudentNameInput" class="form-control" placeholder="e.g. John Doe, Aditi Sharma" required style="width: 100%; font-size: 0.95rem; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('editStudentNameModal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveStudentName">Save Name</button>
+                </div>
+            </form>
+        </dialog>
+
         <%- include('partials/sidebar_end') %>
 </body>
 

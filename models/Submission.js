@@ -39,6 +39,7 @@ const submissionSchema = new mongoose.Schema({
 
   // Highly optimized numbers (BSON Int32/Double takes minimal space)
   score: { type: Number, default: 0 },
+  studentName: { type: String, trim: true, default: '' },
   totalQuestions: { type: Number, default: 0 },
   percentage: { type: Number, default: 0 },
   maxMarks: { type: Number, default: 0 },

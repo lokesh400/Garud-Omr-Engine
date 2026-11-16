@@ -98,49 +98,123 @@
             align-items: center;
         }
 
-        /* Dynamic Category / Section Filter Bar */
-        .category-filter-bar {
+        /* Section / Batch / Folder Browser */
+        .folder-browser-section {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 1.25rem;
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .folder-browser-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .folder-chips-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+        }
+
+        .folder-chip {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 1.25rem;
-            padding: 4px 0;
-        }
-
-        .cat-filter-label {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-right: 4px;
-        }
-
-        .cat-pill {
-            background: #FFFFFF;
-            color: var(--text-body);
-            border: 1px solid var(--border-color);
-            padding: 4px 12px;
-            border-radius: var(--radius-full);
-            font-size: 0.8rem;
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
             font-weight: 600;
+            color: #475569;
             cursor: pointer;
             transition: all 140ms ease;
+            white-space: nowrap;
             user-select: none;
+            font-family: inherit;
         }
 
-        .cat-pill:hover {
-            border-color: var(--border-hover);
-            background: var(--surface-subtle);
+        .folder-chip:hover {
+            border-color: #94A3B8;
+            background: #F1F5F9;
+            color: #1E293B;
+            transform: translateY(-1px);
         }
 
-        .cat-pill.active {
-            background: #1D4ED8;
+        .folder-chip.active {
+            background: #EFF6FF;
+            border-color: #2563EB;
+            color: #1D4ED8;
+            box-shadow: 0 1px 4px rgba(37,99,235,0.15);
+        }
+
+        .folder-chip-badge {
+            background: #E2E8F0;
+            color: #475569;
+            border-radius: 999px;
+            padding: 1px 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .folder-chip.active .folder-chip-badge {
+            background: #2563EB;
             color: #FFFFFF;
-            border-color: #1D4ED8;
-            box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
         }
+
+        .active-folder-banner {
+            background: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .folder-banner-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #EFF6FF;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .folder-banner-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .folder-banner-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .btn-act-migrate {
+            background: #F0FDF4;
+            color: #15803D;
+            border-color: #BBF7D0;
+        }
+        .btn-act-migrate:hover { background: #DCFCE7; color: #166534; border-color: #86EFAC; }
 
         /* Compact Attractive Cards Grid */
         .jee-papers-grid {
@@ -378,16 +452,58 @@
                 </div>
             </header>
 
-            <!-- Dynamic Category / Section Filter Bar -->
-            <nav class="category-filter-bar" aria-label="Filter by section or category">
-                <span class="cat-filter-label">Section:</span>
-                <button type="button" class="cat-pill active" data-cat="all" onclick="setCategoryFilter('all', this)">All</button>
-                <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
-                    <% categories.forEach(cat => { %>
-                        <button type="button" class="cat-pill" data-cat="<%= cat.toLowerCase() %>" onclick="setCategoryFilter('<%= cat.toLowerCase() %>', this)"><%= cat %></button>
-                    <% }) %>
-                <% } %>
-            </nav>
+            <!-- Section / Batch / Folder Browser -->
+            <div class="folder-browser-section">
+                <div class="folder-browser-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.15rem;">📁</span>
+                        <h2 style="font-size: 1rem; font-weight: 700; margin: 0; color: var(--text-main);">JEE Sections / Batches / Folders</h2>
+                    </div>
+                    <% if (currentUser && currentUser.role === 'admin') { %>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="font-size: 0.8rem; padding: 5px 12px; font-weight: 600;">
+                            + New Folder
+                        </button>
+                    <% } %>
+                </div>
+
+                <div class="folder-chips-row" id="folderChipsRow">
+                    <button type="button" class="folder-chip <%= (!activeFolder || activeFolder === 'all') ? 'active' : '' %>" data-cat="all" onclick="setCategoryFilter('all', this)">
+                        <span class="folder-chip-icon">🌐</span>
+                        <span class="folder-chip-name">All JEE Papers</span>
+                        <span class="folder-chip-badge" id="badge-all"><%= papers.length %></span>
+                    </button>
+                    <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
+                        <% folders.forEach(f => { %>
+                            <button type="button" class="folder-chip <%= (activeFolder && activeFolder.toLowerCase() === f.name.toLowerCase()) ? 'active' : '' %>" data-cat="<%= f.name.toLowerCase() %>" onclick="setCategoryFilter('<%= f.name.toLowerCase() %>', this)">
+                                <span class="folder-chip-icon">📁</span>
+                                <span class="folder-chip-name"><%= f.name %></span>
+                                <span class="folder-chip-badge"><%= f.count || 0 %></span>
+                            </button>
+                        <% }) %>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Active Folder Banner (Visible when a specific folder is clicked) -->
+            <div class="active-folder-banner" id="activeFolderBanner" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                    <div class="folder-banner-avatar">📁</div>
+                    <div style="min-width: 0;">
+                        <h3 class="folder-banner-title" id="activeFolderName">Folder</h3>
+                        <span class="folder-banner-sub" id="activeFolderMeta">Showing JEE papers in this folder</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <% if (currentUser && currentUser.role === 'admin') { %>
+                        <a href="/jee/new" id="btnCreateInFolder" class="btn btn-primary btn-sm" style="font-weight: 600;">
+                            + Create JEE Paper in this Folder
+                        </a>
+                    <% } %>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="setCategoryFilter('all')">
+                        Show All Papers
+                    </button>
+                </div>
+            </div>
 
             <!-- Papers Grid -->
             <% if (papers && papers.length > 0) { %>
@@ -473,6 +589,15 @@
                                         OMR
                                     </a>
 
+                                    <button type="button" class="btn-action-pill btn-act-migrate" onclick="openMigrateModal('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>', '<%= paperCat.replace(/'/g, "\\'") %>')" title="Move / Migrate this paper to another Section / Batch / Folder">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                            <polyline points="12 11 12 17"></polyline>
+                                            <polyline points="9 14 12 17 15 14"></polyline>
+                                        </svg>
+                                        Move
+                                    </button>
+
                                     <button type="button" class="btn-action-pill btn-act-delete" onclick="deleteJeePaper('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>')" title="Delete this paper and all its student submissions and OMR images">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -508,13 +633,90 @@
         </main>
     </div>
 
+    <!-- Create Folder Modal Dialog -->
+    <dialog id="createFolderModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">📁 Create JEE Section / Batch / Folder</h3>
+            <button type="button" onclick="document.getElementById('createFolderModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
+        </div>
+        <form onsubmit="submitCreateFolder(event)" style="padding: 20px;">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Folder Name *</label>
+                <input type="text" id="newFolderNameInput" class="form-control" placeholder="e.g. 12th JEE, Droppers, Target 2026" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Description (Optional)</label>
+                <input type="text" id="newFolderDescInput" class="form-control" placeholder="e.g. Evening Advanced Batch" style="width: 100%;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('createFolderModal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitCreateFolder">Create Folder</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Migrate Paper Modal Dialog -->
+    <dialog id="migratePaperModal" class="folder-modal-dialog" closedby="any" style="max-width: 440px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">📁 Migrate JEE Paper to Folder</h3>
+            <button type="button" onclick="document.getElementById('migratePaperModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
+        </div>
+        <form onsubmit="submitMigratePaper(event)" style="padding: 20px;">
+            <input type="hidden" id="migratePaperId">
+            <div style="margin-bottom: 14px;">
+                <span style="font-size: 0.78rem; color: #64748B; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Selected Paper</span>
+                <div id="migratePaperTitle" style="font-weight: 700; font-size: 0.95rem; color: #1E293B; margin-top: 2px;"></div>
+                <div id="migrateCurrentFolder" style="font-size: 0.8rem; color: #64748B; margin-top: 2px;"></div>
+            </div>
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Target Section / Batch / Folder *</label>
+                <select id="migrateTargetSelect" class="form-control" style="width: 100%; font-weight: 600;" required>
+                    <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
+                        <% folders.forEach(f => { %>
+                            <option value="<%= f.name %>">📁 <%= f.name %></option>
+                        <% }) %>
+                    <% } else if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat %>">📁 <%= cat %></option>
+                        <% }) %>
+                    <% } %>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('migratePaperModal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitMigrate" style="background: #059669; border-color: #059669;">Migrate Paper</button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
-        let activeCategory = 'all';
+        let activeCategory = <%- JSON.stringify(activeFolder ? activeFolder.toLowerCase() : 'all') %>;
 
         function setCategoryFilter(cat, btn) {
-            activeCategory = cat;
-            document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+            activeCategory = (cat || 'all').toLowerCase();
+            document.querySelectorAll('.folder-chip').forEach(b => {
+                if (b.getAttribute('data-cat') === activeCategory) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            const banner = document.getElementById('activeFolderBanner');
+            const nameEl = document.getElementById('activeFolderName');
+            const metaEl = document.getElementById('activeFolderMeta');
+            const createBtn = document.getElementById('btnCreateInFolder');
+
+            if (activeCategory === 'all') {
+                if (banner) banner.style.display = 'none';
+            } else {
+                if (banner) banner.style.display = 'flex';
+                let displayName = cat;
+                const activeBtn = document.querySelector(`.folder-chip[data-cat="${activeCategory}"]`);
+                if (activeBtn) {
+                    const nameSpan = activeBtn.querySelector('.folder-chip-name');
+                    if (nameSpan) displayName = nameSpan.textContent;
+                }
+                if (nameEl) nameEl.textContent = displayName;
+                if (createBtn) createBtn.href = '/jee/new?category=' + encodeURIComponent(displayName);
+            }
             filterJeePapers();
         }
 
@@ -538,10 +740,107 @@
             if (badge) {
                 badge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
             }
+
+            const metaEl = document.getElementById('activeFolderMeta');
+            if (metaEl && activeCategory !== 'all') {
+                metaEl.textContent = `${visibleCount} JEE paper(s) inside this Section / Batch / Folder`;
+            }
+        }
+
+        function openCreateFolderModal() {
+            const m = document.getElementById('createFolderModal');
+            if (m) {
+                document.getElementById('newFolderNameInput').value = '';
+                document.getElementById('newFolderDescInput').value = '';
+                if (typeof m.showModal === 'function') m.showModal();
+                else m.setAttribute('open', '');
+            }
+        }
+
+        async function submitCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('newFolderNameInput').value.trim();
+            const desc = document.getElementById('newFolderDescInput').value.trim();
+            if (!name) return;
+            const btn = document.getElementById('btnSubmitCreateFolder');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+            try {
+                const res = await fetch('/api/folders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description: desc })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to create folder');
+                }
+                document.getElementById('createFolderModal').close();
+                alert(`Folder "${data.folder.name}" created successfully!`);
+                window.location.href = '/jee?category=' + encodeURIComponent(data.folder.name);
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Folder';
+            }
+        }
+
+        function openMigrateModal(pId, title, currentCat) {
+            document.getElementById('migratePaperId').value = pId;
+            document.getElementById('migratePaperTitle').textContent = title;
+            document.getElementById('migrateCurrentFolder').textContent = 'Currently in: ' + currentCat;
+            const sel = document.getElementById('migrateTargetSelect');
+            if (sel) {
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value.toLowerCase() === currentCat.toLowerCase()) {
+                        sel.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            const m = document.getElementById('migratePaperModal');
+            if (m) {
+                if (typeof m.showModal === 'function') m.showModal();
+                else m.setAttribute('open', '');
+            }
+        }
+
+        async function submitMigratePaper(e) {
+            e.preventDefault();
+            const paperId = document.getElementById('migratePaperId').value;
+            const targetFolder = document.getElementById('migrateTargetSelect').value;
+            const btn = document.getElementById('btnSubmitMigrate');
+            btn.disabled = true;
+            btn.textContent = 'Migrating...';
+            try {
+                const res = await fetch(`/api/paper/${encodeURIComponent(paperId)}/migrate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetFolder })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to migrate paper');
+                }
+                const card = document.getElementById('card-' + paperId);
+                if (card) {
+                    card.setAttribute('data-category', targetFolder.toLowerCase());
+                    const catBadge = card.querySelector('.jee-chip-cat');
+                    if (catBadge) catBadge.textContent = '📁 ' + targetFolder;
+                }
+                document.getElementById('migratePaperModal').close();
+                alert(`Paper migrated to "${targetFolder}" successfully!`);
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Migrate Paper';
+            }
         }
 
         async function deleteJeePaper(id, title) {
-            // Triple confirmation before deleting paper
             const c1 = confirm(`[1/3 CONFIRMATION REQUIRED]\n\nAre you sure you want to permanently DELETE JEE Paper "${title}"?\n\nThis will remove the paper, all graded submissions, and all stored OMR scans.`);
             if (!c1) return;
 
@@ -567,6 +866,13 @@
                 alert('Request failed: ' + err.message);
             }
         }
+
+        // Initialize active folder on page load if query param was present
+        window.addEventListener('DOMContentLoaded', () => {
+            if (activeCategory && activeCategory !== 'all') {
+                setCategoryFilter(activeCategory);
+            }
+        });
     </script>
     <%- include('partials/sidebar_end') %>
 </body>

@@ -15,6 +15,7 @@ const Paper = require('./models/Paper');
 const Submission = require('./models/Submission');
 const Result = Submission;
 const User = require('./models/User');
+const Folder = require('./models/Folder');
 const { uploadOmrSheet, deleteOmrSheet } = require('./utils/cloudinaryPool');
 const {
     parseBulkStudentsInput,
@@ -1053,6 +1054,46 @@ app.post('/users/:id/delete', requireAdmin, async (req, res) => {
     }
 });
 
+// Helper to retrieve and ensure all Section / Batch / Folders are synchronized
+async function getAllFolders() {
+    let folders = [];
+    try {
+        folders = await Folder.find({}).sort({ name: 1 }).lean();
+    } catch (e) {
+        folders = [];
+    }
+
+    const existingNames = new Set(folders.map(f => (f.name || '').trim().toLowerCase()));
+
+    // Seed standard initial folders if empty or missing
+    const defaultSeed = ['General', '11th NEET', '12th NEET', '11th JEE', '12th JEE', 'Foundation'];
+    for (const def of defaultSeed) {
+        if (!existingNames.has(def.toLowerCase())) {
+            try {
+                const created = await Folder.create({ name: def });
+                folders.push(created.toObject ? created.toObject() : created);
+                existingNames.add(def.toLowerCase());
+            } catch (err) {}
+        }
+    }
+
+    // Sync any existing paper categories that may not be in the Folder collection
+    try {
+        const paperCats = await Paper.distinct('category');
+        for (const cat of paperCats) {
+            if (cat && typeof cat === 'string' && cat.trim() && !existingNames.has(cat.trim().toLowerCase())) {
+                try {
+                    const created = await Folder.create({ name: cat.trim() });
+                    folders.push(created.toObject ? created.toObject() : created);
+                    existingNames.add(cat.trim().toLowerCase());
+                } catch (err) {}
+            }
+        }
+    } catch (err) {}
+
+    return folders.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+}
+
 // Dashboard & Paper Routes
 app.get('/', requireAuth, async (req, res) => {
     if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
@@ -1065,9 +1106,24 @@ app.get('/', requireAuth, async (req, res) => {
             subject: { $not: /jee/i }
         };
         const papers = await Paper.find(query).sort({ createdAt: -1 });
-        const rawCats = await Paper.distinct('category', query);
-        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
-        res.render('index', { papers, categories });
+        const allFolders = await getAllFolders();
+
+        const folderCounts = {};
+        papers.forEach(p => {
+            const cat = (p.category || p.batch || 'General').trim().toLowerCase();
+            folderCounts[cat] = (folderCounts[cat] || 0) + 1;
+        });
+
+        const foldersWithCounts = allFolders.map(f => ({
+            _id: f._id,
+            name: f.name,
+            description: f.description || '',
+            count: folderCounts[f.name.toLowerCase()] || 0
+        }));
+
+        const categories = allFolders.map(f => f.name);
+        const activeFolder = (req.query.category || req.query.folder || '').trim();
+        res.render('index', { papers, categories, folders: foldersWithCounts, activeFolder });
     } catch (e) {
         res.status(500).send('Error loading papers: ' + e.message);
     }
@@ -1075,11 +1131,12 @@ app.get('/', requireAuth, async (req, res) => {
 
 app.get('/paper/new', requireAdmin, async (req, res) => {
     try {
-        const rawCats = await Paper.distinct('category');
-        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
-        res.render('create_paper', { categories });
+        const allFolders = await getAllFolders();
+        const categories = allFolders.map(f => f.name);
+        const selectedFolder = (req.query.category || req.query.folder || '').trim();
+        res.render('create_paper', { categories, folders: allFolders, selectedFolder });
     } catch (e) {
-        res.render('create_paper', { categories: [] });
+        res.render('create_paper', { categories: [], folders: [], selectedFolder: '' });
     }
 });
 
@@ -1244,16 +1301,107 @@ app.post('/paper/:id/delete', requireAdmin, async (req, res) => {
     }
 });
 
-// Update Paper Category / Section / Batch
+// Section / Batch / Folder APIs
+app.get('/api/folders', requireAuth, async (req, res) => {
+    try {
+        const allFolders = await getAllFolders();
+        const counts = await Paper.aggregate([
+            { $group: { _id: '$category', count: { $sum: 1 } } }
+        ]);
+        const countMap = {};
+        counts.forEach(c => {
+            if (c._id) countMap[String(c._id).trim().toLowerCase()] = c.count;
+        });
+        const result = allFolders.map(f => ({
+            _id: f._id,
+            name: f.name,
+            description: f.description || '',
+            count: countMap[f.name.toLowerCase()] || 0
+        }));
+        res.json({ success: true, folders: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create New Section / Batch / Folder
+app.post('/api/folders', requireAdmin, async (req, res) => {
+    try {
+        const name = String(req.body.name || '').trim();
+        if (!name) return res.status(400).json({ error: 'Folder name cannot be empty' });
+        const existing = await Folder.findOne({ name: new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+        if (existing) {
+            return res.status(400).json({ error: `Section / Batch / Folder "${existing.name}" already exists.` });
+        }
+        const folder = await Folder.create({ name, description: String(req.body.description || '').trim() });
+        res.json({ success: true, folder: { _id: folder._id, name: folder.name, description: folder.description, count: 0 } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Migrate Paper to another Section / Batch / Folder
+app.post('/api/paper/:id/migrate', requireAdmin, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+        const targetFolder = String(req.body.targetFolder || req.body.category || '').trim();
+        if (!targetFolder) return res.status(400).json({ error: 'Please select a valid Section / Batch / Folder' });
+
+        const existing = await Folder.findOne({ name: new RegExp('^' + targetFolder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+        if (!existing) {
+            await Folder.create({ name: targetFolder });
+        }
+
+        paper.category = targetFolder;
+        await paper.save();
+        res.json({ success: true, category: targetFolder, message: `Paper migrated to ${targetFolder} successfully.` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update Paper Category / Section / Batch (backward compatibility)
 app.post('/api/paper/:id/category', requireAdmin, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).json({ error: 'Paper not found' });
-        const newCategory = String(req.body.category || 'General').trim() || 'General';
+        const newCategory = String(req.body.category || req.body.targetFolder || 'General').trim() || 'General';
+        const existing = await Folder.findOne({ name: new RegExp('^' + newCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+        if (!existing) {
+            await Folder.create({ name: newCategory });
+        }
         paper.category = newCategory;
         await paper.save();
         res.json({ success: true, category: newCategory });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update Student Name for a submission and roll number
+app.post('/api/submission/:id/student-name', requireAdmin, async (req, res) => {
+    try {
+        const subId = req.params.id;
+        const newName = String(req.body.studentName || '').trim();
+        const sub = await Submission.findById(subId);
+        if (!sub) return res.status(404).json({ error: 'Submission not found' });
+
+        const roll = String(sub.rollnumber || '').trim();
+        sub.studentName = newName;
+        await sub.save();
+
+        if (roll && roll !== 'UNKNOWN') {
+            await Submission.updateMany({ rollnumber: roll }, { $set: { studentName: newName } });
+            await User.updateMany(
+                { $or: [{ rollnumber: roll }, { username: roll.toLowerCase() }] },
+                { $set: { fullName: newName } }
+            );
+        }
+
+        res.json({ success: true, studentName: newName, rollnumber: roll });
+    } catch (err) {
+        console.error('Error updating student name:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -1289,16 +1437,24 @@ app.get('/jee', requireAdminOrTeacher, async (req, res) => {
             counts.forEach(c => { subCounts[String(c._id)] = c.count; });
         }
 
-        const rawCats = await Paper.distinct('category', {
-            $or: [
-                { exam_type: 'jee' },
-                { title: /jee/i },
-                { subject: /jee/i }
-            ]
+        const allFolders = await getAllFolders();
+        const folderCounts = {};
+        jeePapers.forEach(p => {
+            const cat = (p.category || p.batch || '12th JEE').trim().toLowerCase();
+            folderCounts[cat] = (folderCounts[cat] || 0) + 1;
         });
-        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
 
-        res.render('jee_dashboard', { papers: jeePapers, allPapers, subCounts, categories });
+        const foldersWithCounts = allFolders.map(f => ({
+            _id: f._id,
+            name: f.name,
+            description: f.description || '',
+            count: folderCounts[f.name.toLowerCase()] || 0
+        }));
+
+        const categories = allFolders.map(f => f.name);
+        const activeFolder = (req.query.category || req.query.folder || '').trim();
+
+        res.render('jee_dashboard', { papers: jeePapers, allPapers, subCounts, categories, folders: foldersWithCounts, activeFolder });
     } catch (error) {
         res.status(500).send('Error loading JEE Mains portal: ' + error.message);
     }
@@ -1307,11 +1463,12 @@ app.get('/jee', requireAdminOrTeacher, async (req, res) => {
 // Create New JEE Mains Paper Form
 app.get('/jee/new', requireAdmin, async (req, res) => {
     try {
-        const rawCats = await Paper.distinct('category');
-        const categories = [...new Set(rawCats.filter(c => c && typeof c === 'string' && c.trim()))].sort();
-        res.render('create_jee_paper', { categories });
+        const allFolders = await getAllFolders();
+        const categories = allFolders.map(f => f.name);
+        const selectedFolder = (req.query.category || req.query.folder || '12th JEE').trim();
+        res.render('create_jee_paper', { categories, folders: allFolders, selectedFolder });
     } catch (e) {
-        res.render('create_jee_paper', { categories: [] });
+        res.render('create_jee_paper', { categories: [], folders: [], selectedFolder: '12th JEE' });
     }
 });
 
@@ -2041,15 +2198,20 @@ function buildGradedSubmissionObj(doc, paper) {
 async function buildStudentNameMap(results) {
     const rollVariants = [];
     const lowerRolls = new Set();
+    const studentNameByRoll = {};
+
     (results || []).forEach(r => {
         const roll = String((r && (r.rollnumber || r.rollNumber)) || '').trim();
         if (!roll) return;
-        rollVariants.push(roll, roll.toUpperCase(), roll.toLowerCase());
-        lowerRolls.add(roll.toLowerCase());
+        const lowRoll = roll.toLowerCase();
+        rollVariants.push(roll, roll.toUpperCase(), lowRoll);
+        lowerRolls.add(lowRoll);
+        if (r.studentName && typeof r.studentName === 'string' && r.studentName.trim()) {
+            studentNameByRoll[lowRoll] = r.studentName.trim();
+        }
     });
 
     const uniqueRolls = [...new Set(rollVariants.filter(Boolean))];
-    const studentNameByRoll = {};
     if (uniqueRolls.length > 0) {
         const users = await User.find({
             $or: [
