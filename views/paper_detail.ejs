@@ -281,6 +281,11 @@
             color: #FFFFFF;
         }
 
+        .bubbles-readonly .omr-bubble {
+            cursor: default !important;
+            pointer-events: none !important;
+        }
+
         .omr-bubble:active {
             scale: 0.93;
         }
@@ -707,7 +712,7 @@
                                 <%= isBonus ? '★ BONUS' : (currentVal || '-') %>
                             </span>
                         </div>
-                        <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= i %> options">
+                        <div class="omr-bubbles-wrap <%= (currentUser && currentUser.role === 'admin') ? '' : 'bubbles-readonly' %>" role="group" aria-label="Question <%= i %> options">
                             <% ['A','B','C','D'].forEach(opt => { %>
                                 <button type="button"
                                         class="omr-bubble <%= (!isBonus && valArray.includes(opt)) ? 'selected' : '' %>"

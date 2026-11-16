@@ -266,6 +266,11 @@
             box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
         }
 
+        .bubbles-readonly .omr-bubble {
+            cursor: default !important;
+            pointer-events: none !important;
+        }
+
         .omr-bonus-btn {
             padding: 0 9px;
             height: 34px;
@@ -571,6 +576,7 @@
                 <% } %>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <% if (currentUser && currentUser.role === 'admin') { %>
                 <a href="/paper/<%= encodedId %>" class="btn btn-secondary btn-sm" title="View standard answer key with all questions">
                     All Questions View
                 </a>
@@ -581,6 +587,7 @@
                     </svg>
                     JEE Scanner
                 </a>
+                <% } %>
                 <a href="/paper/<%= encodedId %>/results" class="btn btn-secondary btn-sm" title="View Results & Checked OMR Copies">
                     Results
                 </a>
@@ -670,7 +677,7 @@
                                     <%= isBonus ? '★ BONUS' : (currentVal || '-') %>
                                 </span>
                             </div>
-                            <div class="omr-bubbles-wrap" role="group" aria-label="Question <%= displayQ %> options">
+                            <div class="omr-bubbles-wrap <%= (currentUser && currentUser.role === 'admin') ? '' : 'bubbles-readonly' %>" role="group" aria-label="Question <%= displayQ %> options">
                                 <% ['A','B','C','D'].forEach(opt => { %>
                                     <button type="button"
                                             class="omr-bubble <%= (!isBonus && valArray.includes(opt)) ? 'selected' : '' %>"
@@ -682,6 +689,7 @@
                                         <%= opt %>
                                     </button>
                                 <% }) %>
+                                <% if (currentUser && currentUser.role === 'admin') { %>
                                 <button type="button"
                                         class="omr-mode-btn <%= isMulti ? 'active' : '' %>"
                                         id="btn_multi_q<%= i %>"
@@ -696,6 +704,7 @@
                                         title="Mark as Bonus Question (awards +4 marks to all students)">
                                     ★ Bonus
                                 </button>
+                                <% } %>
                             </div>
                             <input type="hidden" name="q<%= i %>" id="input_q<%= i %>" value="<%= currentVal %>">
                         </div>
@@ -709,7 +718,7 @@
             <div style="font-size: 1.25rem; line-height: 1;">💡</div>
             <div style="font-size: 0.85rem; color: var(--text-body); line-height: 1.45;">
                 <strong>Looking for Section B Numerical Questions?</strong><br>
-                Questions <strong>Q21–Q25 (Physics)</strong>, <strong>Q46–Q50 (Chemistry)</strong>, and <strong>Q71–Q75 (Mathematics)</strong> are handwritten numerical value answers on the student's OMR sheet. They are graded directly using the single-tap <code>+4 Correct</code>, <code>-1 Wrong</code>, or <code>0 Blank</code> buttons inside the <a href="/paper/<%= encodedId %>/jee-scan" style="color: #2563EB; font-weight: 700; text-decoration: underline;">JEE Live Scanner</a> or <a href="/paper/<%= encodedId %>/jee-evaluator" style="color: #2563EB; font-weight: 700; text-decoration: underline;">JEE Evaluator</a>.
+                Questions <strong>Q21–Q25 (Physics)</strong>, <strong>Q46–Q50 (Chemistry)</strong>, and <strong>Q71–Q75 (Mathematics)</strong> are handwritten numerical value answers on the student's OMR sheet. They are graded directly using the single-tap <code>+4 Correct</code>, <code>-1 Wrong</code>, or <code>0 Blank</code> buttons <% if (currentUser && currentUser.role === 'admin') { %>inside the <a href="/paper/<%= encodedId %>/jee-scan" style="color: #2563EB; font-weight: 700; text-decoration: underline;">JEE Live Scanner</a> or <a href="/paper/<%= encodedId %>/jee-evaluator" style="color: #2563EB; font-weight: 700; text-decoration: underline;">JEE Evaluator</a><% } else { %>during evaluation<% } %>.
             </div>
         </div>
 
@@ -718,6 +727,7 @@
             <div class="floating-counter">
                 <span id="floatingCounter"><strong><%= jeeKeyedCount %></strong></span> / 60 Keyed
             </div>
+            <% if (currentUser && currentUser.role === 'admin') { %>
             <button type="button" class="btn-floating-clear" onclick="confirmAndClearAll()" title="Clear all answers on this page">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -733,11 +743,17 @@
                 </svg>
                 Save JEE Answer Key
             </button>
+            <% } else { %>
+            <div style="font-size: 0.82rem; font-weight: 600; color: #1D4ED8; padding: 6px 14px; background: #EFF6FF; border-radius: var(--radius-sm); border: 1px solid #BFDBFE;">
+                👁️ Teacher View · Read-Only Mode
+            </div>
+            <% } %>
         </div>
     </div>
 
     <script>
         const totalJeeQuestions = 60;
+        const IS_ADMIN = <%- (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
 
         function parseAnswerVal(val) {
             if (!val || typeof val !== 'string') return [];
@@ -753,6 +769,7 @@
         }
 
         function selectAnswer(qNum, opt, evt) {
+            if (!IS_ADMIN) return;
             const input = document.getElementById('input_q' + qNum);
             const multiBtn = document.getElementById('btn_multi_q' + qNum);
             const bonusBtn = document.getElementById('btn_bonus_q' + qNum);
@@ -792,6 +809,7 @@
         }
 
         function setBonusAnswer(qNum) {
+            if (!IS_ADMIN) return;
             const input = document.getElementById('input_q' + qNum);
             if (!input) return;
 
@@ -806,6 +824,7 @@
         }
 
         function toggleMultiMode(qNum) {
+            if (!IS_ADMIN) return;
             const multiBtn = document.getElementById('btn_multi_q' + qNum);
             if (!multiBtn) return;
             const isNowActive = !multiBtn.classList.contains('active');
@@ -884,6 +903,7 @@
         }
 
         function confirmAndClearAll() {
+            if (!IS_ADMIN) return;
             if (confirm("Are you sure you want to clear all marked answers for these 60 questions?")) {
                 const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
                 inputs.forEach(inp => { inp.value = ""; });
@@ -905,6 +925,7 @@
         }
 
         function confirmAndSaveKey() {
+            if (!IS_ADMIN) return;
             const inputs = document.querySelectorAll('#answerGrid input[type="hidden"]');
             let filled = 0;
             inputs.forEach(inp => { if (inp.value && inp.value.trim() !== '') filled++; });

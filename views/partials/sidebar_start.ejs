@@ -178,16 +178,18 @@
                                     <span>Results &amp; Copies</span>
                                 </a>
                             </li>
-                            <li>
-                                <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                        <rect x="6" y="14" width="12" height="8"></rect>
-                                    </svg>
-                                    <span>Print OMR</span>
-                                </a>
-                            </li>
+                            <% if (_isAdmin) { %>
+                                <li>
+                                    <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                            <rect x="6" y="14" width="12" height="8"></rect>
+                                        </svg>
+                                        <span>Print OMR</span>
+                                    </a>
+                                </li>
+                            <% } %>
                         <% } else { %>
                             <li>
                                 <a href="/paper/<%= _paperEncodedId %>" class="sidebar-link" <%- _navActive === 'paper_key' ? 'aria-current="page"' : '' %>>
@@ -207,25 +209,27 @@
                                     <span>Results &amp; Copies</span>
                                 </a>
                             </li>
-                            <li>
-                                <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                        <rect x="6" y="14" width="12" height="8"></rect>
-                                    </svg>
-                                    <span>Print OMR</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="/paper/<%= _paperEncodedId %>/scan" class="sidebar-link">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                        <circle cx="12" cy="13" r="4"></circle>
-                                    </svg>
-                                    <span>Live Scanner</span>
-                                </a>
-                            </li>
+                            <% if (_isAdmin) { %>
+                                <li>
+                                    <a href="/paper/<%= _paperEncodedId %>/omr" target="_blank" rel="noopener" class="sidebar-link">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                            <rect x="6" y="14" width="12" height="8"></rect>
+                                        </svg>
+                                        <span>Print OMR</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/paper/<%= _paperEncodedId %>/scan" class="sidebar-link">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                            <circle cx="12" cy="13" r="4"></circle>
+                                        </svg>
+                                        <span>Live Scanner</span>
+                                    </a>
+                                </li>
+                            <% } %>
                         <% } %>
                     </ul>
                 </div>

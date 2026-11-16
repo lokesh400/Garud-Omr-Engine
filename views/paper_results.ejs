@@ -1690,13 +1690,15 @@
                                         the answer key and archive checked copies.
                                     </p>
                                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
-                                            class="btn btn-primary btn-lg">
-                                            Launch Live Scanner
-                                        </a>
+                                        <% if (currentUser && currentUser.role === 'admin') { %>
+                                            <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
+                                                class="btn btn-primary btn-lg">
+                                                Launch Live Scanner
+                                            </a>
+                                        <% } %>
                                         <a href="/paper/<%= encodeURIComponent(paper._id) %>"
                                             class="btn btn-secondary btn-lg">
-                                            Configure Answer Key
+                                            <%= (currentUser && currentUser.role === 'admin') ? 'Configure Answer Key' : 'View Answer Key' %>
                                         </a>
                                     </div>
                                 </div>
@@ -1891,6 +1893,7 @@
                         </div>
 
                         <!-- Floating NVQ Edit Save Bar -->
+                        <% if (currentUser && currentUser.role === 'admin') { %>
                         <div id="nvqEditActionBar" class="nvq-save-floating-bar">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.05rem;">✏️</span>
@@ -1901,6 +1904,7 @@
                                 <button type="button" class="btn btn-primary btn-sm" id="btnSaveNvq" onclick="saveEditedNumericalScores()" style="padding: 5px 14px; font-size: 0.8rem; font-weight: 700; background: #059669; border-color: #059669; color: white;">💾 Save Changes</button>
                             </div>
                         </div>
+                        <% } %>
                     </div>
                 </div>
             </div>
