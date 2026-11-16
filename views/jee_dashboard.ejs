@@ -98,129 +98,222 @@
             align-items: center;
         }
 
-        /* Section / Batch / Folder Browser */
-        .folder-browser-section {
+        /* Folder Directory Layout & Cards */
+        .directory-info-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
             background: #FFFFFF;
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
             margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .directory-heading {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 4px 0;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .directory-subheading {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.15rem;
+        }
+
+        .folder-card-item {
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        .folder-browser-header {
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .folder-chips-row {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 4px 2px 6px 2px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .folder-chips-row::-webkit-scrollbar {
-            display: none;
-            width: 0;
-            height: 0;
-        }
-
-        .folder-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: #F8FAFC;
-            border: 1.5px solid #E2E8F0;
-            border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #475569;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+            transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
             cursor: pointer;
-            transition: all 140ms ease;
-            white-space: nowrap;
+            position: relative;
             user-select: none;
-            font-family: inherit;
-        }
-
-        .folder-chip:hover {
-            border-color: #94A3B8;
-            background: #F1F5F9;
-            color: #1E293B;
-            transform: translateY(-1px);
-        }
-
-        .folder-chip.active {
-            background: #EFF6FF;
-            border-color: #2563EB;
-            color: #1D4ED8;
-            box-shadow: 0 1px 4px rgba(37,99,235,0.15);
-        }
-
-        .folder-chip-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            text-decoration: none;
             color: inherit;
         }
 
-        .folder-chip-badge {
-            background: #E2E8F0;
-            color: #475569;
-            border-radius: 999px;
-            padding: 1px 7px;
-            font-size: 0.72rem;
-            font-weight: 700;
+        .folder-card-item:hover {
+            border-color: #3B82F6;
+            box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.12), 0 4px 10px -2px rgba(37, 99, 235, 0.04);
+            transform: translateY(-2.5px);
         }
 
-        .folder-chip.active .folder-chip-badge {
-            background: #2563EB;
-            color: #FFFFFF;
+        .folder-card-all {
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+            border-color: #CBD5E1;
         }
 
-        .active-folder-banner {
-            background: #F8FAFC;
-            border: 1px solid #CBD5E1;
-            border-radius: var(--radius-md);
-            padding: 12px 16px;
-            margin-bottom: 1.25rem;
+        .folder-card-all:hover {
+            border-color: #2563EB;
+        }
+
+        .folder-card-top {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: space-between;
             gap: 12px;
         }
 
-        .folder-banner-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
+        .folder-icon-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             background: #EFF6FF;
             color: #2563EB;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.15);
         }
 
-        .folder-banner-title {
-            margin: 0;
-            font-size: 1rem;
+        .avatar-all {
+            background: #F0FDF4;
+            color: #16A34A;
+            box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.15);
+        }
+
+        .folder-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.74rem;
             font-weight: 700;
-            color: var(--text-main);
         }
 
-        .folder-banner-sub {
-            font-size: 0.78rem;
-            color: var(--text-muted);
+        .folder-count-badge.has-papers {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+        }
+
+        .folder-count-badge.empty {
+            background: #F8FAFC;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+        }
+
+        .folder-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .folder-card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+
+        .folder-card-desc {
+            font-size: 0.82rem;
+            color: #64748B;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .folder-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid #F1F5F9;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2563EB;
+        }
+
+        .folder-card-footer span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .folder-card-arrow {
+            transition: transform 140ms ease;
+        }
+
+        .folder-card-item:hover .folder-card-arrow {
+            transform: translateX(3px);
+        }
+
+        /* Folder Navigation Bar (Inside Folder View) */
+        .folder-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0.85rem 1.25rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .folder-active-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back-folders {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            color: #334155;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 130ms ease;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-back-folders:hover {
+            background: #EFF6FF;
+            border-color: #93C5FD;
+            color: #1D4ED8;
+            transform: translateX(-2px);
+        }
+
+        .breadcrumb-sep {
+            color: #94A3B8;
+            font-size: 1rem;
+            font-weight: 300;
         }
 
         /* Compact Attractive Cards Grid */
@@ -447,6 +540,10 @@
             .jee-header-bar { flex-direction: column; align-items: stretch; gap: 10px; }
             .jee-header-right { flex-direction: column; align-items: stretch; }
             .jee-search-box { min-width: 100%; }
+            .folders-grid { grid-template-columns: 1fr; }
+            .folder-card-item { padding: 1.1rem; }
+            .directory-info-strip { flex-direction: column; align-items: stretch; gap: 10px; }
+            .folder-nav-bar { flex-direction: column; align-items: stretch; gap: 10px; }
             .jee-papers-grid { grid-template-columns: 1fr; }
             .btn-act-delete { margin-left: 0; }
         }
@@ -460,17 +557,17 @@
             <!-- Compact Header Bar -->
             <header class="jee-header-bar">
                 <div class="jee-header-left">
-                    <h1 class="jee-page-title">
-                        <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                    <h1 class="jee-page-title" id="topHeaderTitle">
+                        <span id="topHeaderIcon" style="display: inline-flex; align-items: center; color: #2563EB;">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse>
                                 <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse>
                             </svg>
                         </span>
-                        JEE Mains Exams
+                        <span id="topHeaderTitleText"><%= activeFolder ? (activeFolder === 'all' ? 'All JEE Papers' : activeFolder) : 'JEE Folders & Batches' %></span>
                     </h1>
-                    <span class="count-pill" id="paperCountBadge"><%= papers ? papers.length : 0 %> Papers</span>
+                    <span class="count-pill" id="topCountBadge"><%= activeFolder ? ((papers ? papers.length : 0) + ' Papers') : ((folders ? folders.length : 0) + ' Folders') %></span>
                 </div>
 
                 <div class="jee-header-right">
@@ -481,10 +578,18 @@
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                         </span>
-                        <input type="search" id="jeeSearchInput" aria-label="Search JEE Papers" placeholder="Search JEE papers..." oninput="filterJeePapers()">
+                        <input type="search" id="dashboardSearchInput" aria-label="Search JEE Folders" placeholder="<%= activeFolder ? 'Search papers in this folder...' : 'Search JEE folders by name or batch...' %>" oninput="handleSearch()">
                     </div>
 
                     <% if (currentUser && currentUser.role === 'admin') { %>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            New Folder
+                        </button>
+
                         <a href="/jee/new" class="btn btn-primary btn-sm" id="btnCreateJeeTop" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -504,84 +609,125 @@
                 </div>
             </header>
 
-            <!-- Section / Batch / Folder Browser -->
-            <div class="folder-browser-section">
-                <div class="folder-browser-header">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="display: inline-flex; align-items: center; color: #2563EB;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <!-- FOLDERS DIRECTORY VIEW (Front Page Default: ONLY shows folders in a modern mobile-friendly grid) -->
+            <section id="foldersDirectorySection" style="<%= activeFolder ? 'display: none;' : '' %>">
+                <div class="directory-info-strip">
+                    <div>
+                        <h2 class="directory-heading">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                             </svg>
-                        </span>
-                        <h2 style="font-size: 1rem; font-weight: 700; margin: 0; color: var(--text-main);">JEE Sections / Batches / Folders</h2>
+                            JEE Mains Sections & Batches
+                        </h2>
+                        <p class="directory-subheading">Select a JEE folder below to view all papers inside, scan OMR sheets, and evaluate student marks.</p>
                     </div>
                     <% if (currentUser && currentUser.role === 'admin') { %>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="font-size: 0.8rem; padding: 5px 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openCreateFolderModal()" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 6px 14px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
-                            New Folder
+                            + New Folder
                         </button>
                     <% } %>
                 </div>
 
-                <div class="folder-chips-row" id="folderChipsRow">
-                    <button type="button" class="folder-chip <%= (!activeFolder || activeFolder === 'all') ? 'active' : '' %>" data-cat="all" onclick="setCategoryFilter('all', this)">
-                        <span class="folder-chip-icon">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                <polyline points="2 17 12 22 22 17"></polyline>
-                                <polyline points="2 12 12 17 22 12"></polyline>
+                <div class="folders-grid" id="foldersGrid">
+                    <!-- All JEE Papers Summary Card -->
+                    <div class="folder-card-item folder-card-all" onclick="selectFolder('all')" data-folder-name="all jee papers" data-folder-desc="all jee mains assessment papers combined">
+                        <div class="folder-card-top">
+                            <div class="folder-icon-avatar avatar-all">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="folder-count-badge <%= (papers && papers.length > 0) ? 'has-papers' : 'empty' %>">
+                                <%= papers ? papers.length : 0 %> <%= (papers && papers.length === 1) ? 'Paper' : 'Papers' %>
+                            </span>
+                        </div>
+                        <div class="folder-card-body">
+                            <h3 class="folder-card-title">All JEE Papers</h3>
+                            <p class="folder-card-desc">Combined overview of all JEE papers across all batches & series.</p>
+                        </div>
+                        <div class="folder-card-footer">
+                            <span>Open All Papers</span>
+                            <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
-                        </span>
-                        <span class="folder-chip-name">All JEE Papers</span>
-                        <span class="folder-chip-badge" id="badge-all"><%= papers.length %></span>
-                    </button>
+                        </div>
+                    </div>
+
                     <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
                         <% folders.forEach(f => { %>
-                            <button type="button" class="folder-chip <%= (activeFolder && activeFolder.toLowerCase() === f.name.toLowerCase()) ? 'active' : '' %>" data-cat="<%= f.name.toLowerCase() %>" onclick="setCategoryFilter('<%= f.name.toLowerCase() %>', this)">
-                                <span class="folder-chip-icon">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                            <div class="folder-card-item" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '').toLowerCase() %>">
+                                <div class="folder-card-top">
+                                    <div class="folder-icon-avatar">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
+                                        <%= f.count || 0 %> <%= (f.count === 1) ? 'Paper' : 'Papers' %>
+                                    </span>
+                                </div>
+                                <div class="folder-card-body">
+                                    <h3 class="folder-card-title"><%= f.name %></h3>
+                                    <p class="folder-card-desc"><%= f.description || 'JEE Mains tests, Section B numericals & batch results' %></p>
+                                </div>
+                                <div class="folder-card-footer">
+                                    <span>Open Folder</span>
+                                    <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
                                     </svg>
-                                </span>
-                                <span class="folder-chip-name"><%= f.name %></span>
-                                <span class="folder-chip-badge"><%= f.count || 0 %></span>
-                            </button>
+                                </div>
+                            </div>
                         <% }) %>
                     <% } %>
                 </div>
-            </div>
 
-            <!-- Active Folder Banner (Visible when a specific folder is clicked) -->
-            <div class="active-folder-banner" id="activeFolderBanner" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-                    <div class="folder-banner-avatar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                        </svg>
-                    </div>
-                    <div style="min-width: 0;">
-                        <h3 class="folder-banner-title" id="activeFolderName">Folder</h3>
-                        <span class="folder-banner-sub" id="activeFolderMeta">Showing JEE papers in this folder</span>
-                    </div>
+                <div id="noFoldersFoundState" style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; margin-top: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">No JEE folders matching your search.</p>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <% if (currentUser && currentUser.role === 'admin') { %>
-                        <a href="/jee/new" id="btnCreateInFolder" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </section>
+
+            <!-- FOLDER PAPERS VIEW (Shown when a folder is selected) -->
+            <section id="folderPapersSection" style="<%= activeFolder ? '' : 'display: none;' %>">
+                <div class="folder-nav-bar">
+                    <div class="folder-active-title-group">
+                        <button type="button" class="btn-back-folders" onclick="exitFolderView()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
                             </svg>
-                            Create JEE Paper in this Folder
-                        </a>
-                    <% } %>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="setCategoryFilter('all')">
-                        Show All Papers
-                    </button>
+                            All JEE Folders
+                        </button>
+                        <span class="breadcrumb-sep">/</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #2563EB; display: inline-flex; align-items: center;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </span>
+                            <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0F172A;" id="activeFolderHeading">
+                                <%= activeFolder || 'Folder' %>
+                            </h2>
+                            <span class="count-pill" id="activeFolderPaperBadge">0 Papers</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <% if (currentUser && currentUser.role === 'admin') { %>
+                            <a href="/jee/new" id="btnCreatePaperInActiveFolder" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                + Create JEE Paper in this Folder
+                            </a>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
 
             <!-- Papers Grid -->
             <% if (papers && papers.length > 0) { %>
@@ -720,26 +866,26 @@
                         </article>
                     <% }) %>
                 </div>
-            <% } else { %>
-                <div class="empty-state" style="background:#FFFFFF; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:3rem 1.5rem; text-align:center;">
-                    <div class="empty-state-icon" aria-hidden="true" style="background:#EFF6FF; color:#2563EB; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem auto;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"></circle>
-                            <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+            <% } %>
+
+                <!-- Empty Folder State (shown when current active folder has 0 papers) -->
+                <div id="emptyFolderBox" style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3.5rem 1.5rem; text-align: center; margin-top: 1rem;">
+                    <div style="width: 52px; height: 52px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
                     </div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size:1.15rem; font-weight:700;">No JEE Mains papers created yet</h3>
-                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.9rem; line-height:1.5;">
-                        Create a JEE Mains paper to evaluate Physics, Chemistry, and Mathematics with Section B numerical checking.
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; font-weight: 700; color: #0F172A;" id="emptyFolderTitle">No JEE papers in this folder yet</h3>
+                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.88rem; line-height: 1.5;" id="emptyFolderDesc">
+                        Create your first JEE Mains assessment paper in this folder to start evaluating.
                     </p>
                     <% if (currentUser && currentUser.role === 'admin') { %>
-                        <a href="/jee/new" class="btn btn-primary" style="box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);">
-                            + Create First JEE Paper
+                        <a href="/jee/new" id="btnEmptyCreatePaper" class="btn btn-primary" style="box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);">
+                            + Create JEE Paper in this Folder
                         </a>
                     <% } %>
                 </div>
-            <% } %>
+            </section>
         </main>
     </div>
 
@@ -816,60 +962,147 @@
     </dialog>
 
     <script>
-        let activeCategory = <%- JSON.stringify(activeFolder ? activeFolder.toLowerCase() : 'all') %>;
+        let currentActiveFolder = <%- JSON.stringify(activeFolder ? activeFolder : null) %>;
 
-        function setCategoryFilter(cat, btn) {
-            activeCategory = (cat || 'all').toLowerCase();
-            document.querySelectorAll('.folder-chip').forEach(b => {
-                if (b.getAttribute('data-cat') === activeCategory) b.classList.add('active');
-                else b.classList.remove('active');
-            });
+        function selectFolder(folderName, updateHistory = true) {
+            currentActiveFolder = folderName;
+            const foldersSec = document.getElementById('foldersDirectorySection');
+            const papersSec = document.getElementById('folderPapersSection');
+            const heading = document.getElementById('activeFolderHeading');
+            const searchInput = document.getElementById('dashboardSearchInput');
+            const topTitleText = document.getElementById('topHeaderTitleText');
+            const topHeaderIcon = document.getElementById('topHeaderIcon');
+            const btnCreateInFolder = document.getElementById('btnCreatePaperInActiveFolder');
+            const btnEmptyCreate = document.getElementById('btnEmptyCreatePaper');
 
-            const banner = document.getElementById('activeFolderBanner');
-            const nameEl = document.getElementById('activeFolderName');
-            const metaEl = document.getElementById('activeFolderMeta');
-            const createBtn = document.getElementById('btnCreateInFolder');
+            if (foldersSec) foldersSec.style.display = 'none';
+            if (papersSec) papersSec.style.display = 'block';
 
-            if (activeCategory === 'all') {
-                if (banner) banner.style.display = 'none';
-            } else {
-                if (banner) banner.style.display = 'flex';
-                let displayName = cat;
-                const activeBtn = document.querySelector(`.folder-chip[data-cat="${activeCategory}"]`);
-                if (activeBtn) {
-                    const nameSpan = activeBtn.querySelector('.folder-chip-name');
-                    if (nameSpan) displayName = nameSpan.textContent;
-                }
-                if (nameEl) nameEl.textContent = displayName;
-                if (createBtn) createBtn.href = '/jee/new?category=' + encodeURIComponent(displayName);
+            const displayName = (folderName === 'all') ? 'All JEE Papers' : folderName;
+            if (heading) heading.textContent = displayName;
+            if (topTitleText) topTitleText.textContent = displayName;
+
+            if (topHeaderIcon) {
+                topHeaderIcon.innerHTML = (folderName === 'all')
+                    ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`
+                    : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
             }
-            filterJeePapers();
+
+            const targetUrlParam = (folderName === 'all') ? '' : ('?category=' + encodeURIComponent(folderName));
+            if (btnCreateInFolder) {
+                btnCreateInFolder.href = '/jee/new' + targetUrlParam;
+            }
+            if (btnEmptyCreate) {
+                btnEmptyCreate.href = '/jee/new' + targetUrlParam;
+                btnEmptyCreate.textContent = (folderName === 'all') ? '+ Create First JEE Paper' : `+ Create JEE Paper in "${displayName}"`;
+            }
+            const emptyTitle = document.getElementById('emptyFolderTitle');
+            if (emptyTitle) {
+                emptyTitle.textContent = (folderName === 'all') ? 'No JEE assessment papers found' : `No JEE papers in "${displayName}" yet`;
+            }
+
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.placeholder = `Search papers in ${displayName}...`;
+            }
+
+            filterPapersInsideFolder('');
+
+            if (updateHistory) {
+                const newUrl = (folderName === 'all') ? '/jee?folder=all' : ('/jee?folder=' + encodeURIComponent(folderName));
+                window.history.pushState({ folder: folderName }, '', newUrl);
+            }
         }
 
-        function filterJeePapers() {
-            const query = (document.getElementById('jeeSearchInput').value || '').toLowerCase().trim();
+        function exitFolderView(updateHistory = true) {
+            currentActiveFolder = null;
+            const foldersSec = document.getElementById('foldersDirectorySection');
+            const papersSec = document.getElementById('folderPapersSection');
+            const searchInput = document.getElementById('dashboardSearchInput');
+            const topTitleText = document.getElementById('topHeaderTitleText');
+            const topHeaderIcon = document.getElementById('topHeaderIcon');
+            const topBadge = document.getElementById('topCountBadge');
+
+            if (foldersSec) foldersSec.style.display = 'block';
+            if (papersSec) papersSec.style.display = 'none';
+
+            if (topTitleText) topTitleText.textContent = 'JEE Folders & Batches';
+            if (topHeaderIcon) {
+                topHeaderIcon.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse></svg>`;
+            }
+
+            const totalFolders = document.querySelectorAll('.folder-card-item').length;
+            if (topBadge) topBadge.textContent = totalFolders + ' Folders';
+
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.placeholder = 'Search JEE folders by name or batch...';
+            }
+
+            // Restore all folder cards
+            document.querySelectorAll('.folder-card-item').forEach(c => c.style.display = '');
+            const noFound = document.getElementById('noFoldersFoundState');
+            if (noFound) noFound.style.display = 'none';
+
+            if (updateHistory) {
+                window.history.pushState({}, '', '/jee');
+            }
+        }
+
+        function handleSearch() {
+            const query = (document.getElementById('dashboardSearchInput').value || '').toLowerCase().trim();
+            if (!currentActiveFolder) {
+                // Filter folder cards in directory
+                let visibleCount = 0;
+                document.querySelectorAll('.folder-card-item').forEach(card => {
+                    const name = card.getAttribute('data-folder-name') || '';
+                    const desc = card.getAttribute('data-folder-desc') || '';
+                    const match = !query || name.includes(query) || desc.includes(query);
+                    card.style.display = match ? '' : 'none';
+                    if (match) visibleCount++;
+                });
+
+                const noFound = document.getElementById('noFoldersFoundState');
+                if (noFound) noFound.style.display = (visibleCount === 0) ? 'block' : 'none';
+
+                const badge = document.getElementById('topCountBadge');
+                if (badge) badge.textContent = visibleCount + ' Folders';
+            } else {
+                // Filter papers inside active folder
+                filterPapersInsideFolder(query);
+            }
+        }
+
+        function filterPapersInsideFolder(query = '') {
+            const q = (query || (document.getElementById('dashboardSearchInput') ? document.getElementById('dashboardSearchInput').value : '')).toLowerCase().trim();
             const items = document.querySelectorAll('.jee-paper-item');
             let visibleCount = 0;
 
             items.forEach(item => {
                 const searchStr = item.getAttribute('data-search') || '';
                 const itemCat = item.getAttribute('data-category') || '';
-                const matchesSearch = !query || searchStr.includes(query);
-                const matchesCat = (activeCategory === 'all') || (itemCat === activeCategory);
+                const matchesSearch = !q || searchStr.includes(q);
+                const matchesFolder = (currentActiveFolder === 'all') || (itemCat === (currentActiveFolder || '').toLowerCase());
 
-                const show = matchesSearch && matchesCat;
+                const show = matchesSearch && matchesFolder;
                 item.style.display = show ? '' : 'none';
                 if (show) visibleCount++;
             });
 
-            const badge = document.getElementById('paperCountBadge');
-            if (badge) {
-                badge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
-            }
+            const badge = document.getElementById('topCountBadge');
+            if (badge) badge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
 
-            const metaEl = document.getElementById('activeFolderMeta');
-            if (metaEl && activeCategory !== 'all') {
-                metaEl.textContent = `${visibleCount} JEE paper(s) inside this Section / Batch / Folder`;
+            const activeFolderBadge = document.getElementById('activeFolderPaperBadge');
+            if (activeFolderBadge) activeFolderBadge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
+
+            const emptyBox = document.getElementById('emptyFolderBox');
+            const paperGrid = document.getElementById('jeePapersGrid');
+            if (visibleCount === 0) {
+                if (emptyBox) emptyBox.style.display = 'block';
+                if (paperGrid) paperGrid.style.display = 'none';
+            } else {
+                if (emptyBox) emptyBox.style.display = 'none';
+                if (paperGrid) paperGrid.style.display = 'grid';
             }
         }
 
@@ -903,7 +1136,7 @@
                 }
                 document.getElementById('createFolderModal').close();
                 alert(`Folder "${data.folder.name}" created successfully!`);
-                window.location.href = '/jee?category=' + encodeURIComponent(data.folder.name);
+                window.location.href = '/jee?folder=' + encodeURIComponent(data.folder.name);
             } catch (err) {
                 alert(err.message);
             } finally {
@@ -986,7 +1219,7 @@
                 if (data.success) {
                     const card = document.getElementById('card-' + id);
                     if (card) card.remove();
-                    filterJeePapers();
+                    filterPapersInsideFolder('');
                 } else {
                     alert('Error: ' + (data.error || 'Failed to delete paper'));
                 }
@@ -995,10 +1228,23 @@
             }
         }
 
-        // Initialize active folder on page load if query param was present
+        // Handle browser Back / Forward buttons
+        window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            const folder = params.get('folder') || params.get('category');
+            if (folder) {
+                selectFolder(folder, false);
+            } else {
+                exitFolderView(false);
+            }
+        });
+
+        // Initialize view on page load
         window.addEventListener('DOMContentLoaded', () => {
-            if (activeCategory && activeCategory !== 'all') {
-                setCategoryFilter(activeCategory);
+            if (currentActiveFolder) {
+                selectFolder(currentActiveFolder, false);
+            } else {
+                exitFolderView(false);
             }
         });
     </script>
