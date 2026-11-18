@@ -693,71 +693,25 @@
                         </div>
                         <% } %>
 
-                    <%
-                        let currentVal = "";
-                        if (Array.isArray(paper.answer_key) && paper.answer_key.length >= i) {
-                            currentVal = paper.answer_key[i - 1] || "";
-                        } else if (paper.answerKey) {
-                            if (typeof paper.answerKey.get === 'function') {
-                                currentVal = paper.answerKey.get(String(i)) || "";
-                            } else {
-                                currentVal = paper.answerKey[String(i)] || "";
-                            }
-                        }
-                        const isBonus = (currentVal === 'BONUS');
-                        let valArray = [];
-                        if (!isBonus && currentVal) {
-                            if (currentVal.includes(',') || currentVal.includes('/') || currentVal.includes(';') || currentVal.includes(' ')) {
-                                valArray = currentVal.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
-                            } else if (currentVal.length > 1 && /^[ABCD]+$/.test(currentVal)) {
-                                valArray = currentVal.split('');
-                            } else {
-                                valArray = [currentVal];
-                            }
-                        }
-                        const isMulti = valArray.length > 1;
-                    %>
-                    <div class="omr-key-row <%= currentVal ? 'has-val' : '' %>" id="row_q<%= i %>">
-                        <div class="omr-q-badge">
-                            <span class="omr-q-num">Q<%= i %></span>
-                            <span class="omr-selected-val <%= isBonus ? 'val-bonus' : (isMulti ? 'val-multi' : '') %>" id="badge_val_q<%= i %>">
-                                <%= isBonus ? '★ BONUS' : (currentVal || '-') %>
-                            </span>
+                    <% if (typeof saved !== 'undefined' && saved) { %>
+                        <div style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:var(--radius-md); padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:8px; font-size:0.86rem; color:#065F46; font-weight:600;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Answer key saved successfully and all scanned submissions have been automatically re-evaluated.</span>
                         </div>
-                        <div class="omr-bubbles-wrap <%= (currentUser && currentUser.role === 'admin') ? '' : 'bubbles-readonly' %>" role="group" aria-label="Question <%= i %> options">
-                            <% ['A','B','C','D'].forEach(opt => { %>
-                                <button type="button"
-                                        class="omr-bubble <%= (!isBonus && valArray.includes(opt)) ? 'selected' : '' %>"
-                                        id="btn_q<%= i %>_<%= opt %>"
-                                        data-q="<%= i %>"
-                                        data-opt="<%= opt %>"
-                                        onclick="selectAnswer('<%= i %>', '<%= opt %>', event)"
-                                        title="Select <%= opt %> for Question <%= i %>">
-                                    <%= opt %>
-                                </button>
+                    <% } %>
+
+                    <% if (paper.sections && paper.sections.length > 0) { %>
+                        <div class="section-quick-tabs">
+                            <% paper.sections.forEach(sec => { %>
+                                <a href="#sec_<%= sec.from_question %>" class="section-quick-tab">
+                                    <span><%= sec.name %></span>
+                                    <span style="color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono', monospace;">Q<%= sec.from_question %>-<%= sec.to_question %></span>
+                                </a>
                             <% }) %>
-                            <% if (currentUser && currentUser.role === 'admin') { %>
-                                <button type="button"
-                                        class="omr-mode-btn <%= isMulti ? 'active' : '' %>"
-                                        id="btn_multi_q<%= i %>"
-                                        onclick="toggleMultiMode('<%= i %>')"
-                                        title="Toggle Multi-Correct mode (awards marks if student chooses any of the selected options)">
-                                    ⇄ Multi
-                                </button>
-                                <button type="button"
-                                        class="omr-bonus-btn <%= isBonus ? 'selected' : '' %>"
-                                        id="btn_bonus_q<%= i %>"
-                                        onclick="setBonusAnswer('<%= i %>')"
-                                        title="Mark as Bonus Question (awards marks to all students)">
-                                    ★ Bonus
-                                </button>
-                            <% } %>
                         </div>
-                        <input type="hidden" name="q<%= i %>" id="input_q<%= i %>" value="<%= currentVal %>">
-                    </div>
-                <% } %>
-            </div>
-        </form>
+                    <% } %>
 
                                     <form action="/paper/<%= encodedId %>/answerkey" method="POST" id="answerKeyForm">
                                         <div class="omr-grid-container" id="answerGrid">
@@ -826,7 +780,7 @@
                                                                                 ) %>
                                                                         </span>
                                                                     </div>
-                                                                    <div class="omr-bubbles-wrap" role="group"
+                                                                    <div class="omr-bubbles-wrap <%= (currentUser && currentUser.role === 'admin') ? '' : 'bubbles-readonly' %>" role="group"
                                                                         aria-label="Question <%= i %> options">
                                                                         <% ['A','B','C','D'].forEach(opt=> { %>
                                                                             <button type="button"

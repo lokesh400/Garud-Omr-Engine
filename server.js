@@ -1457,7 +1457,7 @@ app.get('/paper/:id', requireAdminOrTeacher, async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).send('Paper not found');
-        res.render('paper_detail', { paper });
+        res.render('paper_detail', { paper, saved: req.query.saved === 'true' });
     } catch (error) {
         res.status(500).send('Error loading paper: ' + error.message);
     }
@@ -1640,7 +1640,7 @@ app.post('/paper/:id/answerkey', requireAdmin, async (req, res) => {
         // Automatically recheck all previously scanned OMR submissions against the updated key
         await regradePaperSubmissions(paper);
 
-        res.redirect(`/paper/${encodeURIComponent(paper._id)}`);
+        res.redirect(`/paper/${encodeURIComponent(paper._id)}?saved=true`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error saving answer key: ' + error.message);
