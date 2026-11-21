@@ -225,6 +225,60 @@
             gap: 4px;
         }
 
+        .rank-badge {
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: #92400E;
+            background: #FEF3C7;
+            border: 1px solid #FCD34D;
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .rank-badge-top1 {
+            color: #78350F;
+            background: linear-gradient(135deg, #FEF08A 0%, #FDE047 100%);
+            border-color: #EAB308;
+            box-shadow: 0 1px 4px rgba(234, 179, 8, 0.28);
+        }
+
+        .rank-badge-top3 {
+            color: #1E3A8A;
+            background: #DBEAFE;
+            border-color: #93C5FD;
+        }
+
+        .rank-pill {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #92400E;
+            background: #FEF3C7;
+            border: 1px solid #FDE68A;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rank-pill-top1 {
+            color: #78350F;
+            background: #FEF08A;
+            border-color: #EAB308;
+        }
+
+        .rank-pill-top3 {
+            color: #1E3A8A;
+            background: #DBEAFE;
+            border-color: #93C5FD;
+        }
+
         .sec-stack-list {
             display: flex;
             flex-direction: column;
@@ -653,7 +707,7 @@
 
         .omr-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: 10px;
         }
 
@@ -876,6 +930,8 @@
         let bestScore = 0;
         let bestTotal = 0;
         let totalAttempted = 0;
+        let bestRank = Infinity;
+        let bestRankTotal = 0;
 
         if (totalExams > 0) {
             results.forEach(item => {
@@ -889,6 +945,13 @@
                 }
                 const att = sumSec.attemptedQuestions !== undefined ? sumSec.attemptedQuestions : Math.max(0, (item.totalQuestions || 0) - (item.blankCount || 0));
                 totalAttempted += att;
+
+                if (item.rank && Number(item.rank) > 0) {
+                    if (Number(item.rank) < bestRank) {
+                        bestRank = Number(item.rank);
+                        bestRankTotal = item.totalCandidates || 0;
+                    }
+                }
             });
         }
         const avgAccuracy = totalExams > 0 ? (sumAccuracy / totalExams).toFixed(0) : 0;
@@ -927,6 +990,16 @@
                 <div class="student-stat-item">
                     <span class="stat-number" style="color: #2563EB;"><%= bestScore %> <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%= bestTotal || 300 %></span></span>
                     <span class="stat-label">Top Score</span>
+                </div>
+                <div class="student-stat-item">
+                    <span class="stat-number" style="color: #D97706;">
+                        <% if (bestRank !== Infinity) { %>
+                            #<%= bestRank %><% if (bestRankTotal > 0) { %><span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> / <%= bestRankTotal %></span><% } %>
+                        <% } else { %>
+                            &mdash;
+                        <% } %>
+                    </span>
+                    <span class="stat-label">Best Rank</span>
                 </div>
                 <div class="student-stat-item">
                     <span class="stat-number" style="color: #7C3AED;"><%= totalAttempted %></span>
@@ -988,9 +1061,17 @@
                                         <span><%= scannedDate.toLocaleDateString() %></span>
                                     </div>
                                 </div>
-                                <span class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
-                                    <%= item.percentage %>% Accuracy
-                                </span>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                                    <span class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
+                                        <%= item.percentage %>% Accuracy
+                                    </span>
+                                    <% if (item.rank) { %>
+                                        <span class="rank-badge <%= item.rank === 1 ? 'rank-badge-top1' : (item.rank <= 3 ? 'rank-badge-top3' : '') %>" title="Your rank in <%= item.paperTitle %>">
+                                            <% if (item.rank === 1) { %>🥇<% } else if (item.rank === 2) { %>🥈<% } else if (item.rank === 3) { %>🥉<% } else { %>🏅<% } %>
+                                            Rank #<%= item.rank %><% if (item.totalCandidates) { %><span style="font-weight: 500; opacity: 0.8; font-size: 0.72rem;"> / <%= item.totalCandidates %></span><% } %>
+                                        </span>
+                                    <% } %>
+                                </div>
                             </div>
 
                             <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
@@ -999,13 +1080,18 @@
                                     <div class="agg-score">
                                         <%= sumSec.obtainedMarks %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= sumSec.totalMarks %></span>
                                     </div>
-                                    <% if (pStats && pStats.highestOverall !== undefined) { %>
-                                        <div>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+                                        <% if (item.rank) { %>
+                                            <span class="rank-pill <%= item.rank === 1 ? 'rank-pill-top1' : (item.rank <= 3 ? 'rank-pill-top3' : '') %>" title="Student rank in this exam">
+                                                🎯 Rank: #<%= item.rank %><% if (item.totalCandidates) { %> / <%= item.totalCandidates %><% } %>
+                                            </span>
+                                        <% } %>
+                                        <% if (pStats && pStats.highestOverall !== undefined) { %>
                                             <span class="topper-pill" title="Highest marks scored across all candidates for this exam">
                                                 🏆 Paper Highest: <%= pStats.highestOverall %> / <%= sumSec.totalMarks %>
                                             </span>
-                                        </div>
-                                    <% } %>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 <div style="text-align: right; font-size: 0.8rem;">
                                     <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
@@ -1102,6 +1188,7 @@
                 </button>
                 <span class="roll-badge" id="modalRollNo" style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
                 <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0 / 0</span>
+                <span class="rank-badge" id="modalRankBadge" style="display: none; font-size: 0.82rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap;">Rank #0</span>
             </div>
 
             <div class="omr-modal-header-center" id="omrMobileNav">
@@ -1186,18 +1273,25 @@
                                 Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
                             </div>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                             <div class="hero-sublabel">
                                 Overall Accuracy
                             </div>
                             <div class="hero-accuracy-val" id="modalAccuracyText">
                                 0%
                             </div>
+                            <div id="modalHeroRankBadge" style="display: none; font-size: 0.82rem; font-weight: 700; color: #92400E; background: #FEF3C7; border: 1px solid #FCD34D; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;">
+                                🏅 <span id="modalHeroRankVal">Rank #1</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- KPI Tiles Grid -->
                     <div class="omr-kpi-grid">
+                        <div class="omr-kpi-tile" id="tileRankWrap" style="display: none;">
+                            <span class="kpi-label">Rank</span>
+                            <span class="kpi-val" id="kpiRank" style="color: #D97706;">#1</span>
+                        </div>
                         <div class="omr-kpi-tile">
                             <span class="kpi-label">Attempted</span>
                             <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
@@ -1846,6 +1940,42 @@
             if (elWro) elWro.textContent = sumSec.wrongCount;
             const elBla = document.getElementById('kpiBlank');
             if (elBla) elBla.textContent = sumSec.unattemptedQuestions;
+
+            // Populate Rank elements
+            const rankVal = data.rank;
+            const totalCand = data.totalCandidates;
+            const rankBadgeEl = document.getElementById('modalRankBadge');
+            const heroRankEl = document.getElementById('modalHeroRankBadge');
+            const heroRankValEl = document.getElementById('modalHeroRankVal');
+            const tileRankWrap = document.getElementById('tileRankWrap');
+            const kpiRankEl = document.getElementById('kpiRank');
+
+            if (rankVal) {
+                const rankText = totalCand ? `Rank #${rankVal} / ${totalCand}` : `Rank #${rankVal}`;
+                if (rankBadgeEl) {
+                    rankBadgeEl.style.display = 'inline-flex';
+                    rankBadgeEl.textContent = rankText;
+                    if (rankVal === 1) {
+                        rankBadgeEl.className = 'rank-badge rank-badge-top1';
+                    } else if (rankVal <= 3) {
+                        rankBadgeEl.className = 'rank-badge rank-badge-top3';
+                    } else {
+                        rankBadgeEl.className = 'rank-badge';
+                    }
+                }
+                if (heroRankEl && heroRankValEl) {
+                    heroRankEl.style.display = 'inline-flex';
+                    heroRankValEl.textContent = rankText;
+                }
+                if (tileRankWrap && kpiRankEl) {
+                    tileRankWrap.style.display = 'flex';
+                    kpiRankEl.textContent = totalCand ? `#${rankVal} / ${totalCand}` : `#${rankVal}`;
+                }
+            } else {
+                if (rankBadgeEl) rankBadgeEl.style.display = 'none';
+                if (heroRankEl) heroRankEl.style.display = 'none';
+                if (tileRankWrap) tileRankWrap.style.display = 'none';
+            }
             
             const grandAggEl = document.getElementById('modalGrandAggregate');
             if (grandAggEl) {

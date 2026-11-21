@@ -172,7 +172,7 @@ function buildDetailedResultsCsv({ paper, results, studentNameByRoll = {} }) {
         const formattedDate = scannedDate ? new Date(scannedDate).toLocaleString('en-IN') : '';
 
         const rowCells = [
-            escapeCsvNumber(idx + 1),
+            escapeCsvNumber(item.rank || (idx + 1)),
             escapeCsvText(roll),
             escapeCsvText(studentName)
         ];

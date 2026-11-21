@@ -1469,7 +1469,7 @@
                                                     data-search="<%= searchStr %>" id="row-<%= r._id %>">
                                                     <td
                                                         style="font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">
-                                                        #<%= idx + 1 %>
+                                                        #<%= r.rank || (idx + 1) %>
                                                     </td>
                                                     <td>
                                                         <div style="display: flex; flex-direction: column; gap: 3px;">
@@ -1642,7 +1642,7 @@
                                     <div class="mobile-student-card" data-roll="<%= studentRoll.toLowerCase() %>" data-search="<%= searchStr %>" id="mcard-<%= r._id %>">
                                         <div class="mobile-card-header">
                                             <div class="mobile-card-meta">
-                                                <span class="mobile-rank-badge">#<%= idx + 1 %></span>
+                                                <span class="mobile-rank-badge">#<%= r.rank || (idx + 1) %></span>
                                                 <span class="roll-badge"><%= studentRoll %></span>
                                                 <div style="display: inline-flex; align-items: center; gap: 4px;">
                                                     <span id="mob-name-display-<%= r._id %>" style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);"><%= studentName || '' %></span>

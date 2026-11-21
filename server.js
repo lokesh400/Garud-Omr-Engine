@@ -2277,20 +2277,59 @@ async function buildStudentNameMap(results) {
     return studentNameByRoll;
 }
 
-async function getSortedGradedPaperResults(paper) {
+function getGradedSubmissionScore(graded) {
+    if (!graded) return 0;
+    if (graded.allSectionsSummary && graded.allSectionsSummary.obtainedMarks !== undefined) {
+        return Number(graded.allSectionsSummary.obtainedMarks) || 0;
+    }
+    if (graded.aggregateMarks !== undefined) {
+        return Number(graded.aggregateMarks) || 0;
+    }
+    return Number(graded.score || 0);
+}
+
+async function getSortedGradedPaperResults(paper, fallbackPaperId = null) {
+    const paperId = paper ? (paper._id || paper.id) : fallbackPaperId;
+    if (!paperId) return [];
+
+    const orConditions = [
+        { paper_id: String(paperId) },
+        { paper_id: paperId },
+        { paperId: paperId }
+    ];
+    if (mongoose.Types.ObjectId.isValid(paperId) && String(new mongoose.Types.ObjectId(paperId)) === String(paperId)) {
+        orConditions.push({ paper_id: new mongoose.Types.ObjectId(paperId) });
+        orConditions.push({ paperId: new mongoose.Types.ObjectId(paperId) });
+    }
+
     const docs = await Submission.find({
-        $or: [
-            { paper_id: String(paper._id) },
-            { paper_id: paper._id },
-            { paperId: paper._id }
-        ]
+        $or: orConditions
     }).sort({ score: -1, submitted_at: -1, scannedAt: -1 });
 
     const results = docs.map(doc => buildGradedSubmissionObj(doc, paper));
     results.sort((a, b) => {
-        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-        return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0);
+        const scoreA = getGradedSubmissionScore(a);
+        const scoreB = getGradedSubmissionScore(b);
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        const timeA = new Date(a.submitted_at || a.scannedAt || 0).getTime();
+        const timeB = new Date(b.submitted_at || b.scannedAt || 0).getTime();
+        return timeB - timeA;
     });
+
+    let currentRank = 1;
+    for (let i = 0; i < results.length; i++) {
+        if (i > 0) {
+            const prevScore = getGradedSubmissionScore(results[i - 1]);
+            const currScore = getGradedSubmissionScore(results[i]);
+            if (currScore < prevScore) {
+                currentRank = i + 1;
+            }
+        }
+        results[i].rank = currentRank;
+        results[i].position = i + 1;
+        results[i].totalCandidates = results.length;
+    }
+
     return results;
 }
 
@@ -2954,20 +2993,18 @@ app.get('/student', requireAuth, async (req, res) => {
                 return buildGradedSubmissionObj(doc, paper);
             });
 
-            // Compute highest marks overall and subject-wise for each paper
-            for (const pid of paperIds) {
-                const paperDocs = await Submission.find({
-                    $or: [
-                        { paper_id: pid },
-                        { paperId: pid }
-                    ]
-                });
-                if (paperDocs.length > 0) {
+            // Compute highest marks overall, subject-wise, and candidate rankings for each paper
+            await Promise.all(paperIds.map(async (pid) => {
+                const currentPaper = papersMap[pid] || null;
+                const sortedPaperResults = await getSortedGradedPaperResults(currentPaper, pid);
+                if (sortedPaperResults && sortedPaperResults.length > 0) {
                     let highestOverall = -Infinity;
                     const sectionHighest = {};
-                    paperDocs.forEach(d => {
-                        const graded = buildGradedSubmissionObj(d, papersMap[pid]);
-                        const agg = graded.allSectionsSummary ? graded.allSectionsSummary.obtainedMarks : ((graded.aggregateMarks !== undefined) ? graded.aggregateMarks : (graded.score * 4));
+                    const rankBySubId = {};
+                    const rankByRoll = {};
+
+                    sortedPaperResults.forEach(graded => {
+                        const agg = getGradedSubmissionScore(graded);
                         if (agg > highestOverall) highestOverall = agg;
 
                         if (Array.isArray(graded.sectionWise)) {
@@ -2982,14 +3019,41 @@ app.get('/student', requireAuth, async (req, res) => {
                                 }
                             });
                         }
+
+                        const subId = String(graded._id || graded.id || '');
+                        const roll = String(graded.rollnumber || graded.rollNumber || '').trim().toLowerCase();
+                        const rankEntry = {
+                            rank: graded.rank,
+                            position: graded.position,
+                            totalCandidates: sortedPaperResults.length
+                        };
+                        if (subId) rankBySubId[subId] = rankEntry;
+                        if (roll && !rankByRoll[roll]) rankByRoll[roll] = rankEntry;
                     });
+
+                    // Attach rank and totalCandidates to this student's result objects
+                    results.forEach(r => {
+                        const rPid = String(r.paper_id || r.paperId || '');
+                        if (rPid === pid) {
+                            const subId = String(r._id || r.id || '');
+                            const roll = String(r.rollnumber || r.rollNumber || '').trim().toLowerCase();
+                            const match = (subId && rankBySubId[subId]) || (roll && rankByRoll[roll]);
+                            if (match) {
+                                r.rank = match.rank;
+                                r.position = match.position;
+                                r.totalCandidates = match.totalCandidates;
+                            }
+                        }
+                    });
+
                     if (highestOverall === -Infinity) highestOverall = 0;
                     paperTopperStats[pid] = {
                         highestOverall,
-                        sectionHighest
+                        sectionHighest,
+                        totalCandidates: sortedPaperResults.length
                     };
                 }
-            }
+            }));
         }
 
         res.render('student_dashboard', {
