@@ -39,7 +39,7 @@ class RateLimiter {
         }, 5 * 60 * 1000).unref();
     }
 
-    middleware(keyGenerator = (req) => req.ip || req.connection.remoteAddress || 'unknown') {
+    middleware(keyGenerator = (req) => req.ip || (req.socket && req.socket.remoteAddress) || 'unknown', failureHandler = null) {
         return (req, res, next) => {
             const key = keyGenerator(req);
             const now = Date.now();
@@ -61,6 +61,9 @@ class RateLimiter {
 
             if (record.count > this.maxRequests) {
                 res.setHeader('Retry-After', resetSeconds);
+                if (typeof failureHandler === 'function') {
+                    return failureHandler(req, res, this.message, resetSeconds);
+                }
                 if (req.xhr || req.is('application/json') || (req.originalUrl && req.originalUrl.startsWith('/api/'))) {
                     return res.status(429).json({ error: this.message, retryAfterSeconds: resetSeconds });
                 }
@@ -80,11 +83,32 @@ class RateLimiter {
     }
 }
 
+// Global DDoS / Burst Limiter: Max 300 requests per minute per IP
+const globalLimiter = new RateLimiter({
+    windowMs: 60 * 1000,
+    maxRequests: 300,
+    message: 'Too many requests from this IP. Please slow down and try again shortly.'
+});
+
 // Login Limiter: Max 6 failed login attempts per 15 minutes per IP
 const loginLimiter = new RateLimiter({
     windowMs: 15 * 60 * 1000,
     maxRequests: 6,
     message: 'Too many login attempts. For security, your access is locked for 15 minutes.'
+});
+
+// Forgot Password Limiter: Max 5 OTP requests per 15 minutes per IP
+const forgotPasswordLimiter = new RateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 5,
+    message: 'Too many OTP requests. Please wait 15 minutes before requesting another OTP.'
+});
+
+// Reset Password / OTP Verification Limiter: Max 5 verification attempts per 15 minutes per IP
+const resetPasswordLimiter = new RateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 5,
+    message: 'Too many invalid verification attempts. For security, access is temporarily locked for 15 minutes.'
 });
 
 // API Limiter: Max 120 calls per minute per IP to protect server resources
@@ -99,6 +123,13 @@ const passwordChangeLimiter = new RateLimiter({
     windowMs: 15 * 60 * 1000,
     maxRequests: 5,
     message: 'Too many password change attempts. Please try again after 15 minutes.'
+});
+
+// Scan & Upload Limiter: Max 60 OMR checks per minute per IP
+const scanLimiter = new RateLimiter({
+    windowMs: 60 * 1000,
+    maxRequests: 60,
+    message: 'Upload and evaluation rate limit reached. Please wait a moment before submitting more sheets.'
 });
 
 
@@ -323,10 +354,21 @@ function isValidMongoId(id) {
     return /^[0-9a-fA-F]{24}$/.test(id.trim());
 }
 
+function isValidEmail(email) {
+    if (typeof email !== 'string') return false;
+    const trimmed = email.trim();
+    if (trimmed.length > 120 || trimmed.length < 5) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+}
+
 module.exports = {
+    globalLimiter,
     loginLimiter,
-    apiLimiter,
+    forgotPasswordLimiter,
+    resetPasswordLimiter,
     passwordChangeLimiter,
+    apiLimiter,
+    scanLimiter,
     securityHeaders,
     sanitizeMongo,
     csrfProtection,
@@ -334,6 +376,7 @@ module.exports = {
     secureSpreadsheetUpload,
     isValidId,
     isValidMongoId,
+    isValidEmail,
     uploadDir
 };
 

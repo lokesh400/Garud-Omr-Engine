@@ -40,14 +40,46 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  resetPasswordOtpAttempts: {
+    type: Number,
+    default: 0
+  },
+  resetPasswordLastRequestedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
   collection: 'users',
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: {
+    virtuals: true,
+    transform: function (doc, ret) {
+      delete ret.hash;
+      delete ret.salt;
+      delete ret.resetPasswordOtp;
+      delete ret.resetPasswordOtpExpires;
+      delete ret.resetPasswordOtpAttempts;
+      delete ret.resetPasswordLastRequestedAt;
+      delete ret.__v;
+      return ret;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: function (doc, ret) {
+      delete ret.hash;
+      delete ret.salt;
+      delete ret.resetPasswordOtp;
+      delete ret.resetPasswordOtpExpires;
+      delete ret.resetPasswordOtpAttempts;
+      delete ret.resetPasswordLastRequestedAt;
+      delete ret.__v;
+      return ret;
+    }
+  }
 });
 
 userSchema.index({ rollnumber: 1, role: 1 });

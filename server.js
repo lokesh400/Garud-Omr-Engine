@@ -32,9 +32,13 @@ const {
     evaluateQuestionVerdict
 } = require('./utils/omrEvaluator');
 const {
+    globalLimiter,
     loginLimiter,
-    apiLimiter,
+    forgotPasswordLimiter,
+    resetPasswordLimiter,
     passwordChangeLimiter,
+    apiLimiter,
+    scanLimiter,
     securityHeaders,
     sanitizeMongo,
     csrfProtection,
@@ -42,6 +46,7 @@ const {
     secureSpreadsheetUpload,
     isValidId,
     isValidMongoId,
+    isValidEmail,
     uploadDir
 } = require('./utils/security');
 
@@ -156,6 +161,14 @@ mongoConnectPromise
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/health', (req, res) => res.status(200).send('OK'));
 app.get('/ping', (req, res) => res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: Date.now() }));
+
+// Global Rate Limiter (Protects against DDoS, brute-force floods, & crawling)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/css') || req.path === '/healthz' || req.path === '/health' || req.path === '/ping') {
+        return next();
+    }
+    return globalLimiter.middleware()(req, res, next);
+});
 
 // Global Security Headers (CSP, FrameGuard, NoSniff, ReferrerPolicy, PermissionsPolicy)
 app.use(securityHeaders);
@@ -718,7 +731,12 @@ app.get('/forgot-password', (req, res) => {
     });
 });
 
-app.post('/forgot-password', async (req, res) => {
+app.post('/forgot-password', forgotPasswordLimiter.middleware((req) => req.ip || (req.socket && req.socket.remoteAddress) || 'unknown', (req, res, msg) => {
+    return res.status(429).render('forgot_password', {
+        error: msg,
+        identifier: req.body && req.body.identifier ? String(req.body.identifier) : ''
+    });
+}), async (req, res) => {
     try {
         const identifier = String((req.body && req.body.identifier) || '').trim();
         if (!identifier) {
@@ -751,10 +769,21 @@ app.post('/forgot-password', async (req, res) => {
             });
         }
 
+        // Account-level cooldown: 60 seconds between OTP generation requests
+        if (user.resetPasswordLastRequestedAt && (Date.now() - new Date(user.resetPasswordLastRequestedAt).getTime()) < 60 * 1000) {
+            const waitSec = Math.ceil((60 * 1000 - (Date.now() - new Date(user.resetPasswordLastRequestedAt).getTime())) / 1000);
+            return res.render('forgot_password', {
+                error: `An OTP was recently generated. Please wait ${waitSec} second(s) before requesting another.`,
+                identifier
+            });
+        }
+
         // Generate secure 6-digit OTP
         const otp = crypto.randomInt(100000, 999999).toString();
         user.resetPasswordOtp = otp;
         user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        user.resetPasswordOtpAttempts = 0;
+        user.resetPasswordLastRequestedAt = new Date();
         await user.save();
 
         // Mask email for display: e.g. j***@gmail.com
@@ -804,7 +833,13 @@ app.get('/reset-password', (req, res) => {
     });
 });
 
-app.post('/reset-password', async (req, res) => {
+app.post('/reset-password', resetPasswordLimiter.middleware((req) => req.ip || (req.socket && req.socket.remoteAddress) || 'unknown', (req, res, msg) => {
+    return res.status(429).render('reset_password', {
+        error: msg,
+        identifier: req.body && req.body.identifier ? String(req.body.identifier) : '',
+        maskedEmail: req.body && req.body.maskedEmail ? String(req.body.maskedEmail) : ''
+    });
+}), async (req, res) => {
     try {
         const identifier = String((req.body && req.body.identifier) || '').trim();
         const otp = String((req.body && req.body.otp) || '').trim();
@@ -859,6 +894,10 @@ app.post('/reset-password', async (req, res) => {
         }
 
         if (!user.resetPasswordOtpExpires || new Date() > user.resetPasswordOtpExpires) {
+            user.resetPasswordOtp = null;
+            user.resetPasswordOtpExpires = null;
+            user.resetPasswordOtpAttempts = 0;
+            await user.save();
             return res.render('reset_password', {
                 error: 'The OTP code has expired. Please request a new OTP.',
                 identifier,
@@ -866,18 +905,39 @@ app.post('/reset-password', async (req, res) => {
             });
         }
 
-        if (user.resetPasswordOtp.trim() !== otp) {
+        // Timing-safe comparison to prevent side-channel timing analysis attacks
+        const expectedOtp = String(user.resetPasswordOtp || '').trim();
+        const providedOtp = String(otp).trim();
+        const isMatch = (expectedOtp.length === 6 && providedOtp.length === 6 &&
+            crypto.timingSafeEqual(Buffer.from(expectedOtp), Buffer.from(providedOtp)));
+
+        if (!isMatch) {
+            user.resetPasswordOtpAttempts = (user.resetPasswordOtpAttempts || 0) + 1;
+            const remaining = Math.max(0, 5 - user.resetPasswordOtpAttempts);
+            if (remaining === 0) {
+                user.resetPasswordOtp = null;
+                user.resetPasswordOtpExpires = null;
+                user.resetPasswordOtpAttempts = 0;
+                await user.save();
+                return res.render('reset_password', {
+                    error: 'Too many incorrect OTP attempts. For your security, this OTP has been invalidated. Please request a new OTP.',
+                    identifier,
+                    maskedEmail
+                });
+            }
+            await user.save();
             return res.render('reset_password', {
-                error: 'Invalid OTP code. Please check your email and try again.',
+                error: `Invalid OTP code. ${remaining} attempt(s) remaining. Please check your email and try again.`,
                 identifier,
                 maskedEmail
             });
         }
 
-        // Valid OTP! Reset password
+        // Valid OTP! Reset password and invalidate OTP
         await user.setPassword(password);
         user.resetPasswordOtp = null;
         user.resetPasswordOtpExpires = null;
+        user.resetPasswordOtpAttempts = 0;
         await user.save();
 
         console.log(`[Auth] Password reset successfully via OTP for user @${user.username}.`);
@@ -958,6 +1018,9 @@ app.post('/account/password', requireAuth, passwordChangeLimiter.middleware(), a
 app.post('/account/email', requireAuth, async (req, res) => {
     try {
         const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+        if (email && !isValidEmail(email)) {
+            return res.redirect('/account?error=' + encodeURIComponent('Please enter a valid email address (e.g. name@example.com).'));
+        }
         const targetUser = await User.findById(req.user._id);
         if (!targetUser) return res.redirect('/login');
         targetUser.email = email;
@@ -971,7 +1034,9 @@ app.post('/account/email', requireAuth, async (req, res) => {
 // Admin User Management Routes
 app.get('/users', requireAdmin, async (req, res) => {
     try {
-        const users = await User.find().sort({ role: 1, createdAt: -1 });
+        const users = await User.find()
+            .select('-hash -salt -resetPasswordOtp -resetPasswordOtpExpires -resetPasswordOtpAttempts -resetPasswordLastRequestedAt')
+            .sort({ role: 1, createdAt: -1 });
         const bulkReport = (req.session && req.session.bulkImportReport) ? req.session.bulkImportReport : null;
         if (req.session && req.session.bulkImportReport) {
             delete req.session.bulkImportReport;
@@ -1204,6 +1269,9 @@ app.post('/users', requireAdmin, async (req, res) => {
         }
 
         const email = String(req.body.email || '').trim().toLowerCase();
+        if (email && !isValidEmail(email)) {
+            return res.redirect('/users?error=' + encodeURIComponent('Please enter a valid email address.'));
+        }
 
         const newUser = new User({
             username,
@@ -1227,6 +1295,10 @@ app.post('/users/:id/email', requireAdmin, async (req, res) => {
             return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
         }
         const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+        if (email && !isValidEmail(email)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
+            return res.redirect('/users?error=' + encodeURIComponent('Please enter a valid email address.'));
+        }
         const targetUser = await User.findById(req.params.id);
         if (!targetUser) {
             if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
@@ -1565,8 +1637,8 @@ app.post('/paper/:id/delete', requireAdmin, async (req, res) => {
     }
 });
 
-// Section / Batch / Folder APIs
-app.get('/api/folders', requireAuth, async (req, res) => {
+// Section / Batch / Folder APIs (Staff only)
+app.get('/api/folders', requireAdminOrTeacher, async (req, res) => {
     try {
         const filterType = (req.query.examType || req.query.type || 'all').toLowerCase();
         const allFolders = await getAllFolders(filterType);
@@ -2083,7 +2155,7 @@ app.get('/paper/:id/scan', requireAdmin, async (req, res) => {
     }
 });
 
-app.post('/paper/:id/check', requireAdmin, upload.single('omrSheet'), async (req, res) => {
+app.post('/paper/:id/check', requireAdmin, scanLimiter.middleware(), upload.single('omrSheet'), async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id);
         if (!paper) return res.status(404).send('Paper not found');
@@ -2130,7 +2202,7 @@ app.get('/paper/:id/jee-evaluator', requireAdmin, async (req, res) => {
 });
 
 // JEE Mains Image Upload Evaluator
-app.post('/paper/:id/jee-check', requireAdmin, secureImageUpload.single('omrSheet'), async (req, res) => {
+app.post('/paper/:id/jee-check', requireAdmin, scanLimiter.middleware(), secureImageUpload.single('omrSheet'), async (req, res) => {
     try {
         const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
         if (!paper) return res.status(404).send('Paper not found');
