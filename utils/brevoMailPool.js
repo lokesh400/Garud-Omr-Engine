@@ -49,8 +49,8 @@ class BrevoMailPool {
             throw new Error('Email service is not configured. Please ask your administrator to configure Brevo API keys.');
         }
 
-        const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SENDER_EMAIL || 'garudomr@gmail.com';
-        const senderName = process.env.BREVO_SENDER_NAME || 'Garud OMR';
+        const senderEmail = (process.env.BREVO_SENDER_EMAIL || process.env.SENDER_EMAIL || 'communications@garudclasses.com').trim();
+        const senderName = (process.env.BREVO_SENDER_NAME || 'Garud Classes').trim();
 
         const payload = JSON.stringify({
             sender: {

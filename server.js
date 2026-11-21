@@ -61,40 +61,43 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Seed default admin account when no admins exist yet
+// Seed default admin account when no admins exist yet (only if configured in environment)
 async function ensureDefaultAdmin() {
     try {
         const adminCount = await User.countDocuments({ role: 'admin' });
         if (adminCount === 0) {
-            const defaultUsername = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
-            const defaultPassword = process.env.ADMIN_PASSWORD || 'admin123';
-            const adminEmail = (process.env.ADMIN_EMAIL || 'lokeshbadgujjar401@gmail.com').trim().toLowerCase();
-            const existing = await User.findOne({ username: defaultUsername });
+            const adminUsername = process.env.ADMIN_USERNAME ? process.env.ADMIN_USERNAME.trim().toLowerCase() : '';
+            const adminPassword = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : '';
+            const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.trim().toLowerCase() : '';
+
+            if (!adminUsername || !adminPassword) {
+                console.log('[Auth] No admin accounts exist in database, and ADMIN_USERNAME / ADMIN_PASSWORD are not set in environment. Skipping admin creation.');
+                return;
+            }
+
+            const existing = await User.findOne({ username: adminUsername });
             if (existing) {
                 existing.role = 'admin';
-                if (!existing.email) existing.email = adminEmail;
-                await existing.setPassword(defaultPassword);
+                if (!existing.email && adminEmail) existing.email = adminEmail;
+                await existing.setPassword(adminPassword);
                 await existing.save();
-                console.log(`[Auth] Promoted existing account "${defaultUsername}" to default Admin.`);
+                console.log(`[Auth] Configured admin account "${adminUsername}" from environment variables.`);
             } else {
                 await User.register(
                     new User({
-                        username: defaultUsername,
+                        username: adminUsername,
                         fullName: 'Administrator',
                         role: 'admin',
                         rollnumber: '',
-                        email: adminEmail
+                        email: adminEmail || undefined
                     }),
-                    defaultPassword
+                    adminPassword
                 );
-                console.log(`[Auth] Seeded default Admin account "${defaultUsername}".`);
-            }
-            if (defaultPassword === 'admin123') {
-                console.warn('\x1b[33m%s\x1b[0m', '[SECURITY WARNING] Default admin password "admin123" is in use! Please change it in /account.');
+                console.log(`[Auth] Created admin account "${adminUsername}" from environment variables.`);
             }
         }
     } catch (err) {
-        console.error('[Auth] Error seeding default admin:', err.message);
+        console.error('[Auth] Error setting up admin from environment:', err.message);
     }
 }
 
