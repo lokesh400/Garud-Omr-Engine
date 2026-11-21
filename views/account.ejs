@@ -101,7 +101,29 @@
                         <div class="profile-field-val" style="font-family: 'JetBrains Mono', monospace;"><%= currentUser.rollnumber || currentUser.username %></div>
                     </div>
                 <% } %>
+                <div>
+                    <div class="profile-field-label">Email (For Password Reset OTP)</div>
+                    <div class="profile-field-val" style="font-family: 'JetBrains Mono', monospace;">
+                        <%= currentUser.email || 'No email registered' %>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header-styled">
+                <h2 style="font-size: 1.05rem; margin: 0;">Registered Email Address</h2>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0 0 1rem 0;">
+                This email is used to receive verification OTPs if you ever forget your password.
+            </p>
+            <form action="/account/email" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 220px; margin-bottom: 0;">
+                    <label for="accEmail">Email Address</label>
+                    <input type="email" id="accEmail" name="email" class="form-control" value="<%= currentUser.email || '' %>" placeholder="e.g. student@gmail.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Save Email</button>
+            </form>
         </div>
 
         <div class="card">

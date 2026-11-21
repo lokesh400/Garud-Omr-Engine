@@ -974,6 +974,7 @@
                             <th>User Account</th>
                             <th>Role</th>
                             <th>Roll Number</th>
+                            <th>Email Address</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
@@ -986,7 +987,8 @@
                                     const nameStr = (u.fullName || '').trim();
                                     const rollStr = (u.rollnumber || '').trim();
                                     const userStr = (u.username || '').trim();
-                                    const searchContent = `${userStr} ${nameStr} ${rollStr} ${roleStr}`.toLowerCase();
+                                    const emailStr = (u.email || '').trim();
+                                    const searchContent = `${userStr} ${nameStr} ${rollStr} ${roleStr} ${emailStr}`.toLowerCase();
                                     const initials = (nameStr || userStr)
                                         .split(/\s+/)
                                         .filter(Boolean)
@@ -1027,8 +1029,35 @@
                                             <span style="color: #94A3B8; font-size: 0.8rem;">&mdash;</span>
                                         <% } %>
                                     </td>
+                                    <td id="email-cell-<%= u._id %>">
+                                        <% if (emailStr) { %>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="user-email-text" id="email-text-<%= u._id %>" style="font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-main);"><%= emailStr %></span>
+                                                <button type="button" class="btn-email-inline-edit" onclick="openEditEmailModal('<%= u._id %>', '<%= emailStr.replace(/'/g, "\\'") %>', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')" title="Edit email address" style="border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 4px; padding: 1px 6px; font-size: 0.7rem; cursor: pointer; color: #475569; font-weight: 600;">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        <% } else { %>
+                                            <button type="button" class="btn-email-add-pill" onclick="openEditEmailModal('<%= u._id %>', '', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')" title="Add student email for OTP password reset" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-weight: 700; font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                                <span>+</span> Add Email
+                                            </button>
+                                        <% } %>
+                                    </td>
                                     <td>
                                         <div class="um-actions-cell">
+                                            <!-- Edit/Add Email Button -->
+                                            <button type="button"
+                                                    id="btn-action-email-<%= u._id %>"
+                                                    class="btn-act btn-act-edit"
+                                                    title="<%= emailStr ? 'Edit email address' : 'Add email address' %>"
+                                                    onclick="openEditEmailModal('<%= u._id %>', '<%= emailStr.replace(/'/g, "\\'") %>', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                                </svg>
+                                                <%= emailStr ? 'Edit Email' : 'Add Email' %>
+                                            </button>
+
                                             <!-- Edit Name Button -->
                                             <button type="button"
                                                     class="btn-act btn-act-edit"
@@ -1142,6 +1171,12 @@
                     <label for="newUsername">Login Username <span style="color: #DC2626;">*</span></label>
                     <input type="text" id="newUsername" name="username" class="um-input" placeholder="e.g. 01234567 or aarav.sharma" required autocorrect="off" autocapitalize="none">
                     <span class="um-input-desc">2-40 characters: lowercase letters, numbers, dots, hyphens.</span>
+                </div>
+
+                <div class="um-form-group">
+                    <label for="newEmail">Email Address (for Password Reset OTP)</label>
+                    <input type="email" id="newEmail" name="email" class="um-input" placeholder="e.g. student@gmail.com" autocomplete="email">
+                    <span class="um-input-desc">Used to send password reset OTPs via Brevo Mail.</span>
                 </div>
 
                 <div class="um-form-group">
@@ -1364,6 +1399,46 @@
         </form>
     </dialog>
 
+    <!-- ============================================================ -->
+    <!-- 4. EDIT EMAIL MODAL                                           -->
+    <!-- ============================================================ -->
+    <dialog id="editEmailModal" class="um-modal" aria-labelledby="modalEditEmailTitle">
+        <div class="um-modal-header">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #EFF6FF; color: #2563EB;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <h3 id="modalEditEmailTitle" class="um-modal-title">Edit Email Address</h3>
+            </div>
+            <button type="button" class="um-modal-close-btn" onclick="closeEditEmailModal()">&times;</button>
+        </div>
+
+        <form id="editEmailForm" onsubmit="submitEditEmail(event)">
+            <input type="hidden" id="editEmailUserId">
+            <div class="um-modal-body">
+                <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 1.25rem 0;">
+                    Update the registered email address for <strong id="editEmailUsernameLabel" style="color: #0F172A; font-family: 'JetBrains Mono', monospace;"></strong>. This address receives password reset OTPs via Brevo Mail.
+                </p>
+
+                <div class="um-form-group">
+                    <label for="editEmailInput">Email Address</label>
+                    <input type="email" id="editEmailInput" name="email" class="um-input" placeholder="e.g. student@gmail.com">
+                    <span class="um-input-desc">Required for students to reset their password via email OTP.</span>
+                </div>
+            </div>
+
+            <div class="um-modal-footer">
+                <button type="button" class="btn-um-secondary" onclick="closeEditEmailModal()">Cancel</button>
+                <button type="submit" class="btn-um-primary" id="btnSaveUserEmail">
+                    Save Email
+                </button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
         let currentRoleFilter = 'all';
 
@@ -1549,6 +1624,108 @@
                 btn.disabled = false;
                 btn.textContent = 'Save Name';
             }
+        }
+
+        function openEditEmailModal(userId, currentEmail, username, fullName = '') {
+            document.getElementById('editEmailUserId').value = userId;
+            document.getElementById('editEmailInput').value = currentEmail || '';
+            const label = fullName ? `${fullName} (@${username})` : `@${username}`;
+            document.getElementById('editEmailUsernameLabel').textContent = label;
+            const titleEl = document.getElementById('modalEditEmailTitle');
+            if (titleEl) titleEl.textContent = currentEmail ? 'Edit Email Address' : 'Add Email Address';
+            const m = document.getElementById('editEmailModal');
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+            setTimeout(() => {
+                const inp = document.getElementById('editEmailInput');
+                if (inp) inp.focus();
+            }, 60);
+        }
+
+        function closeEditEmailModal() {
+            const m = document.getElementById('editEmailModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
+        }
+
+        async function submitEditEmail(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editEmailUserId').value;
+            const newEmail = document.getElementById('editEmailInput').value.trim();
+            const btn = document.getElementById('btnSaveUserEmail');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            try {
+                const res = await fetch('/users/' + encodeURIComponent(userId) + '/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ email: newEmail })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to update email');
+                }
+
+                // Update cell and button state on table row
+                const cell = document.getElementById('email-cell-' + userId);
+                const row = document.getElementById('row-' + userId);
+                const username = row ? (row.querySelector('.um-user-handle')?.textContent.replace(/^@/, '') || '') : '';
+                const fullName = row ? (row.querySelector('.user-fullname-display')?.textContent || '') : '';
+
+                if (cell) {
+                    if (newEmail) {
+                        cell.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="user-email-text" id="email-text-${userId}" style="font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">${escapeHtml(newEmail)}</span>
+                                <button type="button" class="btn-email-inline-edit" onclick="openEditEmailModal('${userId}', '${escapeAttr(newEmail)}', '${escapeAttr(username)}', '${escapeAttr(fullName)}')" title="Edit email address" style="border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 4px; padding: 1px 6px; font-size: 0.7rem; cursor: pointer; color: #475569; font-weight: 600;">
+                                    Edit
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = `
+                            <button type="button" class="btn-email-add-pill" onclick="openEditEmailModal('${userId}', '', '${escapeAttr(username)}', '${escapeAttr(fullName)}')" title="Add student email for OTP password reset" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-weight: 700; font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                <span>+</span> Add Email
+                            </button>
+                        `;
+                    }
+                }
+
+                const actionBtn = document.getElementById('btn-action-email-' + userId);
+                if (actionBtn) {
+                    actionBtn.setAttribute('onclick', `openEditEmailModal('${userId}', '${escapeAttr(newEmail)}', '${escapeAttr(username)}', '${escapeAttr(fullName)}')`);
+                    actionBtn.title = newEmail ? 'Edit email address' : 'Add email address';
+                    actionBtn.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        ${newEmail ? 'Edit Email' : 'Add Email'}
+                    `;
+                }
+
+                if (row) {
+                    const oldSearch = row.getAttribute('data-search') || '';
+                    row.setAttribute('data-search', oldSearch + ' ' + newEmail.toLowerCase());
+                }
+
+                closeEditEmailModal();
+            } catch (err) {
+                alert(err.message || 'Error updating email.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Email';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function escapeAttr(str) {
+            if (!str) return '';
+            return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         // 5. Delete User

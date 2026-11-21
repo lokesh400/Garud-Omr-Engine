@@ -16,6 +16,7 @@ const Submission = require('./models/Submission');
 const Result = Submission;
 const User = require('./models/User');
 const Folder = require('./models/Folder');
+const brevoMailPool = require('./utils/brevoMailPool');
 const { uploadOmrSheet, deleteOmrSheet } = require('./utils/cloudinaryPool');
 const {
     parseBulkStudentsInput,
@@ -697,6 +698,194 @@ app.get('/register', (req, res) => {
     res.redirect('/login');
 });
 
+// ============================================================
+// FORGOT & RESET PASSWORD VIA BREVO MAIL OTP
+// ============================================================
+app.get('/forgot-password', (req, res) => {
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        return res.redirect((req.user.role === 'admin' || req.user.role === 'teacher') ? '/' : '/student');
+    }
+    res.render('forgot_password', {
+        error: req.query.error || null,
+        message: req.query.message || null,
+        identifier: req.query.identifier || ''
+    });
+});
+
+app.post('/forgot-password', async (req, res) => {
+    try {
+        const identifier = String((req.body && req.body.identifier) || '').trim();
+        if (!identifier) {
+            return res.render('forgot_password', {
+                error: 'Please enter your student roll number or username.',
+                identifier: ''
+            });
+        }
+
+        const user = await User.findOne({
+            $or: [
+                { rollnumber: identifier },
+                { rollnumber: identifier.toUpperCase() },
+                { username: identifier.toLowerCase() },
+                { email: identifier.toLowerCase() }
+            ]
+        });
+
+        if (!user) {
+            return res.render('forgot_password', {
+                error: 'No account found matching this roll number or username. Please check and try again.',
+                identifier
+            });
+        }
+
+        if (!user.email || !user.email.trim()) {
+            return res.render('forgot_password', {
+                error: 'No mailing address in your account. Please ask your administrator to add one.',
+                identifier
+            });
+        }
+
+        // Generate secure 6-digit OTP
+        const otp = crypto.randomInt(100000, 999999).toString();
+        user.resetPasswordOtp = otp;
+        user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await user.save();
+
+        // Mask email for display: e.g. j***@gmail.com
+        const parts = user.email.split('@');
+        const userPart = parts[0] || '';
+        const domainPart = parts[1] || '';
+        const maskedUserPart = userPart.length <= 2
+            ? userPart[0] + '*'
+            : userPart[0] + '*'.repeat(Math.min(userPart.length - 2, 5)) + userPart[userPart.length - 1];
+        const maskedEmail = `${maskedUserPart}@${domainPart}`;
+
+        // Send OTP via Brevo multi-account pool
+        try {
+            await brevoMailPool.sendOtpEmail({
+                toEmail: user.email,
+                toName: user.fullName || user.username,
+                otp,
+                expiresMinutes: 10
+            });
+        } catch (mailErr) {
+            console.warn(`[Forgot Password] Brevo mail pool notice: ${mailErr.message}`);
+            console.log(`[AUTH OTP DEV FALLBACK] Generated OTP for @${user.username} (${user.email}): ${otp}`);
+        }
+
+        return res.render('reset_password', {
+            identifier: user.username,
+            maskedEmail,
+            error: null,
+            message: `OTP sent successfully to your registered email (${maskedEmail}). Please check your inbox or spam folder.`
+        });
+    } catch (err) {
+        console.error('Error initiating password reset:', err);
+        return res.render('forgot_password', {
+            error: 'An error occurred while processing your request: ' + err.message,
+            identifier: req.body ? req.body.identifier : ''
+        });
+    }
+});
+
+app.get('/reset-password', (req, res) => {
+    const identifier = req.query.identifier || '';
+    res.render('reset_password', {
+        identifier,
+        maskedEmail: req.query.email || '',
+        error: req.query.error || null,
+        message: req.query.message || null
+    });
+});
+
+app.post('/reset-password', async (req, res) => {
+    try {
+        const identifier = String((req.body && req.body.identifier) || '').trim();
+        const otp = String((req.body && req.body.otp) || '').trim();
+        const password = String((req.body && req.body.password) || '');
+        const confirmPassword = String((req.body && req.body.confirmPassword) || '');
+        const maskedEmail = String((req.body && req.body.maskedEmail) || '');
+
+        if (!identifier) {
+            return res.render('reset_password', {
+                error: 'Missing account identifier. Please request a new OTP.',
+                identifier,
+                maskedEmail
+            });
+        }
+        if (!otp || otp.length !== 6) {
+            return res.render('reset_password', {
+                error: 'Please enter a valid 6-digit OTP code.',
+                identifier,
+                maskedEmail
+            });
+        }
+        if (!password || password.length < 6) {
+            return res.render('reset_password', {
+                error: 'New password must be at least 6 characters long.',
+                identifier,
+                maskedEmail
+            });
+        }
+        if (password !== confirmPassword) {
+            return res.render('reset_password', {
+                error: 'Passwords do not match. Please re-enter both fields.',
+                identifier,
+                maskedEmail
+            });
+        }
+
+        const user = await User.findOne({
+            $or: [
+                { rollnumber: identifier },
+                { rollnumber: identifier.toUpperCase() },
+                { username: identifier.toLowerCase() },
+                { email: identifier.toLowerCase() }
+            ]
+        });
+
+        if (!user || !user.resetPasswordOtp) {
+            return res.render('reset_password', {
+                error: 'No active password reset request found. Please request a new OTP.',
+                identifier,
+                maskedEmail
+            });
+        }
+
+        if (!user.resetPasswordOtpExpires || new Date() > user.resetPasswordOtpExpires) {
+            return res.render('reset_password', {
+                error: 'The OTP code has expired. Please request a new OTP.',
+                identifier,
+                maskedEmail
+            });
+        }
+
+        if (user.resetPasswordOtp.trim() !== otp) {
+            return res.render('reset_password', {
+                error: 'Invalid OTP code. Please check your email and try again.',
+                identifier,
+                maskedEmail
+            });
+        }
+
+        // Valid OTP! Reset password
+        await user.setPassword(password);
+        user.resetPasswordOtp = null;
+        user.resetPasswordOtpExpires = null;
+        await user.save();
+
+        console.log(`[Auth] Password reset successfully via OTP for user @${user.username}.`);
+        return res.redirect('/login?message=' + encodeURIComponent('Your password has been reset successfully! Please sign in with your new password.'));
+    } catch (err) {
+        console.error('Error verifying OTP and resetting password:', err);
+        return res.render('reset_password', {
+            error: 'Could not reset password: ' + err.message,
+            identifier: req.body ? req.body.identifier : '',
+            maskedEmail: req.body ? req.body.maskedEmail : ''
+        });
+    }
+});
+
 app.post('/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) return next(err);
@@ -757,6 +946,19 @@ app.post('/account/password', requireAuth, passwordChangeLimiter.middleware(), a
             error: errMsg,
             message: null
         });
+    }
+});
+
+app.post('/account/email', requireAuth, async (req, res) => {
+    try {
+        const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+        const targetUser = await User.findById(req.user._id);
+        if (!targetUser) return res.redirect('/login');
+        targetUser.email = email;
+        await targetUser.save();
+        return res.redirect('/account?message=' + encodeURIComponent('Email address updated successfully.'));
+    } catch (err) {
+        return res.redirect('/account?error=' + encodeURIComponent(err.message || 'Could not update email.'));
     }
 });
 
@@ -995,16 +1197,45 @@ app.post('/users', requireAdmin, async (req, res) => {
             return res.redirect('/users?error=' + encodeURIComponent('Password must be at least 6 characters long.'));
         }
 
+        const email = String(req.body.email || '').trim().toLowerCase();
+
         const newUser = new User({
             username,
             fullName,
             role,
-            rollnumber
+            rollnumber,
+            email
         });
         await User.register(newUser, password);
         return res.redirect('/users?message=' + encodeURIComponent(`Account @${username} (${role}) created successfully.`));
     } catch (err) {
         return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not create user.'));
+    }
+});
+
+app.post('/users/:id/email', requireAdmin, async (req, res) => {
+    try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (!isValidMongoId(req.params.id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Invalid user identifier.' });
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
+        const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+        targetUser.email = email;
+        await targetUser.save();
+        if (wantsJson) {
+            return res.json({ success: true, message: `Email updated for @${targetUser.username}.`, email: targetUser.email });
+        }
+        return res.redirect('/users?message=' + encodeURIComponent(`Email updated for @${targetUser.username}.`));
+    } catch (err) {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (wantsJson) return res.status(500).json({ success: false, error: err.message || 'Could not update email.' });
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update email.'));
     }
 });
 

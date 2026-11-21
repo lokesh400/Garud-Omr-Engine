@@ -196,6 +196,9 @@
                            autocomplete="current-password"
                            enterkeyhint="done"
                            required>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                        <a href="/forgot-password" style="font-size: 0.8125rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot password?</a>
+                    </div>
                 </div>
 
                 <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 0.25rem;">
@@ -204,7 +207,7 @@
             </form>
 
             <div class="auth-footer-note">
-                Accounts are provisioned by your exam administrator.
+                Forgot password? <a href="/forgot-password" style="color: var(--primary); font-weight: 600; text-decoration: none;">Reset via email OTP</a> &middot; Provisioned by admin
             </div>
         </div>
     </main>
