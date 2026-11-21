@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .student-container {
-            max-width: 1200px;
+            /* max-width: 1200px; */
             margin: 0 auto;
             padding: 1.5rem 1.25rem 4rem 1.25rem;
         }
@@ -660,6 +660,7 @@
                 opacity: 0;
                 transform: translateY(-6px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -745,7 +746,7 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
 
         .sec-card-total {
@@ -918,823 +919,1576 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* ================================================================
+           GARUD OMR — PREMIUM PERFORMANCE EXPERIENCE
+           Visual-only enhancement. Existing EJS data and JS behavior stay intact.
+        ================================================================= */
+        :root {
+            --garud-ink: #101a35;
+            --garud-muted: #71809c;
+            --garud-blue: #315efb;
+            --garud-violet: #7657f6;
+            --garud-line: rgba(148, 163, 184, .22);
+            --garud-card-shadow: 0 18px 45px rgba(20, 35, 75, .075);
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse at 8% 0%, rgba(91, 124, 255, .10), transparent 34rem),
+                radial-gradient(ellipse at 96% 12%, rgba(139, 92, 246, .08), transparent 30rem),
+                #f5f7fc;
+        }
+
+        .student-container {
+            max-width: 1480px;
+            padding-top: clamp(1.25rem, 3vw, 2.5rem);
+            padding-bottom: 5rem;
+        }
+
+        .student-profile-banner {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            padding: clamp(1.25rem, 2.4vw, 2rem);
+            border: 1px solid rgba(255, 255, 255, .8);
+            border-radius: 26px;
+            background: linear-gradient(115deg, #fff 0%, #fbfcff 55%, #f0f3ff 100%);
+            box-shadow: 0 22px 60px rgba(34, 52, 105, .09), inset 0 1px 0 #fff;
+            gap: 24px;
+        }
+
+        .student-profile-banner::before,
+        .student-profile-banner::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .student-profile-banner::before {
+            width: 330px;
+            height: 330px;
+            right: -115px;
+            top: -210px;
+            background: radial-gradient(circle, rgba(91, 124, 255, .18), rgba(91, 124, 255, 0));
+        }
+
+        .student-profile-banner::after {
+            width: 230px;
+            height: 230px;
+            right: 20%;
+            bottom: -205px;
+            background: radial-gradient(circle, rgba(139, 92, 246, .12), rgba(139, 92, 246, 0));
+        }
+
+        .student-profile-info {
+            gap: 16px;
+            min-width: 240px;
+        }
+
+        .student-avatar {
+            width: 62px;
+            height: 62px;
+            border-radius: 19px;
+            background: linear-gradient(145deg, #4778ff, #4d43d8 75%, #7657f6);
+            font-size: 1.65rem;
+            box-shadow: 0 10px 24px rgba(64, 91, 230, .28), inset 0 1px 0 rgba(255, 255, 255, .35);
+        }
+
+        .student-name {
+            font-size: clamp(1.25rem, 2vw, 1.65rem);
+            letter-spacing: -.045em;
+            color: var(--garud-ink);
+        }
+
+        .student-meta-sub {
+            color: #7b87a1;
+            font-size: .86rem;
+            margin-top: 5px;
+        }
+
+        .roll-pill {
+            border-radius: 999px;
+            padding: 5px 11px;
+            background: #edf2ff;
+            border-color: #d9e2ff;
+            color: #3156d9;
+        }
+
+        .role-pill {
+            border-radius: 999px;
+            padding: 4px 9px;
+            background: #f1f3f9;
+            color: #64708b;
+        }
+
+        .student-stats-ribbon {
+            gap: 0;
+            padding: 12px 5px;
+            border: 1px solid rgba(226, 232, 240, .85);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, .72);
+            box-shadow: 0 8px 24px rgba(31, 48, 92, .045);
+            backdrop-filter: blur(14px);
+        }
+
+        .student-stat-item {
+            min-width: 105px;
+            padding: 4px 17px;
+            border-right: 1px solid #e9edf5;
+        }
+
+        .student-stat-item:last-child {
+            border-right: 0;
+        }
+
+        .student-stat-item .stat-number {
+            font-size: clamp(1.18rem, 1.8vw, 1.5rem);
+            letter-spacing: -.045em;
+            color: var(--garud-ink);
+        }
+
+        .student-stat-item .stat-label {
+            font-size: .64rem;
+            letter-spacing: .09em;
+            color: #8792a9;
+        }
+
+        .exam-grid {
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+            gap: 1.25rem;
+        }
+
+        .exam-card {
+            position: relative;
+            overflow: hidden;
+            padding: 1.35rem;
+            border: 1px solid rgba(226, 232, 240, .9);
+            border-radius: 22px;
+            background: linear-gradient(160deg, #fff 0%, #fff 72%, #f9faff 100%);
+            box-shadow: 0 8px 24px rgba(27, 43, 86, .045);
+            transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s ease, border-color .28s ease;
+        }
+
+        .exam-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 3px;
+            background: linear-gradient(90deg, #3867ff, #7657f6, #23b6d9);
+            opacity: .0;
+            transition: opacity .25s ease;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-5px);
+            border-color: #d5ddff;
+            box-shadow: 0 22px 48px rgba(35, 55, 115, .11);
+        }
+
+        .exam-card:hover::before {
+            opacity: 1;
+        }
+
+        .exam-title {
+            color: var(--garud-ink);
+            font-size: 1.08rem;
+            letter-spacing: -.025em;
+        }
+
+        .exam-meta {
+            gap: 8px;
+            color: #8a95aa;
+        }
+
+        .subject-badge {
+            border-radius: 999px;
+            padding: 4px 9px;
+            color: #3156d9;
+            background: #eef2ff;
+            border-color: #dce4ff;
+        }
+
+        .agg-summary {
+            border: 1px solid #e9edf7;
+            border-radius: 16px;
+            padding: 1rem 1.05rem;
+            background: linear-gradient(135deg, #f8faff, #f5f7ff);
+            box-shadow: inset 0 1px 0 #fff;
+        }
+
+        .agg-label,
+        .hero-sublabel {
+            letter-spacing: .09em;
+            color: #7d8aa5;
+        }
+
+        .agg-score {
+            color: #315efb;
+            font-size: 1.6rem;
+            letter-spacing: -.05em;
+        }
+
+        .rank-badge,
+        .rank-pill,
+        .topper-pill {
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+
+        .rank-badge-top1 {
+            box-shadow: 0 5px 14px rgba(234, 179, 8, .16);
+        }
+
+        .sec-stack-list {
+            gap: 8px;
+        }
+
+        .sec-stack-item {
+            border-color: #edf0f6;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fff;
+            transition: background .2s ease, border-color .2s ease, transform .2s ease;
+        }
+
+        .sec-stack-item:hover {
+            background: #fafbff;
+            border-color: #dce4ff;
+            transform: translateX(2px);
+        }
+
+        .sec-stack-marks {
+            color: #315efb;
+        }
+
+        .btn-view-omr {
+            min-height: 44px;
+            border-radius: 13px;
+            background: linear-gradient(110deg, #315efb, #5549e8 58%, #7657f6);
+            box-shadow: 0 9px 20px rgba(64, 83, 224, .2), inset 0 1px 0 rgba(255, 255, 255, .22);
+            letter-spacing: .01em;
+        }
+
+        .btn-view-omr:hover {
+            background: linear-gradient(110deg, #244fe9, #493bd7 58%, #6846ed);
+            box-shadow: 0 13px 25px rgba(64, 83, 224, .28);
+        }
+
+        /* Staff roll-number lookup */
+        .student-container search .card {
+            border: 1px solid #e7ebf4 !important;
+            border-radius: 18px;
+            box-shadow: 0 10px 28px rgba(27, 43, 86, .045);
+        }
+
+        #lookupRoll {
+            min-height: 42px;
+            border-radius: 11px;
+            border-color: #dce3f0;
+        }
+
+        #lookupRoll:focus {
+            outline: 3px solid rgba(49, 94, 251, .12);
+            border-color: #7190ff;
+        }
+
+        /* Full-screen OMR inspection workspace */
+        dialog.omr-modal-dialog {
+            background: #080d1b;
+        }
+
+        .omr-modal-header {
+            height: 58px;
+            min-height: 58px;
+            max-height: 58px;
+            padding: 0 18px;
+            background: rgba(12, 19, 39, .96);
+            border-bottom: 1px solid rgba(148, 163, 184, .17);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+        }
+
+        .btn-omr-back,
+        .btn-omr-tool,
+        .btn-modal-close {
+            border-radius: 10px;
+            min-height: 34px;
+            transition: background .2s ease, border-color .2s ease, transform .2s ease;
+        }
+
+        .btn-omr-back:hover,
+        .btn-omr-tool:hover {
+            transform: translateY(-1px);
+        }
+
+        .omr-modal-body {
+            height: calc(100vh - 58px);
+            max-height: calc(100vh - 58px);
+            grid-template-columns: minmax(0, 1.08fr) minmax(390px, .92fr);
+        }
+
+        .omr-stage-pane {
+            background: radial-gradient(ellipse at center, #18233d 0%, #090f20 72%);
+        }
+
+        .omr-stage-viewport {
+            padding: 24px;
+        }
+
+        .omr-preview-frame {
+            border-radius: 10px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .18);
+        }
+
+        .omr-stage-footer {
+            height: 52px;
+            padding: 0 20px;
+            background: #101a31;
+            border-top-color: rgba(148, 163, 184, .14);
+        }
+
+        .btn-zoom {
+            border-radius: 8px;
+            padding: 5px 10px;
+        }
+
+        .omr-details-pane {
+            padding: 1.4rem clamp(1rem, 2vw, 1.8rem) 3rem;
+            gap: 1.15rem;
+            background: #f5f7fc;
+            scrollbar-width: thin;
+            scrollbar-color: #c7d0e2 transparent;
+        }
+
+        .btn-scorecard-toggle {
+            min-height: 54px;
+            border-radius: 14px;
+            padding: .85rem 1rem;
+            border-color: #e5eaf4;
+            box-shadow: 0 6px 18px rgba(27, 43, 86, .045);
+        }
+
+        .btn-scorecard-toggle:hover {
+            border-color: #cbd6ff;
+            background: #fff;
+        }
+
+        .omr-hero-banner {
+            border: 1px solid #dce5ff;
+            border-radius: 18px;
+            background: linear-gradient(120deg, #edf3ff 0%, #f4f0ff 100%);
+            padding: 1.2rem 1.35rem;
+        }
+
+        .aggregate-grand-val {
+            color: #315efb;
+            letter-spacing: -.055em;
+        }
+
+        .hero-accuracy-val {
+            color: #07966e;
+            letter-spacing: -.05em;
+        }
+
+        .omr-kpi-grid {
+            gap: 10px;
+        }
+
+        .omr-kpi-tile {
+            min-height: 82px;
+            justify-content: center;
+            gap: 3px;
+            border: 1px solid #e7ebf4;
+            border-radius: 14px;
+            box-shadow: 0 6px 18px rgba(27, 43, 86, .04);
+        }
+
+        .omr-kpi-tile .kpi-label {
+            letter-spacing: .08em;
+            color: #8994aa;
+        }
+
+        .omr-kpi-tile .kpi-val {
+            letter-spacing: -.04em;
+        }
+
+        .sec-card {
+            border-radius: 13px !important;
+            padding: 13px 14px !important;
+            box-shadow: 0 5px 16px rgba(27, 43, 86, .035) !important;
+        }
+
+        .breakdown-filter-bar {
+            gap: 7px;
+        }
+
+        .filter-pill {
+            border-radius: 999px;
+            padding: 6px 12px;
+            background: #fff;
+        }
+
+        .filter-pill.active {
+            box-shadow: 0 5px 12px rgba(49, 94, 251, .18);
+        }
+
+        #modalBreakdownBody tr {
+            transition: background .15s ease;
+        }
+
+        #modalBreakdownBody tr:hover {
+            background: #f5f7ff;
+        }
+
+        #modalBreakdownBody td {
+            border-bottom: 1px solid #eef1f6;
+        }
+
+        .omr-details-pane>div[style*="max-height"] {
+            border-radius: 14px !important;
+        }
+
+        .empty-state {
+            padding: 3.5rem 1.5rem;
+            border: 1px dashed #cfd8ea;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, .82);
+            box-shadow: 0 16px 40px rgba(27, 43, 86, .045);
+        }
+
+        .empty-state-icon {
+            width: 58px;
+            height: 58px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 1rem;
+            border-radius: 18px;
+            color: #315efb;
+            background: #edf2ff;
+        }
+
+        @media (max-width: 1100px) {
+            .student-profile-banner {
+                align-items: flex-start;
+            }
+
+            .student-stats-ribbon {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .student-stat-item {
+                flex: 1 1 100px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .omr-modal-header {
+                height: 54px;
+                min-height: 54px;
+                max-height: 54px;
+                padding: 0 12px;
+            }
+
+            .omr-modal-body {
+                height: calc(100vh - 54px);
+                max-height: calc(100vh - 54px);
+            }
+
+            .omr-stage-pane {
+                background: radial-gradient(ellipse at center, #18233d 0%, #090f20 78%);
+            }
+
+            .omr-stage-viewport {
+                padding: 12px 8px;
+            }
+
+            .omr-preview-frame {
+                max-width: min(100%, 520px);
+            }
+
+            .omr-details-pane {
+                padding: 1rem .9rem 3rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .student-container {
+                padding: .85rem .7rem 3rem;
+            }
+
+            .student-profile-banner {
+                border-radius: 20px;
+                padding: 1.1rem;
+                gap: 18px;
+            }
+
+            .student-profile-info {
+                gap: 12px;
+            }
+
+            .student-avatar {
+                width: 52px;
+                height: 52px;
+                border-radius: 16px;
+                font-size: 1.4rem;
+            }
+
+            .student-name-row {
+                gap: 6px;
+            }
+
+            .student-name {
+                font-size: 1.18rem;
+            }
+
+            .student-meta-sub {
+                font-size: .76rem;
+            }
+
+            .student-stats-ribbon {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                padding: 7px;
+                border-radius: 15px;
+            }
+
+            .student-stat-item {
+                min-width: 0;
+                padding: 10px 9px;
+                border-right: 0;
+                border-bottom: 1px solid #edf0f6;
+            }
+
+            .student-stat-item:nth-last-child(-n+2) {
+                border-bottom: 0;
+            }
+
+            .student-stat-item:nth-child(odd) {
+                border-right: 1px solid #edf0f6;
+            }
+
+            .student-stat-item .stat-number {
+                font-size: 1.25rem;
+            }
+
+            .student-stat-item .stat-label {
+                font-size: .6rem;
+            }
+
+            .exam-grid {
+                gap: .9rem;
+            }
+
+            .exam-card {
+                padding: 1.05rem;
+                border-radius: 18px;
+            }
+
+            .omr-modal-header {
+                padding: 0 7px;
+                gap: 5px;
+            }
+
+            .omr-modal-header-left,
+            .omr-modal-header-right {
+                gap: 4px;
+            }
+
+            .btn-omr-tool {
+                padding: 4px 7px;
+                font-size: .68rem;
+            }
+
+            .btn-modal-close {
+                width: 30px;
+                height: 30px;
+            }
+
+            .omr-stage-footer {
+                padding: 0 9px;
+                height: 46px;
+                gap: 5px;
+            }
+
+            .omr-stage-footer>div:first-child {
+                gap: 6px !important;
+                font-size: .64rem !important;
+            }
+
+            .omr-stage-footer>div:last-child {
+                display: none;
+            }
+
+            .omr-kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .omr-hero-banner {
+                padding: 1rem;
+            }
+
+            .aggregate-grand-val {
+                font-size: 1.55rem;
+            }
+
+            .hero-accuracy-val {
+                font-size: 1.5rem;
+            }
+
+            .breakdown-filter-bar {
+                width: 100%;
+            }
+
+            .filter-pill {
+                font-size: .68rem;
+                padding: 5px 9px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
     </style>
 </head>
 
 <body>
     <%- include('partials/sidebar_start', { activeNav: 'student' }) %>
 
-    <%
-        const totalExams = (results && Array.isArray(results)) ? results.length : 0;
-        let sumAccuracy = 0;
-        let bestScore = 0;
-        let bestTotal = 0;
-        let totalAttempted = 0;
-        let bestRank = Infinity;
-        let bestRankTotal = 0;
-
-        if (totalExams > 0) {
+        <% const totalExams=(results && Array.isArray(results)) ? results.length : 0; let sumAccuracy=0; let
+            bestScore=0; let bestTotal=0; let totalAttempted=0; let bestRank=Infinity; let bestRankTotal=0; if
+            (totalExams> 0) {
             results.forEach(item => {
-                sumAccuracy += (Number(item.percentage) || 0);
-                const sumSec = item.allSectionsSummary || {};
-                const obMarks = sumSec.obtainedMarks !== undefined ? sumSec.obtainedMarks : ((item.aggregateMarks !== undefined) ? item.aggregateMarks : (item.score * 4));
-                const totMarks = sumSec.totalMarks !== undefined ? sumSec.totalMarks : (item.maxMarks || ((item.totalQuestions || 50) * 4));
-                if (obMarks > bestScore) {
-                    bestScore = obMarks;
-                    bestTotal = totMarks;
-                }
-                const att = sumSec.attemptedQuestions !== undefined ? sumSec.attemptedQuestions : Math.max(0, (item.totalQuestions || 0) - (item.blankCount || 0));
-                totalAttempted += att;
+            sumAccuracy += (Number(item.percentage) || 0);
+            const sumSec = item.allSectionsSummary || {};
+            const obMarks = sumSec.obtainedMarks !== undefined ? sumSec.obtainedMarks : ((item.aggregateMarks !==
+            undefined) ? item.aggregateMarks : (item.score * 4));
+            const totMarks = sumSec.totalMarks !== undefined ? sumSec.totalMarks : (item.maxMarks ||
+            ((item.totalQuestions || 50) * 4));
+            if (obMarks > bestScore) {
+            bestScore = obMarks;
+            bestTotal = totMarks;
+            }
+            const att = sumSec.attemptedQuestions !== undefined ? sumSec.attemptedQuestions : Math.max(0,
+            (item.totalQuestions || 0) - (item.blankCount || 0));
+            totalAttempted += att;
 
-                if (item.rank && Number(item.rank) > 0) {
-                    if (Number(item.rank) < bestRank) {
-                        bestRank = Number(item.rank);
-                        bestRankTotal = item.totalCandidates || 0;
-                    }
-                }
-            });
-        }
-        const avgAccuracy = totalExams > 0 ? (sumAccuracy / totalExams).toFixed(0) : 0;
-    %>
+            if (item.rank && Number(item.rank) > 0) {
+            if (Number(item.rank) < bestRank) { bestRank=Number(item.rank); bestRankTotal=item.totalCandidates || 0; } }
+                }); } const avgAccuracy=totalExams> 0 ? (sumAccuracy / totalExams).toFixed(0) : 0;
+                %>
 
-    <div class="student-container">
-        <!-- Student Overview Profile Ribbon -->
-        <header class="student-profile-banner">
-            <div class="student-profile-info">
-                <div class="student-avatar" aria-hidden="true">
-                    <%= (currentUser.fullName || currentUser.username || 'S')[0].toUpperCase() %>
-                </div>
-                <div>
-                    <div class="student-name-row">
-                        <h1 class="student-name"><%= currentUser.fullName || currentUser.username %></h1>
-                        <% if (targetRoll) { %>
-                            <span class="roll-pill">Roll: <%= targetRoll %></span>
-                        <% } %>
-                        <span class="role-pill"><%= (currentUser.role || 'student').toUpperCase() %></span>
-                    </div>
-                    <div class="student-meta-sub">
-                        Student Performance & OMR Evaluation Portal
-                    </div>
-                </div>
-            </div>
-
-            <div class="student-stats-ribbon">
-                <div class="student-stat-item">
-                    <span class="stat-number"><%= totalExams %></span>
-                    <span class="stat-label">Evaluated Tests</span>
-                </div>
-                <div class="student-stat-item">
-                    <span class="stat-number" style="color: #059669;"><%= avgAccuracy %>%</span>
-                    <span class="stat-label">Avg Accuracy</span>
-                </div>
-                <div class="student-stat-item">
-                    <span class="stat-number" style="color: #2563EB;"><%= bestScore %> <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%= bestTotal || 300 %></span></span>
-                    <span class="stat-label">Top Score</span>
-                </div>
-                <div class="student-stat-item">
-                    <span class="stat-number" style="color: #D97706;">
-                        <% if (bestRank !== Infinity) { %>
-                            #<%= bestRank %><% if (bestRankTotal > 0) { %><span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);"> / <%= bestRankTotal %></span><% } %>
-                        <% } else { %>
-                            &mdash;
-                        <% } %>
-                    </span>
-                    <span class="stat-label">Best Rank</span>
-                </div>
-                <div class="student-stat-item">
-                    <span class="stat-number" style="color: #7C3AED;"><%= totalAttempted %></span>
-                    <span class="stat-label">Questions Attempted</span>
-                </div>
-            </div>
-        </header>
-
-        <% if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'teacher')) { %>
-            <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; background: #FFFFFF;">
-                <search>
-                    <form action="/student" method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <label for="lookupRoll" style="font-weight: 700; font-size: 0.875rem; color: var(--text-main);">
-                            Lookup Student Roll Number:
-                        </label>
-                        <input type="text"
-                               id="lookupRoll"
-                               name="roll"
-                               class="form-control"
-                               value="<%= targetRoll || '' %>"
-                               placeholder="e.g. 01234567"
-                               autocorrect="off"
-                               autocapitalize="none"
-                               spellcheck="false"
-                               style="max-width: 240px;">
-                        <button type="submit" class="btn btn-primary btn-sm">Preview Student Results</button>
-                    </form>
-                </search>
-            </div>
-        <% } %>
-
-        <% if (results && results.length > 0) { %>
-            <div class="exam-grid">
-                <% results.forEach(item => { %>
-                    <%
-                        const scannedDate = new Date(item.submitted_at || item.scannedAt || Date.now());
-                        const agg = item.aggregateMarks !== undefined ? item.aggregateMarks : (item.score * 4);
-                        const maxM = item.maxMarks || ((item.totalQuestions || 50) * 4);
-                        const sumSec = item.allSectionsSummary || {
-                            totalMarks: maxM,
-                            obtainedMarks: agg,
-                            totalQuestions: item.totalQuestions || 0,
-                            attemptedQuestions: Math.max(0, (item.totalQuestions || 0) - (item.blankCount || 0)),
-                            unattemptedQuestions: item.blankCount || 0,
-                            correctCount: item.correctCount || 0,
-                            wrongCount: item.wrongCount || 0
-                        };
-                        const pId = String(item.paper_id || item.paperId || '');
-                        const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats && paperTopperStats[pId]) ? paperTopperStats[pId] : null;
-                    %>
-                    <article class="exam-card">
-                        <div>
-                            <div class="exam-header">
-                                <div>
-                                    <h2 class="exam-title"><%= item.paperTitle %></h2>
-                                    <div class="exam-meta">
-                                        <span class="subject-badge"><%= item.paperSubject || 'General' %></span>
-                                        <span>&middot;</span>
-                                        <span><%= scannedDate.toLocaleDateString() %></span>
-                                    </div>
+                <div class="student-container">
+                    <!-- Student Overview Profile Ribbon -->
+                    <header class="student-profile-banner">
+                        <div class="student-profile-info">
+                            <div class="student-avatar" aria-hidden="true">
+                                <%= (currentUser.fullName || currentUser.username || 'S' )[0].toUpperCase() %>
+                            </div>
+                            <div>
+                                <div class="student-name-row">
+                                    <h1 class="student-name">
+                                        <%= currentUser.fullName || currentUser.username %>
+                                    </h1>
+                                    <% if (targetRoll) { %>
+                                        <span class="roll-pill">Roll: <%= targetRoll %></span>
+                                        <% } %>
+                                            <span class="role-pill">
+                                                <%= (currentUser.role || 'student' ).toUpperCase() %>
+                                            </span>
                                 </div>
-                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                                    <span class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
-                                        <%= item.percentage %>% Accuracy
-                                    </span>
-                                    <% if (item.rank) { %>
-                                        <span class="rank-badge <%= item.rank === 1 ? 'rank-badge-top1' : (item.rank <= 3 ? 'rank-badge-top3' : '') %>" title="Your rank in <%= item.paperTitle %>">
-                                            <% if (item.rank === 1) { %>🥇<% } else if (item.rank === 2) { %>🥈<% } else if (item.rank === 3) { %>🥉<% } else { %>🏅<% } %>
-                                            Rank #<%= item.rank %><% if (item.totalCandidates) { %><span style="font-weight: 500; opacity: 0.8; font-size: 0.72rem;"> / <%= item.totalCandidates %></span><% } %>
-                                        </span>
-                                    <% } %>
+                                <div class="student-meta-sub">
+                                    Student Performance & OMR Evaluation Portal
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
-                                <div>
-                                    <div class="agg-label">Obtained Score</div>
-                                    <div class="agg-score">
-                                        <%= sumSec.obtainedMarks %> <span style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/ <%= sumSec.totalMarks %></span>
-                                    </div>
-                                    <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
-                                        <% if (item.rank) { %>
-                                            <span class="rank-pill <%= item.rank === 1 ? 'rank-pill-top1' : (item.rank <= 3 ? 'rank-pill-top3' : '') %>" title="Student rank in this exam">
-                                                🎯 Rank: #<%= item.rank %><% if (item.totalCandidates) { %> / <%= item.totalCandidates %><% } %>
-                                            </span>
-                                        <% } %>
-                                        <% if (pStats && pStats.highestOverall !== undefined) { %>
-                                            <span class="topper-pill" title="Highest marks scored across all candidates for this exam">
-                                                🏆 Paper Highest: <%= pStats.highestOverall %> / <%= sumSec.totalMarks %>
-                                            </span>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <div style="text-align: right; font-size: 0.8rem;">
-                                    <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
-                                        <%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %> Att
-                                    </div>
-                                    <div style="color: var(--text-muted); margin-top: 2px;">
-                                        Unatt: <strong style="color: var(--text-body);"><%= sumSec.unattemptedQuestions %></strong> &middot;
-                                        <span style="color: var(--success-hover); font-weight: 600;"><%= sumSec.correctCount %>C</span> &middot;
-                                        <span style="color: var(--danger); font-weight: 600;"><%= sumSec.wrongCount %>W</span>
-                                    </div>
-                                </div>
+                        <div class="student-stats-ribbon">
+                            <div class="student-stat-item">
+                                <span class="stat-number">
+                                    <%= totalExams %>
+                                </span>
+                                <span class="stat-label">Evaluated Tests</span>
                             </div>
-
-                            <% if (item.sectionWise && item.sectionWise.length > 0) { %>
-                                <div class="sec-stack-list">
-                                    <% item.sectionWise.forEach(s => { %>
-                                        <%
-                                            const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
-                                            const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
-                                            const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
-                                            const secHighestObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
-                                            const secHighestVal = secHighestObj ? secHighestObj.highest : null;
-                                        %>
-                                        <div class="sec-stack-item">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                                                <div class="sec-stack-name">
-                                                    <%= s.sectionName %>
-                                                    <% if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) { %>
-                                                        <span style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(<%= s.range %>)</span>
-                                                    <% } %>
-                                                </div>
-                                                <% if (secHighestVal !== null && secHighestVal !== undefined) { %>
-                                                    <span style="font-size: 0.72rem; font-weight: 700; color: #065F46; background: #D1FAE5; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;" title="Highest marks scored in <%= s.sectionName %> across all candidates">
-                                                        Top: <%= secHighestVal %>/<%= s.maxMarks %>
-                                                    </span>
+                            <div class="student-stat-item">
+                                <span class="stat-number" style="color: #059669;">
+                                    <%= avgAccuracy %>%
+                                </span>
+                                <span class="stat-label">Avg Accuracy</span>
+                            </div>
+                            <div class="student-stat-item">
+                                <span class="stat-number" style="color: #2563EB;">
+                                    <%= bestScore %> <span
+                                            style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/ <%=
+                                                bestTotal || 300 %></span>
+                                </span>
+                                <span class="stat-label">Top Score</span>
+                            </div>
+                            <div class="student-stat-item">
+                                <span class="stat-number" style="color: #D97706;">
+                                    <% if (bestRank !==Infinity) { %>
+                                        #<%= bestRank %>
+                                            <% if (bestRankTotal> 0) { %><span
+                                                    style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">
+                                                    / <%= bestRankTotal %></span>
                                                 <% } %>
-                                            </div>
-                                            <div class="sec-stack-marks"><%= s.marks %> <span class="sec-stack-max">/ <%= s.maxMarks %> marks</span></div>
-                                            <div class="sec-stack-meta">
-                                                Total: <strong><%= secTotalQ %></strong> &middot;
-                                                Att: <strong><%= secAtt %></strong> &middot;
-                                                Unatt: <strong><%= secUnatt %></strong>
-                                            </div>
-                                        </div>
-                                    <% }) %>
+                                                    <% } else { %>
+                                                        &mdash;
+                                                        <% } %>
+                                </span>
+                                <span class="stat-label">Best Rank</span>
+                            </div>
+                            <div class="student-stat-item">
+                                <span class="stat-number" style="color: #7C3AED;">
+                                    <%= totalAttempted %>
+                                </span>
+                                <span class="stat-label">Questions Attempted</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <% if (currentUser && (currentUser.role==='admin' || currentUser.role==='teacher' )) { %>
+                        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; background: #FFFFFF;">
+                            <search>
+                                <form action="/student" method="GET"
+                                    style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <label for="lookupRoll"
+                                        style="font-weight: 700; font-size: 0.875rem; color: var(--text-main);">
+                                        Lookup Student Roll Number:
+                                    </label>
+                                    <input type="text" id="lookupRoll" name="roll" class="form-control"
+                                        value="<%= targetRoll || '' %>" placeholder="e.g. 01234567" autocorrect="off"
+                                        autocapitalize="none" spellcheck="false" style="max-width: 240px;">
+                                    <button type="submit" class="btn btn-primary btn-sm">Preview Student
+                                        Results</button>
+                                </form>
+                            </search>
+                        </div>
+                        <% } %>
+
+                            <% if (results && results.length> 0) { %>
+                                <div class="exam-grid">
+                                    <% results.forEach(item=> { %>
+                                        <% const scannedDate=new Date(item.submitted_at || item.scannedAt ||
+                                            Date.now()); const agg=item.aggregateMarks !==undefined ?
+                                            item.aggregateMarks : (item.score * 4); const maxM=item.maxMarks ||
+                                            ((item.totalQuestions || 50) * 4); const sumSec=item.allSectionsSummary || {
+                                            totalMarks: maxM, obtainedMarks: agg, totalQuestions: item.totalQuestions ||
+                                            0, attemptedQuestions: Math.max(0, (item.totalQuestions || 0) -
+                                            (item.blankCount || 0)), unattemptedQuestions: item.blankCount || 0,
+                                            correctCount: item.correctCount || 0, wrongCount: item.wrongCount || 0 };
+                                            const pId=String(item.paper_id || item.paperId || '' ); const pStats=(typeof
+                                            paperTopperStats !=='undefined' && paperTopperStats &&
+                                            paperTopperStats[pId]) ? paperTopperStats[pId] : null; %>
+                                            <article class="exam-card">
+                                                <div>
+                                                    <div class="exam-header">
+                                                        <div>
+                                                            <h2 class="exam-title">
+                                                                <%= item.paperTitle %>
+                                                            </h2>
+                                                            <div class="exam-meta">
+                                                                <span class="subject-badge">
+                                                                    <%= item.paperSubject || 'General' %>
+                                                                </span>
+                                                                <span>&middot;</span>
+                                                                <span>
+                                                                    <%= scannedDate.toLocaleDateString() %>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                                                            <span
+                                                                class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
+                                                                <%= item.percentage %>% Accuracy
+                                                            </span>
+                                                            <% if (item.rank) { %>
+                                                                <span
+                                                                    class="rank-badge <%= item.rank === 1 ? 'rank-badge-top1' : (item.rank <= 3 ? 'rank-badge-top3' : '') %>"
+                                                                    title="Your rank in <%= item.paperTitle %>">
+                                                                    <% if (item.rank===1) { %>🥇<% } else if
+                                                                            (item.rank===2) { %>🥈<% } else if
+                                                                                (item.rank===3) { %>🥉<% } else { %>🏅<%
+                                                                                        } %>
+                                                                                        Rank #<%= item.rank %>
+                                                                                            <% if (item.totalCandidates)
+                                                                                                { %><span
+                                                                                                    style="font-weight: 500; opacity: 0.8; font-size: 0.72rem;">
+                                                                                                    / <%=
+                                                                                                        item.totalCandidates
+                                                                                                        %></span>
+                                                                                                <% } %>
+                                                                </span>
+                                                                <% } %>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
+                                                        <div>
+                                                            <div class="agg-label">Obtained Score</div>
+                                                            <div class="agg-score">
+                                                                <%= sumSec.obtainedMarks %> <span
+                                                                        style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/
+                                                                        <%= sumSec.totalMarks %></span>
+                                                            </div>
+                                                            <div
+                                                                style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+                                                                <% if (item.rank) { %>
+                                                                    <span
+                                                                        class="rank-pill <%= item.rank === 1 ? 'rank-pill-top1' : (item.rank <= 3 ? 'rank-pill-top3' : '') %>"
+                                                                        title="Student rank in this exam">
+                                                                        🎯 Rank: #<%= item.rank %>
+                                                                            <% if (item.totalCandidates) { %> / <%=
+                                                                                    item.totalCandidates %>
+                                                                                    <% } %>
+                                                                    </span>
+                                                                    <% } %>
+                                                                        <% if (pStats && pStats.highestOverall
+                                                                            !==undefined) { %>
+                                                                            <span class="topper-pill"
+                                                                                title="Highest marks scored across all candidates for this exam">
+                                                                                🏆 Paper Highest: <%=
+                                                                                    pStats.highestOverall %> / <%=
+                                                                                        sumSec.totalMarks %>
+                                                                            </span>
+                                                                            <% } %>
+                                                            </div>
+                                                        </div>
+                                                        <div style="text-align: right; font-size: 0.8rem;">
+                                                            <div
+                                                                style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
+                                                                <%= sumSec.attemptedQuestions %> / <%=
+                                                                        sumSec.totalQuestions %> Att
+                                                            </div>
+                                                            <div style="color: var(--text-muted); margin-top: 2px;">
+                                                                Unatt: <strong style="color: var(--text-body);">
+                                                                    <%= sumSec.unattemptedQuestions %>
+                                                                </strong> &middot;
+                                                                <span
+                                                                    style="color: var(--success-hover); font-weight: 600;">
+                                                                    <%= sumSec.correctCount %>C
+                                                                </span> &middot;
+                                                                <span style="color: var(--danger); font-weight: 600;">
+                                                                    <%= sumSec.wrongCount %>W
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <% if (item.sectionWise && item.sectionWise.length> 0) { %>
+                                                        <div class="sec-stack-list">
+                                                            <% item.sectionWise.forEach(s=> { %>
+                                                                <% const secUnatt=s.unattempted !==undefined ?
+                                                                    s.unattempted : (s.blank || 0); const
+                                                                    secTotalQ=s.totalQuestions !==undefined ?
+                                                                    s.totalQuestions : ((s.correct || 0) + (s.wrong ||
+                                                                    0) + secUnatt); const secAtt=s.attempted
+                                                                    !==undefined ? s.attempted : Math.max(0, secTotalQ -
+                                                                    secUnatt); const secHighestObj=(pStats &&
+                                                                    pStats.sectionHighest) ?
+                                                                    pStats.sectionHighest[s.sectionName] : null; const
+                                                                    secHighestVal=secHighestObj ? secHighestObj.highest
+                                                                    : null; %>
+                                                                    <div class="sec-stack-item">
+                                                                        <div
+                                                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                                                            <div class="sec-stack-name">
+                                                                                <%= s.sectionName %>
+                                                                                    <% if (s.range &&
+                                                                                        !s.range.includes('MCQ') &&
+                                                                                        !s.range.includes('NVQ')) { %>
+                                                                                        <span
+                                                                                            style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
+                                                                                            <%= s.range %>)</span>
+                                                                                        <% } %>
+                                                                            </div>
+                                                                            <% if (secHighestVal !==null &&
+                                                                                secHighestVal !==undefined) { %>
+                                                                                <span
+                                                                                    style="font-size: 0.72rem; font-weight: 700; color: #065F46; background: #D1FAE5; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;"
+                                                                                    title="Highest marks scored in <%= s.sectionName %> across all candidates">
+                                                                                    Top: <%= secHighestVal %>/<%=
+                                                                                            s.maxMarks %>
+                                                                                </span>
+                                                                                <% } %>
+                                                                        </div>
+                                                                        <div class="sec-stack-marks">
+                                                                            <%= s.marks %> <span class="sec-stack-max">/
+                                                                                    <%= s.maxMarks %> marks</span>
+                                                                        </div>
+                                                                        <div class="sec-stack-meta">
+                                                                            Total: <strong>
+                                                                                <%= secTotalQ %>
+                                                                            </strong> &middot;
+                                                                            Att: <strong>
+                                                                                <%= secAtt %>
+                                                                            </strong> &middot;
+                                                                            Unatt: <strong>
+                                                                                <%= secUnatt %>
+                                                                            </strong>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% }) %>
+                                                        </div>
+                                                        <% } %>
+                                                </div>
+
+                                                <button type="button" class="btn-view-omr"
+                                                    onclick="openStudentOmrModal('<%= item._id %>')">
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                    </svg>
+                                                    <span>View Evaluated OMR Sheet</span>
+                                                </button>
+                                            </article>
+                                            <% }) %>
                                 </div>
-                            <% } %>
-                        </div>
-
-                        <button type="button"
-                                class="btn-view-omr"
-                                onclick="openStudentOmrModal('<%= item._id %>')">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <span>View Evaluated OMR Sheet</span>
-                        </button>
-                    </article>
-                <% }) %>
-            </div>
-        <% } else { %>
-            <div class="empty-state">
-                <div class="empty-state-icon" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                    </svg>
-                </div>
-                <h3 style="margin-bottom: 0.4rem;">No evaluated OMR sheets found</h3>
-                <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto; font-size: 0.9rem;">
-                    <% if (targetRoll) { %>
-                        No OMR submissions have been uploaded yet for roll number <strong><%= targetRoll %></strong>.
-                    <% } else { %>
-                        No roll number is assigned to this account. Contact your exam administrator.
-                    <% } %>
-                </p>
-            </div>
-        <% } %>
-    </div>
-
-    <!-- Checked OMR Copy Full-Page Modal Dialog -->
-    <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalRollNo">
-        <header class="omr-modal-header">
-            <div class="omr-modal-header-left">
-                <button type="button" class="btn-omr-back" onclick="closeStudentOmrModal()" title="Close OMR view">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                    <span class="back-text">Back</span>
-                </button>
-                <span class="roll-badge" id="modalRollNo" style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
-                <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0 / 0</span>
-                <span class="rank-badge" id="modalRankBadge" style="display: none; font-size: 0.82rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap;">Rank #0</span>
-            </div>
-
-            <div class="omr-modal-header-center" id="omrMobileNav">
-                <button type="button" class="omr-tab-pill active" id="tabMobileOmr" onclick="setMobileModalTab('omr')">Sheet</button>
-                <button type="button" class="omr-tab-pill" id="tabMobileBreakdown" onclick="setMobileModalTab('breakdown')">Marks</button>
-            </div>
-
-            <div class="omr-modal-header-right">
-                <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()" title="Toggle live check marks overlay">
-                    Marks: ON
-                </button>
-                <a id="modalOpenFullBtn" href="#" target="_blank" class="btn-omr-tool" title="Open full resolution photo in new tab">
-                    Photo &#8599;
-                </a>
-                <button type="button" class="btn-modal-close" onclick="closeStudentOmrModal()" aria-label="Close modal">&times;</button>
-            </div>
-        </header>
-
-        <div class="omr-modal-body">
-            <!-- Left: Full-Height OMR Sheet Stage with Centered Canvas & Live Checking Overlay -->
-            <div class="omr-stage-pane">
-                <div class="omr-stage-viewport">
-                    <div class="omr-preview-frame">
-                        <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
-                            onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
-                        <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"></svg>
-                    </div>
-                </div>
-                <div class="omr-stage-footer">
-                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
-                        <span><span style="color: #10B981;">&#9679;</span> Correct (+4)</span>
-                        <span><span style="color: #EF4444;">&#9679;</span> Wrong (-1)</span>
-                        <span><span style="color: #10B981;">&#9676;</span> Key</span>
-                        <span><span style="color: #06B6D4;">&#9679;</span> Roll</span>
-                    </div>
-                    <div class="omr-zoom-bar">
-                        <span style="font-size: 0.72rem; color: #94A3B8; margin-right: 3px; font-weight: 600;">Zoom:</span>
-                        <button type="button" class="btn-zoom active" id="btnZoom1" onclick="setOmrModalZoom(1, this)">1×</button>
-                        <button type="button" class="btn-zoom" id="btnZoom15" onclick="setOmrModalZoom(1.5, this)">1.5×</button>
-                        <button type="button" class="btn-zoom" id="btnZoom2" onclick="setOmrModalZoom(2, this)">2×</button>
-                    </div>
-                    <div id="modalCloudInfo" style="color: #64748B; font-size: 0.73rem;">
-                        Stored on Cloudinary
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Performance & Breakdown Dashboard -->
-            <div class="omr-details-pane">
-                <!-- Collapsible Score & Performance Toggle Bar (Hidden by Default) -->
-                <div class="scorecard-toggle-wrap">
-                    <button type="button" class="btn-scorecard-toggle" id="btnScorecardToggle" onclick="toggleStudentScorecardVisibility()">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
-                                <path d="M18 20V10"></path>
-                                <path d="M12 20V4"></path>
-                                <path d="M6 20v-6"></path>
-                            </svg>
-                            <span id="scorecardToggleLabel" style="font-weight: 700; font-size: 0.88rem;">Show Score & Subject Performance</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="scorecard-toggle-badge" id="scorecardToggleSummaryBadge">0 / 0</span>
-                            <svg class="scorecard-toggle-chevron" id="scorecardToggleChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </div>
-                    </button>
+                                <% } else { %>
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon" aria-hidden="true">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                </path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            </svg>
+                                        </div>
+                                        <h3 style="margin-bottom: 0.4rem;">No evaluated OMR sheets found</h3>
+                                        <p
+                                            style="color: var(--text-muted); max-width: 440px; margin: 0 auto; font-size: 0.9rem;">
+                                            <% if (targetRoll) { %>
+                                                No OMR submissions have been uploaded yet for roll number <strong>
+                                                    <%= targetRoll %>
+                                                </strong>.
+                                                <% } else { %>
+                                                    No roll number is assigned to this account. Contact your exam
+                                                    administrator.
+                                                    <% } %>
+                                        </p>
+                                    </div>
+                                    <% } %>
                 </div>
 
-                <!-- Collapsible Scorecard Breakdown Content (HIDDEN BY DEFAULT) -->
-                <div id="modalScorecardCollapsible" class="omr-scorecard-collapsible" style="display: none;">
-                    <!-- Hero Banner (Light Theme) -->
-                    <div class="omr-hero-banner">
-                        <div>
-                            <div class="hero-sublabel">
-                                Total Obtained Score
-                            </div>
-                            <div class="aggregate-grand-val" id="modalGrandAggregate">
-                                0 / 0
-                            </div>
-                            <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
-                                Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
-                            </div>
-                        </div>
-                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                            <div class="hero-sublabel">
-                                Overall Accuracy
-                            </div>
-                            <div class="hero-accuracy-val" id="modalAccuracyText">
-                                0%
-                            </div>
-                            <div id="modalHeroRankBadge" style="display: none; font-size: 0.82rem; font-weight: 700; color: #92400E; background: #FEF3C7; border: 1px solid #FCD34D; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;">
-                                🏅 <span id="modalHeroRankVal">Rank #1</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- KPI Tiles Grid -->
-                    <div class="omr-kpi-grid">
-                        <div class="omr-kpi-tile" id="tileRankWrap" style="display: none;">
-                            <span class="kpi-label">Rank</span>
-                            <span class="kpi-val" id="kpiRank" style="color: #D97706;">#1</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Attempted</span>
-                            <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Correct (+4)</span>
-                            <span class="kpi-val" id="kpiCorrect" style="color: #059669;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Wrong (-1)</span>
-                            <span class="kpi-val" id="kpiWrong" style="color: #DC2626;">0</span>
-                        </div>
-                        <div class="omr-kpi-tile">
-                            <span class="kpi-label">Unattempted</span>
-                            <span class="kpi-val" id="kpiBlank" style="color: #64748B;">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Subject/Section Breakdown Section -->
-                    <div>
-                        <h4 style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                            Subject Performance
-                        </h4>
-                        <div id="modalSectionContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
-                    </div>
-                </div>
-
-                <!-- Question Breakdown Table Section -->
-                <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        <h4 style="margin: 0; font-size: 0.94rem; font-weight: 700; color: #0F172A;">
-                            Question-by-Question Breakdown
-                        </h4>
-                        <div class="breakdown-filter-bar">
-                            <button type="button" class="filter-pill active" data-filter="all" onclick="filterModalBreakdown('all')">
-                                All (<span id="filterCountAll">0</span>)
+                <!-- Checked OMR Copy Full-Page Modal Dialog -->
+                <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalRollNo">
+                    <header class="omr-modal-header">
+                        <div class="omr-modal-header-left">
+                            <button type="button" class="btn-omr-back" onclick="closeStudentOmrModal()"
+                                title="Close OMR view">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
+                                </svg>
+                                <span class="back-text">Back</span>
                             </button>
-                            <button type="button" class="filter-pill" data-filter="correct" onclick="filterModalBreakdown('correct')">
-                                Correct (<span id="filterCountCorrect">0</span>)
+                            <span class="roll-badge" id="modalRollNo"
+                                style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
+                            <span class="aggregate-badge" id="modalAggregateText"
+                                style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0
+                                / 0</span>
+                            <span class="rank-badge" id="modalRankBadge"
+                                style="display: none; font-size: 0.82rem; padding: 2px 8px; border-radius: 999px; white-space: nowrap;">Rank
+                                #0</span>
+                        </div>
+
+                        <div class="omr-modal-header-center" id="omrMobileNav">
+                            <button type="button" class="omr-tab-pill active" id="tabMobileOmr"
+                                onclick="setMobileModalTab('omr')">Sheet</button>
+                            <button type="button" class="omr-tab-pill" id="tabMobileBreakdown"
+                                onclick="setMobileModalTab('breakdown')">Marks</button>
+                        </div>
+
+                        <div class="omr-modal-header-right">
+                            <button type="button" id="toggleOverlayBtn" class="btn-omr-tool"
+                                onclick="toggleCheckingOverlay()" title="Toggle live check marks overlay">
+                                Marks: ON
                             </button>
-                            <button type="button" class="filter-pill" data-filter="wrong" onclick="filterModalBreakdown('wrong')">
-                                Wrong (<span id="filterCountWrong">0</span>)
-                            </button>
-                            <button type="button" class="filter-pill" data-filter="blank" onclick="filterModalBreakdown('blank')">
-                                Blank (<span id="filterCountBlank">0</span>)
-                            </button>
+                            <a id="modalOpenFullBtn" href="#" target="_blank" class="btn-omr-tool"
+                                title="Open full resolution photo in new tab">
+                                Photo &#8599;
+                            </a>
+                            <button type="button" class="btn-modal-close" onclick="closeStudentOmrModal()"
+                                aria-label="Close modal">&times;</button>
+                        </div>
+                    </header>
+
+                    <div class="omr-modal-body">
+                        <!-- Left: Full-Height OMR Sheet Stage with Centered Canvas & Live Checking Overlay -->
+                        <div class="omr-stage-pane">
+                            <div class="omr-stage-viewport">
+                                <div class="omr-preview-frame">
+                                    <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
+                                        onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
+                                    <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"></svg>
+                                </div>
+                            </div>
+                            <div class="omr-stage-footer">
+                                <div
+                                    style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
+                                    <span><span style="color: #10B981;">&#9679;</span> Correct (+4)</span>
+                                    <span><span style="color: #EF4444;">&#9679;</span> Wrong (-1)</span>
+                                    <span><span style="color: #10B981;">&#9676;</span> Key</span>
+                                    <span><span style="color: #06B6D4;">&#9679;</span> Roll</span>
+                                </div>
+                                <div class="omr-zoom-bar">
+                                    <span
+                                        style="font-size: 0.72rem; color: #94A3B8; margin-right: 3px; font-weight: 600;">Zoom:</span>
+                                    <button type="button" class="btn-zoom active" id="btnZoom1"
+                                        onclick="setOmrModalZoom(1, this)">1×</button>
+                                    <button type="button" class="btn-zoom" id="btnZoom15"
+                                        onclick="setOmrModalZoom(1.5, this)">1.5×</button>
+                                    <button type="button" class="btn-zoom" id="btnZoom2"
+                                        onclick="setOmrModalZoom(2, this)">2×</button>
+                                </div>
+                                <div id="modalCloudInfo" style="color: #64748B; font-size: 0.73rem;">
+                                    Stored on Cloudinary
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Performance & Breakdown Dashboard -->
+                        <div class="omr-details-pane">
+                            <!-- Collapsible Score & Performance Toggle Bar (Hidden by Default) -->
+                            <div class="scorecard-toggle-wrap">
+                                <button type="button" class="btn-scorecard-toggle" id="btnScorecardToggle"
+                                    onclick="toggleStudentScorecardVisibility()">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                            stroke-linejoin="round" style="color: #2563EB;">
+                                            <path d="M18 20V10"></path>
+                                            <path d="M12 20V4"></path>
+                                            <path d="M6 20v-6"></path>
+                                        </svg>
+                                        <span id="scorecardToggleLabel"
+                                            style="font-weight: 700; font-size: 0.88rem;">Show Score & Subject
+                                            Performance</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span class="scorecard-toggle-badge" id="scorecardToggleSummaryBadge">0 /
+                                            0</span>
+                                        <svg class="scorecard-toggle-chevron" id="scorecardToggleChevron" width="16"
+                                            height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Collapsible Scorecard Breakdown Content (HIDDEN BY DEFAULT) -->
+                            <div id="modalScorecardCollapsible" class="omr-scorecard-collapsible"
+                                style="display: none;">
+                                <!-- Hero Banner (Light Theme) -->
+                                <div class="omr-hero-banner">
+                                    <div>
+                                        <div class="hero-sublabel">
+                                            Total Obtained Score
+                                        </div>
+                                        <div class="aggregate-grand-val" id="modalGrandAggregate">
+                                            0 / 0
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;"
+                                            id="modalAllSectionsStats">
+                                            Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                        <div class="hero-sublabel">
+                                            Overall Accuracy
+                                        </div>
+                                        <div class="hero-accuracy-val" id="modalAccuracyText">
+                                            0%
+                                        </div>
+                                        <div id="modalHeroRankBadge"
+                                            style="display: none; font-size: 0.82rem; font-weight: 700; color: #92400E; background: #FEF3C7; border: 1px solid #FCD34D; padding: 2px 8px; border-radius: 6px; font-family: 'JetBrains Mono', monospace;">
+                                            🏅 <span id="modalHeroRankVal">Rank #1</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- KPI Tiles Grid -->
+                                <div class="omr-kpi-grid">
+                                    <div class="omr-kpi-tile" id="tileRankWrap" style="display: none;">
+                                        <span class="kpi-label">Rank</span>
+                                        <span class="kpi-val" id="kpiRank" style="color: #D97706;">#1</span>
+                                    </div>
+                                    <div class="omr-kpi-tile">
+                                        <span class="kpi-label">Attempted</span>
+                                        <span class="kpi-val" id="kpiAttempted" style="color: #2563EB;">0</span>
+                                    </div>
+                                    <div class="omr-kpi-tile">
+                                        <span class="kpi-label">Correct (+4)</span>
+                                        <span class="kpi-val" id="kpiCorrect" style="color: #059669;">0</span>
+                                    </div>
+                                    <div class="omr-kpi-tile">
+                                        <span class="kpi-label">Wrong (-1)</span>
+                                        <span class="kpi-val" id="kpiWrong" style="color: #DC2626;">0</span>
+                                    </div>
+                                    <div class="omr-kpi-tile">
+                                        <span class="kpi-label">Unattempted</span>
+                                        <span class="kpi-val" id="kpiBlank" style="color: #64748B;">0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Subject/Section Breakdown Section -->
+                                <div>
+                                    <h4
+                                        style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                            stroke-linejoin="round" style="color: #2563EB;">
+                                            <rect x="3" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="14" width="7" height="7"></rect>
+                                            <rect x="3" y="14" width="7" height="7"></rect>
+                                        </svg>
+                                        Subject Performance
+                                    </h4>
+                                    <div id="modalSectionContainer"
+                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Question Breakdown Table Section -->
+                            <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                                    <h4 style="margin: 0; font-size: 0.94rem; font-weight: 700; color: #0F172A;">
+                                        Question-by-Question Breakdown
+                                    </h4>
+                                    <div class="breakdown-filter-bar">
+                                        <button type="button" class="filter-pill active" data-filter="all"
+                                            onclick="filterModalBreakdown('all')">
+                                            All (<span id="filterCountAll">0</span>)
+                                        </button>
+                                        <button type="button" class="filter-pill" data-filter="correct"
+                                            onclick="filterModalBreakdown('correct')">
+                                            Correct (<span id="filterCountCorrect">0</span>)
+                                        </button>
+                                        <button type="button" class="filter-pill" data-filter="wrong"
+                                            onclick="filterModalBreakdown('wrong')">
+                                            Wrong (<span id="filterCountWrong">0</span>)
+                                        </button>
+                                        <button type="button" class="filter-pill" data-filter="blank"
+                                            onclick="filterModalBreakdown('blank')">
+                                            Blank (<span id="filterCountBlank">0</span>)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; box-shadow: var(--shadow-sm);">
+                                    <table
+                                        style="width: 100%; border-collapse: collapse; font-size: 0.825rem; text-align: center; font-variant-numeric: tabular-nums;">
+                                        <thead>
+                                            <tr
+                                                style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                                                <th style="padding: 9px 8px; font-weight: 700;" id="thSubjectCol">
+                                                    Subject</th>
+                                                <th style="padding: 9px 8px; font-weight: 700;">Q#</th>
+                                                <th style="padding: 9px 8px; font-weight: 700;">Student Response</th>
+                                                <th style="padding: 9px 8px; font-weight: 700;">Official Key</th>
+                                                <th style="padding: 9px 8px; font-weight: 700;">Marks</th>
+                                                <th style="padding: 9px 8px; font-weight: 700;">Verdict</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="modalBreakdownBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </dialog>
 
-                    <div style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; box-shadow: var(--shadow-sm);">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 0.825rem; text-align: center; font-variant-numeric: tabular-nums;">
-                            <thead>
-                                <tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
-                                    <th style="padding: 9px 8px; font-weight: 700;" id="thSubjectCol">Subject</th>
-                                    <th style="padding: 9px 8px; font-weight: 700;">Q#</th>
-                                    <th style="padding: 9px 8px; font-weight: 700;">Student Response</th>
-                                    <th style="padding: 9px 8px; font-weight: 700;">Official Key</th>
-                                    <th style="padding: 9px 8px; font-weight: 700;">Marks</th>
-                                    <th style="padding: 9px 8px; font-weight: 700;">Verdict</th>
-                                </tr>
-                            </thead>
-                            <tbody id="modalBreakdownBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </dialog>
+                <script>
+                    const studentSubmissions = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+                    const paperTopperStats = <% - JSON.stringify(typeof paperTopperStats !== 'undefined' ? paperTopperStats : {}).replace(/</g, '\\u003c') %>;
+                    const submissionsById = {};
+                    studentSubmissions.forEach(s => {
+                        if (s && s._id) submissionsById[String(s._id)] = s;
+                    });
 
-    <script>
-        const studentSubmissions = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
-        const paperTopperStats = <%- JSON.stringify(typeof paperTopperStats !== 'undefined' ? paperTopperStats : {}).replace(/</g, '\\u003c') %>;
-        const submissionsById = {};
-        studentSubmissions.forEach(s => {
-            if (s && s._id) submissionsById[String(s._id)] = s;
-        });
-
-        function parseKeyOptionsClient(keyStr) {
-            if (!keyStr || typeof keyStr !== 'string') return [];
-            const trimmed = keyStr.trim().toUpperCase();
-            if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
-                return ['BONUS'];
-            }
-            if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
-                return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
-            }
-            if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
-                return trimmed.split('');
-            }
-            return [trimmed];
-        }
-
-        function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
-            const key = (officialKey || '').trim().toUpperCase();
-            const resp = (marked || '').trim().toUpperCase();
-            const posMarks = isJee ? 4 : 1;
-            const posMarksStr = isJee ? '+4' : '+1';
-            const negMarks = isJee ? -1 : 0;
-            const negMarksStr = isJee ? '-1' : '0';
-
-            // 1. Bonus Question: Full positive marks to all students
-            if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
-                return {
-                    verdict: 'bonus',
-                    marks: posMarksStr,
-                    scoreDelta: posMarks,
-                    isCorrect: true,
-                    isWrong: false,
-                    isBlank: (!resp || resp === '-' || resp === 'BLANK'),
-                    isBonus: true
-                };
-            }
-
-            // 2. Blank / Unmarked
-            if (!resp || resp === '-' || resp === 'BLANK') {
-                return {
-                    verdict: 'blank',
-                    marks: '0',
-                    scoreDelta: 0,
-                    isCorrect: false,
-                    isWrong: false,
-                    isBlank: true,
-                    isBonus: false
-                };
-            }
-
-            // 3. No Key Set yet
-            if (!key || key === '-') {
-                return {
-                    verdict: 'marked',
-                    marks: posMarksStr,
-                    scoreDelta: posMarks,
-                    isCorrect: true,
-                    isWrong: false,
-                    isBlank: false,
-                    isBonus: false
-                };
-            }
-
-            // 4. Multi-option or single-option key check
-            const validKeys = parseKeyOptionsClient(key);
-            const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
-
-            const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
-            const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
-
-            if (allMarkedValid || singleMarkedValid) {
-                return {
-                    verdict: 'correct',
-                    marks: posMarksStr,
-                    scoreDelta: posMarks,
-                    isCorrect: true,
-                    isWrong: false,
-                    isBlank: false,
-                    isBonus: false
-                };
-            }
-
-            // Student marked multiple bubbles, at least one is wrong
-            if (markedOpts.length > 1) {
-                return {
-                    verdict: 'multiple',
-                    marks: negMarksStr,
-                    scoreDelta: negMarks,
-                    isCorrect: false,
-                    isWrong: true,
-                    isBlank: false,
-                    isBonus: false
-                };
-            }
-
-            // Single wrong option marked
-            return {
-                verdict: 'wrong',
-                marks: negMarksStr,
-                scoreDelta: negMarks,
-                isCorrect: false,
-                isWrong: true,
-                isBlank: false,
-                isBonus: false
-            };
-        }
-
-        let currentModalItem = null;
-        let currentModalList = [];
-        let showCheckingOverlay = true;
-        let currentFilterVerdict = 'all';
-
-        const omrModalDialog = document.getElementById('omrModal');
-        if (omrModalDialog && !('closedBy' in HTMLDialogElement.prototype)) {
-            const outside = (e, d) => {
-                const r = d.getBoundingClientRect();
-                return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-            };
-            let downOutside = false;
-            omrModalDialog.addEventListener('pointerdown', e => { downOutside = outside(e, omrModalDialog); });
-            omrModalDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, omrModalDialog)) omrModalDialog.close(); });
-        }
-
-        const OMR_GEOMETRY = {
-            TARGET_W: 1000,
-            TARGET_H: 1461,
-            U_START: 0.061846,
-            V_START: 0.256331,
-            U_BUBBLE_STEP: 0.028042,
-            V_ROW_STEP: 0.018233,
-            U_COL_STEP: 0.201332,
-            QUESTIONS_PER_COL: 40,
-            OPTIONS: ['A', 'B', 'C', 'D'],
-            BUBBLE_R: 9.0,
-            U_ROLL_START: 0.619879,
-            V_ROLL_START: 0.058644,
-            U_ROLL_COL_STEP: 0.026640,
-            V_ROLL_ROW_STEP: 0.018233,
-            ROLL_R: 8.5
-        };
-
-        function toggleStudentScorecardVisibility() {
-            const coll = document.getElementById('modalScorecardCollapsible');
-            const lbl = document.getElementById('scorecardToggleLabel');
-            const chev = document.getElementById('scorecardToggleChevron');
-            if (!coll) return;
-            const isHidden = (coll.style.display === 'none' || getComputedStyle(coll).display === 'none');
-            if (isHidden) {
-                coll.style.display = 'flex';
-                if (lbl) lbl.textContent = 'Hide Score & Subject Performance';
-                if (chev) chev.style.transform = 'rotate(180deg)';
-            } else {
-                coll.style.display = 'none';
-                if (lbl) lbl.textContent = 'Show Score & Subject Performance';
-                if (chev) chev.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        let currentMobileModalTab = 'omr';
-        function setMobileModalTab(tab) {
-            currentMobileModalTab = tab;
-            const stage = document.querySelector('#omrModal .omr-stage-pane');
-            const details = document.querySelector('#omrModal .omr-details-pane');
-            const btnOmr = document.getElementById('tabMobileOmr');
-            const btnBrk = document.getElementById('tabMobileBreakdown');
-
-            if (window.innerWidth <= 960) {
-                if (tab === 'omr') {
-                    if (stage) stage.classList.remove('mobile-tab-hidden');
-                    if (details) details.classList.add('mobile-tab-hidden');
-                    if (btnOmr) btnOmr.classList.add('active');
-                    if (btnBrk) btnBrk.classList.remove('active');
-                } else {
-                    if (stage) stage.classList.add('mobile-tab-hidden');
-                    if (details) details.classList.remove('mobile-tab-hidden');
-                    if (btnOmr) btnOmr.classList.remove('active');
-                    if (btnBrk) btnBrk.classList.add('active');
-                }
-            } else {
-                if (stage) stage.classList.remove('mobile-tab-hidden');
-                if (details) details.classList.remove('mobile-tab-hidden');
-            }
-        }
-
-        let currentModalZoom = 1;
-        function setOmrModalZoom(scale, btn) {
-            currentModalZoom = scale;
-            const frame = document.querySelector('#omrModal .omr-preview-frame');
-            if (frame) {
-                frame.style.transform = `scale(${scale})`;
-                frame.style.transformOrigin = 'center top';
-                if (scale > 1) {
-                    frame.style.margin = `${Math.round((scale - 1) * 120)}px auto`;
-                } else {
-                    frame.style.margin = 'auto';
-                }
-            }
-            const btns = document.querySelectorAll('#omrModal .btn-zoom');
-            btns.forEach(b => b.classList.remove('active'));
-            if (btn) {
-                btn.classList.add('active');
-            } else {
-                const defaultBtn = document.getElementById('btnZoom' + (scale === 1.5 ? '15' : (scale === 2 ? '2' : '1')));
-                if (defaultBtn) defaultBtn.classList.add('active');
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            const dlg = document.getElementById('omrModal');
-            if (dlg && (dlg.open || dlg.hasAttribute('open'))) {
-                setMobileModalTab(currentMobileModalTab);
-            }
-        });
-
-        function toggleCheckingOverlay() {
-            showCheckingOverlay = !showCheckingOverlay;
-            const btn = document.getElementById('toggleOverlayBtn');
-            if (btn) btn.textContent = showCheckingOverlay ? 'Marks: ON' : 'Marks: OFF';
-            if (currentModalItem) renderOmrOverlay(currentModalItem, currentModalList);
-        }
-
-        function renderOmrOverlay(data, list) {
-            const svg = document.getElementById('modalOmrOverlay');
-            if (!svg) return;
-            svg.innerHTML = '';
-
-            if (!showCheckingOverlay) {
-                svg.style.display = 'none';
-                return;
-            }
-            svg.style.display = 'block';
-
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const G = OMR_GEOMETRY;
-
-            function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
-                const c = document.createElementNS(SVG_NS, 'circle');
-                c.setAttribute('cx', cx.toFixed(1));
-                c.setAttribute('cy', cy.toFixed(1));
-                c.setAttribute('r', String(r));
-                c.setAttribute('fill', fill);
-                c.setAttribute('stroke', stroke);
-                c.setAttribute('stroke-width', String(strokeWidth));
-                if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
-                svg.appendChild(c);
-            }
-
-            const rollStr = String(data.rollnumber || data.rollNumber || '');
-            if (/^[0-9-]{8}$/.test(rollStr)) {
-                for (let c = 0; c < 8; c++) {
-                    const ch = rollStr[c];
-                    if (ch >= '0' && ch <= '9') {
-                        const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
-                        const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
-                        addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
-                    }
-                }
-            }
-
-            list.forEach(b => {
-                if (b.isNumerical) return;
-                const q = Number(b.omrQ || b.q);
-                if (!q || q < 1) return;
-
-                const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
-                const row = (q - 1) % G.QUESTIONS_PER_COL;
-                const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
-                const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
-
-                const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-                const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
-
-                for (let bi = 0; bi < 4; bi++) {
-                    const opt = G.OPTIONS[bi];
-                    const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
-                    const isMarked = markedOpts.includes(opt);
-
-                    if (b.verdict === 'multiple' && isMarked) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
-                        const sz = Math.round(G.BUBBLE_R * 0.5);
-                        const l1 = document.createElementNS(SVG_NS, 'line');
-                        l1.setAttribute('x1', (bx - sz).toFixed(1));
-                        l1.setAttribute('y1', (rowY - sz).toFixed(1));
-                        l1.setAttribute('x2', (bx + sz).toFixed(1));
-                        l1.setAttribute('y2', (rowY + sz).toFixed(1));
-                        l1.setAttribute('stroke', '#FFFFFF');
-                        l1.setAttribute('stroke-width', '2');
-                        svg.appendChild(l1);
-
-                        const l2 = document.createElementNS(SVG_NS, 'line');
-                        l2.setAttribute('x1', (bx + sz).toFixed(1));
-                        l2.setAttribute('y1', (rowY - sz).toFixed(1));
-                        l2.setAttribute('x2', (bx - sz).toFixed(1));
-                        l2.setAttribute('y2', (rowY + sz).toFixed(1));
-                        l2.setAttribute('stroke', '#FFFFFF');
-                        l2.setAttribute('stroke-width', '2');
-                        svg.appendChild(l2);
-                    } else if (isMarked) {
-                        if (b.verdict === 'correct' || b.verdict === 'bonus') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
-                        } else if (b.verdict === 'wrong') {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
-                        } else {
-                            addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
+                    function parseKeyOptionsClient(keyStr) {
+                        if (!keyStr || typeof keyStr !== 'string') return [];
+                        const trimmed = keyStr.trim().toUpperCase();
+                        if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+                            return ['BONUS'];
                         }
-                    } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
-                    } else {
-                        addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
+                        if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+                            return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+                        }
+                        if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+                            return trimmed.split('');
+                        }
+                        return [trimmed];
                     }
-                }
-            });
-        }
 
-        function getSubmissionTotals(data) {
-            if (data && data.allSectionsSummary) {
-                return data.allSectionsSummary;
-            }
-            const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
-            if (secs.length > 0) {
-                return secs.reduce((acc, s) => {
-                    const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
-                    const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
-                    const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
-                    acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
-                    acc.obtainedMarks += Number(s.marks) || 0;
-                    acc.totalQuestions += totQ;
-                    acc.attemptedQuestions += att;
-                    acc.unattemptedQuestions += unatt;
-                    acc.correctCount += Number(s.correct) || 0;
-                    acc.wrongCount += Number(s.wrong) || 0;
-                    return acc;
-                }, {
-                    totalMarks: 0,
-                    obtainedMarks: 0,
-                    totalQuestions: 0,
-                    attemptedQuestions: 0,
-                    unattemptedQuestions: 0,
-                    correctCount: 0,
-                    wrongCount: 0
-                });
-            }
-            const totQ = Number(data && data.totalQuestions) || 0;
-            const blank = Number(data && data.blankCount) || 0;
-            const correct = Number(data && data.correctCount) || 0;
-            const wrong = Number(data && data.wrongCount) || 0;
-            return {
-                totalMarks: (data && data.maxMarks) || (totQ * 4),
-                obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
-                totalQuestions: totQ,
-                attemptedQuestions: Math.max(0, totQ - blank),
-                unattemptedQuestions: blank,
-                correctCount: correct,
-                wrongCount: wrong
-            };
-        }
+                    function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
+                        const key = (officialKey || '').trim().toUpperCase();
+                        const resp = (marked || '').trim().toUpperCase();
+                        const posMarks = isJee ? 4 : 1;
+                        const posMarksStr = isJee ? '+4' : '+1';
+                        const negMarks = isJee ? -1 : 0;
+                        const negMarksStr = isJee ? '-1' : '0';
 
-        function appendSectionSummaryCard(container, opts) {
-            const card = document.createElement('div');
-            card.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
-            card.style.cssText = `
+                        // 1. Bonus Question: Full positive marks to all students
+                        if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+                            return {
+                                verdict: 'bonus',
+                                marks: posMarksStr,
+                                scoreDelta: posMarks,
+                                isCorrect: true,
+                                isWrong: false,
+                                isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+                                isBonus: true
+                            };
+                        }
+
+                        // 2. Blank / Unmarked
+                        if (!resp || resp === '-' || resp === 'BLANK') {
+                            return {
+                                verdict: 'blank',
+                                marks: '0',
+                                scoreDelta: 0,
+                                isCorrect: false,
+                                isWrong: false,
+                                isBlank: true,
+                                isBonus: false
+                            };
+                        }
+
+                        // 3. No Key Set yet
+                        if (!key || key === '-') {
+                            return {
+                                verdict: 'marked',
+                                marks: posMarksStr,
+                                scoreDelta: posMarks,
+                                isCorrect: true,
+                                isWrong: false,
+                                isBlank: false,
+                                isBonus: false
+                            };
+                        }
+
+                        // 4. Multi-option or single-option key check
+                        const validKeys = parseKeyOptionsClient(key);
+                        const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+                        const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+                        const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+                        if (allMarkedValid || singleMarkedValid) {
+                            return {
+                                verdict: 'correct',
+                                marks: posMarksStr,
+                                scoreDelta: posMarks,
+                                isCorrect: true,
+                                isWrong: false,
+                                isBlank: false,
+                                isBonus: false
+                            };
+                        }
+
+                        // Student marked multiple bubbles, at least one is wrong
+                        if (markedOpts.length > 1) {
+                            return {
+                                verdict: 'multiple',
+                                marks: negMarksStr,
+                                scoreDelta: negMarks,
+                                isCorrect: false,
+                                isWrong: true,
+                                isBlank: false,
+                                isBonus: false
+                            };
+                        }
+
+                        // Single wrong option marked
+                        return {
+                            verdict: 'wrong',
+                            marks: negMarksStr,
+                            scoreDelta: negMarks,
+                            isCorrect: false,
+                            isWrong: true,
+                            isBlank: false,
+                            isBonus: false
+                        };
+                    }
+
+                    let currentModalItem = null;
+                    let currentModalList = [];
+                    let showCheckingOverlay = true;
+                    let currentFilterVerdict = 'all';
+
+                    const omrModalDialog = document.getElementById('omrModal');
+                    if (omrModalDialog && !('closedBy' in HTMLDialogElement.prototype)) {
+                        const outside = (e, d) => {
+                            const r = d.getBoundingClientRect();
+                            return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+                        };
+                        let downOutside = false;
+                        omrModalDialog.addEventListener('pointerdown', e => { downOutside = outside(e, omrModalDialog); });
+                        omrModalDialog.addEventListener('pointerup', e => { if (downOutside && outside(e, omrModalDialog)) omrModalDialog.close(); });
+                    }
+
+                    const OMR_GEOMETRY = {
+                        TARGET_W: 1000,
+                        TARGET_H: 1461,
+                        U_START: 0.061846,
+                        V_START: 0.256331,
+                        U_BUBBLE_STEP: 0.028042,
+                        V_ROW_STEP: 0.018233,
+                        U_COL_STEP: 0.201332,
+                        QUESTIONS_PER_COL: 40,
+                        OPTIONS: ['A', 'B', 'C', 'D'],
+                        BUBBLE_R: 9.0,
+                        U_ROLL_START: 0.619879,
+                        V_ROLL_START: 0.058644,
+                        U_ROLL_COL_STEP: 0.026640,
+                        V_ROLL_ROW_STEP: 0.018233,
+                        ROLL_R: 8.5
+                    };
+
+                    function toggleStudentScorecardVisibility() {
+                        const coll = document.getElementById('modalScorecardCollapsible');
+                        const lbl = document.getElementById('scorecardToggleLabel');
+                        const chev = document.getElementById('scorecardToggleChevron');
+                        if (!coll) return;
+                        const isHidden = (coll.style.display === 'none' || getComputedStyle(coll).display === 'none');
+                        if (isHidden) {
+                            coll.style.display = 'flex';
+                            if (lbl) lbl.textContent = 'Hide Score & Subject Performance';
+                            if (chev) chev.style.transform = 'rotate(180deg)';
+                        } else {
+                            coll.style.display = 'none';
+                            if (lbl) lbl.textContent = 'Show Score & Subject Performance';
+                            if (chev) chev.style.transform = 'rotate(0deg)';
+                        }
+                    }
+
+                    let currentMobileModalTab = 'omr';
+                    function setMobileModalTab(tab) {
+                        currentMobileModalTab = tab;
+                        const stage = document.querySelector('#omrModal .omr-stage-pane');
+                        const details = document.querySelector('#omrModal .omr-details-pane');
+                        const btnOmr = document.getElementById('tabMobileOmr');
+                        const btnBrk = document.getElementById('tabMobileBreakdown');
+
+                        if (window.innerWidth <= 960) {
+                            if (tab === 'omr') {
+                                if (stage) stage.classList.remove('mobile-tab-hidden');
+                                if (details) details.classList.add('mobile-tab-hidden');
+                                if (btnOmr) btnOmr.classList.add('active');
+                                if (btnBrk) btnBrk.classList.remove('active');
+                            } else {
+                                if (stage) stage.classList.add('mobile-tab-hidden');
+                                if (details) details.classList.remove('mobile-tab-hidden');
+                                if (btnOmr) btnOmr.classList.remove('active');
+                                if (btnBrk) btnBrk.classList.add('active');
+                            }
+                        } else {
+                            if (stage) stage.classList.remove('mobile-tab-hidden');
+                            if (details) details.classList.remove('mobile-tab-hidden');
+                        }
+                    }
+
+                    let currentModalZoom = 1;
+                    function setOmrModalZoom(scale, btn) {
+                        currentModalZoom = scale;
+                        const frame = document.querySelector('#omrModal .omr-preview-frame');
+                        if (frame) {
+                            frame.style.transform = `scale(${scale})`;
+                            frame.style.transformOrigin = 'center top';
+                            if (scale > 1) {
+                                frame.style.margin = `${Math.round((scale - 1) * 120)}px auto`;
+                            } else {
+                                frame.style.margin = 'auto';
+                            }
+                        }
+                        const btns = document.querySelectorAll('#omrModal .btn-zoom');
+                        btns.forEach(b => b.classList.remove('active'));
+                        if (btn) {
+                            btn.classList.add('active');
+                        } else {
+                            const defaultBtn = document.getElementById('btnZoom' + (scale === 1.5 ? '15' : (scale === 2 ? '2' : '1')));
+                            if (defaultBtn) defaultBtn.classList.add('active');
+                        }
+                    }
+
+                    window.addEventListener('resize', () => {
+                        const dlg = document.getElementById('omrModal');
+                        if (dlg && (dlg.open || dlg.hasAttribute('open'))) {
+                            setMobileModalTab(currentMobileModalTab);
+                        }
+                    });
+
+                    function toggleCheckingOverlay() {
+                        showCheckingOverlay = !showCheckingOverlay;
+                        const btn = document.getElementById('toggleOverlayBtn');
+                        if (btn) btn.textContent = showCheckingOverlay ? 'Marks: ON' : 'Marks: OFF';
+                        if (currentModalItem) renderOmrOverlay(currentModalItem, currentModalList);
+                    }
+
+                    function renderOmrOverlay(data, list) {
+                        const svg = document.getElementById('modalOmrOverlay');
+                        if (!svg) return;
+                        svg.innerHTML = '';
+
+                        if (!showCheckingOverlay) {
+                            svg.style.display = 'none';
+                            return;
+                        }
+                        svg.style.display = 'block';
+
+                        const SVG_NS = 'http://www.w3.org/2000/svg';
+                        const G = OMR_GEOMETRY;
+
+                        function addCircle(cx, cy, r, fill, stroke, strokeWidth, dashArray) {
+                            const c = document.createElementNS(SVG_NS, 'circle');
+                            c.setAttribute('cx', cx.toFixed(1));
+                            c.setAttribute('cy', cy.toFixed(1));
+                            c.setAttribute('r', String(r));
+                            c.setAttribute('fill', fill);
+                            c.setAttribute('stroke', stroke);
+                            c.setAttribute('stroke-width', String(strokeWidth));
+                            if (dashArray) c.setAttribute('stroke-dasharray', dashArray);
+                            svg.appendChild(c);
+                        }
+
+                        const rollStr = String(data.rollnumber || data.rollNumber || '');
+                        if (/^[0-9-]{8}$/.test(rollStr)) {
+                            for (let c = 0; c < 8; c++) {
+                                const ch = rollStr[c];
+                                if (ch >= '0' && ch <= '9') {
+                                    const cx = (G.U_ROLL_START + c * G.U_ROLL_COL_STEP) * G.TARGET_W;
+                                    const cy = (G.V_ROLL_START + Number(ch) * G.V_ROLL_ROW_STEP) * G.TARGET_H;
+                                    addCircle(cx, cy, G.ROLL_R, 'rgba(37, 99, 235, 0.35)', '#2563EB', 2);
+                                }
+                            }
+                        }
+
+                        list.forEach(b => {
+                            if (b.isNumerical) return;
+                            const q = Number(b.omrQ || b.q);
+                            if (!q || q < 1) return;
+
+                            const col = Math.floor((q - 1) / G.QUESTIONS_PER_COL);
+                            const row = (q - 1) % G.QUESTIONS_PER_COL;
+                            const rowY = (G.V_START + row * G.V_ROW_STEP) * G.TARGET_H;
+                            const colX = (G.U_START + col * G.U_COL_STEP) * G.TARGET_W;
+
+                            const markedOpts = (b.marked || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+                            const correctAns = (b.correctKey && b.correctKey !== '-') ? String(b.correctKey).trim().toUpperCase() : '';
+
+                            for (let bi = 0; bi < 4; bi++) {
+                                const opt = G.OPTIONS[bi];
+                                const bx = colX + (bi * G.U_BUBBLE_STEP) * G.TARGET_W;
+                                const isMarked = markedOpts.includes(opt);
+
+                                if (b.verdict === 'multiple' && isMarked) {
+                                    addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.55)', '#DC2626', 2);
+                                    const sz = Math.round(G.BUBBLE_R * 0.5);
+                                    const l1 = document.createElementNS(SVG_NS, 'line');
+                                    l1.setAttribute('x1', (bx - sz).toFixed(1));
+                                    l1.setAttribute('y1', (rowY - sz).toFixed(1));
+                                    l1.setAttribute('x2', (bx + sz).toFixed(1));
+                                    l1.setAttribute('y2', (rowY + sz).toFixed(1));
+                                    l1.setAttribute('stroke', '#FFFFFF');
+                                    l1.setAttribute('stroke-width', '2');
+                                    svg.appendChild(l1);
+
+                                    const l2 = document.createElementNS(SVG_NS, 'line');
+                                    l2.setAttribute('x1', (bx + sz).toFixed(1));
+                                    l2.setAttribute('y1', (rowY - sz).toFixed(1));
+                                    l2.setAttribute('x2', (bx - sz).toFixed(1));
+                                    l2.setAttribute('y2', (rowY + sz).toFixed(1));
+                                    l2.setAttribute('stroke', '#FFFFFF');
+                                    l2.setAttribute('stroke-width', '2');
+                                    svg.appendChild(l2);
+                                } else if (isMarked) {
+                                    if (b.verdict === 'correct' || b.verdict === 'bonus') {
+                                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(22, 163, 74, 0.45)', '#16A34A', 2);
+                                    } else if (b.verdict === 'wrong') {
+                                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(220, 38, 38, 0.45)', '#DC2626', 2);
+                                    } else {
+                                        addCircle(bx, rowY, G.BUBBLE_R, 'rgba(37, 99, 235, 0.40)', '#2563EB', 2);
+                                    }
+                                } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (b.verdict === 'wrong' || b.verdict === 'multiple' || b.verdict === 'blank' || b.verdict === 'unmarked')) {
+                                    addCircle(bx, rowY, G.BUBBLE_R, 'none', '#16A34A', 2, '3,3');
+                                } else {
+                                    addCircle(bx, rowY, G.BUBBLE_R, 'none', 'rgba(148, 163, 184, 0.22)', 1.5);
+                                }
+                            }
+                        });
+                    }
+
+                    function getSubmissionTotals(data) {
+                        if (data && data.allSectionsSummary) {
+                            return data.allSectionsSummary;
+                        }
+                        const secs = (data && Array.isArray(data.sectionWise)) ? data.sectionWise : [];
+                        if (secs.length > 0) {
+                            return secs.reduce((acc, s) => {
+                                const unatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                                const totQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + unatt);
+                                const att = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, totQ - unatt);
+                                acc.totalMarks += Number(s.maxMarks) || (totQ * 4);
+                                acc.obtainedMarks += Number(s.marks) || 0;
+                                acc.totalQuestions += totQ;
+                                acc.attemptedQuestions += att;
+                                acc.unattemptedQuestions += unatt;
+                                acc.correctCount += Number(s.correct) || 0;
+                                acc.wrongCount += Number(s.wrong) || 0;
+                                return acc;
+                            }, {
+                                totalMarks: 0,
+                                obtainedMarks: 0,
+                                totalQuestions: 0,
+                                attemptedQuestions: 0,
+                                unattemptedQuestions: 0,
+                                correctCount: 0,
+                                wrongCount: 0
+                            });
+                        }
+                        const totQ = Number(data && data.totalQuestions) || 0;
+                        const blank = Number(data && data.blankCount) || 0;
+                        const correct = Number(data && data.correctCount) || 0;
+                        const wrong = Number(data && data.wrongCount) || 0;
+                        return {
+                            totalMarks: (data && data.maxMarks) || (totQ * 4),
+                            obtainedMarks: (data && data.aggregateMarks !== undefined) ? data.aggregateMarks : Math.max(0, (correct * 4) - wrong),
+                            totalQuestions: totQ,
+                            attemptedQuestions: Math.max(0, totQ - blank),
+                            unattemptedQuestions: blank,
+                            correctCount: correct,
+                            wrongCount: wrong
+                        };
+                    }
+
+                    function appendSectionSummaryCard(container, opts) {
+                        const card = document.createElement('div');
+                        card.className = opts.isTotal ? 'sec-card sec-card-total' : 'sec-card';
+                        card.style.cssText = `
                 background: ${opts.isTotal ? '#F0FDF4' : '#FFFFFF'};
                 border: 1px solid ${opts.isTotal ? '#BBF7D0' : '#E2E8F0'};
                 border-radius: var(--radius-sm);
@@ -1745,489 +2499,489 @@
                 box-shadow: 0 1px 2px rgba(0,0,0,0.04);
             `;
 
-            const head = document.createElement('div');
-            head.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+                        const head = document.createElement('div');
+                        head.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
 
-            const title = document.createElement('div');
-            title.style.cssText = `font-weight:700; font-size:0.86rem; color:${opts.isTotal ? '#15803D' : '#1E293B'};`;
-            title.textContent = opts.title;
+                        const title = document.createElement('div');
+                        title.style.cssText = `font-weight:700; font-size:0.86rem; color:${opts.isTotal ? '#15803D' : '#1E293B'};`;
+                        title.textContent = opts.title;
 
-            const marks = document.createElement('div');
-            marks.style.cssText = `font-weight:800; font-family:"JetBrains Mono",monospace; font-size:1.05rem; color:${opts.isTotal ? '#15803D' : '#2563EB'};`;
-            marks.innerHTML = `${opts.obtainedMarks} <span style="font-size:0.72rem; font-weight:600; color:#64748B;">/ ${opts.totalMarks}</span>`;
+                        const marks = document.createElement('div');
+                        marks.style.cssText = `font-weight:800; font-family:"JetBrains Mono",monospace; font-size:1.05rem; color:${opts.isTotal ? '#15803D' : '#2563EB'};`;
+                        marks.innerHTML = `${opts.obtainedMarks} <span style="font-size:0.72rem; font-weight:600; color:#64748B;">/ ${opts.totalMarks}</span>`;
 
-            head.appendChild(title);
-            head.appendChild(marks);
+                        head.appendChild(title);
+                        head.appendChild(marks);
 
-            const meta = document.createElement('div');
-            meta.style.cssText = 'font-size:0.73rem; color:#64748B; line-height:1.35; font-variant-numeric:tabular-nums;';
-            meta.textContent = opts.metaText;
+                        const meta = document.createElement('div');
+                        meta.style.cssText = 'font-size:0.73rem; color:#64748B; line-height:1.35; font-variant-numeric:tabular-nums;';
+                        meta.textContent = opts.metaText;
 
-            card.appendChild(head);
-            card.appendChild(meta);
+                        card.appendChild(head);
+                        card.appendChild(meta);
 
-            if (opts.topScore !== undefined && opts.topScore !== null) {
-                const topBadge = document.createElement('div');
-                topBadge.style.cssText = 'font-size:0.72rem; font-weight:700; color:#065F46; background:#D1FAE5; border:1px solid #A7F3D0; padding:2px 7px; border-radius:4px; font-family:"JetBrains Mono",monospace; width:fit-content; margin-top:3px;';
-                topBadge.textContent = `🏆 Paper Top: ${opts.topScore}/${opts.totalMarks}`;
-                card.appendChild(topBadge);
-            }
+                        if (opts.topScore !== undefined && opts.topScore !== null) {
+                            const topBadge = document.createElement('div');
+                            topBadge.style.cssText = 'font-size:0.72rem; font-weight:700; color:#065F46; background:#D1FAE5; border:1px solid #A7F3D0; padding:2px 7px; border-radius:4px; font-family:"JetBrains Mono",monospace; width:fit-content; margin-top:3px;';
+                            topBadge.textContent = `🏆 Paper Top: ${opts.topScore}/${opts.totalMarks}`;
+                            card.appendChild(topBadge);
+                        }
 
-            container.appendChild(card);
-        }
-
-        function filterModalBreakdown(verdict) {
-            currentFilterVerdict = verdict;
-            document.querySelectorAll('.filter-pill').forEach(p => {
-                if (p.getAttribute('data-filter') === verdict) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
-            renderModalBreakdownTable();
-        }
-
-        function renderModalBreakdownTable() {
-            const tbody = document.getElementById('modalBreakdownBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const list = currentModalList || [];
-            const data = currentModalItem || {};
-            const isJee = (data.examType === 'jee') || 
-                          (data.exam_type === 'jee') || 
-                          (data.numericalScores && Object.keys(data.numericalScores).length > 0) || 
-                          (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) || 
-                          /jee/i.test(data.paperTitle || '') || 
-                          /jee/i.test(data.paperSubject || '');
-
-            const thSub = document.getElementById('thSubjectCol');
-            if (thSub) thSub.style.display = isJee ? '' : 'none';
-
-            let cAll = 0, cCor = 0, cWro = 0, cBla = 0;
-            list.forEach(q => {
-                cAll++;
-                if (q.verdict === 'correct' || q.verdict === 'bonus') cCor++;
-                else if (q.verdict === 'wrong' || q.verdict === 'multiple') cWro++;
-                else cBla++;
-            });
-
-            const cntAll = document.getElementById('filterCountAll');
-            if (cntAll) cntAll.textContent = cAll;
-            const cntCor = document.getElementById('filterCountCorrect');
-            if (cntCor) cntCor.textContent = cCor;
-            const cntWro = document.getElementById('filterCountWrong');
-            if (cntWro) cntWro.textContent = cWro;
-            const cntBla = document.getElementById('filterCountBlank');
-            if (cntBla) cntBla.textContent = cBla;
-
-            const filtered = list.filter(b => {
-                if (currentFilterVerdict === 'correct') return b.verdict === 'correct' || b.verdict === 'bonus';
-                if (currentFilterVerdict === 'wrong') return (b.verdict === 'wrong' || b.verdict === 'multiple');
-                if (currentFilterVerdict === 'blank') return (b.verdict === 'blank' || b.verdict === 'unmarked');
-                return true;
-            });
-
-            if (filtered.length > 0) {
-                filtered.forEach(b => {
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid #F1F5F9';
-                    let vColor = '#64748B';
-                    let vBg = '#F1F5F9';
-                    let vText = 'Blank';
-                    let qMarksText = (b.marks !== undefined) ? b.marks : '0';
-                    let qMarksColor = '#64748B';
-
-                    if (b.verdict === 'bonus') {
-                        vColor = '#92400E'; vBg = '#FEF3C7'; vText = '★ BONUS'; if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1'; qMarksColor = '#D97706';
-                    } else if (b.verdict === 'correct') {
-                        vColor = '#15803D'; vBg = '#DCFCE7'; vText = 'Correct'; if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1'; qMarksColor = '#15803D';
-                    } else if (b.verdict === 'wrong') {
-                        vColor = '#DC2626'; vBg = '#FEE2E2'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = isJee ? '-1' : '0'; qMarksColor = '#DC2626';
-                    } else if (b.verdict === 'multiple') {
-                        vColor = '#B91C1C'; vBg = '#FEE2E2'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = isJee ? '-1' : '0'; qMarksColor = '#B91C1C';
-                    } else if (b.verdict === 'marked') {
-                        vColor = '#1D4ED8'; vBg = '#DBEAFE'; vText = 'Recorded';
+                        container.appendChild(card);
                     }
 
-                    if (isJee) {
-                        const tdSub = document.createElement('td');
-                        tdSub.style.cssText = 'padding:8px 6px; font-weight:700; font-size:0.75rem; color:#475569;';
-                        tdSub.textContent = b.subject || '-';
-                        tr.appendChild(tdSub);
+                    function filterModalBreakdown(verdict) {
+                        currentFilterVerdict = verdict;
+                        document.querySelectorAll('.filter-pill').forEach(p => {
+                            if (p.getAttribute('data-filter') === verdict) {
+                                p.classList.add('active');
+                            } else {
+                                p.classList.remove('active');
+                            }
+                        });
+                        renderModalBreakdownTable();
                     }
 
-                    const tdQ = document.createElement('td');
-                    tdQ.style.cssText = 'padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
-                    tdQ.textContent = 'Q' + (b.displayQ || b.q);
+                    function renderModalBreakdownTable() {
+                        const tbody = document.getElementById('modalBreakdownBody');
+                        if (!tbody) return;
+                        tbody.innerHTML = '';
 
-                    const tdMarked = document.createElement('td');
-                    tdMarked.style.cssText = 'padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
-                    tdMarked.textContent = b.marked || '—';
+                        const list = currentModalList || [];
+                        const data = currentModalItem || {};
+                        const isJee = (data.examType === 'jee') ||
+                            (data.exam_type === 'jee') ||
+                            (data.numericalScores && Object.keys(data.numericalScores).length > 0) ||
+                            (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) ||
+                            /jee/i.test(data.paperTitle || '') ||
+                            /jee/i.test(data.paperSubject || '');
 
-                    const tdKey = document.createElement('td');
-                    tdKey.style.cssText = 'padding:8px 6px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
-                    const cKeyStr = String(b.correctKey || '-').trim();
-                    if (cKeyStr.toUpperCase() === 'BONUS') {
-                        tdKey.innerHTML = '<span style="color:#D97706; font-weight:800;">★ BONUS</span>';
-                    } else {
-                        tdKey.textContent = cKeyStr;
+                        const thSub = document.getElementById('thSubjectCol');
+                        if (thSub) thSub.style.display = isJee ? '' : 'none';
+
+                        let cAll = 0, cCor = 0, cWro = 0, cBla = 0;
+                        list.forEach(q => {
+                            cAll++;
+                            if (q.verdict === 'correct' || q.verdict === 'bonus') cCor++;
+                            else if (q.verdict === 'wrong' || q.verdict === 'multiple') cWro++;
+                            else cBla++;
+                        });
+
+                        const cntAll = document.getElementById('filterCountAll');
+                        if (cntAll) cntAll.textContent = cAll;
+                        const cntCor = document.getElementById('filterCountCorrect');
+                        if (cntCor) cntCor.textContent = cCor;
+                        const cntWro = document.getElementById('filterCountWrong');
+                        if (cntWro) cntWro.textContent = cWro;
+                        const cntBla = document.getElementById('filterCountBlank');
+                        if (cntBla) cntBla.textContent = cBla;
+
+                        const filtered = list.filter(b => {
+                            if (currentFilterVerdict === 'correct') return b.verdict === 'correct' || b.verdict === 'bonus';
+                            if (currentFilterVerdict === 'wrong') return (b.verdict === 'wrong' || b.verdict === 'multiple');
+                            if (currentFilterVerdict === 'blank') return (b.verdict === 'blank' || b.verdict === 'unmarked');
+                            return true;
+                        });
+
+                        if (filtered.length > 0) {
+                            filtered.forEach(b => {
+                                const tr = document.createElement('tr');
+                                tr.style.borderBottom = '1px solid #F1F5F9';
+                                let vColor = '#64748B';
+                                let vBg = '#F1F5F9';
+                                let vText = 'Blank';
+                                let qMarksText = (b.marks !== undefined) ? b.marks : '0';
+                                let qMarksColor = '#64748B';
+
+                                if (b.verdict === 'bonus') {
+                                    vColor = '#92400E'; vBg = '#FEF3C7'; vText = '★ BONUS'; if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1'; qMarksColor = '#D97706';
+                                } else if (b.verdict === 'correct') {
+                                    vColor = '#15803D'; vBg = '#DCFCE7'; vText = 'Correct'; if (b.marks === undefined) qMarksText = isJee ? '+4' : '+1'; qMarksColor = '#15803D';
+                                } else if (b.verdict === 'wrong') {
+                                    vColor = '#DC2626'; vBg = '#FEE2E2'; vText = 'Wrong'; if (b.marks === undefined) qMarksText = isJee ? '-1' : '0'; qMarksColor = '#DC2626';
+                                } else if (b.verdict === 'multiple') {
+                                    vColor = '#B91C1C'; vBg = '#FEE2E2'; vText = 'Multiple'; if (b.marks === undefined) qMarksText = isJee ? '-1' : '0'; qMarksColor = '#B91C1C';
+                                } else if (b.verdict === 'marked') {
+                                    vColor = '#1D4ED8'; vBg = '#DBEAFE'; vText = 'Recorded';
+                                }
+
+                                if (isJee) {
+                                    const tdSub = document.createElement('td');
+                                    tdSub.style.cssText = 'padding:8px 6px; font-weight:700; font-size:0.75rem; color:#475569;';
+                                    tdSub.textContent = b.subject || '-';
+                                    tr.appendChild(tdSub);
+                                }
+
+                                const tdQ = document.createElement('td');
+                                tdQ.style.cssText = 'padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:#475569;';
+                                tdQ.textContent = 'Q' + (b.displayQ || b.q);
+
+                                const tdMarked = document.createElement('td');
+                                tdMarked.style.cssText = 'padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:var(--text-main);';
+                                tdMarked.textContent = b.marked || '—';
+
+                                const tdKey = document.createElement('td');
+                                tdKey.style.cssText = 'padding:8px 6px; font-weight:700; color:#1D4ED8; font-family:"JetBrains Mono",monospace;';
+                                const cKeyStr = String(b.correctKey || '-').trim();
+                                if (cKeyStr.toUpperCase() === 'BONUS') {
+                                    tdKey.innerHTML = '<span style="color:#D97706; font-weight:800;">★ BONUS</span>';
+                                } else {
+                                    tdKey.textContent = cKeyStr;
+                                }
+
+                                const tdMarks = document.createElement('td');
+                                tdMarks.style.cssText = `padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
+                                tdMarks.textContent = qMarksText;
+
+                                const tdVerdict = document.createElement('td');
+                                tdVerdict.style.cssText = 'padding:8px 6px;';
+                                const vPill = document.createElement('span');
+                                vPill.style.cssText = `display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; color:${vColor}; background:${vBg};`;
+                                vPill.textContent = vText;
+                                tdVerdict.appendChild(vPill);
+
+                                tr.appendChild(tdQ);
+                                tr.appendChild(tdMarked);
+                                tr.appendChild(tdKey);
+                                tr.appendChild(tdMarks);
+                                tr.appendChild(tdVerdict);
+                                tbody.appendChild(tr);
+                            });
+                        } else {
+                            tbody.innerHTML = '<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--text-muted);">No questions match the selected filter.</td></tr>';
+                        }
                     }
 
-                    const tdMarks = document.createElement('td');
-                    tdMarks.style.cssText = `padding:8px 6px; font-weight:700; font-family:"JetBrains Mono",monospace; color:${qMarksColor};`;
-                    tdMarks.textContent = qMarksText;
+                    function openStudentOmrModal(id) {
+                        const data = submissionsById[String(id)];
+                        if (!data) return;
 
-                    const tdVerdict = document.createElement('td');
-                    tdVerdict.style.cssText = 'padding:8px 6px;';
-                    const vPill = document.createElement('span');
-                    vPill.style.cssText = `display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; color:${vColor}; background:${vBg};`;
-                    vPill.textContent = vText;
-                    tdVerdict.appendChild(vPill);
+                        currentModalItem = data;
+                        const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
+                        const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
+                        const sumSec = getSubmissionTotals(data);
+                        const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
+                        const pId = String(data.paper_id || data.paperId || '');
+                        const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats) ? paperTopperStats[pId] : null;
 
-                    tr.appendChild(tdQ);
-                    tr.appendChild(tdMarked);
-                    tr.appendChild(tdKey);
-                    tr.appendChild(tdMarks);
-                    tr.appendChild(tdVerdict);
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--text-muted);">No questions match the selected filter.</td></tr>';
-            }
-        }
+                        document.getElementById('modalRollNo').textContent = roll;
+                        const titleEl = document.getElementById('modalPaperTitle');
+                        if (titleEl) titleEl.textContent = data.paperTitle || 'Exam Sheet';
+                        const aggEl = document.getElementById('modalAggregateText');
+                        if (aggEl) aggEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                        const scoreTextEl = document.getElementById('modalScoreText');
+                        if (scoreTextEl) scoreTextEl.textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
 
-        function openStudentOmrModal(id) {
-            const data = submissionsById[String(id)];
-            if (!data) return;
+                        // Reset Scorecard Collapsible by default (Hidden)
+                        const coll = document.getElementById('modalScorecardCollapsible');
+                        if (coll) coll.style.display = 'none';
+                        const lbl = document.getElementById('scorecardToggleLabel');
+                        if (lbl) lbl.textContent = 'Show Score & Subject Performance';
+                        const chev = document.getElementById('scorecardToggleChevron');
+                        if (chev) chev.style.transform = 'rotate(0deg)';
 
-            currentModalItem = data;
-            const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
-            const imgUrl = data.cloudinary_image_url || data.omrImageUrl || '';
-            const sumSec = getSubmissionTotals(data);
-            const pct = data.percentage !== undefined ? data.percentage : (data.totalQuestions > 0 ? Math.round((data.score / data.totalQuestions) * 100) : 0);
-            const pId = String(data.paper_id || data.paperId || '');
-            const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats) ? paperTopperStats[pId] : null;
+                        const badge = document.getElementById('scorecardToggleSummaryBadge');
+                        if (badge) {
+                            badge.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} (${pct}%)`;
+                        }
 
-            document.getElementById('modalRollNo').textContent = roll;
-            const titleEl = document.getElementById('modalPaperTitle');
-            if (titleEl) titleEl.textContent = data.paperTitle || 'Exam Sheet';
-            const aggEl = document.getElementById('modalAggregateText');
-            if (aggEl) aggEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
-            const scoreTextEl = document.getElementById('modalScoreText');
-            if (scoreTextEl) scoreTextEl.textContent = `${sumSec.attemptedQuestions} / ${sumSec.totalQuestions} Att · ${sumSec.unattemptedQuestions} Unatt`;
+                        // Populate KPI elements
+                        const elAtt = document.getElementById('kpiAttempted');
+                        if (elAtt) elAtt.textContent = sumSec.attemptedQuestions;
+                        const elCor = document.getElementById('kpiCorrect');
+                        if (elCor) elCor.textContent = sumSec.correctCount;
+                        const elWro = document.getElementById('kpiWrong');
+                        if (elWro) elWro.textContent = sumSec.wrongCount;
+                        const elBla = document.getElementById('kpiBlank');
+                        if (elBla) elBla.textContent = sumSec.unattemptedQuestions;
 
-            // Reset Scorecard Collapsible by default (Hidden)
-            const coll = document.getElementById('modalScorecardCollapsible');
-            if (coll) coll.style.display = 'none';
-            const lbl = document.getElementById('scorecardToggleLabel');
-            if (lbl) lbl.textContent = 'Show Score & Subject Performance';
-            const chev = document.getElementById('scorecardToggleChevron');
-            if (chev) chev.style.transform = 'rotate(0deg)';
+                        // Populate Rank elements
+                        const rankVal = data.rank;
+                        const totalCand = data.totalCandidates;
+                        const rankBadgeEl = document.getElementById('modalRankBadge');
+                        const heroRankEl = document.getElementById('modalHeroRankBadge');
+                        const heroRankValEl = document.getElementById('modalHeroRankVal');
+                        const tileRankWrap = document.getElementById('tileRankWrap');
+                        const kpiRankEl = document.getElementById('kpiRank');
 
-            const badge = document.getElementById('scorecardToggleSummaryBadge');
-            if (badge) {
-                badge.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} (${pct}%)`;
-            }
+                        if (rankVal) {
+                            const rankText = totalCand ? `Rank #${rankVal} / ${totalCand}` : `Rank #${rankVal}`;
+                            if (rankBadgeEl) {
+                                rankBadgeEl.style.display = 'inline-flex';
+                                rankBadgeEl.textContent = rankText;
+                                if (rankVal === 1) {
+                                    rankBadgeEl.className = 'rank-badge rank-badge-top1';
+                                } else if (rankVal <= 3) {
+                                    rankBadgeEl.className = 'rank-badge rank-badge-top3';
+                                } else {
+                                    rankBadgeEl.className = 'rank-badge';
+                                }
+                            }
+                            if (heroRankEl && heroRankValEl) {
+                                heroRankEl.style.display = 'inline-flex';
+                                heroRankValEl.textContent = rankText;
+                            }
+                            if (tileRankWrap && kpiRankEl) {
+                                tileRankWrap.style.display = 'flex';
+                                kpiRankEl.textContent = totalCand ? `#${rankVal} / ${totalCand}` : `#${rankVal}`;
+                            }
+                        } else {
+                            if (rankBadgeEl) rankBadgeEl.style.display = 'none';
+                            if (heroRankEl) heroRankEl.style.display = 'none';
+                            if (tileRankWrap) tileRankWrap.style.display = 'none';
+                        }
 
-            // Populate KPI elements
-            const elAtt = document.getElementById('kpiAttempted');
-            if (elAtt) elAtt.textContent = sumSec.attemptedQuestions;
-            const elCor = document.getElementById('kpiCorrect');
-            if (elCor) elCor.textContent = sumSec.correctCount;
-            const elWro = document.getElementById('kpiWrong');
-            if (elWro) elWro.textContent = sumSec.wrongCount;
-            const elBla = document.getElementById('kpiBlank');
-            if (elBla) elBla.textContent = sumSec.unattemptedQuestions;
+                        const grandAggEl = document.getElementById('modalGrandAggregate');
+                        if (grandAggEl) {
+                            if (pStats && pStats.highestOverall !== undefined) {
+                                grandAggEl.innerHTML = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} <span style="display:inline-block; font-size:0.75rem; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:2px 8px; border-radius:4px; font-weight:700; margin-left:8px;">🏆 Top: ${pStats.highestOverall}</span>`;
+                            } else {
+                                grandAggEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
+                            }
+                        }
 
-            // Populate Rank elements
-            const rankVal = data.rank;
-            const totalCand = data.totalCandidates;
-            const rankBadgeEl = document.getElementById('modalRankBadge');
-            const heroRankEl = document.getElementById('modalHeroRankBadge');
-            const heroRankValEl = document.getElementById('modalHeroRankVal');
-            const tileRankWrap = document.getElementById('tileRankWrap');
-            const kpiRankEl = document.getElementById('kpiRank');
+                        const allStatsEl = document.getElementById('modalAllSectionsStats');
+                        if (allStatsEl) {
+                            allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
+                        }
+                        document.getElementById('modalAccuracyText').textContent = `${pct}%`;
 
-            if (rankVal) {
-                const rankText = totalCand ? `Rank #${rankVal} / ${totalCand}` : `Rank #${rankVal}`;
-                if (rankBadgeEl) {
-                    rankBadgeEl.style.display = 'inline-flex';
-                    rankBadgeEl.textContent = rankText;
-                    if (rankVal === 1) {
-                        rankBadgeEl.className = 'rank-badge rank-badge-top1';
-                    } else if (rankVal <= 3) {
-                        rankBadgeEl.className = 'rank-badge rank-badge-top3';
-                    } else {
-                        rankBadgeEl.className = 'rank-badge';
+                        document.getElementById('modalOmrImg').src = imgUrl;
+                        document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
+
+                        const accName = data.cloudinary_account || data.cloudinaryAccount;
+                        document.getElementById('modalCloudInfo').textContent = accName
+                            ? `Stored on Cloudinary (${accName})`
+                            : 'Stored on Cloudinary';
+
+                        const secContainer = document.getElementById('modalSectionContainer');
+                        secContainer.innerHTML = '';
+                        if (data.sectionWise && data.sectionWise.length > 0) {
+                            data.sectionWise.forEach(s => {
+                                const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
+                                const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
+                                const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
+                                const secTopObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
+                                const secTopVal = secTopObj ? secTopObj.highest : null;
+                                let secTitle = s.sectionName || '';
+                                if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) {
+                                    secTitle += ` (${s.range})`;
+                                }
+                                appendSectionSummaryCard(secContainer, {
+                                    isTotal: false,
+                                    title: secTitle,
+                                    metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
+                                    obtainedMarks: s.marks || 0,
+                                    totalMarks: s.maxMarks || (secTotalQ * 4),
+                                    topScore: secTopVal
+                                });
+                            });
+                            appendSectionSummaryCard(secContainer, {
+                                isTotal: true,
+                                title: 'All Sections (Sum)',
+                                metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
+                                obtainedMarks: sumSec.obtainedMarks,
+                                totalMarks: sumSec.totalMarks,
+                                topScore: (pStats && pStats.highestOverall !== undefined) ? pStats.highestOverall : null
+                            });
+                        } else {
+                            secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
+                        }
+
+                        const keyObj = data.answerKeyLookup || {};
+                        const resps = Array.isArray(data.responses) ? data.responses : [];
+                        const isJee = (data.examType === 'jee') ||
+                            (data.exam_type === 'jee') ||
+                            (data.numericalScores && Object.keys(data.numericalScores).length > 0) ||
+                            (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) ||
+                            /jee/i.test(data.paperTitle || '') ||
+                            /jee/i.test(data.paperSubject || '');
+
+                        let list = [];
+                        if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
+                            // Map stored breakdown with live answerKey to evaluate bonus and multi-correct options dynamically
+                            list = data.breakdown.map(item => {
+                                if (!item || item.isNumerical) return item;
+                                const omrQ = Number(item.omrQ);
+                                const dispQ = Number(item.displayQ || item.q);
+                                const activeKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[dispQ] || keyObj[String(dispQ)] || item.correctKey;
+                                const ev = evaluateClientQuestionVerdict(item.marked, activeKey, isJee);
+                                return {
+                                    ...item,
+                                    correctKey: activeKey || item.correctKey || '-',
+                                    verdict: ev.verdict,
+                                    marks: ev.marks
+                                };
+                            });
+                        } else if (isJee) {
+                            // Section 1: Physics Q1-20
+                            for (let qNum = 1; qNum <= 20; qNum++) {
+                                const resp = resps[qNum - 1] || '';
+                                const correctKey = keyObj[qNum] || keyObj[String(qNum)] || '-';
+                                const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
+                                list.push({
+                                    q: qNum,
+                                    displayQ: qNum,
+                                    omrQ: qNum,
+                                    subject: '⚛️ Phy',
+                                    marked: resp || '',
+                                    correctKey: correctKey,
+                                    marks: ev.marks,
+                                    verdict: ev.verdict,
+                                    isNumerical: false
+                                });
+                            }
+
+                            // Section 1: Physics Q21-25 (NVQ)
+                            const phyNvq = (data.numericalScores && data.numericalScores.phy) || [];
+                            for (let i = 1; i <= 5; i++) {
+                                const qNum = 20 + i;
+                                const val = Number(phyNvq[i - 1] || 0);
+                                let verdict = 'blank';
+                                let marks = '0';
+                                let markedText = 'Blank';
+                                if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                                else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                                list.push({
+                                    q: qNum,
+                                    displayQ: qNum,
+                                    omrQ: null,
+                                    subject: '⚛️ Phy',
+                                    marked: markedText,
+                                    correctKey: 'NVQ',
+                                    marks: marks,
+                                    verdict: verdict,
+                                    isNumerical: true
+                                });
+                            }
+
+                            // Section 2: Chemistry Q26-45
+                            for (let omrQ = 41; omrQ <= 60; omrQ++) {
+                                const displayQ = 26 + (omrQ - 41);
+                                const resp = resps[omrQ - 1] || '';
+                                const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
+                                const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
+                                list.push({
+                                    q: displayQ,
+                                    displayQ: displayQ,
+                                    omrQ: omrQ,
+                                    subject: '🧪 Chem',
+                                    marked: resp || '',
+                                    correctKey: correctKey,
+                                    marks: ev.marks,
+                                    verdict: ev.verdict,
+                                    isNumerical: false
+                                });
+                            }
+
+                            // Section 2: Chemistry Q46-50 (NVQ)
+                            const chemNvq = (data.numericalScores && data.numericalScores.chem) || [];
+                            for (let i = 1; i <= 5; i++) {
+                                const qNum = 45 + i;
+                                const val = Number(chemNvq[i - 1] || 0);
+                                let verdict = 'blank';
+                                let marks = '0';
+                                let markedText = 'Blank';
+                                if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                                else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                                list.push({
+                                    q: qNum,
+                                    displayQ: qNum,
+                                    omrQ: null,
+                                    subject: '🧪 Chem',
+                                    marked: markedText,
+                                    correctKey: 'NVQ',
+                                    marks: marks,
+                                    verdict: verdict,
+                                    isNumerical: true
+                                });
+                            }
+
+                            // Section 3: Mathematics Q51-70
+                            for (let omrQ = 81; omrQ <= 100; omrQ++) {
+                                const displayQ = 51 + (omrQ - 81);
+                                const resp = resps[omrQ - 1] || '';
+                                const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
+                                const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
+                                list.push({
+                                    q: displayQ,
+                                    displayQ: displayQ,
+                                    omrQ: omrQ,
+                                    subject: '📐 Math',
+                                    marked: resp || '',
+                                    correctKey: correctKey,
+                                    marks: ev.marks,
+                                    verdict: ev.verdict,
+                                    isNumerical: false
+                                });
+                            }
+
+                            // Section 3: Mathematics Q71-75 (NVQ)
+                            const mathNvq = (data.numericalScores && data.numericalScores.math) || [];
+                            for (let i = 1; i <= 5; i++) {
+                                const qNum = 70 + i;
+                                const val = Number(mathNvq[i - 1] || 0);
+                                let verdict = 'blank';
+                                let marks = '0';
+                                let markedText = 'Blank';
+                                if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
+                                else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
+                                list.push({
+                                    q: qNum,
+                                    displayQ: qNum,
+                                    omrQ: null,
+                                    subject: '📐 Math',
+                                    marked: markedText,
+                                    correctKey: 'NVQ',
+                                    marks: marks,
+                                    verdict: verdict,
+                                    isNumerical: true
+                                });
+                            }
+                        } else {
+                            const qTotal = Math.max(resps.length, data.totalQuestions || 0);
+                            for (let i = 0; i < qTotal; i++) {
+                                const qNum = i + 1;
+                                const resp = resps[i];
+                                const correctKey = keyObj[qNum] || keyObj[String(qNum)] || '-';
+                                const ev = evaluateClientQuestionVerdict(resp, correctKey, false);
+                                list.push({
+                                    q: qNum,
+                                    displayQ: qNum,
+                                    marked: resp || '',
+                                    correctKey,
+                                    marks: ev.marks,
+                                    verdict: ev.verdict,
+                                    isNumerical: false
+                                });
+                            }
+                        }
+
+                        currentModalList = list;
+                        renderOmrOverlay(data, list);
+
+                        currentFilterVerdict = 'all';
+                        document.querySelectorAll('.filter-pill').forEach(p => {
+                            if (p.getAttribute('data-filter') === 'all') p.classList.add('active');
+                            else p.classList.remove('active');
+                        });
+                        renderModalBreakdownTable();
+
+                        setMobileModalTab('omr');
+                        setOmrModalZoom(1);
+
+                        if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
+                            omrModalDialog.showModal();
+                        }
                     }
-                }
-                if (heroRankEl && heroRankValEl) {
-                    heroRankEl.style.display = 'inline-flex';
-                    heroRankValEl.textContent = rankText;
-                }
-                if (tileRankWrap && kpiRankEl) {
-                    tileRankWrap.style.display = 'flex';
-                    kpiRankEl.textContent = totalCand ? `#${rankVal} / ${totalCand}` : `#${rankVal}`;
-                }
-            } else {
-                if (rankBadgeEl) rankBadgeEl.style.display = 'none';
-                if (heroRankEl) heroRankEl.style.display = 'none';
-                if (tileRankWrap) tileRankWrap.style.display = 'none';
-            }
-            
-            const grandAggEl = document.getElementById('modalGrandAggregate');
-            if (grandAggEl) {
-                if (pStats && pStats.highestOverall !== undefined) {
-                    grandAggEl.innerHTML = `${sumSec.obtainedMarks} / ${sumSec.totalMarks} <span style="display:inline-block; font-size:0.75rem; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:2px 8px; border-radius:4px; font-weight:700; margin-left:8px;">🏆 Top: ${pStats.highestOverall}</span>`;
-                } else {
-                    grandAggEl.textContent = `${sumSec.obtainedMarks} / ${sumSec.totalMarks}`;
-                }
-            }
 
-            const allStatsEl = document.getElementById('modalAllSectionsStats');
-            if (allStatsEl) {
-                allStatsEl.textContent = `Total: ${sumSec.totalQuestions} Qs · Attempted: ${sumSec.attemptedQuestions} · Unattempted: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`;
-            }
-            document.getElementById('modalAccuracyText').textContent = `${pct}%`;
-
-            document.getElementById('modalOmrImg').src = imgUrl;
-            document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
-
-            const accName = data.cloudinary_account || data.cloudinaryAccount;
-            document.getElementById('modalCloudInfo').textContent = accName
-                ? `Stored on Cloudinary (${accName})`
-                : 'Stored on Cloudinary';
-
-            const secContainer = document.getElementById('modalSectionContainer');
-            secContainer.innerHTML = '';
-            if (data.sectionWise && data.sectionWise.length > 0) {
-                data.sectionWise.forEach(s => {
-                    const secUnatt = s.unattempted !== undefined ? (Number(s.unattempted) || 0) : (Number(s.blank) || 0);
-                    const secTotalQ = s.totalQuestions !== undefined ? (Number(s.totalQuestions) || 0) : ((Number(s.correct) || 0) + (Number(s.wrong) || 0) + secUnatt);
-                    const secAtt = s.attempted !== undefined ? (Number(s.attempted) || 0) : Math.max(0, secTotalQ - secUnatt);
-                    const secTopObj = (pStats && pStats.sectionHighest) ? pStats.sectionHighest[s.sectionName] : null;
-                    const secTopVal = secTopObj ? secTopObj.highest : null;
-                    let secTitle = s.sectionName || '';
-                    if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) {
-                        secTitle += ` (${s.range})`;
+                    function closeStudentOmrModal() {
+                        if (omrModalDialog && omrModalDialog.open) omrModalDialog.close();
+                        setOmrModalZoom(1);
+                        currentModalItem = null;
                     }
-                    appendSectionSummaryCard(secContainer, {
-                        isTotal: false,
-                        title: secTitle,
-                        metaText: `Total: ${secTotalQ} · Att: ${secAtt} · Unatt: ${secUnatt} · ${s.correct || 0}C · ${s.wrong || 0}W`,
-                        obtainedMarks: s.marks || 0,
-                        totalMarks: s.maxMarks || (secTotalQ * 4),
-                        topScore: secTopVal
-                    });
-                });
-                appendSectionSummaryCard(secContainer, {
-                    isTotal: true,
-                    title: 'All Sections (Sum)',
-                    metaText: `Total: ${sumSec.totalQuestions} · Att: ${sumSec.attemptedQuestions} · Unatt: ${sumSec.unattemptedQuestions} · ${sumSec.correctCount}C · ${sumSec.wrongCount}W`,
-                    obtainedMarks: sumSec.obtainedMarks,
-                    totalMarks: sumSec.totalMarks,
-                    topScore: (pStats && pStats.highestOverall !== undefined) ? pStats.highestOverall : null
-                });
-            } else {
-                secContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.84rem;">No sections configured</span>';
-            }
-
-            const keyObj = data.answerKeyLookup || {};
-            const resps = Array.isArray(data.responses) ? data.responses : [];
-            const isJee = (data.examType === 'jee') || 
-                          (data.exam_type === 'jee') || 
-                          (data.numericalScores && Object.keys(data.numericalScores).length > 0) || 
-                          (data.mcqSubjectScores && Object.keys(data.mcqSubjectScores).length > 0) || 
-                          /jee/i.test(data.paperTitle || '') || 
-                          /jee/i.test(data.paperSubject || '');
-
-            let list = [];
-            if (data.breakdown && Array.isArray(data.breakdown) && data.breakdown.length > 0) {
-                // Map stored breakdown with live answerKey to evaluate bonus and multi-correct options dynamically
-                list = data.breakdown.map(item => {
-                    if (!item || item.isNumerical) return item;
-                    const omrQ = Number(item.omrQ);
-                    const dispQ = Number(item.displayQ || item.q);
-                    const activeKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[dispQ] || keyObj[String(dispQ)] || item.correctKey;
-                    const ev = evaluateClientQuestionVerdict(item.marked, activeKey, isJee);
-                    return {
-                        ...item,
-                        correctKey: activeKey || item.correctKey || '-',
-                        verdict: ev.verdict,
-                        marks: ev.marks
-                    };
-                });
-            } else if (isJee) {
-                // Section 1: Physics Q1-20
-                for (let qNum = 1; qNum <= 20; qNum++) {
-                    const resp = resps[qNum - 1] || '';
-                    const correctKey = keyObj[qNum] || keyObj[String(qNum)] || '-';
-                    const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: qNum,
-                        subject: '⚛️ Phy',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        marks: ev.marks,
-                        verdict: ev.verdict,
-                        isNumerical: false
-                    });
-                }
-
-                // Section 1: Physics Q21-25 (NVQ)
-                const phyNvq = (data.numericalScores && data.numericalScores.phy) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 20 + i;
-                    const val = Number(phyNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '⚛️ Phy',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
-
-                // Section 2: Chemistry Q26-45
-                for (let omrQ = 41; omrQ <= 60; omrQ++) {
-                    const displayQ = 26 + (omrQ - 41);
-                    const resp = resps[omrQ - 1] || '';
-                    const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
-                    const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
-                    list.push({
-                        q: displayQ,
-                        displayQ: displayQ,
-                        omrQ: omrQ,
-                        subject: '🧪 Chem',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        marks: ev.marks,
-                        verdict: ev.verdict,
-                        isNumerical: false
-                    });
-                }
-
-                // Section 2: Chemistry Q46-50 (NVQ)
-                const chemNvq = (data.numericalScores && data.numericalScores.chem) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 45 + i;
-                    const val = Number(chemNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '🧪 Chem',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
-
-                // Section 3: Mathematics Q51-70
-                for (let omrQ = 81; omrQ <= 100; omrQ++) {
-                    const displayQ = 51 + (omrQ - 81);
-                    const resp = resps[omrQ - 1] || '';
-                    const correctKey = keyObj[omrQ] || keyObj[String(omrQ)] || keyObj[displayQ] || keyObj[String(displayQ)] || '-';
-                    const ev = evaluateClientQuestionVerdict(resp, correctKey, true);
-                    list.push({
-                        q: displayQ,
-                        displayQ: displayQ,
-                        omrQ: omrQ,
-                        subject: '📐 Math',
-                        marked: resp || '',
-                        correctKey: correctKey,
-                        marks: ev.marks,
-                        verdict: ev.verdict,
-                        isNumerical: false
-                    });
-                }
-
-                // Section 3: Mathematics Q71-75 (NVQ)
-                const mathNvq = (data.numericalScores && data.numericalScores.math) || [];
-                for (let i = 1; i <= 5; i++) {
-                    const qNum = 70 + i;
-                    const val = Number(mathNvq[i - 1] || 0);
-                    let verdict = 'blank';
-                    let marks = '0';
-                    let markedText = 'Blank';
-                    if (val === 4) { verdict = 'correct'; marks = '+4'; markedText = '+4 (Correct)'; }
-                    else if (val === -1) { verdict = 'wrong'; marks = '-1'; markedText = '-1 (Wrong)'; }
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        omrQ: null,
-                        subject: '📐 Math',
-                        marked: markedText,
-                        correctKey: 'NVQ',
-                        marks: marks,
-                        verdict: verdict,
-                        isNumerical: true
-                    });
-                }
-            } else {
-                const qTotal = Math.max(resps.length, data.totalQuestions || 0);
-                for (let i = 0; i < qTotal; i++) {
-                    const qNum = i + 1;
-                    const resp = resps[i];
-                    const correctKey = keyObj[qNum] || keyObj[String(qNum)] || '-';
-                    const ev = evaluateClientQuestionVerdict(resp, correctKey, false);
-                    list.push({
-                        q: qNum,
-                        displayQ: qNum,
-                        marked: resp || '',
-                        correctKey,
-                        marks: ev.marks,
-                        verdict: ev.verdict,
-                        isNumerical: false
-                    });
-                }
-            }
-
-            currentModalList = list;
-            renderOmrOverlay(data, list);
-
-            currentFilterVerdict = 'all';
-            document.querySelectorAll('.filter-pill').forEach(p => {
-                if (p.getAttribute('data-filter') === 'all') p.classList.add('active');
-                else p.classList.remove('active');
-            });
-            renderModalBreakdownTable();
-
-            setMobileModalTab('omr');
-            setOmrModalZoom(1);
-
-            if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
-                omrModalDialog.showModal();
-            }
-        }
-
-        function closeStudentOmrModal() {
-            if (omrModalDialog && omrModalDialog.open) omrModalDialog.close();
-            setOmrModalZoom(1);
-            currentModalItem = null;
-        }
-    </script>
-    <%- include('partials/sidebar_end') %>
+                </script>
+                <%- include('partials/sidebar_end') %>
 </body>
 
 </html>
