@@ -68,9 +68,11 @@ async function ensureDefaultAdmin() {
         if (adminCount === 0) {
             const defaultUsername = (process.env.ADMIN_USERNAME || 'admin').trim().toLowerCase();
             const defaultPassword = process.env.ADMIN_PASSWORD || 'admin123';
+            const adminEmail = (process.env.ADMIN_EMAIL || 'lokeshbadgujjar401@gmail.com').trim().toLowerCase();
             const existing = await User.findOne({ username: defaultUsername });
             if (existing) {
                 existing.role = 'admin';
+                if (!existing.email) existing.email = adminEmail;
                 await existing.setPassword(defaultPassword);
                 await existing.save();
                 console.log(`[Auth] Promoted existing account "${defaultUsername}" to default Admin.`);
@@ -80,7 +82,8 @@ async function ensureDefaultAdmin() {
                         username: defaultUsername,
                         fullName: 'Administrator',
                         role: 'admin',
-                        rollnumber: ''
+                        rollnumber: '',
+                        email: adminEmail
                     }),
                     defaultPassword
                 );
