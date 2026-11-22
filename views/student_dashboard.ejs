@@ -1821,280 +1821,72 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
-        /* Folder Performance Marks Chart & Analytics Card */
-        .folder-analytics-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.15rem 1.35rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow-xs);
-            transition: all 0.2s ease;
-        }
-
-        .fac-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .fac-title-block {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .fac-icon-bubble {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: #EFF6FF;
-            color: #2563EB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            border: 1px solid #DBEAFE;
-        }
-
-        .fac-title-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .fac-title {
-            margin: 0;
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #0F172A;
-            letter-spacing: -0.01em;
-        }
-
-        .fac-folder-tag {
+        /* Analytics Navigation Buttons & Badges */
+        .btn-student-analytics-top {
             display: inline-flex;
             align-items: center;
-            background: #EFF6FF;
-            color: #1E40AF;
-            border: 1px solid #BFDBFE;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.72rem;
+            gap: 7px;
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+            color: #FFFFFF;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
             font-weight: 700;
-        }
-
-        .fac-subtitle {
-            margin: 2px 0 0 0;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        .fac-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .fac-toggle-pill-group {
-            display: inline-flex;
-            background: #F1F5F9;
-            padding: 3px;
-            border-radius: 9px;
-            border: 1px solid #E2E8F0;
-        }
-
-        .fac-mode-btn {
-            border: none;
-            background: transparent;
-            padding: 5px 12px;
-            border-radius: 7px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #64748B;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: inherit;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
             transition: all 130ms ease;
             white-space: nowrap;
         }
 
-        .fac-mode-btn:hover {
-            color: #1E293B;
+        .btn-student-analytics-top:hover {
+            background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            color: #FFFFFF;
         }
 
-        .fac-mode-btn.active {
-            background: #FFFFFF;
-            color: #2563EB;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            font-weight: 700;
-        }
-
-        .fac-btn-collapse {
+        .btn-folder-analytics-nav {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
-            padding: 5px 11px;
-            border-radius: 8px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: #475569;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 130ms ease;
-        }
-
-        .fac-btn-collapse:hover {
-            background: #F8FAFC;
-            border-color: #CBD5E1;
-            color: #0F172A;
-        }
-
-        .fac-collapsible-body {
-            transition: max-height 0.25s ease, opacity 0.2s ease;
-        }
-
-        .fac-collapsible-body.collapsed {
-            display: none;
-        }
-
-        .fac-stats-strip {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 0.75rem 1rem;
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
+            gap: 6px;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1.5px solid #BFDBFE;
+            padding: 6px 13px;
             border-radius: 10px;
-            margin: 0.95rem 0 0.75rem 0;
-            flex-wrap: wrap;
-        }
-
-        .fac-mini-stat {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 90px;
-            flex: 1;
-        }
-
-        .fms-label {
-            font-size: 0.7rem;
+            font-size: 0.82rem;
             font-weight: 700;
-            color: #64748B;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-
-        .fms-value {
-            font-size: 1rem;
-            font-weight: 800;
-            color: #0F172A;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .fac-subject-chips-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 0.75rem 0 0.5rem 0;
-            padding: 4px 0;
-        }
-
-        .fsc-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #475569;
-        }
-
-        .fsc-chips-container {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .fac-subject-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 10px;
-            border-radius: 999px;
-            font-size: 0.74rem;
-            font-weight: 600;
-            border: 1.5px solid;
-            cursor: pointer;
-            user-select: none;
+            text-decoration: none;
             transition: all 130ms ease;
-            font-family: inherit;
+            white-space: nowrap;
         }
 
-        .fac-subject-chip:hover {
+        .btn-folder-analytics-nav:hover {
+            background: #DBEAFE;
+            border-color: #93C5FD;
+            color: #1E40AF;
             transform: translateY(-1px);
         }
 
-        .fac-subject-chip.inactive {
-            opacity: 0.4;
-            background: #F1F5F9 !important;
-            border-color: #CBD5E1 !important;
-            color: #64748B !important;
-            text-decoration: line-through;
+        .folder-chart-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #F8FAFC;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 120ms ease;
         }
 
-        .fac-canvas-wrapper {
-            position: relative;
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            min-height: 250px;
-            background: #FFFFFF;
-            border-radius: 10px;
-            padding: 4px 0;
-        }
-
-        .fac-chart-svg-container {
-            width: 100%;
-        }
-
-        .fac-chart-tooltip {
-            position: absolute;
-            z-index: 50;
-            background: #0F172A;
-            color: #FFFFFF;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            pointer-events: none;
-            box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            min-width: 180px;
-            max-width: 290px;
-            line-height: 1.45;
-            transition: opacity 0.12s ease;
-        }
-
-        .fac-empty-state {
-            padding: 2.5rem 1rem;
-            text-align: center;
-            color: #64748B;
-            font-size: 0.9rem;
-        }
-
-        .fac-chart-point-target {
-            cursor: pointer;
-        }
-
-        .fac-chart-point-target:hover circle.marker-dot {
-            r: 7px;
-            stroke-width: 3.5px;
+        .folder-chart-badge:hover {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border-color: #BFDBFE;
         }
     </style>
 </head>
@@ -2192,6 +1984,15 @@
                                 <span class="stat-label">Questions Attempted</span>
                             </div>
                         </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <a href="/student/analytics" class="btn-student-analytics-top">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                                <span>Performance Charts</span>
+                            </a>
+                        </div>
                     </header>
 
                     <% if (currentUser && (currentUser.role==='admin' || currentUser.role==='teacher' )) { %>
@@ -2251,9 +2052,12 @@
                                                         <polyline points="2 12 12 17 22 12"></polyline>
                                                     </svg>
                                                 </div>
-                                                <span class="folder-count-badge <%= (results && results.length > 0) ? 'has-papers' : 'empty' %>">
-                                                    <%= results ? results.length : 0 %> <%= (results && results.length === 1) ? 'Test' : 'Tests' %>
-                                                </span>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span class="folder-count-badge <%= (results && results.length > 0) ? 'has-papers' : 'empty' %>">
+                                                        <%= results ? results.length : 0 %> <%= (results && results.length === 1) ? 'Test' : 'Tests' %>
+                                                    </span>
+                                                    <a href="/student/analytics" class="folder-chart-badge" onclick="event.stopPropagation();" title="View Performance Charts across all tests">📈 Charts</a>
+                                                </div>
                                             </div>
                                             <div class="folder-card-body">
                                                 <h3 class="folder-card-title">All Evaluated Tests</h3>
@@ -2276,9 +2080,12 @@
                                                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                               </svg>
                                                         </div>
-                                                        <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
-                                                            <%= f.count || 0 %> <%= (f.count === 1) ? 'Test' : 'Tests' %>
-                                                        </span>
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                                            <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
+                                                                <%= f.count || 0 %> <%= (f.count === 1) ? 'Test' : 'Tests' %>
+                                                            </span>
+                                                            <a href="/student/analytics?folder=<%= encodeURIComponent(f.name) %>" class="folder-chart-badge" onclick="event.stopPropagation();" title="View Performance Charts for <%= f.name %>">📈 Charts</a>
+                                                        </div>
                                                     </div>
                                                     <div class="folder-card-body">
                                                         <h3 class="folder-card-title"><%= f.name %></h3>
@@ -2325,6 +2132,12 @@
                                         </div>
 
                                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <a href="/student/analytics" id="btnFolderAnalyticsLink" class="btn-folder-analytics-nav" title="View dedicated performance charts for this folder">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                                </svg>
+                                                <span>Performance Charts</span>
+                                            </a>
                                             <div class="search-box" style="min-width: 220px;">
                                                 <span class="search-icon" aria-hidden="true">
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2333,104 +2146,6 @@
                                                     </svg>
                                                 </span>
                                                 <input type="search" id="studentSearchInput" aria-label="Search tests" placeholder="Search tests in this folder..." oninput="handleStudentSearch()">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- FOLDER PERFORMANCE MARKS CHART & ANALYTICS -->
-                                    <div id="folderAnalyticsCard" class="folder-analytics-card">
-                                        <div class="fac-header">
-                                            <div class="fac-title-block">
-                                                <div class="fac-icon-bubble" aria-hidden="true">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                                                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                                                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <div class="fac-title-row">
-                                                        <h3 class="fac-title">Performance & Marks Trends</h3>
-                                                        <span class="fac-folder-tag" id="facFolderBadge">All Tests</span>
-                                                    </div>
-                                                    <p class="fac-subtitle" id="facSubtitle">Score progression & accuracy trajectory across evaluated tests</p>
-                                                </div>
-                                            </div>
-
-                                            <div class="fac-controls">
-                                                <!-- Mode Switcher -->
-                                                <div class="fac-toggle-pill-group" role="tablist" aria-label="Performance Chart Mode">
-                                                    <button type="button" class="fac-mode-btn active" id="btnModeOverall" onclick="switchChartMode('overall')" role="tab" aria-selected="true">
-                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                                                        </svg>
-                                                        Overall Marks
-                                                    </button>
-                                                    <button type="button" class="fac-mode-btn" id="btnModeSubject" onclick="switchChartMode('subject')" role="tab" aria-selected="false">
-                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <line x1="18" y1="20" x2="18" y2="10"></line>
-                                                            <line x1="12" y1="20" x2="12" y2="4"></line>
-                                                            <line x1="6" y1="20" x2="6" y2="14"></line>
-                                                        </svg>
-                                                        Subject / Section-wise
-                                                    </button>
-                                                </div>
-
-                                                <!-- Collapse Button -->
-                                                <button type="button" class="fac-btn-collapse" id="btnCollapseChart" onclick="toggleChartCardCollapse()" title="Toggle chart expansion" aria-label="Toggle chart visibility">
-                                                    <span id="collapseChartText">Hide Chart</span>
-                                                    <svg id="collapseChartIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                        <polyline points="18 15 12 9 6 15"></polyline>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Collapsible Content Wrapper -->
-                                        <div id="facCollapsibleBody" class="fac-collapsible-body">
-                                            <!-- Stats Ribbon for this Folder -->
-                                            <div class="fac-stats-strip" id="facStatsStrip">
-                                                <div class="fac-mini-stat">
-                                                    <span class="fms-label">Tests Plotted</span>
-                                                    <span class="fms-value" id="facStatTestsCount">0</span>
-                                                </div>
-                                                <div class="fac-mini-stat">
-                                                    <span class="fms-label">Average Score</span>
-                                                    <span class="fms-value" id="facStatAvgScore">--</span>
-                                                </div>
-                                                <div class="fac-mini-stat">
-                                                    <span class="fms-label">Highest Score</span>
-                                                    <span class="fms-value" id="facStatHighScore" style="color: #059669;">--</span>
-                                                </div>
-                                                <div class="fac-mini-stat">
-                                                    <span class="fms-label">Best Rank</span>
-                                                    <span class="fms-value" id="facStatBestRank" style="color: #D97706;">--</span>
-                                                </div>
-                                                <div class="fac-mini-stat" id="facStatTrendBox">
-                                                    <span class="fms-label">Recent Trend</span>
-                                                    <span class="fms-value" id="facStatTrend">--</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Subject Filter Chips (Shown in Subject mode) -->
-                                            <div class="fac-subject-chips-bar" id="facSubjectChipsBar" style="display: none;">
-                                                <span class="fsc-label">Toggle Subjects:</span>
-                                                <div class="fsc-chips-container" id="facSubjectChipsList"></div>
-                                            </div>
-
-                                            <!-- Chart Canvas Area -->
-                                            <div class="fac-canvas-wrapper" id="facCanvasWrapper">
-                                                <div id="facChartSvgContainer" class="fac-chart-svg-container"></div>
-                                                <div id="facChartTooltip" class="fac-chart-tooltip" style="display: none;"></div>
-                                            </div>
-
-                                            <!-- Empty State (When folder has 0 tests) -->
-                                            <div id="facEmptyState" class="fac-empty-state" style="display: none;">
-                                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                                    <circle cx="12" cy="12" r="10"></circle>
-                                                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                                                </svg>
-                                                <p style="margin: 8px 0 0 0; font-weight: 500;">No evaluated tests in this folder to plot performance trends.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2911,540 +2626,13 @@
 
                     let currentActiveFolder = '<%- (typeof activeFolder !== "undefined" && activeFolder) ? activeFolder.replace(/'/g, "\\'") : "" %>';
 
-                    // Chart State
-                    let currentChartMode = 'overall'; // 'overall' or 'subject'
-                    const activeSubjectFilters = new Set(); // subjects toggled off
-                    let isChartCollapsed = false;
-
-                    function toggleChartCardCollapse() {
-                        isChartCollapsed = !isChartCollapsed;
-                        const body = document.getElementById('facCollapsibleBody');
-                        const txt = document.getElementById('collapseChartText');
-                        const icon = document.getElementById('collapseChartIcon');
-                        if (body) {
-                            if (isChartCollapsed) {
-                                body.classList.add('collapsed');
-                                if (txt) txt.textContent = 'Show Chart';
-                                if (icon) icon.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
-                            } else {
-                                body.classList.remove('collapsed');
-                                if (txt) txt.textContent = 'Hide Chart';
-                                if (icon) icon.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>';
-                                renderStudentAnalyticsChart();
-                            }
-                        }
-                    }
-
-                    function switchChartMode(mode) {
-                        if (currentChartMode === mode) return;
-                        currentChartMode = mode;
-                        const btnOverall = document.getElementById('btnModeOverall');
-                        const btnSubject = document.getElementById('btnModeSubject');
-                        if (btnOverall) {
-                            btnOverall.classList.toggle('active', mode === 'overall');
-                            btnOverall.setAttribute('aria-selected', mode === 'overall');
-                        }
-                        if (btnSubject) {
-                            btnSubject.classList.toggle('active', mode === 'subject');
-                            btnSubject.setAttribute('aria-selected', mode === 'subject');
-                        }
-                        const chipsBar = document.getElementById('facSubjectChipsBar');
-                        if (chipsBar) chipsBar.style.display = (mode === 'subject') ? 'flex' : 'none';
-                        renderStudentAnalyticsChart();
-                    }
-
-                    function toggleSubjectFilter(subjName) {
-                        if (activeSubjectFilters.has(subjName)) {
-                            activeSubjectFilters.delete(subjName);
-                        } else {
-                            activeSubjectFilters.add(subjName);
-                        }
-                        renderStudentAnalyticsChart();
-                    }
-
-                    function getSubjectColor(subjName, index = 0) {
-                        const s = (subjName || '').toLowerCase().trim();
-                        if (s.includes('physic')) return { stroke: '#2563EB', fill: '#EFF6FF', badge: 'rgba(37,99,235,0.1)' };
-                        if (s.includes('chem')) return { stroke: '#059669', fill: '#ECFDF5', badge: 'rgba(5,150,105,0.1)' };
-                        if (s.includes('math')) return { stroke: '#7C3AED', fill: '#F5F3FF', badge: 'rgba(124,58,237,0.1)' };
-                        if (s.includes('bio') || s.includes('botan') || s.includes('zool')) return { stroke: '#D97706', fill: '#FFFBEB', badge: 'rgba(217,119,6,0.1)' };
-                        if (s.includes('apt') || s.includes('reason') || s.includes('logic')) return { stroke: '#0891B2', fill: '#ECFEFF', badge: 'rgba(8,145,178,0.1)' };
-                        if (s.includes('eng') || s.includes('lang')) return { stroke: '#DC2626', fill: '#FEF2F2', badge: 'rgba(220,38,38,0.1)' };
-
-                        const palette = [
-                            { stroke: '#2563EB', fill: '#EFF6FF', badge: 'rgba(37,99,235,0.1)' },
-                            { stroke: '#059669', fill: '#ECFDF5', badge: 'rgba(5,150,105,0.1)' },
-                            { stroke: '#7C3AED', fill: '#F5F3FF', badge: 'rgba(124,58,237,0.1)' },
-                            { stroke: '#D97706', fill: '#FFFBEB', badge: 'rgba(217,119,6,0.1)' },
-                            { stroke: '#E11D48', fill: '#FFF1F2', badge: 'rgba(225,29,72,0.1)' },
-                            { stroke: '#0284C7', fill: '#F0F9FF', badge: 'rgba(2,132,199,0.1)' },
-                            { stroke: '#4F46E5', fill: '#EEF2FF', badge: 'rgba(79,70,229,0.1)' },
-                            { stroke: '#16A34A', fill: '#F0FDF4', badge: 'rgba(22,163,74,0.1)' }
-                        ];
-                        return palette[index % palette.length];
-                    }
-
-                    function scrollToTestCard(subId) {
-                        if (!subId) return;
-                        const card = document.getElementById('student-exam-card-' + subId);
-                        if (card) {
-                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            card.style.transition = 'outline 0.2s ease, box-shadow 0.2s ease';
-                            card.style.outline = '3px solid #2563EB';
-                            card.style.boxShadow = '0 0 15px rgba(37,99,235,0.3)';
-                            setTimeout(() => {
-                                card.style.outline = 'none';
-                                card.style.boxShadow = '';
-                            }, 1800);
-                        }
-                    }
-
-                    function positionTooltip(e, tooltip, wrapper) {
-                        const wrapRect = wrapper.getBoundingClientRect();
-                        const x = e.clientX - wrapRect.left + wrapper.scrollLeft;
-                        const y = e.clientY - wrapRect.top;
-
-                        tooltip.style.display = 'block';
-                        tooltip.style.opacity = '1';
-
-                        const tipWidth = tooltip.offsetWidth || 230;
-                        const tipHeight = tooltip.offsetHeight || 120;
-
-                        let posX = x + 12;
-                        if (posX + tipWidth > wrapper.scrollWidth - 10) {
-                            posX = x - tipWidth - 12;
-                        }
-                        let posY = y - tipHeight - 10;
-                        if (posY < 10) {
-                            posY = y + 16;
-                        }
-
-                        tooltip.style.left = Math.max(10, posX) + 'px';
-                        tooltip.style.top = Math.max(10, posY) + 'px';
-                    }
-
-                    function hideChartTooltip() {
-                        const tooltip = document.getElementById('facChartTooltip');
-                        if (tooltip) {
-                            tooltip.style.opacity = '0';
-                            tooltip.style.display = 'none';
-                        }
-                    }
-
-                    function showChartOverallTooltip(e, testIdx) {
-                        const tooltip = document.getElementById('facChartTooltip');
-                        const wrapper = document.getElementById('facCanvasWrapper');
-                        if (!tooltip || !wrapper) return;
-
-                        const filtered = (studentSubmissions || []).filter(s => {
-                            if (!currentActiveFolder || currentActiveFolder === 'all') return true;
-                            const cat = (s.paperCategory || 'General').trim().toLowerCase();
-                            return cat === currentActiveFolder.trim().toLowerCase();
-                        });
-                        const sorted = filtered.slice().sort((a, b) => new Date(a.submitted_at || a.scannedAt || 0) - new Date(b.submitted_at || b.scannedAt || 0));
-                        const item = sorted[testIdx];
-                        if (!item) return;
-
-                        const sumSec = item.allSectionsSummary || {};
-                        const ob = (sumSec.obtainedMarks !== undefined) ? Number(sumSec.obtainedMarks) : ((item.aggregateMarks !== undefined) ? Number(item.aggregateMarks) : (Number(item.score || 0) * 4));
-                        const mx = (sumSec.totalMarks !== undefined) ? Number(sumSec.totalMarks) : (Number(item.maxMarks) || ((Number(item.totalQuestions) || 50) * 4) || 100);
-                        const pct = (item.percentage !== undefined) ? Number(item.percentage) : (mx > 0 ? Number(((ob / mx) * 100).toFixed(1)) : 0);
-                        const pId = String(item.paper_id || item.paperId || '');
-                        const pStats = (typeof paperTopperStats !== 'undefined' && paperTopperStats) ? paperTopperStats[pId] : null;
-
-                        const d = new Date(item.submitted_at || item.scannedAt || Date.now());
-                        const dateFormatted = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-
-                        let rankHtml = '';
-                        if (item.rank) {
-                            rankHtml = `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.12);">
-                                <span style="color: #94A3B8;">Candidate Rank:</span>
-                                <span style="font-weight: 700; color: #FBBF24;">#${item.rank}${item.totalCandidates ? ' / ' + item.totalCandidates : ''}</span>
-                            </div>`;
-                        }
-
-                        let topperHtml = '';
-                        if (pStats && pStats.highestOverall !== undefined) {
-                            topperHtml = `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px;">
-                                <span style="color: #94A3B8;">Paper Highest:</span>
-                                <span style="font-weight: 600; color: #34D399;">${pStats.highestOverall} / ${mx}</span>
-                            </div>`;
-                        }
-
-                        tooltip.innerHTML = `
-                            <div style="font-weight: 800; font-size: 0.85rem; margin-bottom: 2px; color: #FFFFFF; line-height: 1.25;">${item.paperTitle || 'Evaluated Paper'}</div>
-                            <div style="font-size: 0.72rem; color: #94A3B8; margin-bottom: 6px;">${dateFormatted} &bull; ${item.paperSubject || 'General'}</div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
-                                <span style="color: #CBD5E1;">Score:</span>
-                                <span style="font-weight: 800; font-size: 0.92rem; color: #60A5FA;">${ob} / ${mx} (${pct}%)</span>
-                            </div>
-                            ${rankHtml}
-                            ${topperHtml}
-                            <div style="margin-top: 6px; font-size: 0.7rem; color: #94A3B8; text-align: center; font-style: italic;">Click point to view test card</div>
-                        `;
-
-                        positionTooltip(e, tooltip, wrapper);
-                    }
-
-                    function showChartSubjectTooltip(e, testIdx, activeSecName) {
-                        const tooltip = document.getElementById('facChartTooltip');
-                        const wrapper = document.getElementById('facCanvasWrapper');
-                        if (!tooltip || !wrapper) return;
-
-                        const filtered = (studentSubmissions || []).filter(s => {
-                            if (!currentActiveFolder || currentActiveFolder === 'all') return true;
-                            const cat = (s.paperCategory || 'General').trim().toLowerCase();
-                            return cat === currentActiveFolder.trim().toLowerCase();
-                        });
-                        const sorted = filtered.slice().sort((a, b) => new Date(a.submitted_at || a.scannedAt || 0) - new Date(b.submitted_at || b.scannedAt || 0));
-                        const item = sorted[testIdx];
-                        if (!item) return;
-
-                        const d = new Date(item.submitted_at || item.scannedAt || Date.now());
-                        const dateFormatted = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-
-                        let sectionsRows = '';
-                        (item.sectionWise || []).forEach(sec => {
-                            const sName = sec.sectionName || 'Section';
-                            const isCurrent = sName.toLowerCase() === (activeSecName || '').toLowerCase();
-                            const m = Number(sec.marks || 0);
-                            const mx = Number(sec.maxMarks || 100);
-                            const p = mx > 0 ? ((m / mx) * 100).toFixed(0) : 0;
-                            const color = getSubjectColor(sName);
-
-                            sectionsRows += `
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding: 2px 4px; border-radius: 4px; ${isCurrent ? 'background: rgba(255,255,255,0.12);' : ''}">
-                                    <span style="display: flex; align-items: center; gap: 5px; color: ${isCurrent ? '#FFFFFF' : '#CBD5E1'}; font-weight: ${isCurrent ? '700' : '500'};">
-                                        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${color.stroke};"></span>
-                                        ${sName}
-                                    </span>
-                                    <span style="font-weight: 700; color: ${color.stroke};">
-                                        ${m} / ${mx} <span style="font-size: 0.72rem; color: #94A3B8; font-weight: 500;">(${p}%)</span>
-                                    </span>
-                                </div>
-                            `;
-                        });
-
-                        tooltip.innerHTML = `
-                            <div style="font-weight: 800; font-size: 0.85rem; margin-bottom: 2px; color: #FFFFFF;">${item.paperTitle || 'Evaluated Paper'}</div>
-                            <div style="font-size: 0.72rem; color: #94A3B8; margin-bottom: 6px;">${dateFormatted} &bull; Section Breakdown</div>
-                            ${sectionsRows}
-                            <div style="margin-top: 6px; font-size: 0.7rem; color: #94A3B8; text-align: center; font-style: italic;">Click point to view test card</div>
-                        `;
-
-                        positionTooltip(e, tooltip, wrapper);
-                    }
-
-                    function renderStudentAnalyticsChart(folderName, overrideMode) {
-                        if (isChartCollapsed) return;
-                        const targetFolder = (folderName !== undefined) ? folderName : currentActiveFolder;
-                        const mode = (overrideMode !== undefined) ? overrideMode : currentChartMode;
-
-                        const badge = document.getElementById('facFolderBadge');
-                        if (badge) {
-                            badge.textContent = (!targetFolder || targetFolder === 'all') ? 'All Tests' : targetFolder;
-                        }
-
-                        // Filter tests
-                        const filtered = (studentSubmissions || []).filter(s => {
-                            if (!targetFolder || targetFolder === 'all') return true;
-                            const cat = (s.paperCategory || 'General').trim().toLowerCase();
-                            return cat === targetFolder.trim().toLowerCase();
-                        });
-
-                        // Chronological order: earliest to latest
-                        const sorted = filtered.slice().sort((a, b) => {
-                            const timeA = new Date(a.submitted_at || a.scannedAt || 0).getTime();
-                            const timeB = new Date(b.submitted_at || b.scannedAt || 0).getTime();
-                            return timeA - timeB;
-                        });
-
-                        const emptyBox = document.getElementById('facEmptyState');
-                        const statsStrip = document.getElementById('facStatsStrip');
-                        const canvasWrap = document.getElementById('facCanvasWrapper');
-                        const chipsBar = document.getElementById('facSubjectChipsBar');
-
-                        if (sorted.length === 0) {
-                            if (emptyBox) emptyBox.style.display = 'block';
-                            if (statsStrip) statsStrip.style.display = 'none';
-                            if (canvasWrap) canvasWrap.style.display = 'none';
-                            if (chipsBar) chipsBar.style.display = 'none';
-                            return;
-                        }
-
-                        if (emptyBox) emptyBox.style.display = 'none';
-                        if (statsStrip) statsStrip.style.display = 'flex';
-                        if (canvasWrap) canvasWrap.style.display = 'block';
-
-                        // Compute Folder Stats Ribbon
-                        let sumScore = 0;
-                        let sumMax = 0;
-                        let sumPct = 0;
-                        let highestScored = -Infinity;
-                        let highestScoredMax = 100;
-                        let highestPct = 0;
-                        let bestRank = Infinity;
-                        let bestRankTotal = 0;
-
-                        const pcts = [];
-                        sorted.forEach(s => {
-                            const sumSec = s.allSectionsSummary || {};
-                            const ob = (sumSec.obtainedMarks !== undefined) ? Number(sumSec.obtainedMarks) : ((s.aggregateMarks !== undefined) ? Number(s.aggregateMarks) : (Number(s.score || 0) * 4));
-                            const mx = (sumSec.totalMarks !== undefined) ? Number(sumSec.totalMarks) : (Number(s.maxMarks) || ((Number(s.totalQuestions) || 50) * 4) || 100);
-                            const pct = (s.percentage !== undefined) ? Number(s.percentage) : (mx > 0 ? Number(((ob / mx) * 100).toFixed(1)) : 0);
-                            pcts.push(pct);
-                            sumScore += ob;
-                            sumMax += mx;
-                            sumPct += pct;
-                            if (ob > highestScored) {
-                                highestScored = ob;
-                                highestScoredMax = mx;
-                                highestPct = pct;
-                            }
-                            if (s.rank && Number(s.rank) > 0 && Number(s.rank) < bestRank) {
-                                bestRank = Number(s.rank);
-                                bestRankTotal = Number(s.totalCandidates) || 0;
-                            }
-                        });
-
-                        const avgPct = (sumPct / sorted.length).toFixed(1);
-                        const countEl = document.getElementById('facStatTestsCount');
-                        const avgEl = document.getElementById('facStatAvgScore');
-                        const highEl = document.getElementById('facStatHighScore');
-                        const rankEl = document.getElementById('facStatBestRank');
-                        const trendEl = document.getElementById('facStatTrend');
-
-                        if (countEl) countEl.textContent = `${sorted.length} ${sorted.length === 1 ? 'Test' : 'Tests'}`;
-                        if (avgEl) avgEl.textContent = `${avgPct}% Avg`;
-                        if (highEl) highEl.textContent = `${highestScored} / ${highestScoredMax} (${highestPct}%)`;
-                        if (rankEl) {
-                            if (bestRank !== Infinity) {
-                                rankEl.textContent = `#${bestRank}` + (bestRankTotal > 0 ? ` / ${bestRankTotal}` : '');
-                            } else {
-                                rankEl.textContent = '--';
-                            }
-                        }
-                        if (trendEl) {
-                            if (sorted.length >= 2) {
-                                const diff = Number((pcts[pcts.length - 1] - pcts[pcts.length - 2]).toFixed(1));
-                                if (diff > 0) {
-                                    trendEl.innerHTML = `<span style="color: #059669;">+${diff}% ↑</span>`;
-                                } else if (diff < 0) {
-                                    trendEl.innerHTML = `<span style="color: #DC2626;">${diff}% ↓</span>`;
-                                } else {
-                                    trendEl.innerHTML = `<span style="color: #64748B;">0.0% →</span>`;
-                                }
-                            } else {
-                                trendEl.innerHTML = `<span style="color: #64748B; font-size: 0.82rem; font-weight: 600;">Initial Test</span>`;
-                            }
-                        }
-
-                        // Dimension & Coordinates
-                        const container = document.getElementById('facChartSvgContainer');
-                        if (!container) return;
-
-                        const svgWidth = Math.max(680, sorted.length * 85);
-                        const svgHeight = 270;
-                        const padLeft = 52, padRight = 36, padTop = 32, padBottom = 48;
-                        const plotW = svgWidth - padLeft - padRight;
-                        const plotH = svgHeight - padTop - padBottom;
-
-                        if (mode === 'overall') {
-                            if (chipsBar) chipsBar.style.display = 'none';
-
-                            // Calculate points
-                            const points = sorted.map((s, idx) => {
-                                const sumSec = s.allSectionsSummary || {};
-                                const ob = (sumSec.obtainedMarks !== undefined) ? Number(sumSec.obtainedMarks) : ((s.aggregateMarks !== undefined) ? Number(s.aggregateMarks) : (Number(s.score || 0) * 4));
-                                const mx = (sumSec.totalMarks !== undefined) ? Number(sumSec.totalMarks) : (Number(s.maxMarks) || ((Number(s.totalQuestions) || 50) * 4) || 100);
-                                const pct = (s.percentage !== undefined) ? Number(s.percentage) : (mx > 0 ? Number(((ob / mx) * 100).toFixed(1)) : 0);
-                                const clampedPct = Math.max(0, Math.min(100, pct));
-                                const x = sorted.length === 1 ? (padLeft + plotW / 2) : (padLeft + (idx / (sorted.length - 1)) * plotW);
-                                const y = padTop + (1 - clampedPct / 100) * plotH;
-                                return { x, y, pct, ob, mx, item: s, idx };
-                            });
-
-                            // SVG markup
-                            let svg = `<svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="100%" height="${svgHeight}" style="overflow: visible; display: block;" xmlns="http://www.w3.org/2000/svg">`;
-                            svg += `<defs>
-                                <linearGradient id="facGradBlue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#2563EB" stop-opacity="0.22"/>
-                                    <stop offset="100%" stop-color="#2563EB" stop-opacity="0.01"/>
-                                </linearGradient>
-                                <filter id="facPointShadow" x="-30%" y="-30%" width="160%" height="160%">
-                                    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#2563EB" flood-opacity="0.3"/>
-                                </filter>
-                            </defs>`;
-
-                            // Grid lines (0, 25, 50, 75, 100%)
-                            [0, 25, 50, 75, 100].forEach(tick => {
-                                const gy = padTop + (1 - tick / 100) * plotH;
-                                svg += `<line x1="${padLeft}" y1="${gy}" x2="${svgWidth - padRight}" y2="${gy}" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="${tick === 0 ? 'none' : '3 3'}"/>`;
-                                svg += `<text x="${padLeft - 8}" y="${gy + 4}" font-size="10.5" font-weight="600" fill="#94A3B8" text-anchor="end" font-family="inherit">${tick}%</text>`;
-                            });
-
-                            // Area polygon if multiple points
-                            if (points.length > 1) {
-                                const first = points[0];
-                                const last = points[points.length - 1];
-                                const bottomY = padTop + plotH;
-                                let pathD = `M ${first.x} ${first.y}`;
-                                let areaD = `M ${first.x} ${bottomY} L ${first.x} ${first.y}`;
-                                for (let i = 1; i < points.length; i++) {
-                                    pathD += ` L ${points[i].x} ${points[i].y}`;
-                                    areaD += ` L ${points[i].x} ${points[i].y}`;
-                                }
-                                areaD += ` L ${last.x} ${bottomY} Z`;
-
-                                svg += `<path d="${areaD}" fill="url(#facGradBlue)" />`;
-                                svg += `<path d="${pathD}" fill="none" stroke="#2563EB" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />`;
-                            } else if (points.length === 1) {
-                                svg += `<line x1="${padLeft}" y1="${points[0].y}" x2="${svgWidth - padRight}" y2="${points[0].y}" stroke="#93C5FD" stroke-width="1.5" stroke-dasharray="4 4"/>`;
-                            }
-
-                            // X axis labels
-                            points.forEach((p) => {
-                                const d = new Date(p.item.submitted_at || p.item.scannedAt || Date.now());
-                                const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                                let shortTitle = p.item.paperTitle || `Test ${p.idx + 1}`;
-                                if (shortTitle.length > 14) shortTitle = shortTitle.slice(0, 13) + '…';
-
-                                svg += `<text x="${p.x}" y="${padTop + plotH + 18}" font-size="10.5" font-weight="700" fill="#334155" text-anchor="middle" font-family="inherit">${shortTitle}</text>`;
-                                svg += `<text x="${p.x}" y="${padTop + plotH + 32}" font-size="9.5" font-weight="500" fill="#94A3B8" text-anchor="middle" font-family="inherit">${dateStr}</text>`;
-                            });
-
-                            // Points, value badges and hover triggers
-                            points.forEach((p) => {
-                                const labelY = Math.max(padTop - 8, p.y - 12);
-                                svg += `<g class="fac-chart-point-target" onclick="scrollToTestCard('${p.item._id}')" onmouseenter="showChartOverallTooltip(event, ${p.idx})" onmouseleave="hideChartTooltip()">
-                                    <circle class="marker-dot" cx="${p.x}" cy="${p.y}" r="5.5" fill="#FFFFFF" stroke="#2563EB" stroke-width="3" filter="url(#facPointShadow)"/>
-                                    <rect x="${p.x - 18}" y="${labelY - 11}" width="36" height="15" rx="4" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="0.8"/>
-                                    <text x="${p.x}" y="${labelY}" font-size="9" font-weight="700" fill="#1E40AF" text-anchor="middle" font-family="inherit">${p.pct}%</text>
-                                    <circle cx="${p.x}" cy="${p.y}" r="18" fill="transparent"/>
-                                </g>`;
-                            });
-
-                            svg += `</svg>`;
-                            container.innerHTML = svg;
-
-                        } else {
-                            // SUBJECT / SECTION-WISE MODE
-                            if (chipsBar) chipsBar.style.display = 'flex';
-
-                            const sectionNamesSet = new Set();
-                            sorted.forEach(s => {
-                                if (Array.isArray(s.sectionWise) && s.sectionWise.length > 0) {
-                                    s.sectionWise.forEach(sec => {
-                                        if (sec.sectionName) sectionNamesSet.add(sec.sectionName.trim());
-                                    });
-                                } else if (s.paperSubject) {
-                                    sectionNamesSet.add(s.paperSubject.trim());
-                                }
-                            });
-
-                            const sectionsList = Array.from(sectionNamesSet);
-
-                            // Subject legend chips
-                            const chipsList = document.getElementById('facSubjectChipsList');
-                            if (chipsList) {
-                                chipsList.innerHTML = '';
-                                sectionsList.forEach((secName, sIdx) => {
-                                    const color = getSubjectColor(secName, sIdx);
-                                    let sSum = 0;
-                                    let sCount = 0;
-                                    sorted.forEach(item => {
-                                        const sec = (item.sectionWise || []).find(x => (x.sectionName || '').trim().toLowerCase() === secName.toLowerCase());
-                                        if (sec) {
-                                            const m = Number(sec.marks || 0);
-                                            const mx = Number(sec.maxMarks || 100);
-                                            const pct = mx > 0 ? (m / mx) * 100 : 0;
-                                            sSum += pct;
-                                            sCount++;
-                                        }
-                                    });
-                                    const sAvg = sCount > 0 ? (sSum / sCount).toFixed(0) : '0';
-                                    const isHidden = activeSubjectFilters.has(secName);
-
-                                    const chipBtn = document.createElement('button');
-                                    chipBtn.type = 'button';
-                                    chipBtn.className = `fac-subject-chip ${isHidden ? 'inactive' : ''}`;
-                                    chipBtn.style.borderColor = color.stroke;
-                                    chipBtn.style.color = color.stroke;
-                                    chipBtn.style.background = isHidden ? '#F1F5F9' : color.fill;
-                                    chipBtn.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background: ${color.stroke}; display: inline-block;"></span> <span>${secName} (${sAvg}%)</span>`;
-                                    chipBtn.onclick = () => toggleSubjectFilter(secName);
-                                    chipsList.appendChild(chipBtn);
-                                });
-                            }
-
-                            // SVG multi-line rendering
-                            let svg = `<svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="100%" height="${svgHeight}" style="overflow: visible; display: block;" xmlns="http://www.w3.org/2000/svg">`;
-
-                            // Grid lines
-                            [0, 25, 50, 75, 100].forEach(tick => {
-                                const gy = padTop + (1 - tick / 100) * plotH;
-                                svg += `<line x1="${padLeft}" y1="${gy}" x2="${svgWidth - padRight}" y2="${gy}" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="${tick === 0 ? 'none' : '3 3'}"/>`;
-                                svg += `<text x="${padLeft - 8}" y="${gy + 4}" font-size="10.5" font-weight="600" fill="#94A3B8" text-anchor="end" font-family="inherit">${tick}%</text>`;
-                            });
-
-                            // X axis labels
-                            sorted.forEach((item, idx) => {
-                                const x = sorted.length === 1 ? (padLeft + plotW / 2) : (padLeft + (idx / (sorted.length - 1)) * plotW);
-                                const d = new Date(item.submitted_at || item.scannedAt || Date.now());
-                                const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                                let shortTitle = item.paperTitle || `Test ${idx + 1}`;
-                                if (shortTitle.length > 14) shortTitle = shortTitle.slice(0, 13) + '…';
-
-                                svg += `<text x="${x}" y="${padTop + plotH + 18}" font-size="10.5" font-weight="700" fill="#334155" text-anchor="middle" font-family="inherit">${shortTitle}</text>`;
-                                svg += `<text x="${x}" y="${padTop + plotH + 32}" font-size="9.5" font-weight="500" fill="#94A3B8" text-anchor="middle" font-family="inherit">${dateStr}</text>`;
-                            });
-
-                            // Draw each subject line
-                            sectionsList.forEach((secName, sIdx) => {
-                                if (activeSubjectFilters.has(secName)) return;
-                                const color = getSubjectColor(secName, sIdx);
-
-                                const secPoints = [];
-                                sorted.forEach((item, idx) => {
-                                    const x = sorted.length === 1 ? (padLeft + plotW / 2) : (padLeft + (idx / (sorted.length - 1)) * plotW);
-                                    const sec = (item.sectionWise || []).find(x => (x.sectionName || '').trim().toLowerCase() === secName.toLowerCase());
-                                    if (sec) {
-                                        const m = Number(sec.marks || 0);
-                                        const mx = Number(sec.maxMarks || 100);
-                                        const pct = mx > 0 ? (m / mx) * 100 : 0;
-                                        const clampedPct = Math.max(0, Math.min(100, pct));
-                                        const y = padTop + (1 - clampedPct / 100) * plotH;
-                                        secPoints.push({ x, y, m, mx, pct, item, sec, idx });
-                                    }
-                                });
-
-                                if (secPoints.length > 1) {
-                                    let pathD = `M ${secPoints[0].x} ${secPoints[0].y}`;
-                                    for (let i = 1; i < secPoints.length; i++) {
-                                        pathD += ` L ${secPoints[i].x} ${secPoints[i].y}`;
-                                    }
-                                    svg += `<path d="${pathD}" fill="none" stroke="${color.stroke}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
-                                }
-
-                                secPoints.forEach(p => {
-                                    svg += `<g class="fac-chart-point-target" onclick="scrollToTestCard('${p.item._id}')" onmouseenter="showChartSubjectTooltip(event, ${p.idx}, '${secName.replace(/'/g, "\\'")}')" onmouseleave="hideChartTooltip()">
-                                        <circle class="marker-dot" cx="${p.x}" cy="${p.y}" r="4.5" fill="#FFFFFF" stroke="${color.stroke}" stroke-width="2.5"/>
-                                        <circle cx="${p.x}" cy="${p.y}" r="15" fill="transparent"/>
-                                    </g>`;
-                                });
-                            });
-
-                            svg += `</svg>`;
-                            container.innerHTML = svg;
-                        }
-                    }
-
                     function selectFolder(folderName, updateHistory = true) {
                         currentActiveFolder = folderName;
                         const foldersSec = document.getElementById('studentFoldersDirectorySection');
                         const testsSec = document.getElementById('studentFolderTestsSection');
                         const heading = document.getElementById('activeFolderHeading');
                         const searchInput = document.getElementById('studentSearchInput');
+                        const chartLink = document.getElementById('btnFolderAnalyticsLink');
 
                         if (foldersSec) foldersSec.style.display = 'none';
                         if (testsSec) testsSec.style.display = 'block';
@@ -3456,8 +2644,11 @@
                             searchInput.placeholder = (folderName === 'all') ? 'Search all tests...' : `Search tests in ${displayName}...`;
                         }
 
+                        if (chartLink) {
+                            chartLink.href = '/student/analytics' + (folderName && folderName !== 'all' ? '?folder=' + encodeURIComponent(folderName) : '');
+                        }
+
                         filterExamCardsInsideFolder();
-                        renderStudentAnalyticsChart(folderName);
 
                         if (updateHistory) {
                             const url = new URL(window.location.href);
@@ -3474,9 +2665,13 @@
                         currentActiveFolder = '';
                         const foldersSec = document.getElementById('studentFoldersDirectorySection');
                         const testsSec = document.getElementById('studentFolderTestsSection');
+                        const chartLink = document.getElementById('btnFolderAnalyticsLink');
+
                         if (foldersSec) foldersSec.style.display = 'block';
                         if (testsSec) testsSec.style.display = 'none';
-                        hideChartTooltip();
+                        if (chartLink) {
+                            chartLink.href = '/student/analytics';
+                        }
 
                         if (updateHistory) {
                             const url = new URL(window.location.href);
@@ -3560,13 +2755,7 @@
                     // Auto-select if active folder was specified on load
                     if (currentActiveFolder) {
                         selectFolder(currentActiveFolder, false);
-                    } else {
-                        renderStudentAnalyticsChart('all');
                     }
-
-                    window.addEventListener('resize', () => {
-                        renderStudentAnalyticsChart();
-                    });
 
                     function parseKeyOptionsClient(keyStr) {
                         if (!keyStr || typeof keyStr !== 'string') return [];
