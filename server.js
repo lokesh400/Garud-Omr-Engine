@@ -2483,6 +2483,8 @@ function buildGradedSubmissionObj(doc, paper) {
         obj.answerKeyLookup = keyLookup;
         obj.paperTitle = paper ? paper.title : (doc.paper_id || 'JEE Exam Paper');
         obj.paperSubject = 'JEE Mains';
+        obj.paperCategory = (paper && (paper.category || paper.batch)) ? (paper.category || paper.batch).trim() : 'JEE Mains';
+        obj.paperExamType = 'jee';
         obj.maxMarks = 300;
         obj.score = (doc.score !== undefined && doc.score !== null) ? Number(doc.score) : ((phyMcq + phyNvq) + (chemMcq + chemNvq) + (mathMcq + mathNvq));
         obj.aggregateMarks = obj.score;
@@ -2545,6 +2547,8 @@ function buildGradedSubmissionObj(doc, paper) {
     obj.answerKeyLookup = keyLookup;
     obj.paperTitle = paper ? paper.title : (doc.paper_id || 'Exam Paper');
     obj.paperSubject = paper ? (paper.subject || 'General') : 'General';
+    obj.paperCategory = (paper && (paper.category || paper.batch)) ? (paper.category || paper.batch).trim() : 'General';
+    obj.paperExamType = paper ? (paper.exam_type || paper.examType || 'standard') : (doc.examType || 'standard');
     obj.maxMarks = paper ? (paper.max_marks || (totalQ * 4)) : (doc.maxMarks || (totalQ * 4));
     obj.breakdown = doc.breakdown || [];
     obj.allSectionsSummary = summarizeSections(sectionWise, obj).totals;
@@ -3365,10 +3369,44 @@ app.get('/student', requireAuth, async (req, res) => {
             }));
         }
 
+        const allFolders = await getAllFolders('all');
+        const folderCountMap = {};
+        results.forEach(r => {
+            const cat = (r.paperCategory || 'General').trim().toLowerCase();
+            folderCountMap[cat] = (folderCountMap[cat] || 0) + 1;
+        });
+
+        const studentFolders = allFolders.map(f => ({
+            _id: String(f._id),
+            name: f.name,
+            description: f.description || '',
+            examType: f.examType || 'all',
+            count: folderCountMap[f.name.toLowerCase()] || 0
+        }));
+
+        const existingFolderNames = new Set(allFolders.map(f => f.name.toLowerCase()));
+        results.forEach(r => {
+            const cat = (r.paperCategory || 'General').trim();
+            if (cat && !existingFolderNames.has(cat.toLowerCase())) {
+                existingFolderNames.add(cat.toLowerCase());
+                studentFolders.push({
+                    _id: cat,
+                    name: cat,
+                    description: 'Assessment tests & results',
+                    examType: r.paperExamType || 'standard',
+                    count: folderCountMap[cat.toLowerCase()] || 0
+                });
+            }
+        });
+
+        const activeFolder = (req.query.folder || req.query.category || '').trim();
+
         res.render('student_dashboard', {
             results,
             targetRoll,
-            paperTopperStats
+            paperTopperStats,
+            folders: studentFolders,
+            activeFolder
         });
     } catch (error) {
         console.error('Error loading student dashboard:', error);

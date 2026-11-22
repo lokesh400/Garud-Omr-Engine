@@ -1559,6 +1559,267 @@
                 transition-duration: .01ms !important;
             }
         }
+
+        /* -------------------------------------------------------------
+           FOLDERS & BATCHES DIRECTORY (Like Admin Experience)
+        -------------------------------------------------------------- */
+        .directory-info-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 1.25rem;
+            padding: 0.25rem 0;
+        }
+
+        .directory-heading {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin: 0 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .directory-subheading {
+            font-size: 0.85rem;
+            color: #64748B;
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .folder-card-item {
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+            transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .folder-card-item:hover {
+            border-color: #3B82F6;
+            box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.12), 0 4px 10px -2px rgba(37, 99, 235, 0.04);
+            transform: translateY(-2.5px);
+        }
+
+        .folder-card-all {
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+            border-color: #CBD5E1;
+        }
+
+        .folder-card-all:hover {
+            border-color: #2563EB;
+        }
+
+        .folder-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .folder-icon-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #EFF6FF;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.15);
+        }
+
+        .avatar-all {
+            background: #F0FDF4;
+            color: #16A34A;
+            box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.15);
+        }
+
+        .folder-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .folder-count-badge.has-papers {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+        }
+
+        .folder-count-badge.empty {
+            background: #F8FAFC;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+        }
+
+        .folder-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .folder-card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0;
+            letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+
+        .folder-card-desc {
+            font-size: 0.82rem;
+            color: #64748B;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .folder-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 0.75rem;
+            border-top: 1px solid #F1F5F9;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2563EB;
+        }
+
+        .folder-card-footer span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .folder-card-arrow {
+            transition: transform 140ms ease;
+        }
+
+        .folder-card-item:hover .folder-card-arrow {
+            transform: translateX(3px);
+        }
+
+        /* Folder Navigation Bar (Inside Folder View) */
+        .folder-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0.85rem 1.25rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .folder-active-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back-folders {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            color: #334155;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 130ms ease;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-back-folders:hover {
+            background: #EFF6FF;
+            border-color: #93C5FD;
+            color: #1D4ED8;
+            transform: translateY(-1px);
+        }
+
+        .breadcrumb-sep {
+            color: #CBD5E1;
+            font-weight: 600;
+        }
+
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 12px;
+            color: #94A3B8;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input[type="search"] {
+            padding: 7px 12px 7px 34px;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 0.84rem;
+            background: #FFFFFF;
+            color: #0F172A;
+            transition: all 140ms ease;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-box input[type="search"]:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
     </style>
 </head>
 
@@ -1676,187 +1937,332 @@
                         </div>
                         <% } %>
 
-                            <% if (results && results.length> 0) { %>
-                                <div class="exam-grid">
-                                    <% results.forEach(item=> { %>
-                                        <% const scannedDate=new Date(item.submitted_at || item.scannedAt ||
-                                            Date.now()); const agg=item.aggregateMarks !==undefined ?
-                                            item.aggregateMarks : (item.score * 4); const maxM=item.maxMarks ||
-                                            ((item.totalQuestions || 50) * 4); const sumSec=item.allSectionsSummary || {
-                                            totalMarks: maxM, obtainedMarks: agg, totalQuestions: item.totalQuestions ||
-                                            0, attemptedQuestions: Math.max(0, (item.totalQuestions || 0) -
-                                            (item.blankCount || 0)), unattemptedQuestions: item.blankCount || 0,
-                                            correctCount: item.correctCount || 0, wrongCount: item.wrongCount || 0 };
-                                            const pId=String(item.paper_id || item.paperId || '' ); const pStats=(typeof
-                                            paperTopperStats !=='undefined' && paperTopperStats &&
-                                            paperTopperStats[pId]) ? paperTopperStats[pId] : null; %>
-                                            <article class="exam-card">
-                                                <div>
-                                                    <div class="exam-header">
-                                                        <div>
-                                                            <h2 class="exam-title">
-                                                                <%= item.paperTitle %>
-                                                            </h2>
-                                                            <div class="exam-meta">
-                                                                <span class="subject-badge">
-                                                                    <%= item.paperSubject || 'General' %>
-                                                                </span>
-                                                                <span>&middot;</span>
-                                                                <span>
-                                                                    <%= scannedDate.toLocaleDateString() %>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div
-                                                            style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                                                            <span
-                                                                class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
-                                                                <%= item.percentage %>% Accuracy
-                                                            </span>
-                                                            <% if (item.rank) { %>
-                                                                <span
-                                                                    class="rank-badge <%= item.rank === 1 ? 'rank-badge-top1' : (item.rank <= 3 ? 'rank-badge-top3' : '') %>"
-                                                                    title="Your rank in <%= item.paperTitle %>">
-                                                                    <% if (item.rank===1) { %>🥇<% } else if
-                                                                            (item.rank===2) { %>🥈<% } else if
-                                                                                (item.rank===3) { %>🥉<% } else { %>🏅<%
-                                                                                        } %>
-                                                                                        Rank #<%= item.rank %>
-                                                                                            <% if (item.totalCandidates)
-                                                                                                { %><span
-                                                                                                    style="font-weight: 500; opacity: 0.8; font-size: 0.72rem;">
-                                                                                                    / <%=
-                                                                                                        item.totalCandidates
-                                                                                                        %></span>
-                                                                                                <% } %>
-                                                                </span>
-                                                                <% } %>
-                                                        </div>
-                                                    </div>
+                            <% if (results && results.length > 0) { %>
+                                <!-- FOLDERS DIRECTORY VIEW (Like Admin: Folders Grid) -->
+                                <section id="studentFoldersDirectorySection" style="<%= (typeof activeFolder !== 'undefined' && activeFolder) ? 'display: none;' : '' %>">
+                                    <div class="directory-info-strip">
+                                        <div>
+                                            <h2 class="directory-heading">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                                </svg>
+                                                Assessment Batches & Folders
+                                            </h2>
+                                            <p class="directory-subheading">Select a folder or batch below to view all your evaluated tests, ranks, and OMR sheets.</p>
+                                        </div>
 
-                                                    <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
-                                                        <div>
-                                                            <div class="agg-label">Obtained Score</div>
-                                                            <div class="agg-score">
-                                                                <%= sumSec.obtainedMarks %> <span
-                                                                        style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/
-                                                                        <%= sumSec.totalMarks %></span>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div class="search-box" style="min-width: 220px;">
+                                                <span class="search-icon" aria-hidden="true">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <circle cx="11" cy="11" r="8"></circle>
+                                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                    </svg>
+                                                </span>
+                                                <input type="search" id="directorySearchInput" aria-label="Search folders" placeholder="Search folders or batches..." oninput="filterFoldersDirectory()">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="folders-grid" id="studentFoldersGrid">
+                                        <!-- All Assessment Papers Overview Card -->
+                                        <div class="folder-card-item folder-card-all" onclick="selectFolder('all')" data-folder-name="all tests" data-folder-desc="all assessment papers combined">
+                                            <div class="folder-card-top">
+                                                <div class="folder-icon-avatar avatar-all">
+                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                                        <polyline points="2 17 12 22 22 17"></polyline>
+                                                        <polyline points="2 12 12 17 22 12"></polyline>
+                                                    </svg>
+                                                </div>
+                                                <span class="folder-count-badge <%= (results && results.length > 0) ? 'has-papers' : 'empty' %>">
+                                                    <%= results ? results.length : 0 %> <%= (results && results.length === 1) ? 'Test' : 'Tests' %>
+                                                </span>
+                                            </div>
+                                            <div class="folder-card-body">
+                                                <h3 class="folder-card-title">All Evaluated Tests</h3>
+                                                <p class="folder-card-desc">Combined overview of all tests across all batches & folders.</p>
+                                            </div>
+                                            <div class="folder-card-footer">
+                                                <span>Open All Tests</span>
+                                                <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
+                                            <% folders.forEach(f => { %>
+                                                <div class="folder-card-item student-folder-card" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-id="<%= f._id %>" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '').toLowerCase() %>">
+                                                    <div class="folder-card-top">
+                                                        <div class="folder-icon-avatar">
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                                                        </div>
+                                                        <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
+                                                            <%= f.count || 0 %> <%= (f.count === 1) ? 'Test' : 'Tests' %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="folder-card-body">
+                                                        <h3 class="folder-card-title"><%= f.name %></h3>
+                                                        <p class="folder-card-desc"><%= f.description || 'Assessment tests, answer keys & batch results' %></p>
+                                                    </div>
+                                                    <div class="folder-card-footer">
+                                                        <span>Open Folder</span>
+                                                        <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            <% }) %>
+                                        <% } %>
+                                    </div>
+
+                                    <div id="noFoldersFoundState" style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; margin-top: 1rem;">
+                                        <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">No folders matching your search.</p>
+                                    </div>
+                                </section>
+
+                                <!-- FOLDER TESTS VIEW (Shown when a folder is selected) -->
+                                <section id="studentFolderTestsSection" style="<%= (typeof activeFolder !== 'undefined' && activeFolder) ? '' : 'display: none;' %>">
+                                    <div class="folder-nav-bar">
+                                        <div class="folder-active-title-group">
+                                            <button type="button" class="btn-back-folders" onclick="exitFolderView()">
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                                </svg>
+                                                All Folders
+                                            </button>
+                                            <span class="breadcrumb-sep">/</span>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span style="color: #2563EB; display: inline-flex; align-items: center;">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                                    </svg>
+                                                </span>
+                                                <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0F172A;" id="activeFolderHeading">
+                                                    <%= (typeof activeFolder !== 'undefined' && activeFolder === 'all') ? 'All Evaluated Tests' : ((typeof activeFolder !== 'undefined' && activeFolder) ? activeFolder : 'Folder') %>
+                                                </h2>
+                                                <span class="count-badge" id="activeFolderPaperBadge">0 Tests</span>
+                                            </div>
+                                        </div>
+
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <div class="search-box" style="min-width: 220px;">
+                                                <span class="search-icon" aria-hidden="true">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <circle cx="11" cy="11" r="8"></circle>
+                                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                    </svg>
+                                                </span>
+                                                <input type="search" id="studentSearchInput" aria-label="Search tests" placeholder="Search tests in this folder..." oninput="handleStudentSearch()">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="exam-grid" id="studentExamGrid">
+                                        <% results.forEach(item=> { %>
+                                            <% const scannedDate=new Date(item.submitted_at || item.scannedAt ||
+                                                Date.now()); const agg=item.aggregateMarks !==undefined ?
+                                                item.aggregateMarks : (item.score * 4); const maxM=item.maxMarks ||
+                                                ((item.totalQuestions || 50) * 4); const sumSec=item.allSectionsSummary || {
+                                                totalMarks: maxM, obtainedMarks: agg, totalQuestions: item.totalQuestions ||
+                                                0, attemptedQuestions: Math.max(0, (item.totalQuestions || 0) -
+                                                (item.blankCount || 0)), unattemptedQuestions: item.blankCount || 0,
+                                                correctCount: item.correctCount || 0, wrongCount: item.wrongCount || 0 };
+                                                const pId=String(item.paper_id || item.paperId || '' ); const pStats=(typeof
+                                                paperTopperStats !=='undefined' && paperTopperStats &&
+                                                paperTopperStats[pId]) ? paperTopperStats[pId] : null; 
+                                                const paperCat = (item.paperCategory || 'General').trim();
+                                                const searchStr = `${item.paperTitle || ''} ${item.paperSubject || ''} ${paperCat}`.toLowerCase();
+                                            %>
+                                                <article class="exam-card student-exam-card" data-category="<%= paperCat.toLowerCase() %>" data-search="<%= searchStr %>">
+                                                    <div>
+                                                        <div class="exam-header">
+                                                            <div>
+                                                                <h2 class="exam-title">
+                                                                    <%= item.paperTitle %>
+                                                                </h2>
+                                                                <div class="exam-meta">
+                                                                    <span class="subject-badge">
+                                                                        <%= item.paperSubject || 'General' %>
+                                                                    </span>
+                                                                    <span>&middot;</span>
+                                                                    <span>
+                                                                        <%= scannedDate.toLocaleDateString() %>
+                                                                    </span>
+                                                                    <% if (paperCat && paperCat !== 'General') { %>
+                                                                        <span>&middot;</span>
+                                                                        <span style="font-weight: 600; color: #2563EB;"><%= paperCat %></span>
+                                                                    <% } %>
+                                                                </div>
                                                             </div>
                                                             <div
-                                                                style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+                                                                style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                                                                <span
+                                                                    class="pill <%= item.percentage >= 60 ? 'pill-success' : (item.percentage >= 35 ? 'pill-warning' : 'pill-danger') %>">
+                                                                    <%= item.percentage %>% Accuracy
+                                                                </span>
                                                                 <% if (item.rank) { %>
                                                                     <span
-                                                                        class="rank-pill <%= item.rank === 1 ? 'rank-pill-top1' : (item.rank <= 3 ? 'rank-pill-top3' : '') %>"
-                                                                        title="Student rank in this exam">
-                                                                        🎯 Rank: #<%= item.rank %>
-                                                                            <% if (item.totalCandidates) { %> / <%=
-                                                                                    item.totalCandidates %>
-                                                                                    <% } %>
+                                                                        class="rank-badge <%= item.rank === 1 ? 'rank-badge-top1' : (item.rank <= 3 ? 'rank-badge-top3' : '') %>"
+                                                                        title="Your rank in <%= item.paperTitle %>">
+                                                                        <% if (item.rank===1) { %>🥇<% } else if
+                                                                                (item.rank===2) { %>🥈<% } else if
+                                                                                    (item.rank===3) { %>🥉<% } else { %>🏅<%
+                                                                                            } %>
+                                                                                            Rank #<%= item.rank %>
+                                                                                                <% if (item.totalCandidates)
+                                                                                                    { %><span
+                                                                                                        style="font-weight: 500; opacity: 0.8; font-size: 0.72rem;">
+                                                                                                        / <%=
+                                                                                                            item.totalCandidates
+                                                                                                            %></span>
+                                                                                                    <% } %>
                                                                     </span>
                                                                     <% } %>
-                                                                        <% if (pStats && pStats.highestOverall
-                                                                            !==undefined) { %>
-                                                                            <span class="topper-pill"
-                                                                                title="Highest marks scored across all candidates for this exam">
-                                                                                🏆 Paper Highest: <%=
-                                                                                    pStats.highestOverall %> / <%=
-                                                                                        sumSec.totalMarks %>
-                                                                            </span>
-                                                                            <% } %>
                                                             </div>
                                                         </div>
-                                                        <div style="text-align: right; font-size: 0.8rem;">
-                                                            <div
-                                                                style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
-                                                                <%= sumSec.attemptedQuestions %> / <%=
-                                                                        sumSec.totalQuestions %> Att
-                                                            </div>
-                                                            <div style="color: var(--text-muted); margin-top: 2px;">
-                                                                Unatt: <strong style="color: var(--text-body);">
-                                                                    <%= sumSec.unattemptedQuestions %>
-                                                                </strong> &middot;
-                                                                <span
-                                                                    style="color: var(--success-hover); font-weight: 600;">
-                                                                    <%= sumSec.correctCount %>C
-                                                                </span> &middot;
-                                                                <span style="color: var(--danger); font-weight: 600;">
-                                                                    <%= sumSec.wrongCount %>W
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
-                                                    <% if (item.sectionWise && item.sectionWise.length> 0) { %>
-                                                        <div class="sec-stack-list">
-                                                            <% item.sectionWise.forEach(s=> { %>
-                                                                <% const secUnatt=s.unattempted !==undefined ?
-                                                                    s.unattempted : (s.blank || 0); const
-                                                                    secTotalQ=s.totalQuestions !==undefined ?
-                                                                    s.totalQuestions : ((s.correct || 0) + (s.wrong ||
-                                                                    0) + secUnatt); const secAtt=s.attempted
-                                                                    !==undefined ? s.attempted : Math.max(0, secTotalQ -
-                                                                    secUnatt); const secHighestObj=(pStats &&
-                                                                    pStats.sectionHighest) ?
-                                                                    pStats.sectionHighest[s.sectionName] : null; const
-                                                                    secHighestVal=secHighestObj ? secHighestObj.highest
-                                                                    : null; %>
-                                                                    <div class="sec-stack-item">
-                                                                        <div
-                                                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                                                                            <div class="sec-stack-name">
-                                                                                <%= s.sectionName %>
-                                                                                    <% if (s.range &&
-                                                                                        !s.range.includes('MCQ') &&
-                                                                                        !s.range.includes('NVQ')) { %>
-                                                                                        <span
-                                                                                            style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
-                                                                                            <%= s.range %>)</span>
+                                                        <div class="agg-summary" style="margin: 1rem 0; flex-wrap: wrap;">
+                                                            <div>
+                                                                <div class="agg-label">Obtained Score</div>
+                                                                <div class="agg-score">
+                                                                    <%= sumSec.obtainedMarks %> <span
+                                                                            style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">/
+                                                                            <%= sumSec.totalMarks %></span>
+                                                                </div>
+                                                                <div
+                                                                    style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+                                                                    <% if (item.rank) { %>
+                                                                        <span
+                                                                            class="rank-pill <%= item.rank === 1 ? 'rank-pill-top1' : (item.rank <= 3 ? 'rank-pill-top3' : '') %>"
+                                                                            title="Student rank in this exam">
+                                                                            🎯 Rank: #<%= item.rank %>
+                                                                                <% if (item.totalCandidates) { %> / <%=
+                                                                                        item.totalCandidates %>
                                                                                         <% } %>
-                                                                            </div>
-                                                                            <% if (secHighestVal !==null &&
-                                                                                secHighestVal !==undefined) { %>
-                                                                                <span
-                                                                                    style="font-size: 0.72rem; font-weight: 700; color: #065F46; background: #D1FAE5; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;"
-                                                                                    title="Highest marks scored in <%= s.sectionName %> across all candidates">
-                                                                                    Top: <%= secHighestVal %>/<%=
-                                                                                            s.maxMarks %>
+                                                                        </span>
+                                                                        <% } %>
+                                                                            <% if (pStats && pStats.highestOverall
+                                                                                !==undefined) { %>
+                                                                                <span class="topper-pill"
+                                                                                    title="Highest marks scored across all candidates for this exam">
+                                                                                    🏆 Paper Highest: <%=
+                                                                                        pStats.highestOverall %> / <%=
+                                                                                            sumSec.totalMarks %>
                                                                                 </span>
                                                                                 <% } %>
-                                                                        </div>
-                                                                        <div class="sec-stack-marks">
-                                                                            <%= s.marks %> <span class="sec-stack-max">/
-                                                                                    <%= s.maxMarks %> marks</span>
-                                                                        </div>
-                                                                        <div class="sec-stack-meta">
-                                                                            Total: <strong>
-                                                                                <%= secTotalQ %>
-                                                                            </strong> &middot;
-                                                                            Att: <strong>
-                                                                                <%= secAtt %>
-                                                                            </strong> &middot;
-                                                                            Unatt: <strong>
-                                                                                <%= secUnatt %>
-                                                                            </strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <% }) %>
+                                                                </div>
+                                                            </div>
+                                                            <div style="text-align: right; font-size: 0.8rem;">
+                                                                <div
+                                                                    style="font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
+                                                                    <%= sumSec.attemptedQuestions %> / <%=
+                                                                            sumSec.totalQuestions %> Att
+                                                                </div>
+                                                                <div style="color: var(--text-muted); margin-top: 2px;">
+                                                                    Unatt: <strong style="color: var(--text-body);">
+                                                                        <%= sumSec.unattemptedQuestions %>
+                                                                    </strong> &middot;
+                                                                    <span
+                                                                        style="color: var(--success-hover); font-weight: 600;">
+                                                                        <%= sumSec.correctCount %>C
+                                                                    </span> &middot;
+                                                                    <span style="color: var(--danger); font-weight: 600;">
+                                                                        <%= sumSec.wrongCount %>W
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <% } %>
-                                                </div>
 
-                                                <button type="button" class="btn-view-omr"
-                                                    onclick="openStudentOmrModal('<%= item._id %>')">
-                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                                                        stroke-linejoin="round" aria-hidden="true">
-                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                        <circle cx="12" cy="12" r="3"></circle>
-                                                    </svg>
-                                                    <span>View Evaluated OMR Sheet</span>
-                                                </button>
-                                            </article>
-                                            <% }) %>
-                                </div>
+                                                        <% if (item.sectionWise && item.sectionWise.length> 0) { %>
+                                                            <div class="sec-stack-list">
+                                                                <% item.sectionWise.forEach(s=> { %>
+                                                                    <% const secUnatt=s.unattempted !==undefined ?
+                                                                        s.unattempted : (s.blank || 0); const
+                                                                        secTotalQ=s.totalQuestions !==undefined ?
+                                                                        s.totalQuestions : ((s.correct || 0) + (s.wrong ||
+                                                                        0) + secUnatt); const secAtt=s.attempted
+                                                                        !==undefined ? s.attempted : Math.max(0, secTotalQ -
+                                                                        secUnatt); const secHighestObj=(pStats &&
+                                                                        pStats.sectionHighest) ?
+                                                                        pStats.sectionHighest[s.sectionName] : null; const
+                                                                        secHighestVal=secHighestObj ? secHighestObj.highest
+                                                                        : null; %>
+                                                                        <div class="sec-stack-item">
+                                                                            <div
+                                                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                                                                <div class="sec-stack-name">
+                                                                                    <%= s.sectionName %>
+                                                                                        <% if (s.range &&
+                                                                                            !s.range.includes('MCQ') &&
+                                                                                            !s.range.includes('NVQ')) { %>
+                                                                                            <span
+                                                                                                style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
+                                                                                                <%= s.range %>)</span>
+                                                                                            <% } %>
+                                                                                </div>
+                                                                                <% if (secHighestVal !==null &&
+                                                                                    secHighestVal !==undefined) { %>
+                                                                                    <span
+                                                                                        style="font-size: 0.72rem; font-weight: 700; color: #065F46; background: #D1FAE5; border: 1px solid #A7F3D0; padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;"
+                                                                                        title="Highest marks scored in <%= s.sectionName %> across all candidates">
+                                                                                        Top: <%= secHighestVal %>/<%=
+                                                                                                s.maxMarks %>
+                                                                                    </span>
+                                                                                    <% } %>
+                                                                            </div>
+                                                                            <div class="sec-stack-marks">
+                                                                                <%= s.marks %> <span class="sec-stack-max">/
+                                                                                        <%= s.maxMarks %> marks</span>
+                                                                            </div>
+                                                                            <div class="sec-stack-meta">
+                                                                                Total: <strong>
+                                                                                    <%= secTotalQ %>
+                                                                                </strong> &middot;
+                                                                                Att: <strong>
+                                                                                    <%= secAtt %>
+                                                                                </strong> &middot;
+                                                                                Unatt: <strong>
+                                                                                    <%= secUnatt %>
+                                                                                </strong>
+                                                                            </div>
+                                                                        </div>
+                                                                        <% }) %>
+                                                            </div>
+                                                            <% } %>
+                                                    </div>
+
+                                                    <button type="button" class="btn-view-omr"
+                                                        onclick="openStudentOmrModal('<%= item._id %>')">
+                                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                            stroke-linejoin="round" aria-hidden="true">
+                                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                        </svg>
+                                                        <span>View Evaluated OMR Sheet</span>
+                                                    </button>
+                                                </article>
+                                                <% }) %>
+                                    </div>
+
+                                    <!-- Empty Folder State (shown when current folder has 0 tests or search matches 0 tests) -->
+                                    <div id="emptyFolderTestsState" style="display: none; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 16px; padding: 2.75rem 1.5rem; text-align: center; margin-top: 1rem;">
+                                        <div style="width: 48px; height: 48px; border-radius: 12px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <h3 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;" id="emptyFolderTitle">No tests found in this folder</h3>
+                                        <p style="color: #64748B; font-size: 0.85rem; max-width: 420px; margin: 0 auto; line-height: 1.5;">
+                                            There are currently no evaluated tests for your roll number in this folder or matching your search filter.
+                                        </p>
+                                    </div>
+                                </section>
                                 <% } else { %>
                                     <div class="empty-state">
                                         <div class="empty-state-icon" aria-hidden="true">
@@ -2128,6 +2534,129 @@
                     studentSubmissions.forEach(s => {
                         if (s && s._id) submissionsById[String(s._id)] = s;
                     });
+
+                    let currentActiveFolder = '<%- (typeof activeFolder !== "undefined" && activeFolder) ? activeFolder.replace(/'/g, "\\'") : "" %>';
+
+                    function selectFolder(folderName, updateHistory = true) {
+                        currentActiveFolder = folderName;
+                        const foldersSec = document.getElementById('studentFoldersDirectorySection');
+                        const testsSec = document.getElementById('studentFolderTestsSection');
+                        const heading = document.getElementById('activeFolderHeading');
+                        const searchInput = document.getElementById('studentSearchInput');
+
+                        if (foldersSec) foldersSec.style.display = 'none';
+                        if (testsSec) testsSec.style.display = 'block';
+
+                        const displayName = (folderName === 'all') ? 'All Evaluated Tests' : folderName;
+                        if (heading) heading.textContent = displayName;
+                        if (searchInput) {
+                            searchInput.value = '';
+                            searchInput.placeholder = (folderName === 'all') ? 'Search all tests...' : `Search tests in ${displayName}...`;
+                        }
+
+                        filterExamCardsInsideFolder();
+
+                        if (updateHistory) {
+                            const url = new URL(window.location.href);
+                            if (folderName === 'all') {
+                                url.searchParams.set('folder', 'all');
+                            } else {
+                                url.searchParams.set('folder', folderName);
+                            }
+                            window.history.pushState({ folder: folderName }, '', url.toString());
+                        }
+                    }
+
+                    function exitFolderView(updateHistory = true) {
+                        currentActiveFolder = '';
+                        const foldersSec = document.getElementById('studentFoldersDirectorySection');
+                        const testsSec = document.getElementById('studentFolderTestsSection');
+                        if (foldersSec) foldersSec.style.display = 'block';
+                        if (testsSec) testsSec.style.display = 'none';
+
+                        if (updateHistory) {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('folder');
+                            url.searchParams.delete('category');
+                            window.history.pushState({}, '', url.toString());
+                        }
+                    }
+
+                    function handleStudentSearch() {
+                        filterExamCardsInsideFolder();
+                    }
+
+                    function filterExamCardsInsideFolder() {
+                        const searchInput = document.getElementById('studentSearchInput');
+                        const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+                        const cards = document.querySelectorAll('.student-exam-card');
+                        let visibleCount = 0;
+
+                        cards.forEach(card => {
+                            const cardCat = (card.getAttribute('data-category') || 'general').toLowerCase();
+                            const cardSearch = (card.getAttribute('data-search') || '').toLowerCase();
+
+                            const matchesFolder = (currentActiveFolder === 'all') || (cardCat === currentActiveFolder.toLowerCase());
+                            const matchesQuery = !query || cardSearch.includes(query);
+
+                            if (matchesFolder && matchesQuery) {
+                                card.style.display = '';
+                                visibleCount++;
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+
+                        const badge = document.getElementById('activeFolderPaperBadge');
+                        if (badge) {
+                            badge.textContent = `${visibleCount} ${visibleCount === 1 ? 'Test' : 'Tests'}`;
+                        }
+
+                        const emptyBox = document.getElementById('emptyFolderTestsState');
+                        const grid = document.getElementById('studentExamGrid');
+                        if (visibleCount === 0) {
+                            if (emptyBox) emptyBox.style.display = 'block';
+                            if (grid) grid.style.display = 'none';
+                        } else {
+                            if (emptyBox) emptyBox.style.display = 'none';
+                            if (grid) grid.style.display = 'grid';
+                        }
+                    }
+
+                    function filterFoldersDirectory() {
+                        const input = document.getElementById('directorySearchInput');
+                        const q = (input ? input.value : '').toLowerCase().trim();
+                        const cards = document.querySelectorAll('.student-folder-card');
+                        let visibleCount = 0;
+
+                        cards.forEach(card => {
+                            const name = card.getAttribute('data-folder-name') || '';
+                            const desc = card.getAttribute('data-folder-desc') || '';
+                            const show = !q || name.includes(q) || desc.includes(q);
+                            card.style.display = show ? '' : 'none';
+                            if (show) visibleCount++;
+                        });
+
+                        const noMatches = document.getElementById('noFoldersFoundState');
+                        if (noMatches) {
+                            noMatches.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+                        }
+                    }
+
+                    window.addEventListener('popstate', (e) => {
+                        const url = new URL(window.location.href);
+                        const f = url.searchParams.get('folder') || url.searchParams.get('category');
+                        if (f) {
+                            selectFolder(f, false);
+                        } else {
+                            exitFolderView(false);
+                        }
+                    });
+
+                    // Auto-select if active folder was specified on load
+                    if (currentActiveFolder) {
+                        selectFolder(currentActiveFolder, false);
+                    }
 
                     function parseKeyOptionsClient(keyStr) {
                         if (!keyStr || typeof keyStr !== 'string') return [];
