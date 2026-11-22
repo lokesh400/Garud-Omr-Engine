@@ -654,7 +654,7 @@
                 style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;" alt="Sheet">
 
             <script>
-                const answerKey = <% - answerKey || '{}' %>;
+                const answerKey = <%- answerKey || '{}' %>;
                 const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
                 const img = document.getElementById('uploadedImage');
                 const canvas = document.getElementById('canvasOutput');

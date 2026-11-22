@@ -2122,8 +2122,8 @@
                 </dialog>
 
                 <script>
-                    const studentSubmissions = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
-                    const paperTopperStats = <% - JSON.stringify(typeof paperTopperStats !== 'undefined' ? paperTopperStats : {}).replace(/</g, '\\u003c') %>;
+                    const studentSubmissions = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+                    const paperTopperStats = <%- JSON.stringify(typeof paperTopperStats !== 'undefined' ? paperTopperStats : {}).replace(/</g, '\\u003c') %>;
                     const submissionsById = {};
                     studentSubmissions.forEach(s => {
                         if (s && s._id) submissionsById[String(s._id)] = s;
@@ -2970,13 +2970,31 @@
                         setMobileModalTab('omr');
                         setOmrModalZoom(1);
 
-                        if (omrModalDialog && typeof omrModalDialog.showModal === 'function') {
-                            omrModalDialog.showModal();
+                        if (omrModalDialog) {
+                            if (typeof omrModalDialog.showModal === 'function') {
+                                try {
+                                    omrModalDialog.showModal();
+                                } catch (e) {
+                                    omrModalDialog.setAttribute('open', '');
+                                }
+                            } else {
+                                omrModalDialog.setAttribute('open', '');
+                            }
                         }
                     }
 
                     function closeStudentOmrModal() {
-                        if (omrModalDialog && omrModalDialog.open) omrModalDialog.close();
+                        if (omrModalDialog) {
+                            if (typeof omrModalDialog.close === 'function') {
+                                try {
+                                    omrModalDialog.close();
+                                } catch (e) {
+                                    omrModalDialog.removeAttribute('open');
+                                }
+                            } else {
+                                omrModalDialog.removeAttribute('open');
+                            }
+                        }
                         setOmrModalZoom(1);
                         currentModalItem = null;
                     }
