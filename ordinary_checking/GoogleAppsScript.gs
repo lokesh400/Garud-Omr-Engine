@@ -5,21 +5,13 @@
  * 
  * Instructions:
  * 1. Open your Google Spreadsheet (https://sheets.google.com).
- * 2. Create a tab named "AnswerKey":
- *    - Row 1 Headers: Question | Answer | Section
- *    - Rows 2..N:     1        | A      | Physics
- *                     2        | B      | Physics
- *                     ...
- * 3. In Google Sheets menu, click: Extensions > Apps Script.
- * 4. Replace any default code with this entire file.
- * 5. Click "Deploy" (top right) > "New deployment".
- * 6. Select type: "Web app" (click the gear icon).
- *    - Description: Ordinary OMR Checker
+ * 2. In Google Sheets menu, click: Extensions > Apps Script.
+ * 3. Replace any default code with this entire file.
+ * 4. Click "Deploy" (top right) > "Manage deployments" (or "New deployment").
+ * 5. If editing existing deployment: click Edit (pencil icon), select Version: "New version", click Deploy.
  *    - Execute as: "Me"
  *    - Who has access: "Anyone"
- * 7. Click "Deploy" (Authorize if prompted).
- * 8. Copy the Web App URL (e.g. https://script.google.com/macros/s/.../exec)
- *    and paste it into your Ordinary Checker portal!
+ * 6. The deployment URL is saved in your .env as `deployment_url`.
  */
 
 function doGet(e) {
@@ -78,18 +70,78 @@ function doGet(e) {
 function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var resultsSheet = ss.getSheetByName("Results");
     
     var payload = {};
     if (e && e.postData && e.postData.contents) {
       payload = JSON.parse(e.postData.contents);
     }
-    
+
+    // -------------------------------------------------------------
+    // ACTION 1: CREATE / SAVE PAPER ANSWER KEY & SECTIONS TO SHEET
+    // -------------------------------------------------------------
+    if (payload.action === 'savePaper' || payload.action === 'createPaper') {
+      var keySheet = ss.getSheetByName("AnswerKey");
+      if (!keySheet) {
+        keySheet = ss.insertSheet("AnswerKey");
+      }
+      keySheet.clear();
+      keySheet.appendRow(["Question", "Answer", "Section"]);
+      keySheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#1E293B").setFontColor("#FFFFFF");
+      
+      var totalQ = Number(payload.totalQuestions) || 180;
+      var aKey = payload.answerKey || {};
+      var secDefs = payload.sections || [];
+      
+      function getSectionName(q) {
+        for (var s = 0; s < secDefs.length; s++) {
+          if (q >= secDefs[s].from && q <= secDefs[s].to) {
+            return secDefs[s].name;
+          }
+        }
+        return "Section 1";
+      }
+      
+      var rows = [];
+      for (var q = 1; q <= totalQ; q++) {
+        var ans = String(aKey[String(q)] || "").trim().toUpperCase();
+        rows.push([q, ans, getSectionName(q)]);
+      }
+      
+      if (rows.length > 0) {
+        keySheet.getRange(2, 1, rows.length, 3).setValues(rows);
+      }
+
+      // Prepare Results Sheet headers aligned with sections
+      var resultsSheet = ss.getSheetByName("Results");
+      if (!resultsSheet) {
+        resultsSheet = ss.insertSheet("Results");
+      }
+      if (resultsSheet.getLastRow() <= 1 && secDefs.length > 0) {
+        resultsSheet.clear();
+        var headers = ["Timestamp", "Student Name", "Roll Number"];
+        secDefs.forEach(function(sd) { headers.push(sd.name); });
+        headers.push("Total Marks");
+        headers.push("Max Marks");
+        resultsSheet.appendRow(headers);
+        resultsSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#1E293B").setFontColor("#FFFFFF");
+        resultsSheet.setFrozenRows(1);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: "Paper '" + (payload.title || "Assessment") + "' saved to Google Sheet with " + totalQ + " questions."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // -------------------------------------------------------------
+    // ACTION 2: RECORD EVALUATED STUDENT RESULT
+    // -------------------------------------------------------------
+    var resultsSheet = ss.getSheetByName("Results");
     var studentName = String(payload.studentName || "Anonymous Student").trim();
     var rollNumber = String(payload.rollNumber || "-").trim();
     var totalMarks = payload.totalMarks !== undefined ? Number(payload.totalMarks) : Number(payload.score || 0);
     var maxMarks = payload.maxMarks !== undefined ? Number(payload.maxMarks) : 720;
-    var sectionMarks = payload.sectionMarks || {}; // { "Physics": 160, "Chemistry": 150, ... }
+    var sectionMarks = payload.sectionMarks || {};
     var sectionNames = Object.keys(sectionMarks);
     
     // Create Results sheet if it doesn't exist
@@ -112,7 +164,6 @@ function doPost(e) {
       resultsSheet.setFrozenRows(1);
     }
     
-    // Ensure existing header row has section columns if they were updated
     var existingHeaders = resultsSheet.getRange(1, 1, 1, Math.max(1, resultsSheet.getLastColumn())).getValues()[0] || [];
     var rowData = [
       new Date().toLocaleString(),
@@ -121,13 +172,11 @@ function doPost(e) {
     ];
     
     if (existingHeaders.length > 5) {
-      // Columns align with existing headers
       for (var col = 3; col < existingHeaders.length - 2; col++) {
         var secHeader = String(existingHeaders[col]).trim();
         rowData.push(sectionMarks[secHeader] !== undefined ? sectionMarks[secHeader] : 0);
       }
     } else {
-      // Append section values
       sectionNames.forEach(function(s) {
         rowData.push(sectionMarks[s]);
       });

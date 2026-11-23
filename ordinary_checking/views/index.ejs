@@ -8,32 +8,39 @@
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .container {
-            max-width: 900px;
-            margin: 30px auto;
-            padding: 24px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 960px;
+            margin: 28px auto 60px auto;
+            padding: 0 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         .header-box {
             background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
             color: #fff;
-            padding: 28px;
+            padding: 24px 28px;
             border-radius: 14px;
             margin-bottom: 24px;
             box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
-        .badge-lite {
-            display: inline-block;
-            background: #10B981;
-            color: #fff;
+        .badge-env {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10B981;
+            color: #34D399;
             padding: 4px 10px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
-            text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .card {
@@ -45,47 +52,19 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 6px;
-        }
-
-        .input-text {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #CBD5E1;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.15s ease;
-        }
-
-        .input-text:focus {
-            outline: none;
-            border-color: #2563EB;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 12px 20px;
+            padding: 10px 18px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             border: none;
             text-decoration: none;
-            transition: background 0.15s ease, transform 0.05s ease;
+            transition: all 0.15s ease;
         }
 
         .btn-primary {
@@ -106,29 +85,34 @@
             background: #047857;
         }
 
-        .btn-secondary {
-            background: #64748B;
-            color: #fff;
+        .btn-outline {
+            background: #FFFFFF;
+            color: #334155;
+            border: 1px solid #CBD5E1;
         }
 
-        .btn-secondary:hover {
-            background: #475569;
+        .btn-outline:hover {
+            background: #F8FAFC;
+            border-color: #94A3B8;
         }
 
         .action-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 16px;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         .action-card {
             background: #F8FAFC;
-            border: 2px dashed #CBD5E1;
+            border: 1.5px solid #E2E8F0;
             border-radius: 12px;
             padding: 24px;
             text-align: center;
             transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .action-card:hover {
@@ -138,7 +122,7 @@
         }
 
         .action-card h3 {
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             color: #1E293B;
             font-size: 18px;
         }
@@ -147,6 +131,7 @@
             color: #64748B;
             font-size: 13px;
             margin: 0 0 16px 0;
+            line-height: 1.4;
         }
 
         .info-pill {
@@ -162,134 +147,158 @@
             margin-bottom: 8px;
         }
 
-        .script-box {
-            background: #0F172A;
-            color: #E2E8F0;
-            padding: 16px;
+        .alert-banner {
+            background: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            color: #065F46;
+            padding: 12px 16px;
             border-radius: 8px;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 250px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #334155;
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 4px;
-            border: none;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .copy-btn:hover {
-            background: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <!-- Success / Info Message -->
+        <% if (message) { %>
+            <div class="alert-banner">
+                ✓ <%= message %>
+            </div>
+        <% } %>
+
         <!-- Header -->
         <div class="header-box">
-            <span class="badge-lite">Ordinary OMR Checker</span>
-            <h1 style="margin: 0 0 8px 0; font-size: 26px;">Google Sheets OMR Evaluation Portal</h1>
-            <p style="margin: 0; color: #94A3B8; font-size: 14px; line-height: 1.5;">
-                Zero database footprint: paper and answer key are loaded directly from your Google Sheet.
-                Scanned student marks and section totals are appended to the sheet automatically without storing photos on Cloudinary.
-            </p>
+            <div>
+                <span class="badge-env">
+                    ● GOOGLE SHEET CONNECTED VIA .ENV
+                </span>
+                <h1 style="margin: 0 0 6px 0; font-size: 24px;">Ordinary OMR Checker</h1>
+                <p style="margin: 0; color: #94A3B8; font-size: 13px;">
+                    Google Sheets integration active &bull; Zero MongoDB / Zero Cloudinary footprint
+                </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="/ordinary/paper/new" class="btn btn-primary" style="background: #10B981;">
+                    ➕ Create New Paper
+                </a>
+                <a href="/" class="btn btn-outline" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
+                    Main Portal
+                </a>
+            </div>
         </div>
 
-        <!-- Google Sheet URL Setup Form -->
+        <!-- Active Assessment Paper Card -->
         <div class="card">
-            <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1E293B;">1. Connect Google Sheet</h2>
-            <form action="/ordinary/setup" method="POST">
-                <div class="form-group">
-                    <label class="form-label" for="sheetUrl">Google Apps Script Web App URL or Google Spreadsheet Link:</label>
-                    <input type="url" id="sheetUrl" name="sheetUrl" class="input-text"
-                        placeholder="https://script.google.com/macros/s/.../exec"
-                        value="<%= config.url || '' %>" required>
-                    <small style="color: #64748B; font-size: 12px; display: block; margin-top: 6px;">
-                        Paste the Web App URL from your Google Sheet's Apps Script deployment, or a public viewable Sheet link.
-                    </small>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Active Assessment Paper</span>
+                    <h2 style="margin: 4px 0 0 0; font-size: 20px; color: #0F172A;"><%= config.title %></h2>
+                    <span style="color: #64748B; font-size: 13px;"><%= config.subject || 'General' %></span>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button type="submit" class="btn btn-primary">
-                        <span>Save &amp; Load Paper</span>
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('instructionsModal').style.display = 'block';">
-                        <span>📋 View Apps Script Code</span>
-                    </button>
+                <div style="display: flex; gap: 8px;">
+                    <a href="/ordinary/paper/new" class="btn btn-outline" style="font-size: 13px; padding: 6px 12px;">
+                        ✏️ Edit Paper / Key
+                    </a>
+                    <form action="/ordinary/sync-sheet" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-outline" style="font-size: 13px; padding: 6px 12px;" title="Fetch latest answer key from Google Sheet">
+                            🔄 Sync from Sheet
+                        </button>
+                    </form>
                 </div>
-            </form>
-        </div>
+            </div>
 
-        <!-- Active Paper Details -->
-        <div class="card">
-            <h2 style="margin: 0 0 12px 0; font-size: 18px; color: #1E293B;">2. Current Paper Details</h2>
+            <!-- Paper Stats -->
             <div style="margin-bottom: 16px;">
-                <span class="info-pill"><strong>Title:</strong> <%= config.title %></span>
                 <span class="info-pill"><strong>Total Questions:</strong> <%= config.totalQuestions %></span>
-                <span class="info-pill"><strong>Key Loaded:</strong> <%= Object.keys(config.answerKey || {}).length %> Questions</span>
+                <span class="info-pill"><strong>Max Marks:</strong> <%= config.maxMarks || (config.totalQuestions * 4) %></span>
+                <span class="info-pill" style="background: <%= Object.keys(config.answerKey || {}).length > 0 ? '#DCFCE7' : '#FEF3C7' %>; color: <%= Object.keys(config.answerKey || {}).length > 0 ? '#166534' : '#92400E' %>;">
+                    <strong>Answer Key:</strong> <%= Object.keys(config.answerKey || {}).length %> / <%= config.totalQuestions %> Keyed
+                </span>
             </div>
 
             <!-- Sections summary -->
-            <div style="margin-bottom: 20px;">
-                <strong style="font-size: 13px; color: #334155; display: block; margin-bottom: 8px;">Paper Sections:</strong>
+            <div>
+                <strong style="font-size: 12px; color: #475569; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Sections Defined:
+                </strong>
                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                     <% (config.sections || []).forEach(function(sec) { %>
                         <span class="info-pill" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8;">
-                            <strong><%= sec.name %>:</strong> Q<%= sec.from %>-Q<%= sec.to %>
+                            <strong><%= sec.name %>:</strong> Q<%= sec.from %>-Q<%= sec.to %> (<%= sec.maxMarks || ((sec.to - sec.from + 1) * 4) %>M)
                         </span>
                     <% }); %>
                 </div>
             </div>
+        </div>
 
-            <!-- Action buttons to launch scanner or evaluator -->
-            <h2 style="margin: 24px 0 12px 0; font-size: 18px; color: #1E293B;">3. Start Checking</h2>
+        <!-- Start Checking Actions -->
+        <div class="card">
+            <h2 style="margin: 0 0 4px 0; font-size: 18px; color: #0F172A;">Start Evaluation</h2>
+            <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748B;">
+                Scanned marks will be appended directly into your Google Sheet under the <strong>Results</strong> tab.
+            </p>
+
             <div class="action-grid">
                 <div class="action-card">
-                    <h3>📷 Live Camera Scanner</h3>
-                    <p>Scan OMR sheets live via webcam or phone camera. Enter student name and save directly to Google Sheets.</p>
-                    <a href="/ordinary/scanner" class="btn btn-success" style="width: 100%; box-sizing: border-box;">
+                    <div>
+                        <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+                        <h3>Live Camera Scanner</h3>
+                        <p>Continuous webcam / mobile scanning. Enter student name, hit Enter, and results save directly to Google Sheets.</p>
+                    </div>
+                    <a href="/ordinary/scanner" class="btn btn-success" style="width: 100%; box-sizing: border-box; padding: 12px;">
                         Launch Camera Scanner
                     </a>
                 </div>
 
                 <div class="action-card">
-                    <h3>📁 Image File Evaluator</h3>
-                    <p>Upload or drag-and-drop captured OMR sheet images. Enter student name and save results instantly.</p>
-                    <a href="/ordinary/evaluator" class="btn btn-primary" style="width: 100%; box-sizing: border-box;">
+                    <div>
+                        <div style="font-size: 32px; margin-bottom: 8px;">📁</div>
+                        <h3>File Upload Evaluator</h3>
+                        <p>Upload or drag &amp; drop OMR sheet photos. Enter student name and record marks instantly.</p>
+                    </div>
+                    <a href="/ordinary/evaluator" class="btn btn-primary" style="width: 100%; box-sizing: border-box; padding: 12px;">
                         Launch File Evaluator
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Copy-Paste Apps Script Modal -->
-        <div id="instructionsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+        <!-- Google Sheet Connection Details (Auto configured from .env) -->
+        <div class="card" style="background: #F8FAFC;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0 0 4px 0; font-size: 14px; color: #1E293B;">Google Apps Script Web App</h3>
+                    <div style="font-family: monospace; font-size: 12px; color: #64748B; word-break: break-all;">
+                        <%= envUrl || config.url %>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="document.getElementById('scriptModal').style.display = 'block';">
+                        📋 View Apps Script Code
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Modal -->
+        <div id="scriptModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
             <div style="background: #fff; max-width: 750px; margin: 40px auto; border-radius: 12px; padding: 24px; max-height: 85vh; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="margin: 0; font-size: 18px; color: #0F172A;">Google Apps Script Setup Code</h3>
-                    <button onclick="document.getElementById('instructionsModal').style.display = 'none';" style="border: none; background: transparent; font-size: 20px; cursor: pointer;">&times;</button>
+                    <h3 style="margin: 0; font-size: 18px; color: #0F172A;">Google Apps Script Code</h3>
+                    <button onclick="document.getElementById('scriptModal').style.display = 'none';" style="border: none; background: transparent; font-size: 20px; cursor: pointer;">&times;</button>
                 </div>
                 <p style="font-size: 13px; color: #475569; margin-bottom: 12px;">
-                    1. In your Google Sheet, create an <strong>AnswerKey</strong> tab with columns: <code>Question | Answer | Section</code>.<br>
-                    2. Go to <strong>Extensions &gt; Apps Script</strong> and paste the code below.<br>
-                    3. Click <strong>Deploy &gt; New deployment &gt; Web app</strong> (Who has access: <em>Anyone</em>).<br>
-                    4. Copy the Web App URL and paste it into the field above!
+                    This script powers the two-way sync: writing the AnswerKey tab when a paper is created, and appending rows to the Results tab when students are checked.
                 </p>
-                <div class="script-box">
-                    <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('rawScript').textContent); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000);">Copy</button>
+                <div style="background: #0F172A; color: #E2E8F0; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 250px; overflow-y: auto; position: relative;">
+                    <button style="position: absolute; top: 10px; right: 10px; background: #334155; color: #fff; padding: 4px 10px; border-radius: 4px; border: none; font-size: 11px; cursor: pointer;" onclick="navigator.clipboard.writeText(document.getElementById('rawScript').textContent); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000);">Copy</button>
                     <pre id="rawScript" style="margin: 0; white-space: pre-wrap;"><%= appsScriptCode %></pre>
                 </div>
                 <div style="text-align: right; margin-top: 16px;">
-                    <button class="btn btn-primary" onclick="document.getElementById('instructionsModal').style.display = 'none';">Close</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('scriptModal').style.display = 'none';">Close</button>
                 </div>
             </div>
         </div>

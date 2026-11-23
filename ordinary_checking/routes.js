@@ -3,8 +3,9 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const {
+    getEnvUrl,
     getActiveConfig,
-    setActiveConfig,
+    createOrUpdatePaper,
     fetchPaperFromSheet,
     saveResultToSheet
 } = require('./googleSheetService');
@@ -17,34 +18,83 @@ try {
     appsScriptCode = '// GoogleAppsScript.gs not found';
 }
 
-// 1. Dashboard & Google Sheet Setup
+// 1. Dashboard
 router.get('/', (req, res) => {
     const config = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'index.ejs'), {
         config,
+        envUrl: getEnvUrl(),
+        message: req.query.message || null,
+        error: req.query.error || null,
         appsScriptCode
     });
 });
 
-// 2. Save Google Sheet URL & Load Paper
-router.post('/setup', async (req, res) => {
+// 2. Create Paper Form (Same style as NEET/JEE)
+router.get('/paper/new', (req, res) => {
+    const config = getActiveConfig();
+    res.render(path.join(__dirname, 'views', 'create_paper.ejs'), {
+        config
+    });
+});
+
+// 3. Process Paper Creation (saves locally and syncs to Google Sheet)
+router.post('/paper/new', async (req, res) => {
     try {
-        const sheetUrl = String((req.body && req.body.sheetUrl) || '').trim();
-        if (!sheetUrl) {
-            return res.redirect('/ordinary?error=' + encodeURIComponent('Please enter a valid Google Sheet or Apps Script URL'));
+        const title = String((req.body && req.body.title) || 'Ordinary Assessment').trim();
+        const subject = String((req.body && req.body.subject) || 'General').trim();
+        const totalQuestions = Number((req.body && req.body.totalQuestions) || 180);
+
+        let sections = [];
+        const rawSections = req.body && req.body.sectionsJson;
+        if (typeof rawSections === 'string' && rawSections.trim() !== '') {
+            try {
+                sections = JSON.parse(rawSections);
+            } catch (e) {
+                console.warn('[Ordinary Checker] Invalid sections JSON:', e.message);
+            }
         }
 
-        const loadedConfig = await fetchPaperFromSheet(sheetUrl);
-        console.log(`[Ordinary Checker] Successfully loaded paper "${loadedConfig.title}" with ${loadedConfig.totalQuestions} questions from Google Sheet.`);
+        let answerKey = {};
+        const rawKey = req.body && req.body.answerKeyJson;
+        if (typeof rawKey === 'string' && rawKey.trim() !== '') {
+            try {
+                answerKey = JSON.parse(rawKey);
+            } catch (e) {
+                console.warn('[Ordinary Checker] Invalid answerKey JSON:', e.message);
+            }
+        }
 
-        res.redirect('/ordinary?message=' + encodeURIComponent(`Paper "${loadedConfig.title}" successfully loaded from Google Sheet!`));
+        const outcome = await createOrUpdatePaper({
+            title,
+            subject,
+            totalQuestions,
+            sections,
+            answerKey
+        });
+
+        const syncMsg = outcome.cloudSynced
+            ? 'Paper created and synced to Google Sheet!'
+            : 'Paper created and saved. (Ready for scanning)';
+
+        res.redirect('/ordinary?message=' + encodeURIComponent(syncMsg));
     } catch (err) {
-        console.error('[Ordinary Checker Setup Error]:', err.message);
+        console.error('[Ordinary Checker Create Paper Error]:', err);
         res.redirect('/ordinary?error=' + encodeURIComponent(err.message));
     }
 });
 
-// 3. Live Camera Scanner View
+// 4. Force Sync / Refresh from Google Sheet
+router.post('/sync-sheet', async (req, res) => {
+    try {
+        const synced = await fetchPaperFromSheet();
+        res.redirect('/ordinary?message=' + encodeURIComponent(`Synced paper "${synced.title}" (${synced.totalQuestions} questions) from Google Sheet.`));
+    } catch (err) {
+        res.redirect('/ordinary?error=' + encodeURIComponent('Could not sync: ' + err.message));
+    }
+});
+
+// 5. Live Camera Scanner View
 router.get('/scanner', (req, res) => {
     const config = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'scanner.ejs'), {
@@ -52,7 +102,7 @@ router.get('/scanner', (req, res) => {
     });
 });
 
-// 4. File Upload / Image Evaluator View
+// 6. File Upload / Image Evaluator View
 router.get('/evaluator', (req, res) => {
     const config = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'evaluator.ejs'), {
@@ -60,7 +110,7 @@ router.get('/evaluator', (req, res) => {
     });
 });
 
-// 5. API endpoint to save result to Google Sheet (No MongoDB, No Cloudinary)
+// 7. API endpoint to save result to Google Sheet (Zero MongoDB, Zero Cloudinary)
 router.post('/api/save-result', async (req, res) => {
     try {
         if (!req.body) {
@@ -72,7 +122,7 @@ router.post('/api/save-result', async (req, res) => {
             return res.status(400).json({ error: 'Student name is required' });
         }
 
-        console.log(`[Ordinary Checker] Saving result for student "${studentName}" (Total: ${totalMarks}) to Google Sheet...`);
+        console.log(`[Ordinary Checker] Saving result for student "${studentName}" (Marks: ${totalMarks}) to Google Sheet...`);
 
         const saveOutcome = await saveResultToSheet({
             studentName: String(studentName).trim(),
@@ -94,7 +144,7 @@ router.post('/api/save-result', async (req, res) => {
     }
 });
 
-// 6. API endpoint to retrieve current paper info
+// 8. API endpoint to retrieve current paper info
 router.get('/api/paper', (req, res) => {
     res.json({ success: true, paper: getActiveConfig() });
 });
