@@ -98,7 +98,8 @@ router.post('/sync-sheet', async (req, res) => {
 router.get('/scanner', (req, res) => {
     const config = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'scanner.ejs'), {
-        config
+        config,
+        paper: config
     });
 });
 
@@ -106,7 +107,8 @@ router.get('/scanner', (req, res) => {
 router.get('/evaluator', (req, res) => {
     const config = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'evaluator.ejs'), {
-        config
+        config,
+        paper: config
     });
 });
 
