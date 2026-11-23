@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ordinary OMR Scanner - <%= config.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #090D16;
+            color: #E2E8F0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            height: 52px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 50;
+        }
+
+        .scanner-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #cameraFeed {
+            position: absolute;
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #overlayCanvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* Result Bottom Sheet Modal */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0F172A;
+            border-top: 2px solid #334155;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            z-index: 100;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.6);
+            animation: slideUp 0.25s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .score-pill-large {
+            font-size: 32px;
+            font-weight: 800;
+            color: #10B981;
+            text-align: center;
+            margin: 4px 0 12px 0;
+        }
+
+        .input-student {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 2px solid #3B82F6;
+            background: #1E293B;
+            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            margin-bottom: 12px;
+        }
+
+        .input-student:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-sheet {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-sheet-save {
+            background: #10B981;
+            color: #fff;
+        }
+
+        .btn-sheet-save:hover {
+            background: #059669;
+        }
+
+        .btn-sheet-cancel {
+            background: #334155;
+            color: #E2E8F0;
+        }
+
+        .section-score-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .sec-card {
+            background: #1E293B;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .sec-card .name {
+            font-size: 11px;
+            color: #94A3B8;
+            text-transform: uppercase;
+        }
+
+        .sec-card .marks {
+            font-size: 18px;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+
+        .toast-msg {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10B981;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="/ordinary" style="color: #94A3B8; text-decoration: none; font-size: 14px;">&larr; Exit</a>
+            <span style="font-weight: 700; font-size: 14px;"><%= config.title %></span>
+        </div>
+        <div>
+            <button onclick="triggerManualCapture();" style="background: #2563EB; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                📸 Snap Sheet
+            </button>
+        </div>
+    </div>
+
+    <!-- Scanner Camera Viewport -->
+    <div class="scanner-container">
+        <video id="cameraFeed" playsinline autoplay muted></video>
+        <canvas id="overlayCanvas"></canvas>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-msg"></div>
+
+    <!-- Bottom Result Sheet Modal -->
+    <div id="resultModal" class="bottom-sheet">
+        <div style="text-align: center; color: #94A3B8; font-size: 12px; text-transform: uppercase;">Scanned Result</div>
+        <div class="score-pill-large" id="modalScore">0 Marks</div>
+
+        <!-- Section Scores -->
+        <div class="section-score-list" id="modalSections"></div>
+
+        <!-- Student Name Input (Autofocused) -->
+        <label style="display: block; font-size: 12px; color: #94A3B8; margin-bottom: 4px;">Enter Student Name:</label>
+        <input type="text" id="modalStudentName" class="input-student" placeholder="e.g. Aarav Sharma" autocomplete="off">
+
+        <label style="display: block; font-size: 12px; color: #94A3B8; margin-bottom: 4px;">Roll Number (Auto-read):</label>
+        <input type="text" id="modalRollNumber" class="input-student" style="padding: 10px 14px; font-size: 14px;" placeholder="Optional">
+
+        <button id="modalSaveBtn" class="btn-sheet btn-sheet-save" onclick="saveScannedResult();">
+            💾 Save to Google Sheet &amp; Next (Enter)
+        </button>
+        <button class="btn-sheet btn-sheet-cancel" onclick="dismissModal();">
+            ✕ Discard &amp; Resume Camera
+        </button>
+    </div>
+
+    <script>
+        const ANSWER_KEY = <%- JSON.stringify(config.answerKey || {}) %>;
+        const SECTIONS = <%- JSON.stringify(config.sections || []) %>;
+        const TOTAL_QUESTIONS = <%= config.totalQuestions || 180 %>;
+
+        const video = document.getElementById('cameraFeed');
+        const overlay = document.getElementById('overlayCanvas');
+        const ctx = overlay.getContext('2d');
+        const resultModal = document.getElementById('resultModal');
+        const modalScore = document.getElementById('modalScore');
+        const modalSections = document.getElementById('modalSections');
+        const modalStudentName = document.getElementById('modalStudentName');
+        const modalRollNumber = document.getElementById('modalRollNumber');
+        const modalSaveBtn = document.getElementById('modalSaveBtn');
+        const toast = document.getElementById('toast');
+
+        let isLocked = false;
+        let isEvaluating = false;
+        let currentEvaluation = null;
+
+        // Init Camera Feed
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.play();
+                requestAnimationFrame(loop);
+            } catch (err) {
+                alert('Camera error: ' + err.message + '. Please ensure camera permissions are allowed.');
+            }
+        }
+
+        // Sizing
+        function resizeOverlay() {
+            if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
+                overlay.width = video.videoWidth || window.innerWidth;
+                overlay.height = video.videoHeight || window.innerHeight;
+            }
+        }
+
+        // Realtime Framing Loop
+        function loop() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                resizeOverlay();
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                if (!isLocked) {
+                    drawFramingBox(ctx, overlay.width, overlay.height);
+                }
+            }
+            if (!isLocked) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        function drawFramingBox(ctx, W, H) {
+            const marginX = W * 0.08;
+            const marginY = H * 0.06;
+            const guideW = W - 2 * marginX;
+            const guideH = H - 2 * marginY;
+
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([12, 8]);
+            ctx.strokeRect(marginX, marginY, guideW, guideH);
+            ctx.setLineDash([]);
+
+            // Draw Corner Crosshairs
+            const cLen = 28;
+            ctx.lineWidth = 5;
+            // TL
+            ctx.beginPath(); ctx.moveTo(marginX, marginY + cLen); ctx.lineTo(marginX, marginY); ctx.lineTo(marginX + cLen, marginY); ctx.stroke();
+            // TR
+            ctx.beginPath(); ctx.moveTo(marginX + guideW - cLen, marginY); ctx.lineTo(marginX + guideW, marginY); ctx.lineTo(marginX + guideW, marginY + cLen); ctx.stroke();
+            // BR
+            ctx.beginPath(); ctx.moveTo(marginX + guideW, marginY + guideH - cLen); ctx.lineTo(marginX + guideW, guideH + marginY); ctx.lineTo(marginX + guideW - cLen, guideH + marginY); ctx.stroke();
+            // BL
+            ctx.beginPath(); ctx.moveTo(marginX + cLen, marginY + guideH); ctx.lineTo(marginX, marginY + guideH); ctx.lineTo(marginX, marginY + guideH - cLen); ctx.stroke();
+        }
+
+        // Trigger manual snap
+        function triggerManualCapture() {
+            if (isEvaluating || isLocked) return;
+            isLocked = true;
+
+            // Capture frozen frame
+            const snapCanvas = document.createElement('canvas');
+            snapCanvas.width = video.videoWidth || 1280;
+            snapCanvas.height = video.videoHeight || 720;
+            const sCtx = snapCanvas.getContext('2d');
+            sCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+
+            evaluateSnap(snapCanvas);
+        }
+
+        // Geometry Constants (Same as NEET Checker)
+        const TARGET_W = 1000;
+        const TARGET_H = 1461;
+        const U_START = 0.061846;
+        const V_START = 0.256331;
+        const U_BUBBLE_STEP = 0.028042;
+        const V_ROW_STEP = 0.018233;
+        const U_COL_STEP = 0.201332;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
+
+        const U_ROLL_START = 0.619879;
+        const V_ROLL_START = 0.058644;
+        const U_ROLL_COL_STEP = 0.026640;
+        const V_ROLL_ROW_STEP = 0.018233;
+
+        function evaluateSnap(srcCanvas) {
+            isEvaluating = true;
+            const W = srcCanvas.width;
+            const H = srcCanvas.height;
+
+            // Perspective warp to leveled standard sheet
+            const levelCanvas = document.createElement('canvas');
+            levelCanvas.width = TARGET_W;
+            levelCanvas.height = TARGET_H;
+            const lCtx = levelCanvas.getContext('2d');
+            lCtx.drawImage(srcCanvas, 0, 0, TARGET_W, TARGET_H);
+
+            const imgData = lCtx.getImageData(0, 0, TARGET_W, TARGET_H);
+            const data = imgData.data;
+
+            function getGray(x, y) {
+                if (x < 0 || x >= TARGET_W || y < 0 || y >= TARGET_H) return 255;
+                const idx = (y * TARGET_W + x) * 4;
+                return (data[idx] * 299 + data[idx + 1] * 587 + data[idx + 2] * 114) / 1000;
+            }
+
+            // Detect Roll Number
+            let detectedRoll = '';
+            for (let c = 0; c < 8; c++) {
+                const colX = (U_ROLL_START + c * U_ROLL_COL_STEP) * TARGET_W;
+                let darkestD = -1, minVal = 255;
+                for (let d = 0; d < 10; d++) {
+                    const rowY = (V_ROLL_START + d * V_ROLL_ROW_STEP) * TARGET_H;
+                    const val = getGray(Math.round(colX), Math.round(rowY));
+                    if (val < minVal) { minVal = val; darkestD = d; }
+                }
+                detectedRoll += (minVal < 160 ? darkestD : '-');
+            }
+            detectedRoll = detectedRoll.replace(/-/g, '');
+
+            // Sections
+            const secs = SECTIONS.length > 0 ? SECTIONS : [
+                { name: 'Physics', from: 1, to: 45 },
+                { name: 'Chemistry', from: 46, to: 90 },
+                { name: 'Botany', from: 91, to: 135 },
+                { name: 'Zoology', from: 136, to: 180 }
+            ];
+
+            const sectionMarks = {};
+            secs.forEach(s => { sectionMarks[s.name] = 0; });
+            let totalScore = 0;
+
+            for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
+                const colIdx = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const rowIdx = (q - 1) % QUESTIONS_PER_COL;
+                let darkestOpt = null, minVal = 255;
+
+                OPTIONS.forEach((opt, oIdx) => {
+                    const bx = (U_START + colIdx * U_COL_STEP + oIdx * U_BUBBLE_STEP) * TARGET_W;
+                    const by = (V_START + rowIdx * V_ROW_STEP) * TARGET_H;
+                    const g = getGray(Math.round(bx), Math.round(by));
+                    if (g < minVal && g < 155) { minVal = g; darkestOpt = opt; }
+                });
+
+                const marked = darkestOpt || '-';
+                const key = String(ANSWER_KEY[String(q)] || '').trim().toUpperCase();
+                let delta = 0;
+
+                if (key && marked !== '-') {
+                    if (key === 'BONUS' || key === '*' || key.includes(marked)) delta = 4;
+                    else delta = -1;
+                } else if (key && (key === 'BONUS' || key === '*')) {
+                    delta = 4;
+                }
+
+                totalScore += delta;
+                for (const s of secs) {
+                    if (q >= s.from && q <= s.to) {
+                        sectionMarks[s.name] = (sectionMarks[s.name] || 0) + delta;
+                        break;
+                    }
+                }
+            }
+
+            currentEvaluation = {
+                score: totalScore,
+                totalMarks: totalScore,
+                maxMarks: TOTAL_QUESTIONS * 4,
+                sectionMarks: sectionMarks,
+                detectedRoll: detectedRoll
+            };
+
+            // Display in Modal
+            modalScore.textContent = `${totalScore} / ${TOTAL_QUESTIONS * 4} Marks`;
+            modalRollNumber.value = detectedRoll;
+            modalStudentName.value = '';
+
+            modalSections.innerHTML = '';
+            secs.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'sec-card';
+                card.innerHTML = `<div class="name">${s.name}</div><div class="marks">${sectionMarks[s.name] || 0}</div>`;
+                modalSections.appendChild(card);
+            });
+
+            resultModal.style.display = 'block';
+            modalStudentName.focus();
+            isEvaluating = false;
+        }
+
+        async function saveScannedResult() {
+            if (!currentEvaluation) return;
+
+            const studentName = modalStudentName.value.trim();
+            if (!studentName) {
+                alert('Please enter the Student Name.');
+                modalStudentName.focus();
+                return;
+            }
+
+            const roll = modalRollNumber.value.trim() || '-';
+            modalSaveBtn.disabled = true;
+            modalSaveBtn.textContent = '⏳ Saving to Google Sheet...';
+
+            try {
+                const res = await fetch('/ordinary/api/save-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentName: studentName,
+                        rollNumber: roll,
+                        totalMarks: currentEvaluation.totalMarks,
+                        maxMarks: currentEvaluation.maxMarks,
+                        sectionMarks: currentEvaluation.sectionMarks
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✓ Saved to Google Sheet: ${studentName} (${currentEvaluation.totalMarks} Marks)`);
+                    dismissModal();
+                } else {
+                    alert('Error saving to Google Sheet: ' + (data.error || 'Unknown error'));
+                    modalSaveBtn.disabled = false;
+                    modalSaveBtn.textContent = '💾 Retry Save';
+                }
+            } catch (err) {
+                alert('Network error: ' + err.message);
+                modalSaveBtn.disabled = false;
+                modalSaveBtn.textContent = '💾 Retry Save';
+            }
+        }
+
+        function dismissModal() {
+            resultModal.style.display = 'none';
+            modalSaveBtn.disabled = false;
+            modalSaveBtn.textContent = '💾 Save to Google Sheet & Next (Enter)';
+            currentEvaluation = null;
+            isLocked = false;
+            requestAnimationFrame(loop);
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        // Enter key to quickly save
+        modalStudentName.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                saveScannedResult();
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', initCamera);
+    </script>
+</body>
+
+</html>

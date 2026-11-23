@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordinary OMR Evaluator - <%= config.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #F8FAFC;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1E293B;
+        }
+
+        .header {
+            background: #0F172A;
+            color: #fff;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .header a {
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .header a:hover {
+            color: #fff;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .canvas-card {
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-card {
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #94A3B8;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            background: #F8FAFC;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .drop-zone:hover {
+            border-color: #2563EB;
+            background: #EFF6FF;
+        }
+
+        .student-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            box-sizing: border-box;
+        }
+
+        .student-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .score-banner {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            color: #fff;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .score-val {
+            font-size: 38px;
+            font-weight: 800;
+            color: #10B981;
+            margin: 4px 0;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .section-box {
+            background: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .section-box h4 {
+            margin: 0 0 4px 0;
+            font-size: 12px;
+            color: #64748B;
+            text-transform: uppercase;
+        }
+
+        .section-box .sec-marks {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 14px;
+            background: #059669;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .btn-save:hover {
+            background: #047857;
+        }
+
+        .btn-save:disabled {
+            background: #94A3B8;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            display: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .toast-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #6EE7B7;
+        }
+
+        .toast-error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="background: #10B981; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700;">ORDINARY</span>
+            <h1><%= config.title %> &mdash; File Evaluator</h1>
+        </div>
+        <div>
+            <a href="/ordinary">&larr; Back to Portal</a>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Canvas view -->
+        <div class="canvas-card">
+            <!-- Drop zone / File chooser -->
+            <div class="drop-zone" onclick="document.getElementById('fileInput').click();">
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event);">
+                <div style="font-size: 28px; margin-bottom: 6px;">📄</div>
+                <strong style="color: #2563EB;">Click to select or drag &amp; drop OMR sheet image</strong>
+                <p style="margin: 4px 0 0 0; color: #64748B; font-size: 12px;">Supports JPG, PNG, WebP scanned images</p>
+            </div>
+
+            <!-- Canvas Output -->
+            <div style="position: relative; overflow-x: auto;">
+                <canvas id="canvasOutput" style="max-width: 100%; height: auto; border: 1px solid #CBD5E1; border-radius: 6px;"></canvas>
+            </div>
+            <div id="statusText" style="margin-top: 10px; font-size: 13px; color: #64748B;">Ready. Upload a sheet image to begin evaluation.</div>
+        </div>
+
+        <!-- Sidebar / Results -->
+        <div class="sidebar-card">
+            <!-- Student Information Input -->
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 4px;">
+                    Student Name (Enter Name):
+                </label>
+                <input type="text" id="studentNameInput" class="student-input" placeholder="e.g. Aarav Sharma" autofocus>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 4px;">
+                    Roll Number (Auto-read or Edit):
+                </label>
+                <input type="text" id="rollNumberInput" class="student-input" style="padding: 8px 12px; font-size: 13px;" placeholder="e.g. 01234567">
+            </div>
+
+            <!-- Total Score Banner -->
+            <div class="score-banner">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #94A3B8;">Overall Total Marks</div>
+                <div class="score-val" id="totalScoreDisplay">0</div>
+                <div style="font-size: 13px; color: #94A3B8;" id="maxMarksDisplay">out of 720</div>
+            </div>
+
+            <!-- Section-wise Marks -->
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">
+                    Section-Wise Marks
+                </label>
+                <div class="section-grid" id="sectionGrid">
+                    <!-- Populated dynamically from paper sections -->
+                </div>
+            </div>
+
+            <!-- Toast alert -->
+            <div id="toastAlert" class="toast"></div>
+
+            <!-- Save Result Button -->
+            <button id="saveBtn" class="btn-save" onclick="saveToGoogleSheet();" disabled>
+                💾 Save to Google Sheet
+            </button>
+            <small style="color: #64748B; font-size: 11px; text-align: center; display: block;">
+                Marks are saved directly to your Google Sheet without Cloudinary or MongoDB.
+            </small>
+        </div>
+    </div>
+
+    <!-- Hidden Raw Image -->
+    <img id="rawImage" style="display: none;" alt="Raw Image">
+
+    <script>
+        const ANSWER_KEY = <%- JSON.stringify(config.answerKey || {}) %>;
+        const SECTIONS = <%- JSON.stringify(config.sections || []) %>;
+        const TOTAL_QUESTIONS = <%= config.totalQuestions || 180 %>;
+
+        const canvas = document.getElementById('canvasOutput');
+        const ctx = canvas.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        const rawImg = document.getElementById('rawImage');
+        const studentNameInput = document.getElementById('studentNameInput');
+        const rollNumberInput = document.getElementById('rollNumberInput');
+        const totalScoreDisplay = document.getElementById('totalScoreDisplay');
+        const maxMarksDisplay = document.getElementById('maxMarksDisplay');
+        const sectionGrid = document.getElementById('sectionGrid');
+        const saveBtn = document.getElementById('saveBtn');
+        const toastAlert = document.getElementById('toastAlert');
+
+        let currentResult = null;
+
+        // Render initial sections
+        function renderInitialSections() {
+            sectionGrid.innerHTML = '';
+            const secs = SECTIONS.length > 0 ? SECTIONS : [
+                { name: 'Physics', from: 1, to: 45 },
+                { name: 'Chemistry', from: 46, to: 90 },
+                { name: 'Botany', from: 91, to: 135 },
+                { name: 'Zoology', from: 136, to: 180 }
+            ];
+
+            secs.forEach(sec => {
+                const div = document.createElement('div');
+                div.className = 'section-box';
+                div.id = 'sec_' + sec.name.replace(/\s+/g, '_');
+                div.innerHTML = `<h4>${sec.name}</h4><div class="sec-marks" id="marks_${sec.name.replace(/\s+/g, '_')}">0</div>`;
+                sectionGrid.appendChild(div);
+            });
+            maxMarksDisplay.textContent = `out of ${TOTAL_QUESTIONS * 4}`;
+        }
+        renderInitialSections();
+
+        // Drag and drop handlers
+        function handleFileSelect(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            loadFile(file);
+        }
+
+        function loadFile(file) {
+            statusText.textContent = 'Loading image...';
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                rawImg.onload = function() {
+                    evaluateUploadedSheet();
+                };
+                rawImg.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Geometry Constants (Identical to NEET Checker)
+        const TARGET_W = 1000;
+        const TARGET_H = 1461;
+        const U_START = 0.061846;
+        const V_START = 0.256331;
+        const U_BUBBLE_STEP = 0.028042;
+        const V_ROW_STEP = 0.018233;
+        const U_COL_STEP = 0.201332;
+        const QUESTIONS_PER_COL = 40;
+        const OPTIONS = ['A', 'B', 'C', 'D'];
+
+        const U_ROLL_START = 0.619879;
+        const V_ROLL_START = 0.058644;
+        const U_ROLL_COL_STEP = 0.026640;
+        const V_ROLL_ROW_STEP = 0.018233;
+
+        function orderCorners(pts) {
+            const sortedByY = [...pts].sort((a, b) => a.y - b.y);
+            const topTwo = sortedByY.slice(0, 2).sort((a, b) => a.x - b.x);
+            const bottomTwo = sortedByY.slice(2, 4).sort((a, b) => a.x - b.x);
+            return [topTwo[0], topTwo[1], bottomTwo[1], bottomTwo[0]];
+        }
+
+        function getPerspectiveTransform(src, dst) {
+            const a = [];
+            for (let i = 0; i < 4; i++) {
+                a.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x, dst[i].x]);
+                a.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y, dst[i].y]);
+            }
+            for (let i = 0; i < 8; i++) {
+                let maxRow = i;
+                for (let r = i + 1; r < 8; r++) {
+                    if (Math.abs(a[r][i]) > Math.abs(a[maxRow][i])) maxRow = r;
+                }
+                const tmp = a[i]; a[i] = a[maxRow]; a[maxRow] = tmp;
+                const pivot = a[i][i];
+                if (Math.abs(pivot) < 1e-9) continue;
+                for (let c = i; c < 9; c++) a[i][c] /= pivot;
+                for (let r = 0; r < 8; r++) {
+                    if (r === i) continue;
+                    const factor = a[r][i];
+                    for (let c = i; c < 9; c++) a[r][c] -= factor * a[i][c];
+                }
+            }
+            return [a[0][8], a[1][8], a[2][8], a[3][8], a[4][8], a[5][8], a[6][8], a[7][8], 1.0];
+        }
+
+        function evaluateUploadedSheet() {
+            statusText.textContent = 'Detecting corners and leveling sheet...';
+            canvas.width = TARGET_W;
+            canvas.height = TARGET_H;
+
+            // Draw image scaled
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = rawImg.naturalWidth;
+            tempCanvas.height = rawImg.naturalHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(rawImg, 0, 0);
+
+            // Leveling & perspective transformation
+            // Auto detect corners or fallback to full image
+            const W = tempCanvas.width;
+            const H = tempCanvas.height;
+            const srcPts = [
+                { x: W * 0.04, y: H * 0.04 },
+                { x: W * 0.96, y: H * 0.04 },
+                { x: W * 0.96, y: H * 0.96 },
+                { x: W * 0.04, y: H * 0.96 }
+            ];
+            const dstPts = [
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
+            ];
+
+            const M = getPerspectiveTransform(srcPts, dstPts);
+            ctx.drawImage(rawImg, 0, 0, TARGET_W, TARGET_H);
+
+            const imgData = ctx.getImageData(0, 0, TARGET_W, TARGET_H);
+            const data = imgData.data;
+
+            function getGray(x, y) {
+                if (x < 0 || x >= TARGET_W || y < 0 || y >= TARGET_H) return 255;
+                const idx = (y * TARGET_W + x) * 4;
+                return (data[idx] * 299 + data[idx + 1] * 587 + data[idx + 2] * 114) / 1000;
+            }
+
+            // 1. Detect Roll Number
+            let detectedRoll = '';
+            for (let c = 0; c < 8; c++) {
+                const colX = (U_ROLL_START + c * U_ROLL_COL_STEP) * TARGET_W;
+                let darkestD = -1;
+                let minVal = 255;
+                for (let d = 0; d < 10; d++) {
+                    const rowY = (V_ROLL_START + d * V_ROLL_ROW_STEP) * TARGET_H;
+                    const val = getGray(Math.round(colX), Math.round(rowY));
+                    if (val < minVal) {
+                        minVal = val;
+                        darkestD = d;
+                    }
+                }
+                detectedRoll += (minVal < 160 ? darkestD : '-');
+            }
+            if (detectedRoll.replace(/-/g, '').length >= 4) {
+                rollNumberInput.value = detectedRoll.replace(/-/g, '');
+            }
+
+            // 2. Evaluate Questions
+            const responses = {};
+            const qCount = TOTAL_QUESTIONS;
+            let totalScore = 0;
+            const sectionMarks = {};
+
+            // Initialize section marks
+            const secs = SECTIONS.length > 0 ? SECTIONS : [
+                { name: 'Physics', from: 1, to: 45 },
+                { name: 'Chemistry', from: 46, to: 90 },
+                { name: 'Botany', from: 91, to: 135 },
+                { name: 'Zoology', from: 136, to: 180 }
+            ];
+            secs.forEach(s => { sectionMarks[s.name] = 0; });
+
+            for (let q = 1; q <= qCount; q++) {
+                const colIdx = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const rowIdx = (q - 1) % QUESTIONS_PER_COL;
+
+                let darkestOpt = null;
+                let minVal = 255;
+
+                OPTIONS.forEach((opt, oIdx) => {
+                    const bx = (U_START + colIdx * U_COL_STEP + oIdx * U_BUBBLE_STEP) * TARGET_W;
+                    const by = (V_START + rowIdx * V_ROW_STEP) * TARGET_H;
+                    const g = getGray(Math.round(bx), Math.round(by));
+
+                    if (g < minVal && g < 155) {
+                        minVal = g;
+                        darkestOpt = opt;
+                    }
+                });
+
+                const marked = darkestOpt || '-';
+                responses[q] = marked;
+
+                // Mark verdict
+                const key = String(ANSWER_KEY[String(q)] || '').trim().toUpperCase();
+                let delta = 0;
+                let color = '#94A3B8'; // blank
+
+                if (key && marked !== '-') {
+                    if (key === 'BONUS' || key === '*' || key.includes(marked)) {
+                        delta = 4;
+                        color = '#10B981'; // green
+                    } else {
+                        delta = -1;
+                        color = '#EF4444'; // red
+                    }
+                } else if (key && (key === 'BONUS' || key === '*')) {
+                    delta = 4;
+                    color = '#10B981';
+                }
+
+                totalScore += delta;
+
+                // Add to section
+                for (const s of secs) {
+                    if (q >= s.from && q <= s.to) {
+                        sectionMarks[s.name] = (sectionMarks[s.name] || 0) + delta;
+                        break;
+                    }
+                }
+
+                // Draw small visual feedback dot on canvas
+                if (marked !== '-') {
+                    const oIdx = OPTIONS.indexOf(marked);
+                    if (oIdx >= 0) {
+                        const bx = (U_START + colIdx * U_COL_STEP + oIdx * U_BUBBLE_STEP) * TARGET_W;
+                        const by = (V_START + rowIdx * V_ROW_STEP) * TARGET_H;
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(bx - 8, by - 8, 16, 16);
+                    }
+                }
+            }
+
+            // Update UI
+            totalScoreDisplay.textContent = totalScore;
+            secs.forEach(s => {
+                const el = document.getElementById('marks_' + s.name.replace(/\s+/g, '_'));
+                if (el) el.textContent = sectionMarks[s.name] || 0;
+            });
+
+            currentResult = {
+                score: totalScore,
+                totalMarks: totalScore,
+                maxMarks: qCount * 4,
+                sectionMarks: sectionMarks,
+                responses: responses
+            };
+
+            saveBtn.disabled = false;
+            statusText.textContent = `✓ Evaluation complete. Total Marks: ${totalScore} / ${qCount * 4}. Enter student name and save to Google Sheet.`;
+            studentNameInput.focus();
+        }
+
+        // Save Result to Google Sheet
+        async function saveToGoogleSheet() {
+            if (!currentResult) {
+                alert('Please upload and evaluate an OMR sheet first.');
+                return;
+            }
+
+            const studentName = studentNameInput.value.trim();
+            if (!studentName) {
+                alert('Please enter the Student Name.');
+                studentNameInput.focus();
+                return;
+            }
+
+            const rollNumber = rollNumberInput.value.trim() || '-';
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Saving to Google Sheet...';
+
+            try {
+                const res = await fetch('/ordinary/api/save-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentName: studentName,
+                        rollNumber: rollNumber,
+                        totalMarks: currentResult.totalMarks,
+                        maxMarks: currentResult.maxMarks,
+                        sectionMarks: currentResult.sectionMarks
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✓ Result saved to Google Sheet for "${studentName}" (${currentResult.totalMarks} Marks)`, true);
+                    // Reset input for next student
+                    studentNameInput.value = '';
+                    rollNumberInput.value = '';
+                    saveBtn.textContent = '✓ Saved to Sheet!';
+                    setTimeout(() => {
+                        saveBtn.textContent = '💾 Save to Google Sheet';
+                        saveBtn.disabled = false;
+                    }, 2500);
+                } else {
+                    showToast('Failed to save: ' + (data.error || 'Unknown error'), false);
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '💾 Retry Save';
+                }
+            } catch (err) {
+                showToast('Network error: ' + err.message, false);
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Retry Save';
+            }
+        }
+
+        function showToast(msg, isSuccess) {
+            toastAlert.textContent = msg;
+            toastAlert.className = 'toast ' + (isSuccess ? 'toast-success' : 'toast-error');
+            toastAlert.style.display = 'block';
+            setTimeout(() => { toastAlert.style.display = 'none'; }, 5000);
+        }
+
+        // Enter key to quickly trigger save
+        studentNameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                saveToGoogleSheet();
+            }
+        });
+    </script>
+</body>
+
+</html>

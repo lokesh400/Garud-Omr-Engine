@@ -40,6 +40,7 @@ const paperRoutes = require('./routes/paperRoutes');
 const scanRoutes = require('./routes/scanRoutes');
 const resultsRoutes = require('./routes/resultsRoutes');
 const studentRoutes = require('./routes/studentRoutes');
+const ordinaryRoutes = require('./ordinary_checking/routes');
 
 const app = express();
 
@@ -124,6 +125,7 @@ app.use('/', paperRoutes);
 app.use('/', scanRoutes);
 app.use('/', resultsRoutes);
 app.use('/', studentRoutes);
+app.use('/ordinary', ordinaryRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {
