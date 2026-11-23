@@ -125,8 +125,8 @@
 
         .sec-row {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
-            gap: 10px;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.2fr 40px;
+            gap: 8px;
             align-items: center;
             background: #fff;
             border: 1px solid #E2E8F0;
@@ -135,9 +135,9 @@
             margin-bottom: 8px;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .sec-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
         }
 
@@ -386,31 +386,66 @@
             const container = document.getElementById('sectionRowsContainer');
             container.innerHTML = '';
             sections.forEach((sec, idx) => {
+                const correct = (sec.correctMarks !== undefined) ? Number(sec.correctMarks) : 4;
+                const wrong = (sec.negativeMarks !== undefined) ? Number(sec.negativeMarks) : 1;
+                const count = Math.max(0, (sec.to - sec.from + 1));
+                const maxMarks = count * correct;
+                sec.correctMarks = correct;
+                sec.negativeMarks = wrong;
+                sec.maxMarks = maxMarks;
+
                 const row = document.createElement('div');
                 row.className = 'sec-row';
                 row.innerHTML = `
                     <div>
-                        <label style="font-size: 11px; color: #64748B; display: block;">Section Name</label>
+                        <label style="font-size: 11px; color: #64748B; display: block; margin-bottom: 2px;">Section Name</label>
                         <input type="text" class="form-input" style="padding: 6px 8px;" value="${sec.name}" onchange="sections[${idx}].name = this.value;">
                     </div>
                     <div>
-                        <label style="font-size: 11px; color: #64748B; display: block;">From Q#</label>
-                        <input type="number" class="form-input" style="padding: 6px 8px;" value="${sec.from}" min="1" max="${totalQ}" onchange="sections[${idx}].from = Number(this.value);">
+                        <label style="font-size: 11px; color: #64748B; display: block; margin-bottom: 2px;">From Q#</label>
+                        <input type="number" class="form-input" style="padding: 6px 8px;" value="${sec.from}" min="1" max="${totalQ}" onchange="sections[${idx}].from = Number(this.value); updateSectionMax(${idx});">
                     </div>
                     <div>
-                        <label style="font-size: 11px; color: #64748B; display: block;">To Q#</label>
-                        <input type="number" class="form-input" style="padding: 6px 8px;" value="${sec.to}" min="1" max="${totalQ}" onchange="sections[${idx}].to = Number(this.value);">
+                        <label style="font-size: 11px; color: #64748B; display: block; margin-bottom: 2px;">To Q#</label>
+                        <input type="number" class="form-input" style="padding: 6px 8px;" value="${sec.to}" min="1" max="${totalQ}" onchange="sections[${idx}].to = Number(this.value); updateSectionMax(${idx});">
                     </div>
                     <div>
-                        <label style="font-size: 11px; color: #64748B; display: block;">Max Marks</label>
-                        <input type="number" class="form-input" style="padding: 6px 8px;" value="${sec.maxMarks || ((sec.to - sec.from + 1) * 4)}" onchange="sections[${idx}].maxMarks = Number(this.value);">
+                        <label style="font-size: 11px; color: #15803D; font-weight: 700; display: block; margin-bottom: 2px;">Correct (+)</label>
+                        <input type="number" step="0.25" class="form-input" style="padding: 6px 8px; border-color: #86EFAC; font-weight: 700; color: #15803D;" value="${correct}" onchange="sections[${idx}].correctMarks = Number(this.value); updateSectionMax(${idx});">
                     </div>
                     <div>
-                        <button type="button" class="btn-del" onclick="deleteSection(${idx});" style="width: 100%; margin-top: 16px;">&times;</button>
+                        <label style="font-size: 11px; color: #DC2626; font-weight: 700; display: block; margin-bottom: 2px;">Wrong (-)</label>
+                        <input type="number" step="0.25" class="form-input" style="padding: 6px 8px; border-color: #FECACA; font-weight: 700; color: #DC2626;" value="${wrong}" onchange="sections[${idx}].negativeMarks = Math.abs(Number(this.value));">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; color: #64748B; display: block; margin-bottom: 2px;">Max Marks</label>
+                        <input type="number" id="secMax_${idx}" class="form-input" style="padding: 6px 8px; background: #F8FAFC;" value="${maxMarks}" readonly>
+                    </div>
+                    <div>
+                        <button type="button" class="btn-del" onclick="deleteSection(${idx});" style="width: 100%; margin-top: 16px;" title="Delete Section">&times;</button>
                     </div>
                 `;
                 container.appendChild(row);
             });
+            updateOverallMaxMarks();
+        }
+
+        function updateSectionMax(idx) {
+            const sec = sections[idx];
+            const correct = (sec.correctMarks !== undefined) ? Number(sec.correctMarks) : 4;
+            const count = Math.max(0, (sec.to - sec.from + 1));
+            sec.maxMarks = count * correct;
+            const input = document.getElementById('secMax_' + idx);
+            if (input) input.value = sec.maxMarks;
+            updateOverallMaxMarks();
+        }
+
+        function updateOverallMaxMarks() {
+            let sum = 0;
+            sections.forEach(s => sum += (Number(s.maxMarks) || 0));
+            if (sum === 0) sum = totalQ * 4;
+            const lbl = document.getElementById('maxMarksLabel');
+            if (lbl) lbl.textContent = sum;
         }
 
         function addSectionRow() {
@@ -421,6 +456,8 @@
                 name: 'Section ' + (sections.length + 1),
                 from: newFrom,
                 to: newTo,
+                correctMarks: 4,
+                negativeMarks: 1,
                 maxMarks: (newTo - newFrom + 1) * 4
             });
             renderSections();
@@ -434,17 +471,17 @@
         function applyNeetSections() {
             setTotalQ(180);
             sections = [
-                { name: 'Physics', from: 1, to: 45, maxMarks: 180 },
-                { name: 'Chemistry', from: 46, to: 90, maxMarks: 180 },
-                { name: 'Botany', from: 91, to: 135, maxMarks: 180 },
-                { name: 'Zoology', from: 136, to: 180, maxMarks: 180 }
+                { name: 'Physics', from: 1, to: 45, correctMarks: 4, negativeMarks: 1, maxMarks: 180 },
+                { name: 'Chemistry', from: 46, to: 90, correctMarks: 4, negativeMarks: 1, maxMarks: 180 },
+                { name: 'Botany', from: 91, to: 135, correctMarks: 4, negativeMarks: 1, maxMarks: 180 },
+                { name: 'Zoology', from: 136, to: 180, correctMarks: 4, negativeMarks: 1, maxMarks: 180 }
             ];
             renderSections();
         }
 
         function rebuildQuestionGrid() {
             totalQ = Number(document.getElementById('totalQuestions').value) || 180;
-            document.getElementById('maxMarksLabel').textContent = totalQ * 4;
+            updateOverallMaxMarks();
 
             const grid = document.getElementById('keyGrid');
             grid.innerHTML = '';

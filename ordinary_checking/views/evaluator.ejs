@@ -415,6 +415,20 @@
     <script>
         const answerKey = <%- answerKey || '{}' %>;
         const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
+        const paperSections = <%- JSON.stringify(paper.sections || []) %>;
+        const paperMaxMarks = <%= Number(paper.maxMarks) || ((paper.numQuestions || 180) * 4) %>;
+
+        function getSectionForQuestion(qNum) {
+            if (Array.isArray(paperSections) && paperSections.length > 0) {
+                for (let s = 0; s < paperSections.length; s++) {
+                    const sec = paperSections[s];
+                    if (qNum >= sec.from && qNum <= sec.to) {
+                        return sec;
+                    }
+                }
+            }
+            return null;
+        }
 
         function parseKeyOptionsClient(keyStr) {
             if (!keyStr || typeof keyStr !== 'string') return [];
@@ -431,20 +445,20 @@
             return [trimmed];
         }
 
-        function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
+        function evaluateClientQuestionVerdict(marked, officialKey, posMarks = 4, negMarks = -1) {
             const key = (officialKey || '').trim().toUpperCase();
             const resp = (marked || '').trim().toUpperCase();
-            const posMarks = isJee ? 4 : 1;
-            const posMarksStr = isJee ? '+4' : '+1';
-            const negMarks = isJee ? -1 : 0;
-            const negMarksStr = isJee ? '-1' : '0';
+            const posMarksNum = (typeof posMarks === 'number' && !isNaN(posMarks)) ? posMarks : 4;
+            const negMarksNum = (typeof negMarks === 'number' && !isNaN(negMarks)) ? -Math.abs(negMarks) : -1;
+            const posMarksStr = (posMarksNum >= 0 ? '+' : '') + posMarksNum;
+            const negMarksStr = String(negMarksNum);
 
             // 1. Bonus Question: Full positive marks to all students
             if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
                 return {
                     verdict: 'bonus',
                     marks: posMarksStr,
-                    scoreDelta: posMarks,
+                    scoreDelta: posMarksNum,
                     isCorrect: true,
                     isWrong: false,
                     isBlank: (!resp || resp === '-' || resp === 'BLANK'),
@@ -452,7 +466,7 @@
                 };
             }
 
-            // 2. Blank / Unmarked
+            // 2. Blank / Unmarked: 0
             if (!resp || resp === '-' || resp === 'BLANK') {
                 return {
                     verdict: 'blank',
@@ -470,7 +484,7 @@
                 return {
                     verdict: 'marked',
                     marks: posMarksStr,
-                    scoreDelta: posMarks,
+                    scoreDelta: posMarksNum,
                     isCorrect: true,
                     isWrong: false,
                     isBlank: false,
@@ -489,7 +503,7 @@
                 return {
                     verdict: 'correct',
                     marks: posMarksStr,
-                    scoreDelta: posMarks,
+                    scoreDelta: posMarksNum,
                     isCorrect: true,
                     isWrong: false,
                     isBlank: false,
@@ -502,7 +516,7 @@
                 return {
                     verdict: 'multiple',
                     marks: negMarksStr,
-                    scoreDelta: negMarks,
+                    scoreDelta: negMarksNum,
                     isCorrect: false,
                     isWrong: true,
                     isBlank: false,
@@ -514,7 +528,7 @@
             return {
                 verdict: 'wrong',
                 marks: negMarksStr,
-                scoreDelta: negMarks,
+                scoreDelta: negMarksNum,
                 isCorrect: false,
                 isWrong: true,
                 isBlank: false,
@@ -1341,11 +1355,15 @@
                 let verdict = 'unmarked';
                 if (correctAns) evaluatedKeyCount++;
 
-                const ev = evaluateClientQuestionVerdict(detectedAnswer, correctAns, false);
+                const sec = getSectionForQuestion(q);
+                const pos = (sec && sec.correctMarks !== undefined) ? Number(sec.correctMarks) : 4;
+                const neg = (sec && sec.negativeMarks !== undefined) ? -Math.abs(Number(sec.negativeMarks)) : -1;
+
+                const ev = evaluateClientQuestionVerdict(detectedAnswer, correctAns, pos, neg);
                 verdict = ev.verdict;
 
                 if (ev.isBonus) {
-                    score++;
+                    score += ev.scoreDelta;
                     correctCount++;
                 } else if (ev.isBlank) {
                     blankCount++;
@@ -1353,22 +1371,29 @@
                     attemptedCount++;
                     wrongCount++;
                     multipleCount++;
+                    score += ev.scoreDelta;
                 } else if (ev.isCorrect) {
                     attemptedCount++;
-                    score++;
+                    score += ev.scoreDelta;
                     correctCount++;
                 } else if (ev.verdict === 'marked') {
                     attemptedCount++;
+                    score += ev.scoreDelta;
                 } else {
                     attemptedCount++;
                     wrongCount++;
+                    score += ev.scoreDelta;
                 }
 
                 questionBreakdown.push({
                     q: q,
+                    qNum: q,
                     marked: detectedAnswer || '',
                     correctKey: correctAns || '',
-                    verdict: verdict
+                    verdict: verdict,
+                    marks: ev.marks,
+                    scoreDelta: ev.scoreDelta,
+                    section: sec ? sec.name : 'General'
                 });
 
                 // Draw Overlay Rings on the Leveled Cropped Sheet
@@ -1456,7 +1481,7 @@
                     '<td style="font-weight:600; color:#475569;">Q' + q + '</td>' +
                     '<td>' + markedCellHtml + '</td>' +
                     '<td>' + keyDisplayHtml + '</td>' +
-                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + verdictText + (ev.marks ? ' (' + ev.marks + ')' : '') + '</span></td>' +
                 '</tr>';
             }
 
@@ -1466,9 +1491,9 @@
                 if (el) el.textContent = text;
             };
 
-            const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
-            safeSetText('scoreValue', `${score} / ${totalGraded}`);
-            const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+            const maxTotalMarks = (typeof paperMaxMarks !== 'undefined' && paperMaxMarks) ? paperMaxMarks : (totalPaperQuestions * 4);
+            safeSetText('scoreValue', `${score} / ${maxTotalMarks}`);
+            const pct = maxTotalMarks > 0 ? Math.round((Math.max(0, score) / maxTotalMarks) * 100) : 0;
             safeSetText('scorePercentage', `${pct}% Accuracy`);
 
             safeSetText('statCorrect', correctCount);
@@ -1557,13 +1582,14 @@
                     });
                 }
 
+                const maxTotalMarks = (typeof paperMaxMarks !== 'undefined' && paperMaxMarks) ? paperMaxMarks : (totalPaperQuestions * 4);
                 const postPayload = {
                     paperId: '<%= paper.id || paper._id %>',
                     paperTitle: '<%= (paper.title || "Assessment").replace(/\'/g, "\\\'") %>',
                     studentName: studentName,
                     rollNumber: window.lastEvaluationData.rollNumber || '-',
                     totalMarks: window.lastEvaluationData.score,
-                    maxMarks: totalPaperQuestions * 4,
+                    maxMarks: maxTotalMarks,
                     sectionMarks: sectionMarks
                 };
 

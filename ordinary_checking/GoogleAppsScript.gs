@@ -1,15 +1,16 @@
 /**
  * =========================================================================
- * GARUD OMR - MULTI-PAPER GOOGLE APPS SCRIPT (CLOUD-ONLY STORAGE)
+ * GARUD OMR - MULTI-PAPER GOOGLE APPS SCRIPT (SECTION-WISE MARKS READY)
  * =========================================================================
  * 
  * Rules:
- *  1. Every paper gets its own NEW sheet tab for questions & answer keys:
+ *  1. Every paper gets its own dedicated sheet tab for questions, keys & marking scheme:
  *     "Paper - <Title>" (e.g., "Paper - NEET Mock 01")
- *  2. Every paper gets its own NEW sheet tab for results:
+ *  2. Every paper gets its own dedicated Results sheet tab with separate section columns:
  *     "Results - <Title>" (e.g., "Results - NEET Mock 01")
+ *     Columns: Timestamp | Student Name | Roll Number | <Section 1> | <Section 2> | ... | Total Marks | Max Marks | Percentage
  *  3. Old papers and their results sheets are NEVER overwritten or deleted.
- *  4. No papers are stored on the local computer - Google Sheets is the single database.
+ *  4. Section marks are placed dynamically into their exact matching section columns.
  * 
  * Instructions to Update in Google Sheets:
  *  1. Open your Google Spreadsheet (https://sheets.google.com).
@@ -82,11 +83,19 @@ function doGet(e) {
           var qNum = parseInt(row[0]);
           var ans = String(row[1] || "").trim().toUpperCase();
           var secName = String(row[2] || "").trim() || "Section 1";
+          var correctM = row[3] !== undefined ? Number(row[3]) : 4;
+          var wrongM = row[4] !== undefined ? Number(row[4]) : 1;
           
           if (!isNaN(qNum) && qNum > 0) {
             answerKey[String(qNum)] = ans;
             if (!sectionMap[secName]) {
-              sectionMap[secName] = { name: secName, from: qNum, to: qNum };
+              sectionMap[secName] = {
+                name: secName,
+                from: qNum,
+                to: qNum,
+                correctMarks: correctM,
+                negativeMarks: wrongM
+              };
               sections.push(sectionMap[secName]);
             } else {
               sectionMap[secName].to = Math.max(sectionMap[secName].to, qNum);
@@ -97,13 +106,17 @@ function doGet(e) {
         var totalQ = Object.keys(answerKey).length;
         if (totalQ === 0) totalQ = 180;
         
-        if (!maxMarks || maxMarks === 720) {
-          maxMarks = totalQ * 4;
-        }
-        
+        // Compute section max marks based on their correctMarks
         sections.forEach(function(sec) {
-          sec.maxMarks = (sec.to - sec.from + 1) * 4;
+          var c = (sec.correctMarks !== undefined) ? Number(sec.correctMarks) : 4;
+          sec.maxMarks = (sec.to - sec.from + 1) * c;
         });
+        
+        if (!maxMarks || maxMarks === 720) {
+          var sumM = 0;
+          sections.forEach(function(s) { sumM += s.maxMarks; });
+          maxMarks = sumM > 0 ? sumM : (totalQ * 4);
+        }
         
         papers.push({
           id: sanitizeSheetName(title),
@@ -182,37 +195,44 @@ function doPost(e) {
       keySheet.getRange(1, 1, 1, 3).setFontColor("#64748B").setFontSize(9);
       
       // Headers Row
-      keySheet.appendRow(["Question", "Answer Key", "Section"]);
-      keySheet.getRange(2, 1, 1, 3)
+      keySheet.appendRow(["Question", "Answer Key", "Section", "Correct (+)", "Wrong (-)"]);
+      keySheet.getRange(2, 1, 1, 5)
         .setFontWeight("bold")
         .setBackground("#1E293B")
         .setFontColor("#FFFFFF");
       
-      function getSectionName(q) {
+      function getSectionInfo(q) {
         for (var s = 0; s < secDefs.length; s++) {
           if (q >= secDefs[s].from && q <= secDefs[s].to) {
-            return secDefs[s].name;
+            return {
+              name: secDefs[s].name,
+              correct: (secDefs[s].correctMarks !== undefined) ? Number(secDefs[s].correctMarks) : 4,
+              wrong: (secDefs[s].negativeMarks !== undefined) ? Number(secDefs[s].negativeMarks) : 1
+            };
           }
         }
-        return "Section 1";
+        return { name: "Section 1", correct: 4, wrong: 1 };
       }
       
       var rows = [];
       for (var q = 1; q <= totalQ; q++) {
         var ans = String(aKey[String(q)] || "").trim().toUpperCase();
-        rows.push([q, ans, getSectionName(q)]);
+        var sInfo = getSectionInfo(q);
+        rows.push([q, ans, sInfo.name, sInfo.correct, sInfo.wrong]);
       }
       
       if (rows.length > 0) {
-        keySheet.getRange(3, 1, rows.length, 3).setValues(rows);
+        keySheet.getRange(3, 1, rows.length, 5).setValues(rows);
       }
       keySheet.setFrozenRows(2);
       
-      // 2. Create the Results sheet for this paper (if not already existing)
+      // 2. Create or initialize the Results sheet for this paper with dedicated section columns
       var resultsSheet = ss.getSheetByName(resultsSheetName);
       if (!resultsSheet) {
         resultsSheet = ss.insertSheet(resultsSheetName);
       }
+      
+      // Always ensure headers match section definitions
       if (resultsSheet.getLastRow() === 0) {
         var headers = ["Timestamp", "Student Name", "Roll Number"];
         secDefs.forEach(function(sd) { headers.push(sd.name); });
@@ -238,7 +258,7 @@ function doPost(e) {
     }
 
     // =============================================================
-    // ACTION 2: RECORD EVALUATED STUDENT RESULT
+    // ACTION 2: RECORD EVALUATED STUDENT RESULT WITH SECTION MARKS
     // =============================================================
     var paperTitle = String(payload.paperTitle || "").trim();
     var resultsSheetName = paperTitle ? sanitizeSheetName("Results - " + paperTitle) : "Results";
@@ -255,49 +275,78 @@ function doPost(e) {
     var sectionMarks = payload.sectionMarks || {};
     var sectionNames = Object.keys(sectionMarks);
     
-    if (resultsSheet.getLastRow() === 0) {
-      var headers = ["Timestamp", "Student Name", "Roll Number"];
-      if (sectionNames.length > 0) {
-        headers = headers.concat(sectionNames);
-      } else {
-        headers.push("Section Marks");
+    // Check existing headers or initialize them
+    var lastCol = Math.max(1, resultsSheet.getLastColumn());
+    var existingHeaders = resultsSheet.getLastRow() > 0 
+      ? (resultsSheet.getRange(1, 1, 1, lastCol).getValues()[0] || [])
+      : [];
+    
+    // Check if section columns are present in existing headers
+    var hasSectionCol = false;
+    for (var c = 0; c < existingHeaders.length; c++) {
+      var hClean = String(existingHeaders[c]).trim().toLowerCase();
+      if (hClean && hClean !== "timestamp" && hClean !== "student name" && hClean !== "roll number" && hClean !== "total marks" && hClean !== "max marks" && hClean !== "percentage") {
+        hasSectionCol = true;
+        break;
       }
-      headers.push("Total Marks");
-      headers.push("Max Marks");
-      headers.push("Percentage");
+    }
+    
+    if (existingHeaders.length === 0 || (!hasSectionCol && sectionNames.length > 0)) {
+      var newHeaders = ["Timestamp", "Student Name", "Roll Number"];
+      sectionNames.forEach(function(s) { newHeaders.push(s); });
+      newHeaders.push("Total Marks");
+      newHeaders.push("Max Marks");
+      newHeaders.push("Percentage");
       
-      resultsSheet.appendRow(headers);
-      resultsSheet.getRange(1, 1, 1, headers.length)
+      if (resultsSheet.getLastRow() === 0) {
+        resultsSheet.appendRow(newHeaders);
+      } else {
+        resultsSheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
+      }
+      
+      resultsSheet.getRange(1, 1, 1, newHeaders.length)
         .setFontWeight("bold")
         .setBackground("#1E293B")
         .setFontColor("#FFFFFF");
       resultsSheet.setFrozenRows(1);
+      existingHeaders = newHeaders;
     }
     
-    var existingHeaders = resultsSheet.getRange(1, 1, 1, Math.max(1, resultsSheet.getLastColumn())).getValues()[0] || [];
-    var rowData = [
-      new Date().toLocaleString(),
-      studentName,
-      rollNumber
-    ];
-    
-    // Match section marks with column headers
-    if (existingHeaders.length > 5) {
-      for (var col = 3; col < existingHeaders.length - 3; col++) {
-        var secHeader = String(existingHeaders[col]).trim();
-        rowData.push(sectionMarks[secHeader] !== undefined ? sectionMarks[secHeader] : 0);
-      }
-    } else {
-      sectionNames.forEach(function(s) {
-        rowData.push(sectionMarks[s]);
-      });
-    }
-    
-    rowData.push(totalMarks);
-    rowData.push(maxMarks);
-    
+    var rowData = [];
     var pct = maxMarks > 0 ? (Math.round((totalMarks / maxMarks) * 1000) / 10) + "%" : "0%";
-    rowData.push(pct);
+    
+    for (var col = 0; col < existingHeaders.length; col++) {
+      var hName = String(existingHeaders[col]).trim();
+      var hLower = hName.toLowerCase();
+      
+      if (hLower === "timestamp") {
+        rowData.push(new Date().toLocaleString());
+      } else if (hLower === "student name") {
+        rowData.push(studentName);
+      } else if (hLower === "roll number") {
+        rowData.push(rollNumber);
+      } else if (hLower === "total marks") {
+        rowData.push(totalMarks);
+      } else if (hLower === "max marks") {
+        rowData.push(maxMarks);
+      } else if (hLower === "percentage") {
+        rowData.push(pct);
+      } else {
+        // Section column: lookup by exact or case-insensitive match
+        var val = 0;
+        if (sectionMarks[hName] !== undefined) {
+          val = sectionMarks[hName];
+        } else {
+          for (var sKey in sectionMarks) {
+            if (sKey.toLowerCase() === hLower) {
+              val = sectionMarks[sKey];
+              break;
+            }
+          }
+        }
+        rowData.push(Number(val));
+      }
+    }
     
     resultsSheet.appendRow(rowData);
     
@@ -306,7 +355,8 @@ function doPost(e) {
       message: "Result recorded successfully for " + studentName + " in sheet '" + resultsSheet.getName() + "'",
       studentName: studentName,
       sheetName: resultsSheet.getName(),
-      totalMarks: totalMarks
+      totalMarks: totalMarks,
+      sectionMarks: sectionMarks
     })).setMimeType(ContentService.MimeType.JSON);
     
   } catch (err) {

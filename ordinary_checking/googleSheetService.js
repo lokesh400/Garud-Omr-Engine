@@ -74,14 +74,31 @@ async function syncPapersFromSheet(force = false) {
         if (data && data.success) {
             if (Array.isArray(data.papers) && data.papers.length > 0) {
                 // Multi-paper array returned from updated Google Apps Script
-                inMemoryPapers = data.papers.map(p => ({
-                    ...p,
-                    id: p.id || p._id || p.title,
-                    _id: p._id || p.id || p.title,
-                    totalQuestions: Number(p.totalQuestions) || Object.keys(p.answerKey || {}).length || 180,
-                    maxMarks: Number(p.maxMarks) || ((Number(p.totalQuestions) || 180) * 4),
-                    sections: Array.isArray(p.sections) ? p.sections : []
-                }));
+                inMemoryPapers = data.papers.map(p => {
+                    const secs = Array.isArray(p.sections) ? p.sections.map(s => {
+                        const correct = (s.correctMarks !== undefined) ? Number(s.correctMarks) : 4;
+                        const wrong = (s.negativeMarks !== undefined) ? Math.abs(Number(s.negativeMarks)) : 1;
+                        const qCount = Math.max(0, (Number(s.to) - Number(s.from) + 1));
+                        return {
+                            name: String(s.name || 'Section').trim(),
+                            from: Number(s.from),
+                            to: Number(s.to),
+                            correctMarks: correct,
+                            negativeMarks: wrong,
+                            maxMarks: s.maxMarks !== undefined ? Number(s.maxMarks) : (qCount * correct)
+                        };
+                    }) : [];
+                    let sumMax = 0;
+                    secs.forEach(s => sumMax += (Number(s.maxMarks) || 0));
+                    return {
+                        ...p,
+                        id: p.id || p._id || p.title,
+                        _id: p._id || p.id || p.title,
+                        totalQuestions: Number(p.totalQuestions) || Object.keys(p.answerKey || {}).length || 180,
+                        maxMarks: Number(p.maxMarks) || (sumMax > 0 ? sumMax : ((Number(p.totalQuestions) || 180) * 4)),
+                        sections: secs
+                    };
+                });
 
                 if (!inMemoryActivePaperId || !inMemoryPapers.some(p => p.id === inMemoryActivePaperId)) {
                     inMemoryActivePaperId = inMemoryPapers[0].id;
@@ -204,19 +221,34 @@ function deletePaper(id) {
 // Create or update paper in Google Sheets directly (ZERO local disk writes)
 async function createOrUpdatePaper(paperData) {
     const totalQ = Number(paperData.totalQuestions) || 180;
-    const maxM = Number(paperData.maxMarks) || (totalQ * 4);
     const title = String(paperData.title || 'Ordinary Assessment').trim();
     const subject = String(paperData.subject || 'General').trim();
     const answerKey = paperData.answerKey || {};
 
     const sections = Array.isArray(paperData.sections) && paperData.sections.length > 0
-        ? paperData.sections
+        ? paperData.sections.map(s => {
+            const correct = (s.correctMarks !== undefined) ? Number(s.correctMarks) : 4;
+            const wrong = (s.negativeMarks !== undefined) ? Math.abs(Number(s.negativeMarks)) : 1;
+            const qCount = Math.max(0, (Number(s.to) - Number(s.from) + 1));
+            return {
+                name: String(s.name || 'Section').trim(),
+                from: Number(s.from),
+                to: Number(s.to),
+                correctMarks: correct,
+                negativeMarks: wrong,
+                maxMarks: s.maxMarks !== undefined ? Number(s.maxMarks) : (qCount * correct)
+            };
+        })
         : [
-            { name: 'Physics', from: 1, to: Math.min(45, totalQ), maxMarks: Math.min(45, totalQ) * 4 },
-            { name: 'Chemistry', from: 46, to: Math.min(90, totalQ), maxMarks: Math.max(0, Math.min(90, totalQ) - 45) * 4 },
-            { name: 'Botany', from: 91, to: Math.min(135, totalQ), maxMarks: Math.max(0, Math.min(135, totalQ) - 90) * 4 },
-            { name: 'Zoology', from: 136, to: Math.min(180, totalQ), maxMarks: Math.max(0, Math.min(180, totalQ) - 135) * 4 }
+            { name: 'Physics', from: 1, to: Math.min(45, totalQ), correctMarks: 4, negativeMarks: 1, maxMarks: Math.min(45, totalQ) * 4 },
+            { name: 'Chemistry', from: 46, to: Math.min(90, totalQ), correctMarks: 4, negativeMarks: 1, maxMarks: Math.max(0, Math.min(90, totalQ) - 45) * 4 },
+            { name: 'Botany', from: 91, to: Math.min(135, totalQ), correctMarks: 4, negativeMarks: 1, maxMarks: Math.max(0, Math.min(135, totalQ) - 90) * 4 },
+            { name: 'Zoology', from: 136, to: Math.min(180, totalQ), correctMarks: 4, negativeMarks: 1, maxMarks: Math.max(0, Math.min(180, totalQ) - 135) * 4 }
         ].filter(s => s.to >= s.from);
+
+    let calculatedMax = 0;
+    sections.forEach(s => calculatedMax += (Number(s.maxMarks) || 0));
+    const maxM = Number(paperData.maxMarks) || (calculatedMax > 0 ? calculatedMax : (totalQ * 4));
 
     const paperObj = {
         id: title,
