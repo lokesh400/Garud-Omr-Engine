@@ -3,333 +3,909 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ordinary OMR Scanner • <%= config.title %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordinary OMR Scanner • <%= paper.title %></title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background: #090D16;
-            color: #E2E8F0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .top-bar {
-            height: 52px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 50;
-        }
-
         .scanner-container {
-            flex: 1;
-            position: relative;
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        .viewfinder-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #0F172A;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+            user-select: none;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        #videoInput {
+            display: none;
+        }
+
+        #canvasPreview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Clean Viewfinder HUD Overlays */
+        .hud-top-bar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        .hud-chip {
+            background: rgba(15, 23, 42, 0.82);
+            color: #FFFFFF;
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.82rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
         }
 
-        #cameraFeed {
-            position: absolute;
-            object-fit: cover;
-            width: 100%;
+        .lock-meter {
+            width: 68px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 3px;
+            overflow: hidden;
+            display: none;
+            margin-left: 4px;
+        }
+
+        .lock-meter.active {
+            display: block;
+        }
+
+        .lock-meter-fill {
             height: 100%;
-            z-index: 1;
+            width: 0%;
+            background: #22C55E;
+            border-radius: 3px;
+            transition: width 0.08s ease-out;
         }
 
-        #overlayCanvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
+        .hud-chip.locked {
+            border-color: #22C55E;
+            color: #DCFCE7;
         }
 
-        /* Result Bottom Sheet Modal */
-        .bottom-sheet {
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #F59E0B;
+        }
+
+        .status-dot.active {
+            background: #22C55E;
+        }
+
+        .scan-laser {
             position: absolute;
-            bottom: 0;
             left: 0;
             right: 0;
-            background: #0F172A;
-            border-top: 2px solid #334155;
-            border-radius: 20px 20px 0 0;
-            padding: 20px;
-            z-index: 100;
+            height: 2px;
+            background: rgba(37, 99, 235, 0.65);
+            pointer-events: none;
+            z-index: 20;
             display: none;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.6);
-            animation: slideUp 0.25s ease-out;
+            animation: laser-sweep 2.2s ease-in-out infinite alternate;
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
+        @keyframes laser-sweep {
+            0% { top: 12%; opacity: 0.25; }
+            50% { opacity: 0.85; }
+            100% { top: 88%; opacity: 0.25; }
         }
 
-        .score-pill-large {
-            font-size: 32px;
-            font-weight: 800;
-            color: #10B981;
-            text-align: center;
-            margin: 4px 0 12px 0;
+        /* Clean Light Bottom Control Bar */
+        .scanner-bottom-bar {
+            background: #FFFFFF;
+            border-top: 1px solid var(--border-color);
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: var(--text-body);
         }
 
-        .input-student {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: 2px solid #3B82F6;
-            background: #1E293B;
+        .btn-capture-auto {
+            background: var(--primary);
             color: #FFFFFF;
-            font-size: 16px;
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-sm);
+            padding: 10px 20px;
+            font-size: 0.92rem;
             font-weight: 600;
-            outline: none;
-            margin-bottom: 12px;
-        }
-
-        .input-student:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
-        }
-
-        .btn-sheet {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: none;
-            font-size: 16px;
-            font-weight: 700;
             cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.15s ease;
-        }
-
-        .btn-sheet-save {
-            background: #10B981;
-            color: #fff;
-        }
-
-        .btn-sheet-save:hover {
-            background: #059669;
-        }
-
-        .btn-sheet-cancel {
-            background: #334155;
-            color: #E2E8F0;
-        }
-
-        .section-score-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            display: inline-flex;
+            align-items: center;
             gap: 8px;
-            margin-bottom: 16px;
+            transition: var(--transition), scale 120ms ease-out;
         }
 
-        .sec-card {
-            background: #1E293B;
-            border-radius: 8px;
-            padding: 8px 12px;
+        .btn-capture-auto:hover:not(:disabled) {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-capture-auto.locked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .btn-capture-auto:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Results View */
+        #resultsSection {
+            display: none;
+            width: 100%;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .rectified-canvas-wrap {
+            background: var(--surface-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .rectified-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--success);
+            color: #FFFFFF;
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            z-index: 10;
+        }
+
+        #canvasResult {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+        }
+
+        .score-hero {
+            background: var(--primary-light);
+            color: var(--text-main);
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-lg);
+            padding: 1.4rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 640px) {
+            .stat-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .stat-box {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 0.5rem;
             text-align: center;
         }
 
-        .sec-card .name {
-            font-size: 11px;
-            color: #94A3B8;
+        .stat-box .num {
+            font-size: 1.45rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.1;
+        }
+
+        .stat-box .lbl {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 4px;
+            letter-spacing: 0.04em;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .breakdown-table th,
+        .breakdown-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #F1F5F9;
+            text-align: center;
+        }
+
+        .breakdown-table th {
+            background: var(--surface-subtle);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .breakdown-table tr:hover td {
+            background: var(--surface-subtle);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-correct {
+            background: var(--success-light);
+            color: var(--success-hover);
+            border: 1px solid var(--success-border);
+        }
+
+        .badge-wrong {
+            background: var(--danger-light);
+            color: var(--danger);
+            border: 1px solid var(--danger-border);
+        }
+
+        .badge-blank {
+            background: var(--surface-subtle);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .badge-marked {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+        }
+
+        .badge-multiple {
+            background: var(--danger-light);
+            color: var(--danger-hover);
+            border: 1px solid var(--danger-border);
+        }
+
+        /* Clean Light Roll Number Card */
+        .roll-number-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .roll-label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .roll-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
             text-transform: uppercase;
         }
 
-        .sec-card .marks {
-            font-size: 18px;
-            font-weight: 700;
-            color: #F8FAFC;
+        .roll-status-pill {
+            margin-left: auto;
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: var(--radius-full);
+            background: var(--success-light);
+            color: var(--success-hover);
+            border: 1px solid var(--success-border);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .toast-msg {
-            position: fixed;
-            top: 60px;
+        .roll-boxes-display {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .roll-digit-box {
+            width: 35px;
+            height: 43px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        .roll-digit-box.filled {
+            border-color: var(--primary-border);
+            background: var(--primary-light);
+            color: var(--primary-active);
+        }
+
+        .roll-digit-box.unknown {
+            color: var(--text-subtle);
+            border-style: dashed;
+        }
+
+        .freeze-banner {
+            position: absolute;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: #10B981;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 13px;
-            z-index: 200;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 30;
+            pointer-events: auto;
+        }
+
+        .freeze-banner-content {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid #22C55E;
+            border-radius: var(--radius-full);
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #FFFFFF;
+        }
+
+        .freeze-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+        }
+
+        .freeze-text strong {
+            font-size: 0.84rem;
+            color: #86EFAC;
+        }
+
+        .freeze-text span {
+            font-size: 0.76rem;
+            color: #E2E8F0;
+        }
+
+        .btn-retake {
+            background: #FFFFFF;
+            border: 1px solid var(--border-hover);
+            color: var(--text-main);
+            padding: 5px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-retake:hover {
+            background: var(--surface-subtle);
+        }
+
+        .flash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.08s ease-out;
+            z-index: 50;
+        }
+
+        .flash-screen.flash {
+            opacity: 0.9;
+        }
+
+        /* Results Action Buttons */
+        .results-actions-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 0 1.25rem 0;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 12px 18px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .action-buttons-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-save-next {
+            background: var(--primary);
+            color: #FFFFFF;
+            border: 1px solid var(--primary);
+            font-weight: 600;
+            padding: 9px 18px;
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition), scale 120ms ease-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-save-next:hover:not(:disabled) {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-save-next:active:not(:disabled) {
+            scale: 0.98;
+        }
+
+        .btn-save-next:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .btn-rescan {
+            background: #FFFFFF;
+            color: var(--text-main);
+            border: 1px solid var(--border-hover);
+            font-weight: 600;
+            padding: 9px 16px;
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-rescan:hover {
+            background: var(--surface-subtle);
+            border-color: #94A3B8;
+        }
+
+        .scanner-sticky-dock {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 640px) {
+            .results-actions-topbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px;
+            }
+            .action-buttons-group, .scanner-sticky-dock {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1.5fr;
+                gap: 8px;
+            }
+            .btn-save-next, .btn-rescan {
+                justify-content: center;
+                padding: 10px 12px;
+                font-size: 0.86rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <a href="/ordinary" style="color: #94A3B8; text-decoration: none; font-size: 14px;">&larr; Exit</a>
-            <span style="font-weight: 700; font-size: 14px;"><%= config.title %></span>
+    <div class="container scanner-container">
+        <!-- Top Navigation Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="/ordinary" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Ordinary Portal
+                </a>
+                <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-heading);"><%= paper.title %></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 5px;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; display: inline-block;"></span> Google Sheets Connected
+                </span>
+                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;"><%= paper.numQuestions %> Questions</span>
+            </div>
         </div>
-        <div>
-            <button onclick="triggerManualCapture();" style="background: #2563EB; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                📸 Snap Sheet
-            </button>
+
+        <!-- Live Viewfinder Section -->
+        <div id="viewfinderSection" class="viewfinder-card">
+            <div class="video-wrapper" id="videoWrapper" onclick="handleTapToCapture()">
+                <div id="flashScreen" class="flash-screen"></div>
+                <div id="scanLaser" class="scan-laser"></div>
+
+                <div class="hud-top-bar">
+                    <div id="hudChip" class="hud-chip">
+                        <div id="statusDot" class="status-dot"></div>
+                        <span id="hudStatus">Align paper in view</span>
+                        <div class="lock-meter" id="lockMeter">
+                            <div class="lock-meter-fill" id="lockMeterFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frozen State Banner -->
+                <div id="freezeBanner" class="freeze-banner" style="display: none;">
+                    <div class="freeze-banner-content">
+                        <div class="freeze-text">
+                            <strong>Corners Locked</strong>
+                            <span>Tap screen to compute score</span>
+                        </div>
+                        <button type="button" class="btn-retake" onclick="event.stopPropagation(); unfreezeScene();">Retake</button>
+                    </div>
+                </div>
+
+                <video id="videoInput" autoplay playsinline></video>
+                <canvas id="canvasPreview"></canvas>
+            </div>
+
+            <!-- Bottom Toolbar -->
+            <div class="scanner-bottom-bar">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+                        Auto-captures when 4 corners align, or tap the viewfinder
+                    </span>
+                </div>
+                <div>
+                    <button type="button" class="btn-capture-auto" id="captureBtn" onclick="triggerManualCapture()">
+                        Capture &amp; Evaluate
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Scanner Camera Viewport -->
-    <div class="scanner-container">
-        <video id="cameraFeed" playsinline autoplay muted></video>
-        <canvas id="overlayCanvas"></canvas>
-    </div>
+        <!-- Leveled Results Section -->
+        <div id="resultsSection">
+            <div class="results-actions-topbar">
+                <div>
+                    <h2 style="margin: 0 0 2px 0; font-size: 1.2rem; font-weight: 700;">Evaluation Results</h2>
+                    <span style="font-size: 0.825rem; color: var(--text-muted);">Review detected roll number and answers, then click Save &amp; Scan Next.</span>
+                </div>
+                <div class="action-buttons-group">
+                    <button type="button" class="btn-rescan" id="topRescanBtn" onclick="rescanSheet()" title="Discard this scan and rescan immediately">
+                        Rescan
+                    </button>
+                    <button type="button" class="btn-save-next" id="topSaveBtn" onclick="saveAndScanNext()" title="Save result to database and upload OMR copy to Cloudinary, then scan next">
+                        Save &amp; Scan Next
+                    </button>
+                </div>
+            </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast-msg"></div>
+            <div class="results-grid">
+                <div class="rectified-canvas-wrap">
+                    <span class="rectified-badge">Auto-Leveled &amp; Cropped</span>
+                    <canvas id="canvasResult"></canvas>
+                </div>
 
-    <!-- Bottom Result Sheet Modal -->
-    <div id="resultModal" class="bottom-sheet">
-        <div style="text-align: center; color: #94A3B8; font-size: 12px; text-transform: uppercase;">Scanned Result</div>
-        <div class="score-pill-large" id="modalScore">0 Marks</div>
+                <div>
+                    <!-- Student Name Input (Required for Google Sheet) -->
+                    <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.25rem; border: 1.5px solid var(--primary); background: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                            <label for="studentNameInput" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); margin: 0;">
+                                Student Name <span style="color: var(--danger);">*</span>
+                            </label>
+                            <span style="font-size: 0.72rem; font-weight: 600; color: #059669; background: #ECFDF5; padding: 2px 7px; border-radius: 4px; border: 1px solid #A7F3D0;">
+                                Google Sheet Row
+                            </span>
+                        </div>
+                        <input type="text" id="studentNameInput" placeholder="Enter student name (e.g. Rahul Sharma)" autocomplete="off" style="width: 100%; padding: 0.65rem 0.85rem; font-size: 1rem; font-weight: 600; border: 1.5px solid #CBD5E1; border-radius: var(--radius-sm); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#CBD5E1'" onkeydown="if(event.key==='Enter') saveAndScanNext()">
+                    </div>
 
-        <!-- Section Scores -->
-        <div class="section-score-list" id="modalSections"></div>
+                    <div class="roll-number-card">
+                        <div class="roll-label-row">
+                            <span class="roll-title">Student Roll Number</span>
+                            <span class="roll-status-pill" id="rollStatusPill">Detecting...</span>
+                        </div>
+                        <div class="roll-boxes-display" id="rollBoxesDisplay">
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                            <div class="roll-digit-box unknown">-</div>
+                        </div>
+                    </div>
 
-        <!-- Student Name Input (Autofocused) -->
-        <label style="display: block; font-size: 12px; color: #94A3B8; margin-bottom: 4px;">Enter Student Name:</label>
-        <input type="text" id="modalStudentName" class="input-student" placeholder="e.g. Aarav Sharma" autocomplete="off">
+                    <div class="score-hero">
+                        <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600;">
+                            Score Achieved
+                        </div>
+                        <div class="score-val" id="scoreValue"
+                            style="font-size: 3rem; font-weight: 700; margin: 0.2rem 0; font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; color: var(--primary);">
+                            0 / 0
+                        </div>
+                        <div id="scorePercentage" style="font-size: 1rem; font-weight: 600; color: var(--text-body);">0% Accuracy</div>
+                    </div>
 
-        <label style="display: block; font-size: 12px; color: #94A3B8; margin-bottom: 4px;">Roll Number (Auto-read):</label>
-        <input type="text" id="modalRollNumber" class="input-student" style="padding: 10px 14px; font-size: 14px;" placeholder="Optional">
+                    <div class="card" style="padding: 1.25rem;">
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="num" id="statCorrect" style="color: var(--success);">0</div>
+                                <div class="lbl">Correct</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statWrong" style="color: var(--danger);">0</div>
+                                <div class="lbl">Wrong</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statMultiple" style="color: var(--danger-hover);">0</div>
+                                <div class="lbl">Multiple</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statAttempted" style="color: var(--primary);">0</div>
+                                <div class="lbl">Attempted</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="num" id="statBlank" style="color: var(--text-muted);">0</div>
+                                <div class="lbl">Unmarked</div>
+                            </div>
+                        </div>
 
-        <button id="modalSaveBtn" class="btn-sheet btn-sheet-save" onclick="saveScannedResult();">
-            💾 Save to Google Sheet &amp; Next (Enter)
-        </button>
-        <button class="btn-sheet btn-sheet-cancel" onclick="dismissModal();">
-            ✕ Discard &amp; Resume Camera
-        </button>
+                        <h4 style="margin: 1rem 0 0.6rem 0; font-size: 0.95rem; font-weight: 700;">Question Breakdown</h4>
+                        <div
+                            style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                            <table class="breakdown-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Marked</th>
+                                        <th>Key</th>
+                                        <th>Verdict</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="scanner-sticky-dock">
+                            <button type="button" class="btn-rescan" id="btnRescan" onclick="rescanSheet()">
+                                Rescan
+                            </button>
+                            <button type="button" class="btn-save-next" id="btnSaveNext" onclick="saveAndScanNext()">
+                                Save &amp; Scan Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const ANSWER_KEY = <%- JSON.stringify(config.answerKey || {}) %>;
-        const SECTIONS = <%- JSON.stringify(config.sections || []) %>;
-        const TOTAL_QUESTIONS = <%= config.totalQuestions || 180 %>;
+        const answerKey = <%- answerKey || '{}' %>;
+        const totalPaperQuestions = <%= paper.numQuestions || 50 %>;
 
-        const video = document.getElementById('cameraFeed');
-        const overlay = document.getElementById('overlayCanvas');
-        const ctx = overlay.getContext('2d');
-        const resultModal = document.getElementById('resultModal');
-        const modalScore = document.getElementById('modalScore');
-        const modalSections = document.getElementById('modalSections');
-        const modalStudentName = document.getElementById('modalStudentName');
-        const modalRollNumber = document.getElementById('modalRollNumber');
-        const modalSaveBtn = document.getElementById('modalSaveBtn');
-        const toast = document.getElementById('toast');
-
-        let isLocked = false;
-        let isEvaluating = false;
-        let currentEvaluation = null;
-
-        // Init Camera Feed
-        async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                });
-                video.srcObject = stream;
-                video.play();
-                requestAnimationFrame(loop);
-            } catch (err) {
-                alert('Camera error: ' + err.message + '. Please ensure camera permissions are allowed.');
+        function parseKeyOptionsClient(keyStr) {
+            if (!keyStr || typeof keyStr !== 'string') return [];
+            const trimmed = keyStr.trim().toUpperCase();
+            if (trimmed === 'BONUS' || trimmed === '*' || trimmed === 'ALL' || trimmed.includes('BONUS')) {
+                return ['BONUS'];
             }
-        }
-
-        // Sizing
-        function resizeOverlay() {
-            if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
-                overlay.width = video.videoWidth || window.innerWidth;
-                overlay.height = video.videoHeight || window.innerHeight;
+            if (trimmed.includes(',') || trimmed.includes('/') || trimmed.includes(';') || trimmed.includes(' ')) {
+                return trimmed.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
             }
-        }
-
-        // Realtime Framing Loop
-        function loop() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                resizeOverlay();
-                ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-                if (!isLocked) {
-                    drawFramingBox(ctx, overlay.width, overlay.height);
-                }
+            if (trimmed.length > 1 && /^[ABCD]+$/.test(trimmed)) {
+                return trimmed.split('');
             }
-            if (!isLocked) {
-                requestAnimationFrame(loop);
+            return [trimmed];
+        }
+
+        function evaluateClientQuestionVerdict(marked, officialKey, isJee = false) {
+            const key = (officialKey || '').trim().toUpperCase();
+            const resp = (marked || '').trim().toUpperCase();
+            const posMarks = isJee ? 4 : 1;
+            const posMarksStr = isJee ? '+4' : '+1';
+            const negMarks = isJee ? -1 : 0;
+            const negMarksStr = isJee ? '-1' : '0';
+
+            // 1. Bonus Question: Full positive marks to all students
+            if (key === 'BONUS' || key === '*' || key === 'ALL' || key.includes('BONUS')) {
+                return {
+                    verdict: 'bonus',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: (!resp || resp === '-' || resp === 'BLANK'),
+                    isBonus: true
+                };
             }
+
+            // 2. Blank / Unmarked
+            if (!resp || resp === '-' || resp === 'BLANK') {
+                return {
+                    verdict: 'blank',
+                    marks: '0',
+                    scoreDelta: 0,
+                    isCorrect: false,
+                    isWrong: false,
+                    isBlank: true,
+                    isBonus: false
+                };
+            }
+
+            // 3. No Key Set yet
+            if (!key || key === '-') {
+                return {
+                    verdict: 'marked',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // 4. Multi-option or single-option key check
+            const validKeys = parseKeyOptionsClient(key);
+            const markedOpts = resp.split(/[,/;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+
+            const allMarkedValid = markedOpts.length > 0 && markedOpts.every(o => validKeys.includes(o));
+            const singleMarkedValid = markedOpts.length === 1 && validKeys.includes(markedOpts[0]);
+
+            if (allMarkedValid || singleMarkedValid) {
+                return {
+                    verdict: 'correct',
+                    marks: posMarksStr,
+                    scoreDelta: posMarks,
+                    isCorrect: true,
+                    isWrong: false,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // Student marked multiple bubbles, at least one is wrong
+            if (markedOpts.length > 1) {
+                return {
+                    verdict: 'multiple',
+                    marks: negMarksStr,
+                    scoreDelta: negMarks,
+                    isCorrect: false,
+                    isWrong: true,
+                    isBlank: false,
+                    isBonus: false
+                };
+            }
+
+            // Single wrong option marked
+            return {
+                verdict: 'wrong',
+                marks: negMarksStr,
+                scoreDelta: negMarks,
+                isCorrect: false,
+                isWrong: true,
+                isBlank: false,
+                isBonus: false
+            };
         }
 
-        function drawFramingBox(ctx, W, H) {
-            const marginX = W * 0.08;
-            const marginY = H * 0.06;
-            const guideW = W - 2 * marginX;
-            const guideH = H - 2 * marginY;
+        const video = document.getElementById('videoInput');
+        const previewCanvas = document.getElementById('canvasPreview');
+        const previewCtx = previewCanvas.getContext('2d');
+        const resultCanvas = document.getElementById('canvasResult');
+        const resultCtx = resultCanvas.getContext('2d');
 
-            ctx.strokeStyle = '#10B981';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([12, 8]);
-            ctx.strokeRect(marginX, marginY, guideW, guideH);
-            ctx.setLineDash([]);
+        const hudChip = document.getElementById('hudChip');
+        const hudStatus = document.getElementById('hudStatus');
+        const statusDot = document.getElementById('statusDot');
+        const tiltBadge = document.getElementById('tiltBadge');
+        const captureBtn = document.getElementById('captureBtn');
+        const autoSnapToggle = document.getElementById('autoSnapToggle');
+        const flashScreen = document.getElementById('flashScreen');
+        const scanLaser = document.getElementById('scanLaser');
 
-            // Draw Corner Crosshairs
-            const cLen = 28;
-            ctx.lineWidth = 5;
-            // TL
-            ctx.beginPath(); ctx.moveTo(marginX, marginY + cLen); ctx.lineTo(marginX, marginY); ctx.lineTo(marginX + cLen, marginY); ctx.stroke();
-            // TR
-            ctx.beginPath(); ctx.moveTo(marginX + guideW - cLen, marginY); ctx.lineTo(marginX + guideW, marginY); ctx.lineTo(marginX + guideW, marginY + cLen); ctx.stroke();
-            // BR
-            ctx.beginPath(); ctx.moveTo(marginX + guideW, marginY + guideH - cLen); ctx.lineTo(marginX + guideW, guideH + marginY); ctx.lineTo(marginX + guideW - cLen, guideH + marginY); ctx.stroke();
-            // BL
-            ctx.beginPath(); ctx.moveTo(marginX + cLen, marginY + guideH); ctx.lineTo(marginX, marginY + guideH); ctx.lineTo(marginX, marginY + guideH - cLen); ctx.stroke();
-        }
+        let cameraStream = null;
+        let animationFrameId = null;
+        let isCaptured = false;
 
-        // Trigger manual snap
-        function triggerManualCapture() {
-            if (isEvaluating || isLocked) return;
-            isLocked = true;
+        // Auto-tracking state
+        let smoothedCorners = null;
+        let lastRawCorners = null;
+        let lockStreak = 0;
+        const LOCK_REQUIRED_FRAMES = 6; // ~0.2s steady hold to auto-capture
+        let isFrozen = false;
+        let frozenCorners = null;
 
-            // Capture frozen frame
-            const snapCanvas = document.createElement('canvas');
-            snapCanvas.width = video.videoWidth || 1280;
-            snapCanvas.height = video.videoHeight || 720;
-            const sCtx = snapCanvas.getContext('2d');
-            sCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+        const lockMeter = document.getElementById('lockMeter');
+        const lockMeterFill = document.getElementById('lockMeterFill');
+        const freezeBanner = document.getElementById('freezeBanner');
 
-            evaluateSnap(snapCanvas);
-        }
+        // Fast analysis downscale canvas
+        const fastCanvas = document.createElement('canvas');
+        const fastCtx = fastCanvas.getContext('2d');
 
-        // Geometry Constants (Same as NEET Checker)
+        // Standardized A4 Leveled Canvas Dimensions
         const TARGET_W = 1000;
-        const TARGET_H = 1461;
+        const TARGET_H = 1461; // Exact aspect ratio between corner markers (1042.05 / 713.22)
+
+        // Measured Standard Ratios from Rendered A4 Sheet
         const U_START = 0.061846;
         const V_START = 0.256331;
         const U_BUBBLE_STEP = 0.028042;
@@ -338,180 +914,1541 @@
         const QUESTIONS_PER_COL = 40;
         const OPTIONS = ['A', 'B', 'C', 'D'];
 
+        // Roll Number Exact Ratios
         const U_ROLL_START = 0.619879;
         const V_ROLL_START = 0.058644;
         const U_ROLL_COL_STEP = 0.026640;
         const V_ROLL_ROW_STEP = 0.018233;
 
-        function evaluateSnap(srcCanvas) {
-            isEvaluating = true;
-            const W = srcCanvas.width;
-            const H = srcCanvas.height;
-
-            // Perspective warp to leveled standard sheet
-            const levelCanvas = document.createElement('canvas');
-            levelCanvas.width = TARGET_W;
-            levelCanvas.height = TARGET_H;
-            const lCtx = levelCanvas.getContext('2d');
-            lCtx.drawImage(srcCanvas, 0, 0, TARGET_W, TARGET_H);
-
-            const imgData = lCtx.getImageData(0, 0, TARGET_W, TARGET_H);
-            const data = imgData.data;
-
-            function getGray(x, y) {
-                if (x < 0 || x >= TARGET_W || y < 0 || y >= TARGET_H) return 255;
-                const idx = (y * TARGET_W + x) * 4;
-                return (data[idx] * 299 + data[idx + 1] * 587 + data[idx + 2] * 114) / 1000;
+        async function initCamera() {
+            isCaptured = false;
+            isFrozen = false;
+            frozenCorners = null;
+            smoothedCorners = null;
+            lastRawCorners = null;
+            lockStreak = 0;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }
+            document.getElementById('viewfinderSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            if (freezeBanner) freezeBanner.style.display = 'none';
+            scanLaser.style.display = 'block';
+            hudStatus.textContent = 'Align paper in view';
+            captureBtn.classList.remove('locked');
+            captureBtn.innerHTML = 'Capture &amp; Evaluate';
 
-            // Detect Roll Number
-            let detectedRoll = '';
-            for (let c = 0; c < 8; c++) {
-                const colX = (U_ROLL_START + c * U_ROLL_COL_STEP) * TARGET_W;
-                let darkestD = -1, minVal = 255;
-                for (let d = 0; d < 10; d++) {
-                    const rowY = (V_ROLL_START + d * V_ROLL_ROW_STEP) * TARGET_H;
-                    const val = getGray(Math.round(colX), Math.round(rowY));
-                    if (val < minVal) { minVal = val; darkestD = d; }
+            // Reuse existing active stream if available
+            if (cameraStream && cameraStream.active) {
+                try {
+                    video.srcObject = cameraStream;
+                    video.muted = true;
+                    await video.play();
+                    previewCanvas.width = video.videoWidth || 1280;
+                    previewCanvas.height = video.videoHeight || 720;
+                    renderLoop();
+                    return;
+                } catch (e) {
+                    console.warn('Reuse stream failed, reopening:', e);
                 }
-                detectedRoll += (minVal < 160 ? darkestD : '-');
             }
-            detectedRoll = detectedRoll.replace(/-/g, '');
 
-            // Sections
-            const secs = SECTIONS.length > 0 ? SECTIONS : [
-                { name: 'Physics', from: 1, to: 45 },
-                { name: 'Chemistry', from: 46, to: 90 },
-                { name: 'Botany', from: 91, to: 135 },
-                { name: 'Zoology', from: 136, to: 180 }
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+
+            let stream = null;
+            const constraintsList = [
+                { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+                { video: { facingMode: 'environment' }, audio: false },
+                { video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+                { video: true, audio: false }
             ];
 
-            const sectionMarks = {};
-            secs.forEach(s => { sectionMarks[s.name] = 0; });
-            let totalScore = 0;
+            for (const c of constraintsList) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(c);
+                    if (stream) break;
+                } catch (err) { }
+            }
 
-            for (let q = 1; q <= TOTAL_QUESTIONS; q++) {
-                const colIdx = Math.floor((q - 1) / QUESTIONS_PER_COL);
-                const rowIdx = (q - 1) % QUESTIONS_PER_COL;
-                let darkestOpt = null, minVal = 255;
+            if (!stream) {
+                hudStatus.textContent = 'CAMERA ERROR: CAMERA NOT ACCESSIBLE';
+                return;
+            }
 
-                OPTIONS.forEach((opt, oIdx) => {
-                    const bx = (U_START + colIdx * U_COL_STEP + oIdx * U_BUBBLE_STEP) * TARGET_W;
-                    const by = (V_START + rowIdx * V_ROW_STEP) * TARGET_H;
-                    const g = getGray(Math.round(bx), Math.round(by));
-                    if (g < minVal && g < 155) { minVal = g; darkestOpt = opt; }
-                });
+            try {
+                cameraStream = stream;
+                video.srcObject = cameraStream;
+                video.muted = true;
+                await video.play();
 
-                const marked = darkestOpt || '-';
-                const key = String(ANSWER_KEY[String(q)] || '').trim().toUpperCase();
-                let delta = 0;
+                previewCanvas.width = video.videoWidth || 1280;
+                previewCanvas.height = video.videoHeight || 720;
 
-                if (key && marked !== '-') {
-                    if (key === 'BONUS' || key === '*' || key.includes(marked)) delta = 4;
-                    else delta = -1;
-                } else if (key && (key === 'BONUS' || key === '*')) {
-                    delta = 4;
+                renderLoop();
+            } catch (err) {
+                console.error(err);
+                hudStatus.textContent = 'CAMERA ERROR: ' + err.message;
+            }
+        }
+
+        // Robust 4-corner ordering [TL, TR, BR, BL]
+        function orderCorners(pts) {
+            if (!pts || pts.length !== 4) return pts;
+            let tl = pts[0], br = pts[0], tr = pts[0], bl = pts[0];
+            let minSum = pts[0].x + pts[0].y, maxSum = minSum;
+            let maxDiff = pts[0].x - pts[0].y, minDiff = maxDiff;
+
+            for (let i = 1; i < pts.length; i++) {
+                const p = pts[i];
+                const sum = p.x + p.y;
+                const diff = p.x - p.y;
+                if (sum < minSum) { minSum = sum; tl = p; }
+                if (sum > maxSum) { maxSum = sum; br = p; }
+                if (diff > maxDiff) { maxDiff = diff; tr = p; }
+                if (diff < minDiff) { minDiff = diff; bl = p; }
+            }
+
+            const unique = new Set([tl, tr, br, bl]);
+            if (unique.size === 4) {
+                return [tl, tr, br, bl];
+            }
+
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+            const sorted = [...pts].map(p => ({
+                x: p.x,
+                y: p.y,
+                angle: Math.atan2(p.y - cy, p.x - cx)
+            })).sort((a, b) => a.angle - b.angle);
+
+            let minAngleDiff = Infinity;
+            let tlIdx = 0;
+            const targetAngle = -2.35619; // -135 deg
+            sorted.forEach((p, idx) => {
+                let diff = Math.abs(p.angle - targetAngle);
+                if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                if (diff < minAngleDiff) {
+                    minAngleDiff = diff;
+                    tlIdx = idx;
                 }
+            });
 
-                totalScore += delta;
-                for (const s of secs) {
-                    if (q >= s.from && q <= s.to) {
-                        sectionMarks[s.name] = (sectionMarks[s.name] || 0) + delta;
-                        break;
+            return [
+                sorted[tlIdx],
+                sorted[(tlIdx + 1) % 4],
+                sorted[(tlIdx + 2) % 4],
+                sorted[(tlIdx + 3) % 4]
+            ].map(p => ({ x: p.x, y: p.y }));
+        }
+
+        function getPerspectiveTransform(src, dst) {
+            const A = [], B = [];
+            for (let i = 0; i < 4; i++) {
+                const sx = src[i].x, sy = src[i].y, dx = dst[i].x, dy = dst[i].y;
+                A.push([sx, sy, 1, 0, 0, 0, -dx * sx, -dx * sy]); B.push(dx);
+                A.push([0, 0, 0, sx, sy, 1, -dy * sx, -dy * sy]); B.push(dy);
+            }
+            const n = 8;
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) maxRow = k;
+                [A[i], A[maxRow]] = [A[maxRow], A[i]];[B[i], B[maxRow]] = [B[maxRow], B[i]];
+                const pivot = A[i][i];
+                if (Math.abs(pivot) < 1e-10) return null;
+                for (let j = i; j < n; j++) A[i][j] /= pivot;
+                B[i] /= pivot;
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = A[k][i];
+                        for (let j = i; j < n; j++) A[k][j] -= factor * A[i][j];
+                        B[k] -= factor * B[i];
+                    }
+                }
+            }
+            return [B[0], B[1], B[2], B[3], B[4], B[5], B[6], B[7], 1];
+        }
+
+        // Live Frame Detection Loop
+        function renderLoop() {
+            if (isCaptured || isFrozen) return;
+
+            if (video.readyState >= 2) {
+                const W = previewCanvas.width;
+                const H = previewCanvas.height;
+                previewCtx.drawImage(video, 0, 0, W, H);
+
+                // Run fast detector on downscaled canvas (400px width from 59e4b1e)
+                const fastW = 400;
+                const fastH = Math.max(1, Math.round(H * (fastW / W)));
+                fastCanvas.width = fastW;
+                fastCanvas.height = fastH;
+                fastCtx.drawImage(video, 0, 0, fastW, fastH);
+
+                const detectedRaw = detectLiveCorners(fastCtx, fastW, fastH);
+
+                if (detectedRaw) {
+                    const scale = W / fastW;
+                    const currentCorners = detectedRaw.map(pt => ({
+                        x: pt.x * scale,
+                        y: pt.y * scale
+                    }));
+
+                    let isSteady = false;
+                    if (lastRawCorners) {
+                        const maxDelta = Math.max(...currentCorners.map((pt, i) =>
+                            Math.hypot(pt.x - lastRawCorners[i].x, pt.y - lastRawCorners[i].y)
+                        ));
+                        if (maxDelta < 20.0) {
+                            isSteady = true;
+                        }
+                    } else {
+                        isSteady = true;
+                    }
+                    lastRawCorners = currentCorners;
+
+                    if (isSteady) {
+                        lockStreak++;
+                    } else {
+                        lockStreak = Math.max(0, lockStreak - 1);
+                    }
+
+                    if (!smoothedCorners) {
+                        smoothedCorners = currentCorners;
+                    } else {
+                        smoothedCorners = smoothedCorners.map((pt, i) => ({
+                            x: pt.x * 0.70 + currentCorners[i].x * 0.30,
+                            y: pt.y * 0.70 + currentCorners[i].y * 0.30
+                        }));
+                    }
+
+                    const pct = Math.min(100, Math.round((lockStreak / LOCK_REQUIRED_FRAMES) * 100));
+
+                    hudChip.classList.add('locked');
+                    statusDot.className = 'status-dot';
+                    statusDot.style.background = '#22C55E';
+                    statusDot.style.boxShadow = 'none';
+                    hudStatus.textContent = `Corners detected • Auto-capturing (${pct}%)`;
+
+                    if (lockMeter) {
+                        lockMeter.classList.add('active');
+                        if (lockMeterFill) lockMeterFill.style.width = pct + '%';
+                    }
+
+                    captureBtn.classList.add('locked');
+                    captureBtn.innerHTML = 'Auto-Capturing...';
+
+                    drawCyberOverlay(previewCtx, smoothedCorners, lockStreak >= LOCK_REQUIRED_FRAMES, pct);
+
+                    // AUTOMATIC CAPTURE WITHOUT TAPPING:
+                    // Once 4 corners are recognized and steady for required frames, auto-click photo & compute!
+                    if (lockStreak >= LOCK_REQUIRED_FRAMES) {
+                        snapAndWarpSheet(smoothedCorners);
+                        return;
+                    }
+                } else {
+                    lockStreak = Math.max(0, lockStreak - 1);
+                    if (lockStreak === 0) {
+                        lastRawCorners = null;
+                        smoothedCorners = null;
+                    }
+
+                    hudChip.classList.remove('locked');
+                    statusDot.className = 'status-dot';
+                    statusDot.style.background = '#F59E0B';
+                    statusDot.style.boxShadow = 'none';
+                    hudStatus.textContent = 'Align paper in view';
+                    captureBtn.classList.remove('locked');
+                    captureBtn.innerHTML = 'Capture &amp; Evaluate';
+
+                    if (lockMeter) {
+                        lockMeter.classList.remove('active');
+                        if (lockMeterFill) lockMeterFill.style.width = '0%';
+                    }
+
+                    if (smoothedCorners) {
+                        drawCyberOverlay(previewCtx, smoothedCorners, false, 0);
+                    } else {
+                        drawFramingGuide(previewCtx, W, H);
                     }
                 }
             }
 
-            currentEvaluation = {
-                score: totalScore,
-                totalMarks: totalScore,
-                maxMarks: TOTAL_QUESTIONS * 4,
-                sectionMarks: sectionMarks,
-                detectedRoll: detectedRoll
-            };
-
-            // Display in Modal
-            modalScore.textContent = `${totalScore} / ${TOTAL_QUESTIONS * 4} Marks`;
-            modalRollNumber.value = detectedRoll;
-            modalStudentName.value = '';
-
-            modalSections.innerHTML = '';
-            secs.forEach(s => {
-                const card = document.createElement('div');
-                card.className = 'sec-card';
-                card.innerHTML = `<div class="name">${s.name}</div><div class="marks">${sectionMarks[s.name] || 0}</div>`;
-                modalSections.appendChild(card);
-            });
-
-            resultModal.style.display = 'block';
-            modalStudentName.focus();
-            isEvaluating = false;
+            animationFrameId = requestAnimationFrame(renderLoop);
         }
 
-        async function saveScannedResult() {
-            if (!currentEvaluation) return;
+        // Freeze the scene when corners are recognized
+        function freezeScene() {
+            if (isFrozen || isCaptured || !smoothedCorners) return;
+            isFrozen = true;
+            frozenCorners = smoothedCorners.map(p => ({ x: p.x, y: p.y }));
 
-            const studentName = modalStudentName.value.trim();
-            if (!studentName) {
-                alert('Please enter the Student Name.');
-                modalStudentName.focus();
+            // Freeze video playback
+            try { video.pause(); } catch (e) { }
+
+            // Stop laser beam
+            scanLaser.style.display = 'none';
+
+            // Draw glowing green locked overlay on the frozen preview
+            drawCyberOverlay(previewCtx, frozenCorners, true, 100);
+
+            // Update HUD
+            hudChip.classList.add('locked');
+            statusDot.className = 'status-dot active';
+            statusDot.style.background = '#22C55E';
+            statusDot.style.boxShadow = 'none';
+            hudStatus.textContent = 'Corners locked • Tap screen to compute';
+
+            if (lockMeter) lockMeter.classList.add('active');
+            if (lockMeterFill) lockMeterFill.style.width = '100%';
+
+            // Show freeze banner on screen
+            const freezeBanner = document.getElementById('freezeBanner');
+            if (freezeBanner) freezeBanner.style.display = 'block';
+
+            captureBtn.classList.add('locked');
+            captureBtn.innerHTML = 'Tap Screen to Compute';
+        }
+
+        // Unfreeze scene and resume live camera
+        function unfreezeScene() {
+            if (isCaptured) return;
+            isFrozen = false;
+            frozenCorners = null;
+            smoothedCorners = null;
+            lastRawCorners = null;
+            lockStreak = 0;
+
+            const freezeBanner = document.getElementById('freezeBanner');
+            if (freezeBanner) freezeBanner.style.display = 'none';
+
+            scanLaser.style.display = 'block';
+            hudChip.classList.remove('locked');
+            statusDot.className = 'status-dot';
+            statusDot.style.background = '#F59E0B';
+            statusDot.style.boxShadow = 'none';
+            hudStatus.textContent = 'Align paper in view';
+            captureBtn.classList.remove('locked');
+            captureBtn.innerHTML = 'Capture &amp; Evaluate';
+
+            if (lockMeter) {
+                lockMeter.classList.remove('active');
+                if (lockMeterFill) lockMeterFill.style.width = '0%';
+            }
+
+            try { video.play(); } catch (e) { }
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(renderLoop);
+            }
+        }
+
+        // High-Precision Solid Corner Detector:
+        // Scans the frame, isolates solid square corner markers using:
+        // 1. Fill density >= 0.45 (solid squares)
+        // 2. Isolation ring check (rejects question bubbles & roll numbers)
+        // 3. Inward white margin check (confirms paper margin)
+        // 4. Quadrilateral geometry solver (confirms A4 aspect ratio 1.46)
+        function detectLiveCorners(ctx, sw, sh) {
+            const imgData = ctx.getImageData(0, 0, sw, sh);
+            const data = imgData.data;
+            const total = sw * sh;
+
+            // 1. Grayscale & Histogram
+            const gray = new Uint8Array(total);
+            const hist = new Int32Array(256);
+            let pIdx = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const g = (data[i] * 77 + data[i + 1] * 150 + data[i + 2] * 29) >> 8;
+                gray[pIdx++] = g;
+                hist[g]++;
+            }
+
+            // 2. Global Otsu Threshold
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sumB = 0, wB = 0, maxVar = 0, thresh = 110;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (wB === 0) continue;
+                const wF = total - wB;
+                if (wF === 0) break;
+                sumB += i * hist[i];
+                const diff = (sumB / wB) - ((sum - sumB) / wF);
+                const v = wB * wF * diff * diff;
+                if (v > maxVar) { maxVar = v; thresh = i + 1; }
+            }
+            thresh = Math.max(40, Math.min(thresh, 175));
+
+            // 3. Connected Component Analysis across the frame
+            const visited = new Uint8Array(total);
+            const candidates = [];
+            const queue = new Int32Array(total);
+
+            for (let py = 4; py < sh - 4; py += 2) {
+                for (let px = 4; px < sw - 4; px += 2) {
+                    const startP = py * sw + px;
+                    if (visited[startP] || gray[startP] >= thresh) continue;
+
+                    let count = 0, sumX = 0, sumY = 0;
+                    let minX = px, maxX = px, minY = py, maxY = py;
+                    let qHead = 0, qTail = 0;
+                    queue[qTail++] = startP;
+                    visited[startP] = 1;
+
+                    while (qHead < qTail) {
+                        if (count > 2500) break;
+                        const cur = queue[qHead++];
+                        const cy = Math.floor(cur / sw);
+                        const cx = cur % sw;
+                        count++;
+                        sumX += cx;
+                        sumY += cy;
+                        if (cx < minX) minX = cx;
+                        if (cx > maxX) maxX = cx;
+                        if (cy < minY) minY = cy;
+                        if (cy > maxY) maxY = cy;
+
+                        const neighbors = [cur - 1, cur + 1, cur - sw, cur + sw];
+                        for (let k = 0; k < 4; k++) {
+                            const nb = neighbors[k];
+                            if (nb >= 0 && nb < total && !visited[nb] && gray[nb] < thresh) {
+                                visited[nb] = 1;
+                                queue[qTail++] = nb;
+                            }
+                        }
+                    }
+
+                    const bw = maxX - minX + 1;
+                    const bh = maxY - minY + 1;
+                    const aspect = bw / bh;
+                    const density = count / (bw * bh);
+
+                    // Solid Square Corner Marker Criteria
+                    if (bw >= 5 && bh >= 5 && bw <= 45 && bh <= 45 && aspect >= 0.55 && aspect <= 1.80 && density >= 0.45 && count >= 14 && count <= 900) {
+                        const bx = sumX / count;
+                        const by = sumY / count;
+                        const blobR = Math.max(bw, bh) / 2;
+
+                        // INWARD ISOLATION CHECK:
+                        // Only samples the quadrant facing INWARD toward the center of the paper.
+                        // Completely immune to dark/wooden desks outside the paper boundary!
+                        // Rejects question bubbles, which have other bubbles/text on all sides.
+                        const dirX = Math.sign((sw / 2) - bx);
+                        const dirY = Math.sign((sh / 2) - by);
+                        const rIn = Math.round(blobR * 1.3);
+                        const rOut = Math.max(rIn + 3, Math.round(blobR * 2.5));
+                        let darkPixels = 0, totalRing = 0;
+
+                        for (let dy = -rOut; dy <= rOut; dy += 2) {
+                            for (let dx = -rOut; dx <= rOut; dx += 2) {
+                                const d2 = dx * dx + dy * dy;
+                                if (d2 >= rIn * rIn && d2 <= rOut * rOut) {
+                                    // Inward check: vector points toward paper center
+                                    if ((dx * dirX + dy * dirY) >= -0.2 * blobR) {
+                                        const gx = Math.round(bx + dx);
+                                        const gy = Math.round(by + dy);
+                                        if (gx >= 0 && gx < sw && gy >= 0 && gy < sh) {
+                                            totalRing++;
+                                            if (gray[gy * sw + gx] < thresh) darkPixels++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        const ringDarkRatio = totalRing > 0 ? (darkPixels / totalRing) : 0;
+                        if (ringDarkRatio > 0.20) {
+                            continue;
+                        }
+
+                        // Inward white paper margin check
+                        let whiteInwardCount = 0;
+                        const testDists = [Math.round(blobR * 1.3), Math.round(blobR * 1.9), Math.round(blobR * 2.5)];
+                        for (let d of testDists) {
+                            const ix = Math.round(bx + dirX * d);
+                            const iy = Math.round(by + dirY * d);
+                            if (ix >= 0 && ix < sw && iy >= 0 && iy < sh) {
+                                if (gray[iy * sw + ix] >= (thresh - 15)) whiteInwardCount++;
+                            }
+                        }
+
+                        if (whiteInwardCount < 2) {
+                            continue;
+                        }
+
+                        const distFromCenter = Math.hypot(bx - sw / 2, by - sh / 2);
+                        const score = (density * 3.0) + (distFromCenter / (sw * 0.5) * 2.0) - (ringDarkRatio * 8.0);
+
+                        candidates.push({
+                            x: bx,
+                            y: by,
+                            bw,
+                            bh,
+                            count,
+                            score,
+                            density,
+                            distFromCenter
+                        });
+                    }
+                }
+            }
+
+            if (candidates.length < 4) return null;
+
+            candidates.sort((a, b) => b.score - a.score);
+            const topCandidates = candidates.slice(0, 10);
+            const n = topCandidates.length;
+
+            let bestQuad = null;
+
+            function evaluateQuadCandidate(ordered) {
+                const [pTL, pTR, pBR, pBL] = ordered;
+
+                const pts = [pTL, pTR, pBR, pBL];
+                for (let i = 0; i < 4; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % 4];
+                    const c = pts[(i + 2) % 4];
+                    const cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+                    if (cross <= 0) return null;
+                }
+
+                const wTop = Math.hypot(pTR.x - pTL.x, pTR.y - pTL.y);
+                const wBot = Math.hypot(pBR.x - pBL.x, pBR.y - pBL.y);
+                const hLeft = Math.hypot(pBL.x - pTL.x, pBL.y - pTL.y);
+                const hRight = Math.hypot(pBR.x - pTR.x, pBR.y - pTR.y);
+
+                const wRatio = Math.min(wTop, wBot) / Math.max(wTop, wBot);
+                const hRatio = Math.min(hLeft, hRight) / Math.max(hLeft, hRight);
+                if (wRatio < 0.50 || hRatio < 0.50) return null;
+
+                const avgW = (wTop + wBot) / 2;
+                const avgH = (hLeft + hRight) / 2;
+                const aspect = avgH / avgW;
+                if (aspect < 1.00 || aspect > 2.10) return null;
+
+                const d1 = Math.hypot(pBR.x - pTL.x, pBR.y - pTL.y);
+                const d2 = Math.hypot(pBL.x - pTR.x, pBL.y - pTR.y);
+                if (Math.min(d1, d2) / Math.max(d1, d2) < 0.55) return null;
+
+                const quadArea = 0.5 * Math.abs(
+                    (pTL.x * pTR.y - pTL.y * pTR.x) +
+                    (pTR.x * pBR.y - pTR.y * pBR.x) +
+                    (pBR.x * pBL.y - pBR.y * pBL.x) +
+                    (pBL.x * pTL.y - pBL.y * pTL.x)
+                );
+                if (quadArea < sw * sh * 0.08) return null;
+
+                const counts = [pTL.count, pTR.count, pBR.count, pBL.count];
+                const minC = Math.min(...counts);
+                const maxC = Math.max(...counts);
+                if (minC / maxC < 0.12) return null;
+
+                const aspectDev = Math.abs(aspect - 1.461);
+                const score = quadArea * (1.0 - aspectDev * 0.4) * wRatio * hRatio;
+
+                return { ordered, score };
+            }
+
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    for (let k = j + 1; k < n; k++) {
+                        for (let l = k + 1; l < n; l++) {
+                            const quad4 = [topCandidates[i], topCandidates[j], topCandidates[k], topCandidates[l]];
+                            const ordered = orderCorners(quad4);
+                            if (!ordered) continue;
+                            const res = evaluateQuadCandidate(ordered);
+                            if (res && (!bestQuad || res.score > bestQuad.score)) {
+                                bestQuad = res;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!bestQuad) return null;
+            return bestQuad.ordered;
+        }
+
+        function drawFramingGuide(ctx, W, H) {
+            ctx.save();
+            const gw = Math.round(W * 0.65);
+            const gh = Math.min(Math.round(H * 0.88), Math.round(gw * 1.414));
+            const gx = Math.round((W - gw) / 2);
+            const gy = Math.round((H - gh) / 2);
+
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.strokeRect(gx, gy, gw, gh);
+            ctx.setLineDash([]);
+
+            // Framing Corner Brackets
+            const cornerLen = Math.min(32, Math.round(gw * 0.08));
+            ctx.strokeStyle = '#06B6D4';
+            ctx.lineWidth = 3.5;
+
+            // Top-Left
+            ctx.beginPath();
+            ctx.moveTo(gx, gy + cornerLen);
+            ctx.lineTo(gx, gy);
+            ctx.lineTo(gx + cornerLen, gy);
+            ctx.stroke();
+
+            // Top-Right
+            ctx.beginPath();
+            ctx.moveTo(gx + gw - cornerLen, gy);
+            ctx.lineTo(gx + gw, gy);
+            ctx.lineTo(gx + gw, gy + cornerLen);
+            ctx.stroke();
+
+            // Bottom-Right
+            ctx.beginPath();
+            ctx.moveTo(gx + gw, gy + gh - cornerLen);
+            ctx.lineTo(gx + gw, gy + gh);
+            ctx.lineTo(gx + gw - cornerLen, gy + gh);
+            ctx.stroke();
+
+            // Bottom-Left
+            ctx.beginPath();
+            ctx.moveTo(gx + cornerLen, gy + gh);
+            ctx.lineTo(gx, gy + gh);
+            ctx.lineTo(gx, gy + gh - cornerLen);
+            ctx.stroke();
+
+            // Center Helper Text
+            ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
+            ctx.textAlign = 'center';
+            ctx.fillText('ALIGN 4 CORNER DOTS IN FRAME', W / 2, gy + gh / 2);
+
+            ctx.restore();
+        }
+
+        // Draw High-Tech Cyber Reticles, Corner Tags, & Bounding Quad
+        function drawCyberOverlay(ctx, pts, isLocked, pct) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[1].x, pts[1].y);
+            ctx.lineTo(pts[2].x, pts[2].y);
+            ctx.lineTo(pts[3].x, pts[3].y);
+            ctx.closePath();
+
+            const primaryColor = isLocked ? '#10B981' : '#06B6D4';
+            const shadowColor = isLocked ? '#10B981' : '#06B6D4';
+            const fillColor = isLocked ? 'rgba(16, 185, 129, 0.18)' : 'rgba(6, 182, 212, 0.10)';
+
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = primaryColor;
+            ctx.shadowColor = shadowColor;
+            ctx.shadowBlur = 14;
+            ctx.stroke();
+
+            const cornerLabels = ['TL', 'TR', 'BR', 'BL'];
+
+            pts.forEach((pt, i) => {
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 16, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = primaryColor;
+                ctx.fill();
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = primaryColor;
+                ctx.beginPath();
+                ctx.moveTo(pt.x - 22, pt.y);
+                ctx.lineTo(pt.x - 10, pt.y);
+                ctx.moveTo(pt.x + 10, pt.y);
+                ctx.lineTo(pt.x + 22, pt.y);
+                ctx.moveTo(pt.x, pt.y - 22);
+                ctx.lineTo(pt.x - 10, pt.y);
+                ctx.moveTo(pt.x, pt.y + 10);
+                ctx.lineTo(pt.x + 22, pt.y);
+                ctx.stroke();
+
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                const tag = cornerLabels[i];
+                const tagW = ctx.measureText(tag).width + 8;
+                const tagH = 16;
+                const tagX = i === 0 || i === 3 ? pt.x - tagW - 14 : pt.x + 14;
+                const tagY = i === 0 || i === 1 ? pt.y - 12 : pt.y + 16;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillRect(tagX, tagY - 12, tagW, tagH);
+                ctx.strokeStyle = primaryColor;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(tagX, tagY - 12, tagW, tagH);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(tag, tagX + 4, tagY);
+            });
+
+            ctx.restore();
+        }
+
+        // Tap screen to compute photo
+        function handleTapToCapture() {
+            triggerManualCapture();
+        }
+
+        function triggerManualCapture() {
+            if (isCaptured) return;
+
+            // If already frozen or corners locked, compute immediately!
+            if (isFrozen && frozenCorners) {
+                snapAndWarpSheet(frozenCorners);
                 return;
             }
 
-            const roll = modalRollNumber.value.trim() || '-';
-            modalSaveBtn.disabled = true;
-            modalSaveBtn.textContent = '⏳ Saving to Google Sheet...';
+            // If corners currently detected, freeze and compute!
+            if (smoothedCorners) {
+                snapAndWarpSheet(smoothedCorners);
+                return;
+            }
+
+            // If no corners detected yet:
+            hudStatus.textContent = 'Please align 4 corner dots first';
+            setTimeout(() => {
+                if (!isFrozen && !isCaptured) hudStatus.textContent = 'Align paper in view';
+            }, 1500);
+        }
+
+        function playShutter() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) { }
+        }
+
+        // Warps the perspective into a perfectly flat, upright, leveled A4 sheet and computes results
+        function snapAndWarpSheet(passedCorners) {
+            isCaptured = true;
+            isFrozen = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+
+            playShutter();
+            flashScreen.classList.add('flash');
+            setTimeout(() => flashScreen.classList.remove('flash'), 120);
+
+            const W = previewCanvas.width;
+            const H = previewCanvas.height;
+
+            const corners = orderCorners(passedCorners || frozenCorners || smoothedCorners || [
+                { x: W * 0.10, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.06 },
+                { x: W * 0.90, y: H * 0.94 },
+                { x: W * 0.10, y: H * 0.94 }
+            ]);
+
+            // Target Leveled Canvas: 1000 x 1461
+            // Directly cropped and unwarped about the 4 detected corners
+            // Completely eliminates horizontal tilt, vertical tilt, and perspective distortion
+            resultCanvas.width = TARGET_W;
+            resultCanvas.height = TARGET_H;
+
+            const dstRectCorners = [
+                { x: 0, y: 0 },
+                { x: TARGET_W, y: 0 },
+                { x: TARGET_W, y: TARGET_H },
+                { x: 0, y: TARGET_H }
+            ];
+
+            // Read clean source frame pixels directly from video (immune to cyber HUD overlays)
+            const cleanCanvas = document.createElement('canvas');
+            cleanCanvas.width = W;
+            cleanCanvas.height = H;
+            const cleanCtx = cleanCanvas.getContext('2d');
+            cleanCtx.drawImage(video, 0, 0, W, H);
+            const srcImgData = cleanCtx.getImageData(0, 0, W, H);
+            const srcData = srcImgData.data;
+            const src32 = new Uint32Array(srcImgData.data.buffer);
+
+            // Flood-fill Centroid Refinement on Full-Resolution Image:
+            // Starts inside the solid black square marker and flood-fills only the connected black ink.
+            // Completely bounded by the white paper margin surrounding the marker - CANNOT cross onto the desk!
+            // Yields mathematical sub-pixel centroid (<0.1px) for flawless perspective leveling at any angle.
+            function refineCornerSubpixel(pt) {
+                const searchR = Math.max(12, Math.min(22, Math.round(Math.min(W, H) * 0.018)));
+                const minX = Math.max(0, Math.round(pt.x - searchR));
+                const maxX = Math.min(W - 1, Math.round(pt.x + searchR));
+                const minY = Math.max(0, Math.round(pt.y - searchR));
+                const maxY = Math.min(H - 1, Math.round(pt.y + searchR));
+
+                // 1. Locate darkest pixel inside the solid square marker near pt
+                let minLum = 255, seedX = Math.round(pt.x), seedY = Math.round(pt.y);
+                for (let y = minY; y <= maxY; y++) {
+                    const rowIdx = y * W;
+                    for (let x = minX; x <= maxX; x++) {
+                        const idx = (rowIdx + x) * 4;
+                        const lum = (srcData[idx] * 77 + srcData[idx + 1] * 150 + srcData[idx + 2] * 29) >> 8;
+                        if (lum < minLum) {
+                            minLum = lum;
+                            seedX = x;
+                            seedY = y;
+                        }
+                    }
+                }
+
+                if (minLum > 140) return pt;
+
+                // 2. Flood-fill from seed within the square marker only (bounded by white paper margin)
+                const markerThresh = minLum + 45;
+                const maxR = Math.max(18, searchR * 1.6);
+                const maxR2 = maxR * maxR;
+                const winDim = Math.round(maxR * 2) + 3;
+                const visited = new Uint8Array(winDim * winDim);
+                const ox = seedX - Math.round(maxR) - 1;
+                const oy = seedY - Math.round(maxR) - 1;
+
+                const qX = new Int32Array(4096);
+                const qY = new Int32Array(4096);
+                let qHead = 0, qTail = 0;
+
+                const startLx = seedX - ox;
+                const startLy = seedY - oy;
+                visited[startLy * winDim + startLx] = 1;
+                qX[qTail] = seedX;
+                qY[qTail] = seedY;
+                qTail++;
+
+                let sumX = 0, sumY = 0, count = 0;
+
+                while (qHead < qTail && count < 3500) {
+                    const cx = qX[qHead];
+                    const cy = qY[qHead];
+                    qHead++;
+
+                    sumX += cx;
+                    sumY += cy;
+                    count++;
+
+                    const neighbors = [
+                        [cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]
+                    ];
+                    for (let k = 0; k < 4; k++) {
+                        const nx = neighbors[k][0];
+                        const ny = neighbors[k][1];
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+
+                        const dx = nx - seedX;
+                        const dy = ny - seedY;
+                        if (dx * dx + dy * dy > maxR2) continue;
+
+                        const lx = nx - ox;
+                        const ly = ny - oy;
+                        if (lx < 0 || lx >= winDim || ly < 0 || ly >= winDim) continue;
+                        const vIdx = ly * winDim + lx;
+                        if (visited[vIdx]) continue;
+                        visited[vIdx] = 1;
+
+                        const pIdx = (ny * W + nx) * 4;
+                        const lum = (srcData[pIdx] * 77 + srcData[pIdx + 1] * 150 + srcData[pIdx + 2] * 29) >> 8;
+                        if (lum < markerThresh) {
+                            if (qTail < 4090) {
+                                qX[qTail] = nx;
+                                qY[qTail] = ny;
+                                qTail++;
+                            }
+                        }
+                    }
+                }
+
+                if (count >= 16) {
+                    return { x: sumX / count, y: sumY / count };
+                }
+                return pt;
+            }
+
+            const refinedCorners = corners.map(p => refineCornerSubpixel(p));
+
+            // Perspective Transform Matrix H (dst -> src) computed from sub-pixel refined corners
+            const H_mat = getPerspectiveTransform(dstRectCorners, refinedCorners);
+
+            // Create target rectified image
+            const dstImgData = resultCtx.createImageData(TARGET_W, TARGET_H);
+            const dst32 = new Uint32Array(dstImgData.data.buffer);
+
+            const h0 = H_mat[0], h1 = H_mat[1], h2 = H_mat[2];
+            const h3 = H_mat[3], h4 = H_mat[4], h5 = H_mat[5];
+            const h6 = H_mat[6], h7 = H_mat[7];
+
+            let dstIdx = 0;
+            for (let y = 0; y < TARGET_H; y++) {
+                const wx = h1 * y + h2;
+                const wy = h4 * y + h5;
+                const wz = h7 * y + 1;
+                for (let x = 0; x < TARGET_W; x++) {
+                    const z = 1 / (h6 * x + wz);
+                    const sx = Math.round((h0 * x + wx) * z);
+                    const sy = Math.round((h3 * x + wy) * z);
+                    if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                        dst32[dstIdx] = src32[sy * W + sx];
+                    } else {
+                        dst32[dstIdx] = 0xFFFFFFFF; // White border outside sheet
+                    }
+                    dstIdx++;
+                }
+            }
+
+            resultCtx.putImageData(dstImgData, 0, 0);
+
+            // Capture CLEAN rectified sheet BEFORE painting checking circles so answer key updates stay recheckable
+            try {
+                window.cleanLeveledImageData = resultCanvas.toDataURL('image/jpeg', 0.78);
+            } catch (e) {
+                window.cleanLeveledImageData = resultCanvas.toDataURL();
+            }
+
+            // Pause video to conserve battery/CPU, keep stream alive
+            video.pause();
+
+            // Evaluate sheet on the leveled, rectified canvas
+            evaluateLeveledSheet(resultCtx, TARGET_W, TARGET_H, 0, 0, TARGET_W, TARGET_H);
+
+            // Switch to Results View
+            document.getElementById('viewfinderSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            setTimeout(() => {
+                const sInput = document.getElementById('studentNameInput');
+                if (sInput) sInput.focus();
+            }, 250);
+        }
+
+        // Evaluate bubbles on the flat, leveled A4 sheet
+        // High-Precision Annular Moat & Interior OMR Evaluator
+        // Distinguishes printed letters/digits from authentic student shading by sampling
+        // both the annular moat (4.0 <= r <= 7.2px, where unfilled bubbles are pure white paper)
+        // and full interior (r <= 7.2px), with adaptive row-level baseline contrast.
+        function evaluateLeveledSheet(ctx, W, H, markerL, markerT, markerW, markerH) {
+            const imgData = ctx.getImageData(0, 0, W, H);
+            const data = imgData.data;
+
+            function getGray(x, y) {
+                if (x < 0 || x >= W || y < 0 || y >= H) return 255;
+                const idx = (y * W + x) * 4;
+                return (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+            }
+
+            function sampleDisk(cx, cy, r) {
+                let sum = 0, count = 0;
+                const r2 = r * r;
+                const ir = Math.ceil(r);
+                for (let dy = -ir; dy <= ir; dy++) {
+                    for (let dx = -ir; dx <= ir; dx++) {
+                        if (dx * dx + dy * dy <= r2) {
+                            sum += getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            count++;
+                        }
+                    }
+                }
+                return count > 0 ? (sum / count) : 255;
+            }
+
+            // Annular Moat & Interior Bubble Sampler
+            // Evaluates:
+            // 1) midDarkness: protected annular moat (2.5 <= r <= 5.8px) between center letter and outer circular border
+            //    In unfilled bubbles, this moat is pure white paper (midDarkness <= 15, midDarkRatio <= 0.05).
+            //    In filled bubbles, student shading covers this moat (midDarkness >= 35, midDarkRatio >= 0.40).
+            // 2) fullDarkness: interior disk (r <= 5.8px)
+            function sampleBubbleFeatures(nominalX, nominalY, paperVal) {
+                const offsets = [
+                    [0, 0], [-1.0, 0], [1.0, 0], [0, -1.0], [0, 1.0]
+                ];
+                let bestStat = null;
+
+                for (let k = 0; k < offsets.length; k++) {
+                    const cx = nominalX + offsets[k][0];
+                    const cy = nominalY + offsets[k][1];
+                    let midSum = 0, midCount = 0, darkMidCount = 0;
+                    let fullSum = 0, fullCount = 0;
+
+                    for (let dy = -6; dy <= 6; dy++) {
+                        for (let dx = -6; dx <= 6; dx++) {
+                            const d2 = dx * dx + dy * dy;
+                            const d = Math.sqrt(d2);
+                            if (d > 5.8) continue; // Protected: never reaches printed outer circular ring (r >= 6.5)
+
+                            const g = getGray(Math.round(cx + dx), Math.round(cy + dy));
+                            fullSum += g;
+                            fullCount++;
+
+                            if (d >= 2.5 && d <= 5.8) {
+                                midSum += g;
+                                midCount++;
+                                if (g < (paperVal - 22)) darkMidCount++;
+                            }
+                        }
+                    }
+
+                    if (midCount === 0 || fullCount === 0) continue;
+
+                    const midMean = midSum / midCount;
+                    const fullMean = fullSum / fullCount;
+                    const midDarkness = Math.max(0, paperVal - midMean);
+                    const fullDarkness = Math.max(0, paperVal - fullMean);
+                    const midDarkRatio = darkMidCount / midCount;
+
+                    // Combined fill score: weights the clean moat around the center letter
+                    const fillScore = midDarkness * 0.70 + fullDarkness * 0.30;
+
+                    if (!bestStat || fillScore > bestStat.fillScore) {
+                        bestStat = {
+                            midDarkness,
+                            fullDarkness,
+                            midDarkRatio,
+                            fillScore
+                        };
+                    }
+                }
+
+                return bestStat || {
+                    midDarkness: 0,
+                    fullDarkness: 0,
+                    midDarkRatio: 0,
+                    fillScore: 0
+                };
+            }
+
+            // 1. DETECT 8-DIGIT ROLL NUMBER FROM ROLL NUMBER GRID
+            const rollRadius = 8.5;
+            let detectedRollNumber = '';
+            let rollDigitsArray = [];
+            let detectedDigitsCount = 0;
+
+            for (let c = 0; c < 8; c++) {
+                const colX = markerL + (U_ROLL_START + c * U_ROLL_COL_STEP) * markerW;
+
+                // Sample clean paper baseline in whitespace to the left/right of the roll column
+                const paperVal1 = sampleDisk(colX - 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
+                const paperVal2 = sampleDisk(colX + 8, markerT + (V_ROLL_START - 0.02) * markerH, 3.5);
+                const rollPaperVal = Math.max(paperVal1, paperVal2);
+
+                let colStats = [];
+                for (let d = 0; d < 10; d++) {
+                    const rowY = markerT + (V_ROLL_START + d * V_ROLL_ROW_STEP) * markerH;
+                    const bubbleSample = sampleBubbleFeatures(colX, rowY, rollPaperVal);
+
+                    colStats.push({
+                        digit: d,
+                        ...bubbleSample,
+                        x: colX,
+                        y: rowY
+                    });
+                }
+
+                // Sort ascending to get row baseline from lightest bubbles
+                const sortedAsc = [...colStats].sort((a, b) => a.fillScore - b.fillScore);
+                const colBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore + sortedAsc[2].fillScore) / 3;
+
+                colStats.sort((a, b) => b.fillScore - a.fillScore);
+                const top1 = colStats[0];
+                const top2 = colStats[1];
+
+                const top1Contrast = top1.fillScore - colBase;
+                let isColFilled = false;
+                if (top1.midDarkness >= 32 && top1Contrast >= 18) {
+                    if (top1.fillScore - top2.fillScore >= 16 || top1Contrast >= 24) {
+                        isColFilled = true;
+                    }
+                }
+
+                const detectedDigit = isColFilled ? top1.digit.toString() : '-';
+                if (isColFilled) detectedDigitsCount++;
+                detectedRollNumber += detectedDigit;
+                rollDigitsArray.push({
+                    digit: detectedDigit,
+                    isFilled: isColFilled,
+                    chosen: isColFilled ? top1 : null
+                });
+
+                // Draw roll number grid overlays on canvas
+                for (let d = 0; d < 10; d++) {
+                    const stat = colStats.find(s => s.digit === d);
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, rollRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.0018));
+
+                    if (isColFilled && d === top1.digit) {
+                        ctx.strokeStyle = '#06B6D4';
+                        ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        ctx.fill();
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            // Update Roll Number UI Display
+            const rollBoxesEl = document.getElementById('rollBoxesDisplay');
+            if (rollBoxesEl) {
+                let rollBoxesHtml = '';
+                for (let c = 0; c < 8; c++) {
+                    const item = rollDigitsArray[c];
+                    if (item.isFilled) {
+                        rollBoxesHtml += '<div class="roll-digit-box filled">' + item.digit + '</div>';
+                    } else {
+                        rollBoxesHtml += '<div class="roll-digit-box unknown">-</div>';
+                    }
+                }
+                rollBoxesEl.innerHTML = rollBoxesHtml;
+            }
+            const rollStatusPill = document.getElementById('rollStatusPill');
+            if (rollStatusPill) {
+                if (detectedDigitsCount === 8) {
+                    rollStatusPill.textContent = '8/8 Digits Detected';
+                    rollStatusPill.style.background = '#F0FDF4';
+                    rollStatusPill.style.color = '#15803D';
+                    rollStatusPill.style.borderColor = '#BBF7D0';
+                } else if (detectedDigitsCount > 0) {
+                    rollStatusPill.textContent = detectedDigitsCount + '/8 Digits Detected';
+                    rollStatusPill.style.background = '#FFFBEB';
+                    rollStatusPill.style.color = '#B45309';
+                    rollStatusPill.style.borderColor = '#FDE68A';
+                } else {
+                    rollStatusPill.textContent = 'No Roll No Detected';
+                    rollStatusPill.style.background = '#F1F5F9';
+                    rollStatusPill.style.color = '#475569';
+                    rollStatusPill.style.borderColor = '#E2E8F0';
+                }
+            }
+
+            // 2. DETECT QUESTIONS & MULTIPLE MARKINGS (IMMUNE TO PRINTED LETTERS & BORDERS)
+            const bubbleRadius = 9.0;
+            let score = 0;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let multipleCount = 0;
+            let attemptedCount = 0;
+            let blankCount = 0;
+            let evaluatedKeyCount = 0;
+            let rowsHtml = '';
+            const scannerBreakdown = [];
+
+            for (let q = 1; q <= totalPaperQuestions; q++) {
+                const col = Math.floor((q - 1) / QUESTIONS_PER_COL);
+                const row = (q - 1) % QUESTIONS_PER_COL;
+
+                // Exact pixel coordinates on the leveled sheet
+                const rowY = markerT + (V_START + row * V_ROW_STEP) * markerH;
+                const colX = markerL + (U_START + col * U_COL_STEP) * markerW;
+
+                // Sample clean paper baseline in the column gutter (16px to right of Option D)
+                const optD_X = colX + 3 * U_BUBBLE_STEP * markerW;
+                const gutterSampleX = Math.min(W - 14, optD_X + 16);
+                const paperVal1 = sampleDisk(gutterSampleX, rowY, 3.5);
+                const paperVal2 = sampleDisk(Math.max(14, colX - 16), rowY, 3.5);
+                const paperVal = Math.max(paperVal1, paperVal2);
+
+                let bubbleStats = [];
+                for (let b = 0; b < 4; b++) {
+                    const bubbleX = colX + (b * U_BUBBLE_STEP) * markerW;
+                    const sample = sampleBubbleFeatures(bubbleX, rowY, paperVal);
+
+                    bubbleStats.push({
+                        opt: OPTIONS[b],
+                        ...sample,
+                        x: bubbleX,
+                        y: rowY
+                    });
+                }
+
+                // Sort ascending to get row baseline from the 2 lightest options
+                const sortedAsc = [...bubbleStats].sort((a, b) => a.fillScore - b.fillScore);
+                const rowBase = (sortedAsc[0].fillScore + sortedAsc[1].fillScore) / 2;
+
+                const sortedDesc = [...bubbleStats].sort((a, b) => b.fillScore - a.fillScore);
+                const maxOption = sortedDesc[0];
+                const isRowBlank = (maxOption.fillScore < 34 && maxOption.midDarkness < 30 && maxOption.midDarkRatio < 0.35);
+
+                function isOptionFilled(s) {
+                    if (isRowBlank) return false;
+                    const contrast = s.fillScore - rowBase;
+                    // Rule 1: Solid mid-ring shading + distinct row contrast (pencil or pen)
+                    if (s.midDarkness >= 38 && s.midDarkRatio >= 0.38 && contrast >= 20) return true;
+                    // Rule 2: Heavy dark pen fill with confirmed contrast
+                    if (s.fillScore >= 50 && s.midDarkRatio >= 0.35 && contrast >= 20) return true;
+                    // Rule 3: Faint HB pencil fill with clear relative contrast
+                    if (s.midDarkness >= 30 && s.midDarkRatio >= 0.42 && s.fillScore >= 35 && contrast >= 18) return true;
+                    // Rule 4: Deliberate multiple marking where student shaded multiple bubbles
+                    if (s.midDarkness >= 55 && s.midDarkRatio >= 0.55 && s.fullDarkness >= 50 && s.fillScore >= 55) return true;
+                    return false;
+                }
+
+                // Filter filled candidates using annular metric
+                const filledCandidates = isRowBlank ? [] : bubbleStats.filter(b => isOptionFilled(b));
+                let filledBubbles = [];
+
+                if (filledCandidates.length === 0) {
+                    filledBubbles = [];
+                } else if (filledCandidates.length === 1) {
+                    filledBubbles = filledCandidates;
+                } else {
+                    // Sort multiple candidates by fillScore descending
+                    const sortedCandidates = [...filledCandidates].sort((a, b) => b.fillScore - a.fillScore);
+                    const top1 = sortedCandidates[0];
+                    const top2 = sortedCandidates[1];
+
+                    // Check dominance (solid fill on top1 vs faint erasure smudge or stray mark on top2)
+                    if (top1.fillScore - top2.fillScore >= 35 && top1.fillScore >= 55) {
+                        filledBubbles = [top1];
+                    } else {
+                        filledBubbles = filledCandidates;
+                    }
+                }
+
+                const isMultiple = filledBubbles.length > 1;
+                const detectedAnswer = filledBubbles.map(b => b.opt).join(', ');
+                const correctAns = answerKey[q.toString()] || '';
+
+                let verdict = 'unmarked';
+                if (correctAns) evaluatedKeyCount++;
+
+                const ev = evaluateClientQuestionVerdict(detectedAnswer, correctAns, false);
+                verdict = ev.verdict;
+
+                if (ev.isBonus) {
+                    score++;
+                    correctCount++;
+                } else if (ev.isBlank) {
+                    blankCount++;
+                } else if (ev.verdict === 'multiple') {
+                    attemptedCount++;
+                    wrongCount++;
+                    multipleCount++;
+                } else if (ev.isCorrect) {
+                    attemptedCount++;
+                    score++;
+                    correctCount++;
+                } else if (ev.verdict === 'marked') {
+                    attemptedCount++;
+                } else {
+                    attemptedCount++;
+                    wrongCount++;
+                }
+
+                scannerBreakdown.push({
+                    q: q,
+                    marked: detectedAnswer || '',
+                    correctKey: correctAns || '',
+                    verdict: verdict
+                });
+
+                // Draw Overlay Rings on the Leveled Cropped Sheet
+                for (let b = 0; b < 4; b++) {
+                    const opt = OPTIONS[b];
+                    const stat = bubbleStats[b];
+                    const isThisBubbleFilled = filledBubbles.some(f => f.opt === opt);
+
+                    ctx.beginPath();
+                    ctx.arc(stat.x, stat.y, bubbleRadius, 0, 2 * Math.PI);
+                    ctx.lineWidth = Math.max(2, Math.round(W * 0.002));
+
+                    if (isMultiple && isThisBubbleFilled) {
+                        ctx.strokeStyle = '#EF4444';
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        ctx.fill();
+                        ctx.stroke();
+
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 2;
+                        const sz = Math.round(bubbleRadius * 0.5);
+                        ctx.beginPath();
+                        ctx.moveTo(stat.x - sz, stat.y - sz);
+                        ctx.lineTo(stat.x + sz, stat.y + sz);
+                        ctx.moveTo(stat.x + sz, stat.y - sz);
+                        ctx.lineTo(stat.x - sz, stat.y + sz);
+                        ctx.stroke();
+                    } else if (isThisBubbleFilled) {
+                        if (verdict === 'correct' || verdict === 'bonus') {
+                            ctx.strokeStyle = '#10B981';
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.55)';
+                        } else if (verdict === 'wrong') {
+                            ctx.strokeStyle = '#EF4444';
+                            ctx.fillStyle = 'rgba(239, 68, 68, 0.55)';
+                        } else {
+                            ctx.strokeStyle = '#06B6D4';
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                        }
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (correctAns && parseKeyOptionsClient(correctAns).includes(opt) && (verdict === 'wrong' || verdict === 'blank' || verdict === 'unmarked')) {
+                        ctx.strokeStyle = '#10B981';
+                        ctx.setLineDash([3, 3]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    } else {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                        ctx.stroke();
+                    }
+                }
+
+                let badgeClass = 'badge-blank';
+                let verdictText = 'Blank';
+                let markedCellHtml = '<span style="color:#94A3B8;">-</span>';
+
+                if (verdict === 'multiple') {
+                    badgeClass = 'badge-multiple';
+                    verdictText = 'Multiple (Invalid)';
+                    markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong> <span style="font-size:0.75rem; color:#B91C1C; font-weight:600;">(Multi)</span>';
+                } else if (verdict === 'bonus') {
+                    badgeClass = 'badge-correct';
+                    verdictText = '★ BONUS';
+                    markedCellHtml = '<strong style="color: #D97706; font-size:0.95rem;">' + (detectedAnswer || '★ BONUS') + '</strong>';
+                } else if (verdict === 'correct') {
+                    badgeClass = 'badge-correct';
+                    verdictText = 'Correct';
+                    markedCellHtml = '<strong style="color: #15803D; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'wrong') {
+                    badgeClass = 'badge-wrong';
+                    verdictText = 'Wrong';
+                    markedCellHtml = '<strong style="color: #DC2626; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                } else if (verdict === 'marked') {
+                    badgeClass = 'badge-marked';
+                    verdictText = 'Recorded';
+                    markedCellHtml = '<strong style="color: #1D4ED8; font-size:0.95rem;">' + detectedAnswer + '</strong>';
+                }
+
+                const keyDisplayHtml = correctAns
+                    ? (correctAns === 'BONUS'
+                        ? '<span style="font-weight:700; color:#D97706;">★ BONUS</span>'
+                        : '<span style="font-weight:700; color:#1D4ED8;">' + correctAns + '</span>')
+                    : '<span style="color:#64748B;">None</span>';
+
+                rowsHtml += '<tr>' +
+                    '<td style="font-weight:600; color:#475569;">Q' + q + '</td>' +
+                    '<td>' + markedCellHtml + '</td>' +
+                    '<td>' + keyDisplayHtml + '</td>' +
+                    '<td><span class="badge ' + badgeClass + '">' + verdictText + '</span></td>' +
+                    '</tr>';
+            }
+
+            // Safe UI Scoreboard Updates
+            const safeSetText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            const totalGraded = evaluatedKeyCount > 0 ? evaluatedKeyCount : totalPaperQuestions;
+            safeSetText('scoreValue', `${score} / ${totalGraded}`);
+            const pct = totalGraded > 0 ? Math.round((score / totalGraded) * 100) : 0;
+            safeSetText('scorePercentage', `${pct}% Accuracy`);
+
+            safeSetText('statCorrect', correctCount);
+            safeSetText('statWrong', wrongCount);
+            safeSetText('statMultiple', multipleCount);
+            safeSetText('statAttempted', attemptedCount);
+            safeSetText('statBlank', blankCount);
+
+            const tbl = document.getElementById('tableBody');
+            if (tbl) tbl.innerHTML = rowsHtml;
+
+            // Prepare evaluation payload for manual Save & Scan Next action (Do NOT auto-save)
+            try {
+                const canvas = document.getElementById('canvasResult');
+                if (canvas) {
+                    let rollNo = (typeof detectedRollNumber !== 'undefined' && detectedRollNumber) ? detectedRollNumber : '';
+                    if (!rollNo || rollNo.length === 0) {
+                        rollNo = 'STUDENT-' + Date.now().toString().slice(-4);
+                    }
+
+                    let imageData = window.cleanLeveledImageData || null;
+                    if (!imageData) {
+                        try {
+                            imageData = canvas.toDataURL('image/jpeg', 0.78);
+                        } catch (e) {
+                            imageData = canvas.toDataURL();
+                        }
+                    }
+
+                    window.lastEvaluationData = {
+                        rollNumber: rollNo,
+                        score: score,
+                        totalQuestions: totalPaperQuestions,
+                        correctCount: correctCount,
+                        wrongCount: wrongCount,
+                        multipleCount: multipleCount,
+                        blankCount: blankCount,
+                        breakdown: scannerBreakdown,
+                        imageData: imageData
+                    };
+
+                    const pill = document.getElementById('rollStatusPill');
+                    if (pill) {
+                        pill.textContent = 'Ready to Save';
+                        pill.style.background = '#FFFBEB';
+                        pill.style.color = '#B45309';
+                        pill.style.borderColor = '#FDE68A';
+                    }
+
+                    updateSaveButtonsState(false, 'Save &amp; Scan Next');
+                }
+            } catch (err) {
+                console.warn('Evaluation payload prep error:', err);
+            }
+        }
+
+        let isSavingSubmission = false;
+
+        function updateSaveButtonsState(disabled, text) {
+            const btns = [document.getElementById('btnSaveNext'), document.getElementById('topSaveBtn')];
+            btns.forEach(btn => {
+                if (btn) {
+                    btn.disabled = disabled;
+                    btn.innerHTML = text;
+                }
+            });
+        }
+
+        // Save result to Google Sheet, then scan next sheet
+        async function saveAndScanNext() {
+            if (isSavingSubmission) return;
+            if (!window.lastEvaluationData) {
+                alert('No evaluated sheet available to save.');
+                return;
+            }
+
+            const studentNameInput = document.getElementById('studentNameInput');
+            const studentName = studentNameInput ? studentNameInput.value.trim() : '';
+            if (!studentName) {
+                alert('Please enter Student Name before saving.');
+                if (studentNameInput) studentNameInput.focus();
+                return;
+            }
+
+            isSavingSubmission = true;
+            updateSaveButtonsState(true, 'Saving to Sheet...');
+
+            const pill = document.getElementById('rollStatusPill');
+            if (pill) {
+                pill.textContent = 'Saving to Sheet...';
+                pill.style.background = '#EFF6FF';
+                pill.style.color = '#1D4ED8';
+                pill.style.borderColor = '#BFDBFE';
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
 
             try {
+                // Compute section-wise marks based on paper.sections
+                const paperSections = <%- JSON.stringify(paper.sections || []) %>;
+                const sectionMarks = {};
+                if (Array.isArray(paperSections) && paperSections.length > 0 && window.lastEvaluationData && Array.isArray(window.lastEvaluationData.breakdown)) {
+                    paperSections.forEach(sec => {
+                        let secScore = 0;
+                        window.lastEvaluationData.breakdown.forEach(item => {
+                            const q = item.q || item.qNum;
+                            if (q >= sec.from && q <= sec.to) {
+                                secScore += (Number(item.scoreDelta) || 0);
+                            }
+                        });
+                        sectionMarks[sec.name] = secScore;
+                    });
+                }
+
+                const postPayload = {
+                    studentName: studentName,
+                    rollNumber: window.lastEvaluationData.rollNumber || (typeof detectedRollNumber !== 'undefined' ? detectedRollNumber : '-'),
+                    totalMarks: window.lastEvaluationData.score,
+                    maxMarks: totalPaperQuestions * 4,
+                    sectionMarks: sectionMarks
+                };
+
                 const res = await fetch('/ordinary/api/save-result', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        studentName: studentName,
-                        rollNumber: roll,
-                        totalMarks: currentEvaluation.totalMarks,
-                        maxMarks: currentEvaluation.maxMarks,
-                        sectionMarks: currentEvaluation.sectionMarks
-                    })
+                    body: JSON.stringify(postPayload),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 const data = await res.json();
+
                 if (data.success) {
-                    showToast(`✓ Saved to Google Sheet: ${studentName} (${currentEvaluation.totalMarks} Marks)`);
-                    dismissModal();
+                    if (pill) {
+                        pill.textContent = 'Saved to Sheet ✓';
+                        pill.style.background = '#F0FDF4';
+                        pill.style.color = '#15803D';
+                        pill.style.borderColor = '#BBF7D0';
+                    }
+                    updateSaveButtonsState(true, 'Saved to Sheet! Scanning Next...');
+
+                    // Clear student name for next scan
+                    if (studentNameInput) studentNameInput.value = '';
+
+                    // Clear stored data and reset state
+                    window.lastEvaluationData = null;
+                    window.cleanLeveledImageData = null;
+                    isSavingSubmission = false;
+
+                    // Immediately resume live camera and scan next sheet
+                    setTimeout(() => {
+                        restartScanner();
+                        updateSaveButtonsState(false, 'Save &amp; Scan Next');
+                    }, 500);
                 } else {
-                    alert('Error saving to Google Sheet: ' + (data.error || 'Unknown error'));
-                    modalSaveBtn.disabled = false;
-                    modalSaveBtn.textContent = '💾 Retry Save';
+                    alert('Error saving to Google Sheet: ' + (data.error || 'Failed to save'));
+                    isSavingSubmission = false;
+                    updateSaveButtonsState(false, 'Save &amp; Scan Next');
+                    if (pill) {
+                        pill.textContent = 'Save Failed';
+                        pill.style.background = '#FEF2F2';
+                        pill.style.color = '#B91C1C';
+                        pill.style.borderColor = '#FECACA';
+                    }
                 }
             } catch (err) {
-                alert('Network error: ' + err.message);
-                modalSaveBtn.disabled = false;
-                modalSaveBtn.textContent = '💾 Retry Save';
+                clearTimeout(timeoutId);
+                console.error('Save error:', err);
+                alert('Save status: ' + (err.name === 'AbortError' ? 'Google Sheet request timed out. Please retry.' : err.message));
+                isSavingSubmission = false;
+                updateSaveButtonsState(false, 'Save &amp; Scan Next');
+                if (pill) {
+                    pill.textContent = 'Save Error';
+                    pill.style.background = '#FEF2F2';
+                    pill.style.color = '#B91C1C';
+                    pill.style.borderColor = '#FECACA';
+                }
             }
         }
 
-        function dismissModal() {
-            resultModal.style.display = 'none';
-            modalSaveBtn.disabled = false;
-            modalSaveBtn.textContent = '💾 Save to Google Sheet & Next (Enter)';
-            currentEvaluation = null;
-            isLocked = false;
-            requestAnimationFrame(loop);
+        // Discard current evaluation without saving and return to camera
+        function rescanSheet() {
+            window.lastEvaluationData = null;
+            window.cleanLeveledImageData = null;
+            isSavingSubmission = false;
+            restartScanner();
         }
 
-        function showToast(msg) {
-            toast.textContent = msg;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        function restartScanner() {
+            initCamera();
         }
-
-        // Enter key to quickly save
-        modalStudentName.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                saveScannedResult();
-            }
-        });
 
         window.addEventListener('DOMContentLoaded', initCamera);
     </script>

@@ -97,18 +97,31 @@ router.post('/sync-sheet', async (req, res) => {
 // 5. Live Camera Scanner View
 router.get('/scanner', (req, res) => {
     const config = getActiveConfig();
+    const paper = {
+        ...config,
+        _id: 'ordinary',
+        numQuestions: config.totalQuestions || 180
+    };
     res.render(path.join(__dirname, 'views', 'scanner.ejs'), {
         config,
-        paper: config
+        paper,
+        answerKey: JSON.stringify(config.answerKey || {}).replace(/</g, '\\u003c')
     });
 });
 
 // 6. File Upload / Image Evaluator View
 router.get('/evaluator', (req, res) => {
     const config = getActiveConfig();
+    const paper = {
+        ...config,
+        _id: 'ordinary',
+        numQuestions: config.totalQuestions || 180
+    };
     res.render(path.join(__dirname, 'views', 'evaluator.ejs'), {
         config,
-        paper: config
+        paper,
+        imagePath: req.query.image || '',
+        answerKey: JSON.stringify(config.answerKey || {}).replace(/</g, '\\u003c')
     });
 });
 
