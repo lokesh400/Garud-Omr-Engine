@@ -238,24 +238,33 @@
     </style>
 </head>
 
+<%
+    const _paper = (typeof paper !== 'undefined' && paper) ? paper : ((typeof config !== 'undefined' && config) ? config : null);
+    const _isEditing = Boolean(_paper && _paper.id);
+    const _titleVal = _paper ? (_paper.title || '') : '';
+    const _subjectVal = _paper ? (_paper.subject || 'Physics, Chemistry, Biology') : 'Physics, Chemistry, Biology';
+    const _totalQVal = _paper ? (Number(_paper.totalQuestions) || 180) : 180;
+    const _paperIdVal = _paper ? (_paper.id || '') : '';
+%>
 <body>
     <div class="container">
         <div class="breadcrumb">
             <a href="/ordinary">&larr; Ordinary OMR Portal</a>
             <span>/</span>
-            <span>Create Assessment Paper</span>
+            <span><%= _isEditing ? 'Edit Assessment Paper' : 'Create Assessment Paper' %></span>
         </div>
 
         <form action="/ordinary/paper/new" method="POST" id="paperForm">
             <!-- Hidden inputs -->
+            <input type="hidden" name="paperId" id="paperId" value="<%= _paperIdVal %>">
             <input type="hidden" name="sectionsJson" id="sectionsJson">
             <input type="hidden" name="answerKeyJson" id="answerKeyJson">
 
             <div class="form-card">
                 <div class="form-header">
                     <div>
-                        <h1>Create Assessment Paper</h1>
-                        <span style="font-size: 13px; color: #64748B;">This paper &amp; answer key will be synced to your Google Sheet</span>
+                        <h1><%= _isEditing ? 'Edit Assessment Paper' : 'Create Assessment Paper' %></h1>
+                        <span style="font-size: 13px; color: #64748B;">This paper &amp; answer key will be synced to dedicated tabs in your Google Sheet</span>
                     </div>
                     <span style="background: #D1FAE5; color: #065F46; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px;">
                         Google Sheet Mode
@@ -266,11 +275,11 @@
                 <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label" for="paperTitle">Paper Title *</label>
-                        <input type="text" id="paperTitle" name="title" class="form-input" placeholder="e.g. NEET Full Test 01" value="<%= config.title || 'NEET Ordinary Assessment' %>" required>
+                        <input type="text" id="paperTitle" name="title" class="form-input" placeholder="e.g. NEET Full Test 01" value="<%= _titleVal %>" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="paperSubject">Subject / Category</label>
-                        <input type="text" id="paperSubject" name="subject" class="form-input" placeholder="e.g. Physics, Chemistry, Biology" value="<%= config.subject || 'NEET (PCB)' %>">
+                        <input type="text" id="paperSubject" name="subject" class="form-input" placeholder="e.g. Physics, Chemistry, Biology" value="<%= _subjectVal %>">
                     </div>
                 </div>
 
@@ -287,8 +296,8 @@
                         <span class="preset-badge" onclick="setTotalQ(200);">200 Qs</span>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center; max-width: 320px;">
-                        <input type="number" id="totalQuestions" name="totalQuestions" class="form-input" value="<%= config.totalQuestions || 180 %>" min="1" max="200" onchange="rebuildQuestionGrid();">
-                        <span style="font-size: 13px; color: #64748B;">Max: <strong id="maxMarksLabel"><%= (config.totalQuestions || 180) * 4 %></strong> Marks</span>
+                        <input type="number" id="totalQuestions" name="totalQuestions" class="form-input" value="<%= _totalQVal %>" min="1" max="200" onchange="rebuildQuestionGrid();">
+                        <span style="font-size: 13px; color: #64748B;">Max: <strong id="maxMarksLabel"><%= _totalQVal * 4 %></strong> Marks</span>
                     </div>
                 </div>
 
@@ -350,7 +359,7 @@
     </div>
 
     <script>
-        const initialConfig = <%- JSON.stringify(config || {}) %>;
+        const initialConfig = <%- JSON.stringify((typeof paper !== 'undefined' && paper) ? paper : ((typeof config !== 'undefined' && config) ? config : {})) %>;
         let totalQ = Number(initialConfig.totalQuestions) || 180;
         let answerKey = { ...(initialConfig.answerKey || {}) };
 

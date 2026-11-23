@@ -266,15 +266,24 @@
     <div class="container eval-container" style="max-width: 1200px; margin: 24px auto; padding: 0 16px;">
         <div class="eval-header-split">
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
                     <a href="/ordinary" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600;">
                         <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         Ordinary Portal
                     </a>
-                    <h1 style="font-size: 1.35rem; margin: 0; font-weight: 700;">OMR Sheet Evaluator</h1>
+                    <h1 style="font-size: 1.35rem; margin: 0; font-weight: 700;"><%= paper.title %></h1>
+                    <% if (typeof allPapers !== 'undefined' && allPapers && allPapers.length > 1) { %>
+                        <select onchange="window.location.href='/ordinary/paper/' + this.value + '/evaluator'" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #FFF; font-weight: 600; color: #1E293B; outline: none; cursor: pointer;">
+                            <% allPapers.forEach(function(ap) { %>
+                                <option value="<%= ap.id %>" <%= (ap.id === (paper.id || paper._id)) ? 'selected' : '' %>>
+                                    Switch Paper: <%= ap.title %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    <% } %>
                 </div>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.875rem;">
-                    <%= paper.title %> &middot; <%= paper.numQuestions %> Questions &middot; <span style="color: #059669; font-weight: 600;">Google Sheets Mode</span>
+                    <%= paper.numQuestions %> Questions &middot; <span style="color: #059669; font-weight: 600;">Results Tab: Results - <%= paper.title %></span>
                 </p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -284,7 +293,7 @@
                     Choose Image File
                 </label>
                 <input type="file" id="evalFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-                <a href="/ordinary/scanner" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" title="Open Live Camera Scanner">
+                <a href="/ordinary/paper/<%= paper.id || paper._id %>/scanner" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" title="Open Live Camera Scanner">
                     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><circle cx="12" cy="13" r="3" stroke-width="2"></circle></svg>
                     Live Scanner
                 </a>
@@ -1549,6 +1558,8 @@
                 }
 
                 const postPayload = {
+                    paperId: '<%= paper.id || paper._id %>',
+                    paperTitle: '<%= (paper.title || "Assessment").replace(/\'/g, "\\\'") %>',
                     studentName: studentName,
                     rollNumber: window.lastEvaluationData.rollNumber || '-',
                     totalMarks: window.lastEvaluationData.score,
