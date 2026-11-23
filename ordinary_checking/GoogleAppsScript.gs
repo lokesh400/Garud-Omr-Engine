@@ -1,29 +1,31 @@
 /**
  * =========================================================================
- * GARUD OMR - MULTI-PAPER ORDINARY CHECKER GOOGLE APPS SCRIPT BACKEND
+ * GARUD OMR - MULTI-PAPER GOOGLE APPS SCRIPT (CLOUD-ONLY STORAGE)
  * =========================================================================
  * 
- * Each paper created gets its own dedicated:
- *  1. Answer Key Sheet:   "Key - <Paper Title>"
- *  2. Results Sheet:      "Results - <Paper Title>"
- *  3. Master Index Sheet: "Papers_Index" (tracks all created papers)
+ * Rules:
+ *  1. Every paper gets its own NEW sheet tab for questions & answer keys:
+ *     "Paper - <Title>" (e.g., "Paper - NEET Mock 01")
+ *  2. Every paper gets its own NEW sheet tab for results:
+ *     "Results - <Title>" (e.g., "Results - NEET Mock 01")
+ *  3. Old papers and their results sheets are NEVER overwritten or deleted.
+ *  4. No papers are stored on the local computer - Google Sheets is the single database.
  * 
- * Setup Instructions:
- * 1. Open your Google Spreadsheet (https://sheets.google.com).
- * 2. In Google Sheets menu, click: Extensions > Apps Script.
- * 3. Replace any default code with this entire file.
- * 4. Click "Deploy" (top right) > "Manage deployments" (or "New deployment").
- * 5. If editing existing deployment: click Edit (pencil icon), select Version: "New version", click Deploy.
- *    - Execute as: "Me"
- *    - Who has access: "Anyone"
- * 6. The Web App URL is saved in your .env file as `deployment_url`.
+ * Instructions to Update in Google Sheets:
+ *  1. Open your Google Spreadsheet (https://sheets.google.com).
+ *  2. Go to: Extensions > Apps Script.
+ *  3. Replace ALL existing code with this entire file.
+ *  4. Click "Deploy" > "Manage deployments".
+ *  5. Click the Edit (pencil icon) button on the active deployment.
+ *  6. Change Version to: "New version".
+ *  7. Click "Deploy".
  */
 
 function sanitizeSheetName(name) {
   if (!name) return "Assessment";
   // Remove characters forbidden in Google Sheet tab names: \ / ? * [ ] :
   var clean = String(name).replace(/[\\/?*\[\]:]/g, " ").replace(/\s+/g, " ").trim();
-  if (clean.length > 80) clean = clean.substring(0, 80).trim();
+  if (clean.length > 70) clean = clean.substring(0, 70).trim();
   return clean || "Assessment";
 }
 
@@ -31,96 +33,113 @@ function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var param = (e && e.parameter) ? e.parameter : {};
+    var sheets = ss.getSheets();
     
-    // 1. List all papers
-    if (param.action === 'listPapers') {
-      var sheets = ss.getSheets();
-      var papersFound = [];
-      for (var i = 0; i < sheets.length; i++) {
-        var sName = sheets[i].getName();
-        if (sName.indexOf("Key - ") === 0) {
-          var pTitle = sName.substring(6).trim();
-          papersFound.push({
-            title: pTitle,
-            keySheet: sName,
-            resultsSheet: "Results - " + pTitle
-          });
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        papers: papersFound
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
+    var papers = [];
+    var seenTitles = {};
     
-    // 2. Fetch specific paper by title
-    var requestedTitle = param.paperTitle || param.title || "";
-    var targetSheetName = "";
-    if (requestedTitle) {
-      targetSheetName = sanitizeSheetName("Key - " + requestedTitle);
-    }
-    
-    var keySheet = null;
-    if (targetSheetName) {
-      keySheet = ss.getSheetByName(targetSheetName);
-    }
-    
-    // Fallbacks: find first sheet starting with "Key - " or "AnswerKey"
-    if (!keySheet) {
-      var allSheets = ss.getSheets();
-      for (var s = 0; s < allSheets.length; s++) {
-        var name = allSheets[s].getName();
-        if (name.indexOf("Key - ") === 0 || name === "AnswerKey" || name === "Key") {
-          keySheet = allSheets[s];
-          break;
-        }
-      }
-      if (!keySheet) keySheet = allSheets[0];
-    }
-    
-    var data = keySheet.getDataRange().getValues();
-    var answerKey = {};
-    var sections = [];
-    var sectionMap = {};
-    
-    var startRow = 1;
-    if (data.length > 0 && typeof data[0][0] === 'string' && isNaN(parseInt(data[0][0]))) {
-      startRow = 1; // Row 0 is header
-    } else {
-      startRow = 0;
-    }
-    
-    for (var r = startRow; r < data.length; r++) {
-      var row = data[r];
-      var qNum = parseInt(row[0]);
-      var ans = String(row[1] || "").trim().toUpperCase();
-      var secName = String(row[2] || "").trim() || "Section 1";
+    // Scan all sheets in the spreadsheet for paper / key sheets
+    for (var i = 0; i < sheets.length; i++) {
+      var sheet = sheets[i];
+      var sName = sheet.getName();
       
-      if (!isNaN(qNum) && qNum > 0) {
-        answerKey[String(qNum)] = ans;
-        if (!sectionMap[secName]) {
-          sectionMap[secName] = { name: secName, from: qNum, to: qNum };
-          sections.push(sectionMap[secName]);
+      var isPaperSheet = sName.indexOf("Paper - ") === 0;
+      var isKeySheet = sName.indexOf("Key - ") === 0;
+      var isLegacyKey = sName === "AnswerKey" || sName === "Key";
+      
+      if (isPaperSheet || isKeySheet || isLegacyKey) {
+        var title = sName;
+        if (isPaperSheet) title = sName.substring(8).trim();
+        else if (isKeySheet) title = sName.substring(6).trim();
+        
+        if (seenTitles[title.toLowerCase()]) continue;
+        seenTitles[title.toLowerCase()] = true;
+        
+        var data = sheet.getDataRange().getValues();
+        var subject = "General";
+        var maxMarks = 720;
+        var startRow = 1;
+        
+        // Check if Row 1 has metadata (Subject, Max Marks)
+        if (data.length > 0 && typeof data[0][0] === 'string' && data[0][0].indexOf('Subject:') === 0) {
+          subject = data[0][0].replace('Subject:', '').trim();
+          if (data[0][1] && String(data[0][1]).indexOf('MaxMarks:') === 0) {
+            maxMarks = Number(String(data[0][1]).replace('MaxMarks:', '').trim()) || 720;
+          }
+          startRow = 2; // Data starts on row 3 (index 2)
+        } else if (data.length > 0 && typeof data[0][0] === 'string' && isNaN(parseInt(data[0][0]))) {
+          startRow = 1; // Header row on row 1 (index 0)
         } else {
-          sectionMap[secName].to = Math.max(sectionMap[secName].to, qNum);
+          startRow = 0;
+        }
+        
+        var answerKey = {};
+        var sections = [];
+        var sectionMap = {};
+        
+        for (var r = startRow; r < data.length; r++) {
+          var row = data[r];
+          var qNum = parseInt(row[0]);
+          var ans = String(row[1] || "").trim().toUpperCase();
+          var secName = String(row[2] || "").trim() || "Section 1";
+          
+          if (!isNaN(qNum) && qNum > 0) {
+            answerKey[String(qNum)] = ans;
+            if (!sectionMap[secName]) {
+              sectionMap[secName] = { name: secName, from: qNum, to: qNum };
+              sections.push(sectionMap[secName]);
+            } else {
+              sectionMap[secName].to = Math.max(sectionMap[secName].to, qNum);
+            }
+          }
+        }
+        
+        var totalQ = Object.keys(answerKey).length;
+        if (totalQ === 0) totalQ = 180;
+        
+        if (!maxMarks || maxMarks === 720) {
+          maxMarks = totalQ * 4;
+        }
+        
+        sections.forEach(function(sec) {
+          sec.maxMarks = (sec.to - sec.from + 1) * 4;
+        });
+        
+        papers.push({
+          id: sanitizeSheetName(title),
+          _id: sanitizeSheetName(title),
+          title: title,
+          subject: subject,
+          totalQuestions: totalQ,
+          maxMarks: maxMarks,
+          sections: sections,
+          answerKey: answerKey,
+          keySheet: sName,
+          resultsSheet: sanitizeSheetName("Results - " + title)
+        });
+      }
+    }
+    
+    // If specific paper requested
+    var reqTitle = param.paperTitle || param.title;
+    if (reqTitle) {
+      for (var p = 0; p < papers.length; p++) {
+        if (papers[p].title.toLowerCase() === reqTitle.toLowerCase() || papers[p].id === reqTitle) {
+          return ContentService.createTextOutput(JSON.stringify({ success: true, ...papers[p] }))
+            .setMimeType(ContentService.MimeType.JSON);
         }
       }
     }
     
-    var paperTitle = keySheet.getName().replace(/^Key\s*-\s*/, "");
-    
-    var response = {
+    return ContentService.createTextOutput(JSON.stringify({
       success: true,
-      title: paperTitle || ss.getName(),
-      totalQuestions: Object.keys(answerKey).length,
-      answerKey: answerKey,
-      sections: sections,
-      keySheet: keySheet.getName(),
-      resultsSheet: sanitizeSheetName("Results - " + paperTitle)
-    };
+      title: ss.getName(),
+      papers: papers,
+      totalQuestions: papers.length > 0 ? papers[0].totalQuestions : 0,
+      answerKey: papers.length > 0 ? papers[0].answerKey : {},
+      sections: papers.length > 0 ? papers[0].sections : []
+    })).setMimeType(ContentService.MimeType.JSON);
     
-    return ContentService.createTextOutput(JSON.stringify(response))
-      .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -136,28 +155,35 @@ function doPost(e) {
       payload = JSON.parse(e.postData.contents);
     }
 
-    // -------------------------------------------------------------
-    // ACTION 1: CREATE OR UPDATE PAPER (Dedicated Key & Results sheets)
-    // -------------------------------------------------------------
+    // =============================================================
+    // ACTION 1: CREATE OR UPDATE A PAPER (NEVER OVERWRITES OTHER PAPERS)
+    // =============================================================
     if (payload.action === 'savePaper' || payload.action === 'createPaper') {
       var paperTitle = String(payload.title || "Ordinary Assessment").trim();
-      var paperId = String(payload.paperId || payload.id || "").trim();
+      var subject = String(payload.subject || "General").trim();
       var totalQ = Number(payload.totalQuestions) || 180;
+      var maxMarks = Number(payload.maxMarks) || (totalQ * 4);
       var aKey = payload.answerKey || {};
       var secDefs = payload.sections || [];
-      var subject = String(payload.subject || "General").trim();
       
-      var keySheetName = sanitizeSheetName("Key - " + paperTitle);
+      var keySheetName = sanitizeSheetName("Paper - " + paperTitle);
       var resultsSheetName = sanitizeSheetName("Results - " + paperTitle);
       
-      // 1. Create or update Answer Key Sheet for this paper
+      // 1. Create or update the Paper & Key sheet
       var keySheet = ss.getSheetByName(keySheetName);
       if (!keySheet) {
         keySheet = ss.insertSheet(keySheetName);
+      } else {
+        keySheet.clear();
       }
-      keySheet.clear();
-      keySheet.appendRow(["Question", "Answer", "Section"]);
-      keySheet.getRange(1, 1, 1, 3)
+      
+      // Metadata Row
+      keySheet.appendRow(["Subject: " + subject, "MaxMarks: " + maxMarks, "Title: " + paperTitle]);
+      keySheet.getRange(1, 1, 1, 3).setFontColor("#64748B").setFontSize(9);
+      
+      // Headers Row
+      keySheet.appendRow(["Question", "Answer Key", "Section"]);
+      keySheet.getRange(2, 1, 1, 3)
         .setFontWeight("bold")
         .setBackground("#1E293B")
         .setFontColor("#FFFFFF");
@@ -178,11 +204,11 @@ function doPost(e) {
       }
       
       if (rows.length > 0) {
-        keySheet.getRange(2, 1, rows.length, 3).setValues(rows);
+        keySheet.getRange(3, 1, rows.length, 3).setValues(rows);
       }
-      keySheet.setFrozenRows(1);
-
-      // 2. Create or initialize Results Sheet for this paper
+      keySheet.setFrozenRows(2);
+      
+      // 2. Create the Results sheet for this paper (if not already existing)
       var resultsSheet = ss.getSheetByName(resultsSheetName);
       if (!resultsSheet) {
         resultsSheet = ss.insertSheet(resultsSheetName);
@@ -192,6 +218,8 @@ function doPost(e) {
         secDefs.forEach(function(sd) { headers.push(sd.name); });
         headers.push("Total Marks");
         headers.push("Max Marks");
+        headers.push("Percentage");
+        
         resultsSheet.appendRow(headers);
         resultsSheet.getRange(1, 1, 1, headers.length)
           .setFontWeight("bold")
@@ -199,65 +227,25 @@ function doPost(e) {
           .setFontColor("#FFFFFF");
         resultsSheet.setFrozenRows(1);
       }
-
-      // 3. Maintain Master Papers Index tab
-      var indexSheet = ss.getSheetByName("Papers_Index");
-      if (!indexSheet) {
-        indexSheet = ss.insertSheet("Papers_Index");
-        indexSheet.appendRow(["Paper ID", "Title", "Subject", "Total Questions", "Key Sheet", "Results Sheet", "Last Updated"]);
-        indexSheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#0F172A").setFontColor("#FFFFFF");
-        indexSheet.setFrozenRows(1);
-      }
       
-      // Check if paper already exists in index
-      var indexData = indexSheet.getDataRange().getValues();
-      var foundRow = -1;
-      for (var idx = 1; idx < indexData.length; idx++) {
-        if (indexData[idx][1] === paperTitle || (paperId && indexData[idx][0] === paperId)) {
-          foundRow = idx + 1;
-          break;
-        }
-      }
-      
-      var indexRowVals = [
-        paperId || ("paper_" + Date.now()),
-        paperTitle,
-        subject,
-        totalQ,
-        keySheetName,
-        resultsSheetName,
-        new Date().toLocaleString()
-      ];
-      
-      if (foundRow > 0) {
-        indexSheet.getRange(foundRow, 1, 1, 7).setValues([indexRowVals]);
-      } else {
-        indexSheet.appendRow(indexRowVals);
-      }
-
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
-        message: "Paper '" + paperTitle + "' ready in Google Sheets! Created tabs: '" + keySheetName + "' & '" + resultsSheetName + "'.",
+        message: "Paper '" + paperTitle + "' saved to Google Sheets! Tabs created: '" + keySheetName + "' and '" + resultsSheetName + "'.",
         keySheet: keySheetName,
-        resultsSheet: resultsSheetName
+        resultsSheet: resultsSheetName,
+        title: paperTitle
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // -------------------------------------------------------------
-    // ACTION 2: RECORD EVALUATED STUDENT RESULT FOR SPECIFIC PAPER
-    // -------------------------------------------------------------
+    // =============================================================
+    // ACTION 2: RECORD EVALUATED STUDENT RESULT
+    // =============================================================
     var paperTitle = String(payload.paperTitle || "").trim();
     var resultsSheetName = paperTitle ? sanitizeSheetName("Results - " + paperTitle) : "Results";
     
     var resultsSheet = ss.getSheetByName(resultsSheetName);
-    
-    // Fallback if paper-specific sheet not found yet
     if (!resultsSheet) {
-      if (paperTitle) {
-        resultsSheet = ss.insertSheet(resultsSheetName);
-      } else {
-        resultsSheet = ss.getSheetByName("Results") || ss.insertSheet("Results");
-      }
+      resultsSheet = ss.insertSheet(resultsSheetName);
     }
     
     var studentName = String(payload.studentName || "Anonymous Student").trim();
@@ -267,7 +255,6 @@ function doPost(e) {
     var sectionMarks = payload.sectionMarks || {};
     var sectionNames = Object.keys(sectionMarks);
     
-    // If the results sheet has no headers, initialize them
     if (resultsSheet.getLastRow() === 0) {
       var headers = ["Timestamp", "Student Name", "Roll Number"];
       if (sectionNames.length > 0) {
@@ -277,6 +264,7 @@ function doPost(e) {
       }
       headers.push("Total Marks");
       headers.push("Max Marks");
+      headers.push("Percentage");
       
       resultsSheet.appendRow(headers);
       resultsSheet.getRange(1, 1, 1, headers.length)
@@ -293,8 +281,9 @@ function doPost(e) {
       rollNumber
     ];
     
+    // Match section marks with column headers
     if (existingHeaders.length > 5) {
-      for (var col = 3; col < existingHeaders.length - 2; col++) {
+      for (var col = 3; col < existingHeaders.length - 3; col++) {
         var secHeader = String(existingHeaders[col]).trim();
         rowData.push(sectionMarks[secHeader] !== undefined ? sectionMarks[secHeader] : 0);
       }
@@ -307,6 +296,9 @@ function doPost(e) {
     rowData.push(totalMarks);
     rowData.push(maxMarks);
     
+    var pct = maxMarks > 0 ? (Math.round((totalMarks / maxMarks) * 1000) / 10) + "%" : "0%";
+    rowData.push(pct);
+    
     resultsSheet.appendRow(rowData);
     
     return ContentService.createTextOutput(JSON.stringify({
@@ -316,6 +308,7 @@ function doPost(e) {
       sheetName: resultsSheet.getName(),
       totalMarks: totalMarks
     })).setMimeType(ContentService.MimeType.JSON);
+    
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({
       success: false,

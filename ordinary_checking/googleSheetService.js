@@ -1,8 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-
-const PAPERS_STORE_PATH = path.join(__dirname, 'papers.json');
-const ACTIVE_PAPER_PATH = path.join(__dirname, 'active_paper.json');
+/**
+ * =========================================================================
+ * GARUD OMR - PURE GOOGLE SHEETS STORAGE SERVICE (ZERO LOCAL FILES)
+ * =========================================================================
+ * All papers, answer keys, and results are stored in Google Sheets only.
+ * No JSON or database files are written to the local disk.
+ */
 
 function getEnvUrl() {
     return (
@@ -14,18 +16,15 @@ function getEnvUrl() {
     ).trim();
 }
 
-// In-memory paper database
-let papersState = {
-    activePaperId: '',
-    papers: []
-};
+// In-memory runtime cache (Never written to disk)
+let inMemoryPapers = [];
+let inMemoryActivePaperId = '';
+let lastSyncTimestamp = 0;
 
-// Default initial paper
-function createDefaultPaper() {
-    const id = 'paper_' + Date.now();
+function createDefaultFallbackPaper() {
     return {
-        id: id,
-        _id: id,
+        id: 'Paper_Default_NEET',
+        _id: 'Paper_Default_NEET',
         title: 'Full NEET Mock Test 01',
         subject: 'Physics, Chemistry, Biology',
         totalQuestions: 180,
@@ -37,120 +36,130 @@ function createDefaultPaper() {
             { name: 'Zoology', from: 136, to: 180, maxMarks: 180 }
         ],
         answerKey: {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        keySheet: 'Paper - Full NEET Mock Test 01',
+        resultsSheet: 'Results - Full NEET Mock Test 01'
     };
 }
 
-// Load local papers from disk (supports migration from active_paper.json)
-function loadPapersFromDisk() {
+// Fetch all papers directly from Google Sheets
+async function syncPapersFromSheet(force = false) {
+    const targetUrl = getEnvUrl();
+    if (!targetUrl || !targetUrl.includes('script.google.com/macros/s/')) {
+        if (inMemoryPapers.length === 0) {
+            inMemoryPapers = [createDefaultFallbackPaper()];
+            inMemoryActivePaperId = inMemoryPapers[0].id;
+        }
+        return inMemoryPapers;
+    }
+
+    const now = Date.now();
+    // Throttle automatic syncing to every 4 seconds unless forced
+    if (!force && inMemoryPapers.length > 0 && (now - lastSyncTimestamp < 4000)) {
+        return inMemoryPapers;
+    }
+
     try {
-        if (fs.existsSync(PAPERS_STORE_PATH)) {
-            const raw = fs.readFileSync(PAPERS_STORE_PATH, 'utf8');
-            const parsed = JSON.parse(raw);
-            if (parsed && Array.isArray(parsed.papers) && parsed.papers.length > 0) {
-                papersState.papers = parsed.papers.map(p => ({
+        const res = await fetch(targetUrl, {
+            headers: { 'User-Agent': 'OMR-Ordinary-Checker/1.0' },
+            signal: AbortSignal.timeout(12000)
+        });
+
+        if (!res.ok) {
+            throw new Error(`Google Apps Script returned HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        lastSyncTimestamp = Date.now();
+
+        if (data && data.success) {
+            if (Array.isArray(data.papers) && data.papers.length > 0) {
+                // Multi-paper array returned from updated Google Apps Script
+                inMemoryPapers = data.papers.map(p => ({
                     ...p,
-                    id: p.id || p._id || ('paper_' + Math.random().toString(36).substring(2, 9)),
-                    _id: p._id || p.id
+                    id: p.id || p._id || p.title,
+                    _id: p._id || p.id || p.title,
+                    totalQuestions: Number(p.totalQuestions) || Object.keys(p.answerKey || {}).length || 180,
+                    maxMarks: Number(p.maxMarks) || ((Number(p.totalQuestions) || 180) * 4),
+                    sections: Array.isArray(p.sections) ? p.sections : []
                 }));
-                papersState.activePaperId = parsed.activePaperId || papersState.papers[0].id;
-                return;
-            }
-        }
 
-        // Migrate from legacy active_paper.json if papers.json doesn't exist
-        if (fs.existsSync(ACTIVE_PAPER_PATH)) {
-            const raw = fs.readFileSync(ACTIVE_PAPER_PATH, 'utf8');
-            const legacy = JSON.parse(raw);
-            if (legacy && typeof legacy === 'object') {
-                const legacyId = 'paper_' + Date.now();
-                const initialPaper = {
-                    ...legacy,
-                    id: legacyId,
-                    _id: legacyId,
-                    title: legacy.title || 'Full NEET Mock Test 01',
-                    subject: legacy.subject || 'Physics, Chemistry, Biology',
-                    totalQuestions: Number(legacy.totalQuestions) || 180,
-                    maxMarks: Number(legacy.maxMarks) || 720,
-                    sections: Array.isArray(legacy.sections) ? legacy.sections : [],
-                    answerKey: legacy.answerKey || {},
-                    createdAt: legacy.updatedAt || new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                if (!inMemoryActivePaperId || !inMemoryPapers.some(p => p.id === inMemoryActivePaperId)) {
+                    inMemoryActivePaperId = inMemoryPapers[0].id;
+                }
+            } else if (data.answerKey || data.title) {
+                // Single paper returned from legacy Apps Script
+                const singleTitle = (data.title && data.title !== 'AnswerKey') ? data.title : 'Assessment 01';
+                const totalQ = Number(data.totalQuestions) || Object.keys(data.answerKey || {}).length || 180;
+                const singlePaper = {
+                    id: singleTitle,
+                    _id: singleTitle,
+                    title: singleTitle,
+                    subject: 'General',
+                    totalQuestions: totalQ,
+                    maxMarks: totalQ * 4,
+                    sections: Array.isArray(data.sections) ? data.sections : [],
+                    answerKey: data.answerKey || {},
+                    keySheet: 'Paper - ' + singleTitle,
+                    resultsSheet: 'Results - ' + singleTitle
                 };
-                papersState.papers = [initialPaper];
-                papersState.activePaperId = legacyId;
-                savePapersToDisk();
-                return;
+                inMemoryPapers = [singlePaper];
+                inMemoryActivePaperId = singlePaper.id;
             }
         }
-
-        // Fallback: create fresh default
-        const def = createDefaultPaper();
-        papersState.papers = [def];
-        papersState.activePaperId = def.id;
-        savePapersToDisk();
-    } catch (e) {
-        console.warn('[Ordinary Checker] Notice initializing papers state:', e.message);
-        if (papersState.papers.length === 0) {
-            const def = createDefaultPaper();
-            papersState.papers = [def];
-            papersState.activePaperId = def.id;
+    } catch (err) {
+        console.warn('[Ordinary Checker] Notice fetching papers from Google Sheet:', err.message);
+        if (inMemoryPapers.length === 0) {
+            inMemoryPapers = [createDefaultFallbackPaper()];
+            inMemoryActivePaperId = inMemoryPapers[0].id;
         }
     }
+
+    return inMemoryPapers;
 }
 
-// Save all papers to disk and update active_paper.json
-function savePapersToDisk() {
-    try {
-        fs.writeFileSync(PAPERS_STORE_PATH, JSON.stringify(papersState, null, 2), 'utf8');
-        
-        // Also update active_paper.json for backwards compatibility
-        const active = getActiveConfig();
-        fs.writeFileSync(ACTIVE_PAPER_PATH, JSON.stringify(active, null, 2), 'utf8');
-    } catch (e) {
-        console.error('[Ordinary Checker] Error writing papers to disk:', e.message);
-    }
-}
-
-loadPapersFromDisk();
-
-// Get list of all papers
+// Get all papers (with active flag attached)
 function getAllPapers() {
-    return papersState.papers.map(p => ({
+    if (inMemoryPapers.length === 0) {
+        inMemoryPapers = [createDefaultFallbackPaper()];
+        inMemoryActivePaperId = inMemoryPapers[0].id;
+    }
+    return inMemoryPapers.map(p => ({
         ...p,
-        isActive: p.id === papersState.activePaperId,
+        isActive: p.id === inMemoryActivePaperId,
         url: getEnvUrl()
     }));
 }
 
-// Get specific paper by id
+// Get specific paper by id or title
 function getPaperById(id) {
     if (!id) return getActiveConfig();
-    const cleanId = String(id).trim();
-    const found = papersState.papers.find(p => p.id === cleanId || p._id === cleanId);
+    const clean = String(id).trim().toLowerCase();
+    const found = inMemoryPapers.find(p =>
+        (p.id && p.id.toLowerCase() === clean) ||
+        (p._id && p._id.toLowerCase() === clean) ||
+        (p.title && p.title.toLowerCase() === clean)
+    );
     if (found) {
         return {
             ...found,
-            isActive: found.id === papersState.activePaperId,
+            isActive: found.id === inMemoryActivePaperId,
             url: getEnvUrl()
         };
     }
     return getActiveConfig();
 }
 
-// Get the currently active paper
+// Get currently active paper
 function getActiveConfig() {
-    let active = papersState.papers.find(p => p.id === papersState.activePaperId);
-    if (!active && papersState.papers.length > 0) {
-        active = papersState.papers[0];
-        papersState.activePaperId = active.id;
+    let active = inMemoryPapers.find(p => p.id === inMemoryActivePaperId);
+    if (!active && inMemoryPapers.length > 0) {
+        active = inMemoryPapers[0];
+        inMemoryActivePaperId = active.id;
     }
     if (!active) {
-        active = createDefaultPaper();
-        papersState.papers = [active];
-        papersState.activePaperId = active.id;
-        savePapersToDisk();
+        active = createDefaultFallbackPaper();
+        inMemoryPapers = [active];
+        inMemoryActivePaperId = active.id;
     }
     return {
         ...active,
@@ -161,40 +170,45 @@ function getActiveConfig() {
 
 // Set active paper
 function setActivePaper(id) {
-    const cleanId = String(id).trim();
-    const found = papersState.papers.find(p => p.id === cleanId || p._id === cleanId);
+    const clean = String(id).trim().toLowerCase();
+    const found = inMemoryPapers.find(p =>
+        (p.id && p.id.toLowerCase() === clean) ||
+        (p._id && p._id.toLowerCase() === clean) ||
+        (p.title && p.title.toLowerCase() === clean)
+    );
     if (found) {
-        papersState.activePaperId = found.id;
-        savePapersToDisk();
+        inMemoryActivePaperId = found.id;
         return found;
     }
     return getActiveConfig();
 }
 
-// Delete paper
+// Delete paper from runtime cache
 function deletePaper(id) {
-    const cleanId = String(id).trim();
-    const idx = papersState.papers.findIndex(p => p.id === cleanId || p._id === cleanId);
+    const clean = String(id).trim().toLowerCase();
+    const idx = inMemoryPapers.findIndex(p =>
+        (p.id && p.id.toLowerCase() === clean) ||
+        (p._id && p._id.toLowerCase() === clean) ||
+        (p.title && p.title.toLowerCase() === clean)
+    );
     if (idx !== -1) {
-        const deleted = papersState.papers.splice(idx, 1)[0];
-        if (papersState.activePaperId === cleanId) {
-            papersState.activePaperId = papersState.papers.length > 0 ? papersState.papers[0].id : '';
+        const deleted = inMemoryPapers.splice(idx, 1)[0];
+        if (inMemoryActivePaperId === deleted.id) {
+            inMemoryActivePaperId = inMemoryPapers.length > 0 ? inMemoryPapers[0].id : '';
         }
-        if (papersState.papers.length === 0) {
-            const def = createDefaultPaper();
-            papersState.papers.push(def);
-            papersState.activePaperId = def.id;
-        }
-        savePapersToDisk();
         return deleted;
     }
     return null;
 }
 
-// Create or update a paper (multi-paper support)
+// Create or update paper in Google Sheets directly (ZERO local disk writes)
 async function createOrUpdatePaper(paperData) {
     const totalQ = Number(paperData.totalQuestions) || 180;
     const maxM = Number(paperData.maxMarks) || (totalQ * 4);
+    const title = String(paperData.title || 'Ordinary Assessment').trim();
+    const subject = String(paperData.subject || 'General').trim();
+    const answerKey = paperData.answerKey || {};
+
     const sections = Array.isArray(paperData.sections) && paperData.sections.length > 0
         ? paperData.sections
         : [
@@ -204,53 +218,29 @@ async function createOrUpdatePaper(paperData) {
             { name: 'Zoology', from: 136, to: Math.min(180, totalQ), maxMarks: Math.max(0, Math.min(180, totalQ) - 135) * 4 }
         ].filter(s => s.to >= s.from);
 
-    const title = String(paperData.title || 'Ordinary Assessment').trim();
-    const subject = String(paperData.subject || 'General').trim();
-    const answerKey = paperData.answerKey || {};
+    const paperObj = {
+        id: title,
+        _id: title,
+        title: title,
+        subject: subject,
+        totalQuestions: totalQ,
+        maxMarks: maxM,
+        sections: sections,
+        answerKey: answerKey,
+        keySheet: 'Paper - ' + title,
+        resultsSheet: 'Results - ' + title
+    };
 
-    let targetId = paperData.id || paperData.paperId;
-    let existingIndex = -1;
-
-    if (targetId) {
-        existingIndex = papersState.papers.findIndex(p => p.id === targetId || p._id === targetId);
-    }
-
-    let paperRecord;
-    if (existingIndex !== -1) {
-        // Update existing paper
-        paperRecord = {
-            ...papersState.papers[existingIndex],
-            title,
-            subject,
-            totalQuestions: totalQ,
-            maxMarks: maxM,
-            sections,
-            answerKey,
-            updatedAt: new Date().toISOString()
-        };
-        papersState.papers[existingIndex] = paperRecord;
+    // Update in-memory list (NO disk write)
+    const existingIdx = inMemoryPapers.findIndex(p => p.title.toLowerCase() === title.toLowerCase());
+    if (existingIdx !== -1) {
+        inMemoryPapers[existingIdx] = paperObj;
     } else {
-        // Create brand new paper
-        const newId = 'paper_' + Date.now();
-        paperRecord = {
-            id: newId,
-            _id: newId,
-            title,
-            subject,
-            totalQuestions: totalQ,
-            maxMarks: maxM,
-            sections,
-            answerKey,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        papersState.papers.push(paperRecord);
-        papersState.activePaperId = newId;
+        inMemoryPapers.push(paperObj);
     }
+    inMemoryActivePaperId = paperObj.id;
 
-    savePapersToDisk();
-
-    // Push to Google Apps Script so dedicated Key sheet & Results sheet are created
+    // Send directly to Google Apps Script
     const targetUrl = getEnvUrl();
     let cloudSynced = false;
     let syncError = null;
@@ -262,14 +252,14 @@ async function createOrUpdatePaper(paperData) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'savePaper',
-                    paperId: paperRecord.id,
-                    title: paperRecord.title,
-                    subject: paperRecord.subject,
-                    totalQuestions: paperRecord.totalQuestions,
-                    sections: paperRecord.sections,
-                    answerKey: paperRecord.answerKey
+                    title: paperObj.title,
+                    subject: paperObj.subject,
+                    totalQuestions: paperObj.totalQuestions,
+                    maxMarks: paperObj.maxMarks,
+                    sections: paperObj.sections,
+                    answerKey: paperObj.answerKey
                 }),
-                signal: AbortSignal.timeout(15000)
+                signal: AbortSignal.timeout(18000)
             });
             const data = await res.json();
             cloudSynced = Boolean(data && data.success);
@@ -281,76 +271,81 @@ async function createOrUpdatePaper(paperData) {
 
     return {
         success: true,
-        paper: paperRecord,
+        paper: paperObj,
         cloudSynced,
         syncError
     };
 }
 
-// Fetch paper details & answer key from Google Sheet
+// Fetch single paper by title from sheet
 async function fetchPaperFromSheet(rawUrl, paperTitle = null) {
     const targetUrl = (rawUrl || getEnvUrl() || '').trim();
-    if (!targetUrl) {
-        throw new Error('Google Sheet or Web App URL is required (set deployment_url in .env)');
-    }
-
-    if (targetUrl.includes('script.google.com/macros/s/')) {
-        let fetchEndpoint = targetUrl;
-        if (paperTitle) {
-            const separator = fetchEndpoint.includes('?') ? '&' : '?';
-            fetchEndpoint += `${separator}paperTitle=${encodeURIComponent(paperTitle)}`;
-        }
-
-        const res = await fetch(fetchEndpoint, {
-            headers: { 'User-Agent': 'OMR-Ordinary-Checker/1.0' },
-            signal: AbortSignal.timeout(10000)
-        });
-
-        if (!res.ok) {
-            throw new Error(`Google Apps Script returned HTTP ${res.status}: ${res.statusText}`);
-        }
-
-        const data = await res.json();
-        if (!data || !data.success) {
-            throw new Error((data && data.error) || 'Failed to fetch AnswerKey from Google Apps Script');
-        }
-
-        const title = data.title || paperTitle || 'Sheet Paper';
-        const totalQ = Number(data.totalQuestions) || Object.keys(data.answerKey || {}).length || 180;
-        const sections = Array.isArray(data.sections) && data.sections.length > 0 ? data.sections : [];
-
-        // Check if paper exists by title
-        const existing = papersState.papers.find(p => p.title.toLowerCase() === title.toLowerCase());
-        const outcome = await createOrUpdatePaper({
-            id: existing ? existing.id : undefined,
-            title: title,
-            subject: (existing && existing.subject) || 'General',
-            totalQuestions: totalQ,
-            sections: sections,
-            answerKey: data.answerKey || {}
-        });
-
-        return outcome.paper;
-    }
-
-    throw new Error('Invalid Google Sheet URL format. Please provide a Google Apps Script Web App URL.');
-}
-
-// Append student's section marks & total marks to the Google Sheet under that paper's results tab
-async function saveResultToSheet(payload, overrideUrl = null) {
-    const targetUrl = (overrideUrl || getEnvUrl() || '').trim();
-    if (!targetUrl) {
+    if (!targetUrl || !targetUrl.includes('script.google.com/macros/s/')) {
         throw new Error('Google Sheet deployment_url is not set in .env.');
     }
 
-    if (!targetUrl.includes('script.google.com/macros/s/')) {
-        throw new Error('Please ensure deployment_url in .env is a valid Google Apps Script Web App URL.');
+    let fetchEndpoint = targetUrl;
+    if (paperTitle) {
+        const sep = fetchEndpoint.includes('?') ? '&' : '?';
+        fetchEndpoint += `${sep}paperTitle=${encodeURIComponent(paperTitle)}`;
     }
 
-    // Resolve paper details
+    const res = await fetch(fetchEndpoint, {
+        headers: { 'User-Agent': 'OMR-Ordinary-Checker/1.0' },
+        signal: AbortSignal.timeout(12000)
+    });
+
+    if (!res.ok) {
+        throw new Error(`Google Apps Script returned HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    if (!data || !data.success) {
+        throw new Error((data && data.error) || 'Failed to fetch paper from Google Apps Script');
+    }
+
+    if (data.papers && Array.isArray(data.papers)) {
+        inMemoryPapers = data.papers;
+        return inMemoryPapers[0];
+    }
+
+    const title = data.title || paperTitle || 'Sheet Paper';
+    const totalQ = Number(data.totalQuestions) || Object.keys(data.answerKey || {}).length || 180;
+    const sections = Array.isArray(data.sections) && data.sections.length > 0 ? data.sections : [];
+
+    const paper = {
+        id: title,
+        _id: title,
+        title: title,
+        subject: 'General',
+        totalQuestions: totalQ,
+        maxMarks: totalQ * 4,
+        sections: sections,
+        answerKey: data.answerKey || {},
+        keySheet: 'Paper - ' + title,
+        resultsSheet: 'Results - ' + title
+    };
+
+    const existingIdx = inMemoryPapers.findIndex(p => p.title.toLowerCase() === title.toLowerCase());
+    if (existingIdx !== -1) {
+        inMemoryPapers[existingIdx] = paper;
+    } else {
+        inMemoryPapers.push(paper);
+    }
+    inMemoryActivePaperId = paper.id;
+
+    return paper;
+}
+
+// Append student's result to that paper's results sheet tab in Google Sheets
+async function saveResultToSheet(payload, overrideUrl = null) {
+    const targetUrl = (overrideUrl || getEnvUrl() || '').trim();
+    if (!targetUrl || !targetUrl.includes('script.google.com/macros/s/')) {
+        throw new Error('Google Sheet deployment_url is not set in .env.');
+    }
+
     const paper = getPaperById(payload.paperId);
     const paperTitle = String(payload.paperTitle || (paper && paper.title) || '').trim();
-    const paperId = String(payload.paperId || (paper && paper.id) || '').trim();
 
     const studentName = String(payload.studentName || 'Anonymous Student').trim();
     const rollNumber = String(payload.rollNumber || '-').trim();
@@ -360,7 +355,6 @@ async function saveResultToSheet(payload, overrideUrl = null) {
 
     const postBody = {
         action: 'saveResult',
-        paperId: paperId,
         paperTitle: paperTitle,
         studentName,
         rollNumber,
@@ -374,7 +368,7 @@ async function saveResultToSheet(payload, overrideUrl = null) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(postBody),
-        signal: AbortSignal.timeout(15000)
+        signal: AbortSignal.timeout(18000)
     });
 
     if (!res.ok) {
@@ -393,6 +387,7 @@ async function saveResultToSheet(payload, overrideUrl = null) {
 
 module.exports = {
     getEnvUrl,
+    syncPapersFromSheet,
     getAllPapers,
     getPaperById,
     getActiveConfig,

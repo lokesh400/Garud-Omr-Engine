@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const {
     getEnvUrl,
+    syncPapersFromSheet,
     getAllPapers,
     getPaperById,
     getActiveConfig,
@@ -22,8 +23,13 @@ try {
     appsScriptCode = '// GoogleAppsScript.gs not found';
 }
 
-// 1. Dashboard: List all papers and show active paper
-router.get('/', (req, res) => {
+// 1. Dashboard: List all papers and show active paper (syncs live from Google Sheet)
+router.get('/', async (req, res) => {
+    try {
+        await syncPapersFromSheet();
+    } catch (e) {
+        console.warn('[Ordinary Checker] Notice syncing on index load:', e.message);
+    }
     const papers = getAllPapers();
     const activePaper = getActiveConfig();
     res.render(path.join(__dirname, 'views', 'index.ejs'), {
@@ -116,9 +122,8 @@ router.post('/paper/:id/delete', (req, res) => {
 // 7. Force Sync / Refresh from Google Sheet
 router.post('/sync-sheet', async (req, res) => {
     try {
-        const paperTitle = req.body && req.body.paperTitle ? String(req.body.paperTitle).trim() : null;
-        const synced = await fetchPaperFromSheet(null, paperTitle);
-        res.redirect('/ordinary?message=' + encodeURIComponent(`Synced paper "${synced.title}" (${synced.totalQuestions} questions) from Google Sheet.`));
+        const papers = await syncPapersFromSheet(true);
+        res.redirect('/ordinary?message=' + encodeURIComponent(`Refreshed directly from Google Sheet tabs (${papers.length} paper(s) found).`));
     } catch (err) {
         res.redirect('/ordinary?error=' + encodeURIComponent('Could not sync: ' + err.message));
     }

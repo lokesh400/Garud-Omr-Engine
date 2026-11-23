@@ -212,10 +212,15 @@
                 </span>
                 <h1 style="margin: 0 0 6px 0; font-size: 24px;">Ordinary OMR Assessment Portal</h1>
                 <p style="margin: 0; color: #94A3B8; font-size: 13px;">
-                    Each paper maintains its own <strong>Key</strong> and <strong>Results</strong> tab in Google Sheets &bull; Zero MongoDB / Zero Cloudinary
+                    Zero local files &bull; Every paper &amp; its results are stored exclusively in your Google Spreadsheet (Cloud Only)
                 </p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <form action="/ordinary/sync-sheet" method="POST" style="display: inline; margin: 0;">
+                    <button type="submit" class="btn btn-outline" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
+                        🔄 Refresh from Sheet
+                    </button>
+                </form>
                 <a href="/ordinary/paper/new" class="btn btn-primary" style="background: #10B981; font-weight: 700;">
                     ➕ Create New Paper
                 </a>
