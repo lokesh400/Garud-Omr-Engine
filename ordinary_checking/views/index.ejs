@@ -4,371 +4,909 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordinary OMR Checker - Google Sheets Portal</title>
+    <title>Ordinary OMR Checker • Assessment Portal</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .container {
-            max-width: 1040px;
-            margin: 28px auto 60px auto;
-            padding: 0 16px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        .ordinary-container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem 3rem 1.5rem;
         }
 
-        .header-box {
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-            color: #fff;
-            padding: 24px 28px;
-            border-radius: 14px;
-            margin-bottom: 24px;
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+        /* Top Header Bar */
+        .ordinary-header-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 12px;
+            padding: 0.85rem 1.25rem;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
         }
 
-        .badge-env {
+        .ordinary-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid #10B981;
-            color: #34D399;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .card {
-            background: #ffffff;
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
+            padding: 6px 12px;
+            background: #FFFFFF;
+            color: var(--text-main);
             text-decoration: none;
-            transition: all 0.15s ease;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid var(--border-hover);
+            transition: var(--transition);
+            flex-shrink: 0;
+            font-family: inherit;
         }
 
-        .btn-primary {
-            background: #2563EB;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #1D4ED8;
-        }
-
-        .btn-success {
-            background: #059669;
-            color: #fff;
-        }
-
-        .btn-success:hover {
-            background: #047857;
-        }
-
-        .btn-outline {
-            background: #FFFFFF;
-            color: #334155;
-            border: 1px solid #CBD5E1;
-        }
-
-        .btn-outline:hover {
-            background: #F8FAFC;
+        .btn-back:hover {
+            background: var(--surface-subtle);
             border-color: #94A3B8;
+            transform: translateX(-2px);
         }
 
-        .btn-danger {
-            background: #FEE2E2;
-            color: #B91C1C;
-            border: 1px solid #FECACA;
+        .breadcrumb-sep {
+            color: #94A3B8;
+            font-size: 1rem;
+            font-weight: 300;
         }
 
-        .btn-danger:hover {
-            background: #FCA5A5;
-            color: #991B1B;
-        }
-
-        .paper-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 18px;
-            margin-top: 16px;
-        }
-
-        .paper-card {
-            background: #FFFFFF;
-            border: 1.5px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 20px;
-            transition: all 0.2s ease;
+        .ordinary-page-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.01em;
         }
 
-        .paper-card:hover {
-            border-color: #94A3B8;
-            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
-            transform: translateY(-2px);
-        }
-
-        .paper-card.is-active {
-            border-color: #2563EB;
-            background: #F8FAFC;
-            box-shadow: 0 0 0 1px #2563EB;
-        }
-
-        .active-tag {
-            position: absolute;
-            top: 14px;
-            right: 14px;
+        .count-pill {
             background: #EFF6FF;
             color: #1D4ED8;
             border: 1px solid #BFDBFE;
-            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: var(--radius-xs);
+            font-size: 0.75rem;
             font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .info-pill {
+        .status-chip {
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            background: #F1F5F9;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #475569;
-            margin-right: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .status-ready {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        .status-dot-sm {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-ready .status-dot-sm {
+            background: #10B981;
+        }
+
+        .ordinary-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Section Directory Info Strip */
+        .directory-info-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .directory-heading {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 4px 0;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .directory-subheading {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 240px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 7px 10px 7px 32px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.84rem;
+            font-family: inherit;
+            color: var(--text-main);
+            background: #FFFFFF;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Paper Cards Grid */
+        .ordinary-papers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .ordinary-paper-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+            transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ordinary-paper-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3.5px;
+            background: linear-gradient(90deg, #10B981, #059669);
+            border-radius: 14px 14px 0 0;
+        }
+
+        .ordinary-paper-card.is-active::before {
+            background: linear-gradient(90deg, #2563EB, #4F46E5);
+            height: 4px;
+        }
+
+        .ordinary-paper-card.is-active {
+            border-color: #BFDBFE;
+            background: #FAFCFF;
+            box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.08);
+        }
+
+        .ordinary-paper-card:hover {
+            border-color: #CBD5E1;
+            box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 6px 12px -4px rgba(15, 23, 42, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .ordinary-paper-card.is-active:hover {
+            border-color: #93C5FD;
+            box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.15);
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
             margin-bottom: 6px;
         }
 
-        .alert-banner {
-            background: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            color: #065F46;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 20px;
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0;
+            line-height: 1.35;
+            letter-spacing: -0.01em;
         }
 
-        .alert-error {
-            background: #FEE2E2;
-            border: 1px solid #FCA5A5;
-            color: #991B1B;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 13px;
+        .card-subject {
+            font-size: 0.8rem;
+            color: #64748B;
+            margin: 2px 0 0 0;
+            font-weight: 500;
+        }
+
+        /* Spec chips */
+        .paper-specs-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .spec-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            color: #475569;
             font-weight: 600;
-            margin-bottom: 20px;
+        }
+
+        .spec-chip-keyed {
+            background: #F0FDF4;
+            color: #166534;
+            border-color: #BBF7D0;
+        }
+
+        .spec-chip-pending {
+            background: #FFFBEB;
+            color: #92400E;
+            border-color: #FDE68A;
+        }
+
+        /* Sheet Tabs Info Box */
+        .sheet-tabs-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            color: #475569;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sheet-tabs-box code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: #1E293B;
+            font-weight: 600;
+        }
+
+        /* Action Buttons */
+        .actions-primary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-action-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 130ms cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+            border: 1px solid transparent;
+            font-family: inherit;
+        }
+
+        .btn-act-scanner {
+            background: #16A34A;
+            color: #FFFFFF;
+        }
+
+        .btn-act-scanner:hover {
+            background: #15803D;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+        }
+
+        .btn-act-evaluator {
+            background: #2563EB;
+            color: #FFFFFF;
+        }
+
+        .btn-act-evaluator:hover {
+            background: #1D4ED8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        .actions-secondary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            padding-top: 8px;
+            border-top: 1px solid #F1F5F9;
+        }
+
+        .btn-act-key {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border-color: #BFDBFE;
+        }
+
+        .btn-act-key:hover {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .btn-act-setactive {
+            background: #F8FAFC;
+            color: #334155;
+            border-color: #CBD5E1;
+        }
+
+        .btn-act-setactive:hover {
+            background: #F1F5F9;
+            color: #0F172A;
+            border-color: #94A3B8;
+        }
+
+        .btn-act-delete {
+            background: #FEF2F2;
+            color: #DC2626;
+            border-color: #FECACA;
+        }
+
+        .btn-act-delete:hover {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #F87171;
+        }
+
+        /* Add Card */
+        .add-paper-dashed-card {
+            background: #FAFAFA;
+            border: 2px dashed #CBD5E1;
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            min-height: 240px;
+            transition: all 180ms ease;
+            cursor: pointer;
+        }
+
+        .add-paper-dashed-card:hover {
+            background: #F8FAFC;
+            border-color: #2563EB;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -4px rgba(37, 99, 235, 0.08);
+        }
+
+        /* Alerts */
+        .alert-banner-success {
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
+            color: #065F46;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .alert-banner-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        /* Modal Dialog */
+        .script-modal-dialog {
+            max-width: 820px;
+            width: 90%;
+            border-radius: 14px;
+            border: 1px solid #CBD5E1;
+            padding: 0;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
+            background: #FFFFFF;
+        }
+
+        .script-modal-dialog::backdrop {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(3px);
+        }
+
+        @media (max-width: 680px) {
+            .ordinary-container {
+                padding: 1rem 0.85rem 2.5rem 0.85rem;
+            }
+
+            .ordinary-header-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ordinary-header-right {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .directory-info-strip {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .ordinary-papers-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Alerts -->
+    <div class="ordinary-container">
+        <!-- Success Alert -->
         <% if (message) { %>
-            <div class="alert-banner">
-                ✓ <%= message %>
-            </div>
-        <% } %>
-        <% if (error) { %>
-            <div class="alert-error">
-                ✕ <%= error %>
+            <div class="alert-banner-success">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span><%= message %></span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; line-height: 1;">&times;</button>
             </div>
         <% } %>
 
-        <!-- Header -->
-        <div class="header-box">
-            <div>
-                <span class="badge-env">
-                    ● GOOGLE SHEET CONNECTED VIA .ENV
-                </span>
-                <h1 style="margin: 0 0 6px 0; font-size: 24px;">Ordinary OMR Assessment Portal</h1>
-                <p style="margin: 0; color: #94A3B8; font-size: 13px;">
-                    Zero local files &bull; Every paper &amp; its results are stored exclusively in your Google Spreadsheet (Cloud Only)
-                </p>
+        <!-- Error Alert -->
+        <% if (error) { %>
+            <div class="alert-banner-error">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span><%= error %></span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; line-height: 1;">&times;</button>
             </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <% } %>
+
+        <!-- Top Header Bar -->
+        <header class="ordinary-header-bar">
+            <div class="ordinary-header-left">
+                <a href="/" class="btn-back" title="Return to Main Portal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                    </svg>
+                    <span>Main Portal</span>
+                </a>
+
+                <span class="breadcrumb-sep">/</span>
+
+                <h1 class="ordinary-page-title">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="8" y1="13" x2="16" y2="13"></line>
+                        <line x1="8" y1="17" x2="16" y2="17"></line>
+                    </svg>
+                    <span>Ordinary OMR Portal</span>
+                </h1>
+
+                <span class="count-pill"><%= (papers || []).length %> <%= (papers || []).length === 1 ? 'Paper' : 'Papers' %></span>
+
+                <span class="status-chip status-ready" title="Configured via .env / Google Apps Script">
+                    <span class="status-dot-sm"></span> Google Sheet Cloud
+                </span>
+            </div>
+
+            <!-- Top Header Right Actions -->
+            <div class="ordinary-header-right">
+                <!-- Apps Script Button (Prominently on top, no raw URL exposed) -->
+                <button type="button" class="btn btn-outline" onclick="openScriptModal()" title="View Google Apps Script deployment code">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    <span>Apps Script</span>
+                </button>
+
+                <!-- Refresh / Sync from Sheet Button -->
                 <form action="/ordinary/sync-sheet" method="POST" style="display: inline; margin: 0;">
-                    <button type="submit" class="btn btn-outline" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
-                        🔄 Refresh from Sheet
+                    <button type="submit" class="btn btn-outline" title="Pull latest paper keys and configurations from Google Spreadsheet">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                        <span>Sync Sheet</span>
                     </button>
                 </form>
-                <a href="/ordinary/paper/new" class="btn btn-primary" style="background: #10B981; font-weight: 700;">
-                    ➕ Create New Paper
+
+                <!-- Create New Paper Button -->
+                <a href="/ordinary/paper/new" class="btn btn-primary" title="Create a new paper with dedicated Google Sheet tabs">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Paper</span>
                 </a>
-                <a href="/" class="btn btn-outline" style="background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">
-                    Main Portal
-                </a>
+            </div>
+        </header>
+
+        <!-- Directory Info Strip & Search Filter -->
+        <div class="directory-info-strip">
+            <div>
+                <h2 class="directory-heading">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    Assessment Papers &amp; Results
+                </h2>
+                <p class="directory-subheading">
+                    Cloud-only assessments with automatic sheet isolation. Each paper manages its own dedicated answer key and results tab in Google Sheets.
+                </p>
+            </div>
+
+            <div class="search-box">
+                <span class="search-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="text" id="paperSearchInput" placeholder="Filter papers..." oninput="filterPapers()" aria-label="Filter papers">
             </div>
         </div>
 
-        <!-- Papers List / Folder Overview -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
-                <div>
-                    <h2 style="margin: 0 0 4px 0; font-size: 20px; color: #0F172A;">
-                        Assessment Papers (<%= (papers || []).length %>)
-                    </h2>
-                    <span style="font-size: 13px; color: #64748B;">
-                        Select any paper to launch its live camera scanner, file evaluator, or edit its answer key.
-                    </span>
-                </div>
-                <a href="/ordinary/paper/new" class="btn btn-outline" style="font-size: 13px; padding: 6px 12px;">
-                    ➕ Add Another Paper
-                </a>
-            </div>
-
-            <!-- Paper Cards Grid -->
-            <div class="paper-grid">
-                <% (papers || []).forEach(function(p) { %>
-                    <div class="paper-card <%= p.isActive ? 'is-active' : '' %>">
-                        <div>
-                            <% if (p.isActive) { %>
-                                <span class="active-tag">Active Paper</span>
-                            <% } %>
-
-                            <h3 style="margin: 0 0 4px 0; font-size: 17px; color: #0F172A; padding-right: 70px;">
-                                <%= p.title %>
-                            </h3>
-                            <div style="color: #64748B; font-size: 13px; margin-bottom: 12px;">
-                                <%= p.subject || 'General' %>
+        <!-- Papers Grid -->
+        <main class="ordinary-papers-grid" id="papersGrid">
+            <% (papers || []).forEach(function(p) { %>
+                <div class="ordinary-paper-card <%= p.isActive ? 'is-active' : '' %>"
+                     data-title="<%= (p.title || '').toLowerCase() %>"
+                     data-subject="<%= (p.subject || '').toLowerCase() %>">
+                    <div>
+                        <!-- Header & Active Chip -->
+                        <div class="card-header-row">
+                            <div>
+                                <h3 class="card-title"><%= p.title %></h3>
+                                <div class="card-subject"><%= p.subject || 'General Assessment' %></div>
                             </div>
-
-                            <!-- Stats -->
-                            <div style="margin-bottom: 12px;">
-                                <span class="info-pill">
-                                    <strong><%= p.totalQuestions %></strong> Questions
-                                </span>
-                                <span class="info-pill">
-                                    <strong><%= p.maxMarks || (p.totalQuestions * 4) %></strong> Marks
-                                </span>
-                                <span class="info-pill" style="background: <%= Object.keys(p.answerKey || {}).length > 0 ? '#DCFCE7' : '#FEF3C7' %>; color: <%= Object.keys(p.answerKey || {}).length > 0 ? '#166534' : '#92400E' %>;">
-                                    <strong><%= Object.keys(p.answerKey || {}).length %></strong> Keyed
-                                </span>
-                            </div>
-
-                            <!-- Google Sheet Tabs Info -->
-                            <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 6px; padding: 8px 10px; margin-bottom: 14px; font-size: 11.5px; color: #475569;">
-                                <div>📋 Key Tab: <strong>Key - <%= p.title %></strong></div>
-                                <div>📊 Results Tab: <strong>Results - <%= p.title %></strong></div>
+                            <div>
+                                <% if (p.isActive) { %>
+                                    <span class="status-chip status-ready" title="Default active paper">
+                                        <span class="status-dot-sm"></span> ACTIVE
+                                    </span>
+                                <% } else { %>
+                                    <span class="status-chip" style="background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0;">
+                                        STANDBY
+                                    </span>
+                                <% } %>
                             </div>
                         </div>
 
-                        <!-- Actions for this Paper -->
-                        <div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                                <a href="/ordinary/paper/<%= p.id %>/scanner" class="btn btn-success" style="font-size: 12.5px; padding: 8px;" title="Scan OMR sheets for this paper">
-                                    📷 Scanner
-                                </a>
-                                <a href="/ordinary/paper/<%= p.id %>/evaluator" class="btn btn-primary" style="font-size: 12.5px; padding: 8px;" title="Upload/evaluate images for this paper">
-                                    📁 Evaluator
-                                </a>
+                        <!-- Specs Row -->
+                        <div class="paper-specs-row">
+                            <span class="spec-chip" title="Total number of questions">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <strong><%= p.totalQuestions %></strong> Qs
+                            </span>
+
+                            <span class="spec-chip" title="Maximum achievable marks">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                <strong><%= p.maxMarks || (p.totalQuestions * 4) %></strong> Marks
+                            </span>
+
+                            <% const keyedCount = Object.keys(p.answerKey || {}).length; %>
+                            <span class="spec-chip <%= keyedCount > 0 ? 'spec-chip-keyed' : 'spec-chip-pending' %>" title="Keyed questions count">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <strong><%= keyedCount %></strong> Keyed
+                            </span>
+                        </div>
+
+                        <!-- Google Sheet Tabs Reference Box -->
+                        <div class="sheet-tabs-box">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="color: #64748B;">Key Tab:</span>
+                                <code>Key - <%= p.title %></code>
                             </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="color: #64748B;">Results Tab:</span>
+                                <code>Results - <%= p.title %></code>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; border-top: 1px solid #F1F5F9; padding-top: 10px;">
-                                <div style="display: flex; gap: 6px;">
-                                    <a href="/ordinary/paper/<%= p.id %>/edit" class="btn btn-outline" style="font-size: 12px; padding: 4px 8px;" title="Edit Answer Key">
-                                        ✏️ Edit Key
-                                    </a>
-                                    <% if (!p.isActive) { %>
-                                        <form action="/ordinary/paper/<%= p.id %>/set-active" method="POST" style="display: inline; margin: 0;">
-                                            <button type="submit" class="btn btn-outline" style="font-size: 12px; padding: 4px 8px;" title="Make this the default active paper">
-                                                ★ Set Active
-                                            </button>
-                                        </form>
-                                    <% } %>
-                                </div>
+                    <!-- Actions Area -->
+                    <div>
+                        <!-- Primary Checking Tools -->
+                        <div class="actions-primary-grid">
+                            <a href="/ordinary/paper/<%= p.id %>/scanner" class="btn-action-pill btn-act-scanner" title="Launch live camera scanner for this paper">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Scanner</span>
+                            </a>
 
-                                <% if ((papers || []).length > 1) { %>
-                                    <form action="/ordinary/paper/<%= p.id %>/delete" method="POST" style="display: inline; margin: 0;" onsubmit="return confirm('Delete paper \'<%= p.title %>\'? (Google Sheet tabs will be preserved)');">
-                                        <button type="submit" class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" title="Remove paper from local portal">
-                                            🗑️
+                            <a href="/ordinary/paper/<%= p.id %>/evaluator" class="btn-action-pill btn-act-evaluator" title="Upload/evaluate OMR image files for this paper">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <span>Evaluator</span>
+                            </a>
+                        </div>
+
+                        <!-- Secondary Actions Row -->
+                        <div class="actions-secondary-row">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <a href="/ordinary/paper/<%= p.id %>/edit" class="btn-action-pill btn-act-key" title="Edit paper answer key &amp; sections">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    <span>Edit Key</span>
+                                </a>
+
+                                <% if (!p.isActive) { %>
+                                    <form action="/ordinary/paper/<%= p.id %>/set-active" method="POST" style="display: inline; margin: 0;">
+                                        <button type="submit" class="btn-action-pill btn-act-setactive" title="Make this the default active paper">
+                                            ★ Set Active
                                         </button>
                                     </form>
                                 <% } %>
                             </div>
+
+                            <% if ((papers || []).length > 1) { %>
+                                <form action="/ordinary/paper/<%= p.id %>/delete" method="POST" style="display: inline; margin: 0;"
+                                      onsubmit="return confirm('Remove paper from portal? (Google Sheet tabs are kept safe)');">
+                                    <button type="submit" class="btn-action-pill btn-act-delete" title="Delete paper from local portal">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            <% } %>
                         </div>
                     </div>
-                <% }); %>
+                </div>
+            <% }); %>
 
-                <!-- Add New Paper Action Card -->
-                <a href="/ordinary/paper/new" class="paper-card" style="border-style: dashed; align-items: center; justify-content: center; text-decoration: none; min-height: 230px; text-align: center; background: #FAFAFA;">
-                    <div style="font-size: 36px; margin-bottom: 8px;">➕</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 4px;">Create Another Paper</div>
-                    <div style="font-size: 12px; color: #64748B; max-width: 220px;">
-                        Sets up a new dedicated Answer Key &amp; Results sheet tab in Google Sheets.
+            <% if ((papers || []).length === 0) { %>
+                <div style="grid-column: 1 / -1; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 14px; padding: 3rem 1.5rem; text-align: center;">
+                    <div style="width: 54px; height: 54px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </div>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; font-weight: 700; color: #0F172A;">No Assessment Papers Found</h3>
+                    <p style="color: #64748B; max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.88rem; line-height: 1.5;">
+                        Your connected Google Spreadsheet currently has no papers configured. Click below to create your first assessment paper.
+                    </p>
+                    <a href="/ordinary/paper/new" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; padding: 9px 18px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Create First Paper</span>
+                    </a>
+                </div>
+            <% } else { %>
+                <!-- Add Another Paper Dashed Card -->
+                <a href="/ordinary/paper/new" class="add-paper-dashed-card" title="Configure a new assessment paper">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #0F172A; margin-bottom: 4px;">
+                        Create Another Paper
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748B; max-width: 240px; line-height: 1.4;">
+                        Sets up a new dedicated Answer Key &amp; Results sheet tab in your Google Spreadsheet.
                     </div>
                 </a>
+            <% } %>
+        </main>
+    </div>
+
+    <!-- Apps Script Code Modal Dialog -->
+    <dialog id="scriptModal" class="script-modal-dialog" closedby="any">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; color: #10B981;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                </span>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;">Google Apps Script Web App</h3>
+                    <div style="font-size: 0.78rem; color: #64748B; margin-top: 1px;">Deploy once inside your Google Spreadsheet (multi-paper ready)</div>
+                </div>
             </div>
+            <button type="button" onclick="closeScriptModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B; padding: 4px; line-height: 1;" aria-label="Close dialog">&times;</button>
         </div>
 
-        <!-- Google Sheet Connection Details (Auto configured from .env) -->
-        <div class="card" style="background: #F8FAFC;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h3 style="margin: 0 0 4px 0; font-size: 14px; color: #1E293B;">Google Apps Script Web App</h3>
-                    <div style="font-family: monospace; font-size: 12px; color: #64748B; word-break: break-all;">
-                        <%= envUrl || config.url %>
-                    </div>
-                </div>
-                <div>
-                    <button class="btn btn-outline" style="font-size: 12px; padding: 6px 12px;" onclick="document.getElementById('scriptModal').style.display = 'block';">
-                        📋 View Apps Script Code
+        <div style="padding: 20px;">
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.82rem; color: #475569; line-height: 1.5;">
+                In your Google Spreadsheet, click <strong>Extensions &gt; Apps Script</strong>, paste this entire code into <code>Code.gs</code>, and click <strong>Deploy &gt; New deployment</strong> (Type: <em>Web App</em>, Execute as: <em>Me</em>, Who has access: <em>Anyone</em>).
+            </div>
+
+            <textarea id="appsScriptTextarea" readonly rows="16"
+                      style="width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.5; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box; background: #0F172A; color: #F8FAFC; resize: vertical;"><%= appsScriptCode %></textarea>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <span id="copySuccessMsg" style="font-size: 0.82rem; color: #16A34A; font-weight: 600; display: none;">
+                    ✓ Code copied to clipboard!
+                </span>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button type="button" class="btn btn-primary" onclick="copyScriptCode()" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copy Code</span>
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="closeScriptModal()">
+                        Close
                     </button>
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
-    <!-- Apps Script Code Modal -->
-    <div id="scriptModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; overflow-y: auto; padding: 20px;">
-        <div style="background: #fff; max-width: 800px; margin: 30px auto; border-radius: 12px; padding: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="margin: 0; font-size: 18px;">Google Apps Script Web App Code (Multi-Paper Ready)</h3>
-                <button type="button" class="btn btn-outline" style="font-size: 12px; padding: 4px 10px;" onclick="document.getElementById('scriptModal').style.display = 'none';">✕ Close</button>
-            </div>
-            <p style="font-size: 13px; color: #64748B; margin-bottom: 12px;">
-                In your Google Spreadsheet, click <strong>Extensions &gt; Apps Script</strong>, paste this code, and deploy as a Web App (Access: Anyone).
-            </p>
-            <textarea id="appsScriptTextarea" readonly rows="16" style="width: 100%; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box; background: #0F172A; color: #F8FAFC;"><%= appsScriptCode %></textarea>
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
-                <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('appsScriptTextarea').value); alert('Copied Apps Script code to clipboard!');">
-                    📋 Copy Code
-                </button>
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('scriptModal').style.display = 'none';">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
+    <script>
+        function openScriptModal() {
+            const modal = document.getElementById('scriptModal');
+            if (modal) {
+                if (typeof modal.showModal === 'function') {
+                    modal.showModal();
+                } else {
+                    modal.setAttribute('open', '');
+                }
+            }
+        }
+
+        function closeScriptModal() {
+            const modal = document.getElementById('scriptModal');
+            if (modal) {
+                if (typeof modal.close === 'function') {
+                    modal.close();
+                } else {
+                    modal.removeAttribute('open');
+                }
+            }
+        }
+
+        // Close on backdrop click
+        const scriptModalElem = document.getElementById('scriptModal');
+        if (scriptModalElem) {
+            scriptModalElem.addEventListener('click', function(e) {
+                if (e.target === scriptModalElem) {
+                    closeScriptModal();
+                }
+            });
+        }
+
+        function copyScriptCode() {
+            const textarea = document.getElementById('appsScriptTextarea');
+            if (!textarea) return;
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const msg = document.getElementById('copySuccessMsg');
+                if (msg) {
+                    msg.style.display = 'inline';
+                    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                }
+            }).catch(() => {
+                textarea.select();
+                document.execCommand('copy');
+                alert('Copied Apps Script code to clipboard!');
+            });
+        }
+
+        function filterPapers() {
+            const q = (document.getElementById('paperSearchInput').value || '').toLowerCase().trim();
+            const cards = document.querySelectorAll('.ordinary-paper-card');
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                const subject = card.getAttribute('data-subject') || '';
+                if (!q || title.includes(q) || subject.includes(q)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

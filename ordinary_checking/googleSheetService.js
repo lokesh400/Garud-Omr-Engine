@@ -72,39 +72,45 @@ async function syncPapersFromSheet(force = false) {
         lastSyncTimestamp = Date.now();
 
         if (data && data.success) {
-            if (Array.isArray(data.papers) && data.papers.length > 0) {
-                // Multi-paper array returned from updated Google Apps Script
-                inMemoryPapers = data.papers.map(p => {
-                    const secs = Array.isArray(p.sections) ? p.sections.map(s => {
-                        const correct = (s.correctMarks !== undefined) ? Number(s.correctMarks) : 4;
-                        const wrong = (s.negativeMarks !== undefined) ? Math.abs(Number(s.negativeMarks)) : 1;
-                        const qCount = Math.max(0, (Number(s.to) - Number(s.from) + 1));
+            if (Array.isArray(data.papers)) {
+                if (data.papers.length > 0) {
+                    // Multi-paper array returned from Google Apps Script
+                    inMemoryPapers = data.papers.map(p => {
+                        const secs = Array.isArray(p.sections) ? p.sections.map(s => {
+                            const correct = (s.correctMarks !== undefined) ? Number(s.correctMarks) : 4;
+                            const wrong = (s.negativeMarks !== undefined) ? Math.abs(Number(s.negativeMarks)) : 1;
+                            const qCount = Math.max(0, (Number(s.to) - Number(s.from) + 1));
+                            return {
+                                name: String(s.name || 'Section').trim(),
+                                from: Number(s.from),
+                                to: Number(s.to),
+                                correctMarks: correct,
+                                negativeMarks: wrong,
+                                maxMarks: s.maxMarks !== undefined ? Number(s.maxMarks) : (qCount * correct)
+                            };
+                        }) : [];
+                        let sumMax = 0;
+                        secs.forEach(s => sumMax += (Number(s.maxMarks) || 0));
                         return {
-                            name: String(s.name || 'Section').trim(),
-                            from: Number(s.from),
-                            to: Number(s.to),
-                            correctMarks: correct,
-                            negativeMarks: wrong,
-                            maxMarks: s.maxMarks !== undefined ? Number(s.maxMarks) : (qCount * correct)
+                            ...p,
+                            id: p.id || p._id || p.title,
+                            _id: p._id || p.id || p.title,
+                            totalQuestions: Number(p.totalQuestions) || Object.keys(p.answerKey || {}).length || 180,
+                            maxMarks: Number(p.maxMarks) || (sumMax > 0 ? sumMax : ((Number(p.totalQuestions) || 180) * 4)),
+                            sections: secs
                         };
-                    }) : [];
-                    let sumMax = 0;
-                    secs.forEach(s => sumMax += (Number(s.maxMarks) || 0));
-                    return {
-                        ...p,
-                        id: p.id || p._id || p.title,
-                        _id: p._id || p.id || p.title,
-                        totalQuestions: Number(p.totalQuestions) || Object.keys(p.answerKey || {}).length || 180,
-                        maxMarks: Number(p.maxMarks) || (sumMax > 0 ? sumMax : ((Number(p.totalQuestions) || 180) * 4)),
-                        sections: secs
-                    };
-                });
+                    });
 
-                if (!inMemoryActivePaperId || !inMemoryPapers.some(p => p.id === inMemoryActivePaperId)) {
-                    inMemoryActivePaperId = inMemoryPapers[0].id;
+                    if (!inMemoryActivePaperId || !inMemoryPapers.some(p => p.id === inMemoryActivePaperId)) {
+                        inMemoryActivePaperId = inMemoryPapers[0].id;
+                    }
+                } else {
+                    // Google Apps Script returned empty papers array -> Sheet has zero papers
+                    inMemoryPapers = [];
+                    inMemoryActivePaperId = '';
                 }
-            } else if (data.answerKey || data.title) {
-                // Single paper returned from legacy Apps Script
+            } else if (data.answerKey && Object.keys(data.answerKey).length > 0) {
+                // Truly a legacy single-paper Apps Script with non-empty answer key
                 const singleTitle = (data.title && data.title !== 'AnswerKey') ? data.title : 'Assessment 01';
                 const totalQ = Number(data.totalQuestions) || Object.keys(data.answerKey || {}).length || 180;
                 const singlePaper = {
@@ -121,14 +127,13 @@ async function syncPapersFromSheet(force = false) {
                 };
                 inMemoryPapers = [singlePaper];
                 inMemoryActivePaperId = singlePaper.id;
+            } else {
+                inMemoryPapers = [];
+                inMemoryActivePaperId = '';
             }
         }
     } catch (err) {
         console.warn('[Ordinary Checker] Notice fetching papers from Google Sheet:', err.message);
-        if (inMemoryPapers.length === 0) {
-            inMemoryPapers = [createDefaultFallbackPaper()];
-            inMemoryActivePaperId = inMemoryPapers[0].id;
-        }
     }
 
     return inMemoryPapers;
@@ -136,10 +141,6 @@ async function syncPapersFromSheet(force = false) {
 
 // Get all papers (with active flag attached)
 function getAllPapers() {
-    if (inMemoryPapers.length === 0) {
-        inMemoryPapers = [createDefaultFallbackPaper()];
-        inMemoryActivePaperId = inMemoryPapers[0].id;
-    }
     return inMemoryPapers.map(p => ({
         ...p,
         isActive: p.id === inMemoryActivePaperId,
@@ -174,9 +175,11 @@ function getActiveConfig() {
         inMemoryActivePaperId = active.id;
     }
     if (!active) {
-        active = createDefaultFallbackPaper();
-        inMemoryPapers = [active];
-        inMemoryActivePaperId = active.id;
+        return {
+            ...createDefaultFallbackPaper(),
+            isActive: false,
+            url: getEnvUrl()
+        };
     }
     return {
         ...active,

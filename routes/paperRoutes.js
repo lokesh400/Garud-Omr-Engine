@@ -218,6 +218,63 @@ router.delete('/api/folders/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Update / Edit Section / Batch / Folder (Admin only)
+async function handleFolderUpdate(req, res) {
+    try {
+        const id = req.params.id;
+        const folder = await Folder.findById(id) || await Folder.findOne({ _id: id }) || await Folder.findOne({ name: id });
+        if (!folder) return res.status(404).json({ error: 'Folder not found' });
+
+        const newName = String(req.body.name || '').trim();
+        if (!newName) return res.status(400).json({ error: 'Folder name cannot be empty' });
+
+        const oldName = folder.name;
+        if (newName.toLowerCase() !== oldName.toLowerCase()) {
+            const existing = await Folder.findOne({
+                _id: { $ne: folder._id },
+                name: new RegExp('^' + newName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i')
+            });
+            if (existing) {
+                return res.status(400).json({ error: `Folder "${existing.name}" already exists.` });
+            }
+        }
+
+        folder.name = newName;
+        if (req.body.description !== undefined) {
+            folder.description = String(req.body.description || '').trim();
+        }
+        if (req.body.examType) {
+            folder.examType = String(req.body.examType).trim();
+        }
+        await folder.save();
+
+        // Update all papers currently in this folder so their category aligns with new folder name
+        if (oldName !== newName) {
+            await Paper.updateMany(
+                { category: new RegExp('^' + oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') },
+                { category: newName }
+            );
+        }
+
+        res.json({
+            success: true,
+            message: `Folder updated successfully.`,
+            folder: {
+                _id: folder._id,
+                name: folder.name,
+                description: folder.description,
+                examType: folder.examType
+            },
+            oldName,
+            newName
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+router.put('/api/folders/:id', requireAdmin, handleFolderUpdate);
+router.post('/api/folders/:id/edit', requireAdmin, handleFolderUpdate);
+
 // Migrate Paper to another Section / Batch / Folder
 router.post('/api/paper/:id/migrate', requireAdmin, async (req, res) => {
     try {
@@ -256,6 +313,141 @@ router.post('/api/paper/:id/category', requireAdmin, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Get single paper details as JSON (Staff only)
+router.get('/api/paper/:id', requireAdminOrTeacher, async (req, res) => {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+        res.json({
+            success: true,
+            paper: {
+                _id: paper._id,
+                title: paper.title,
+                subject: paper.subject || 'General',
+                category: paper.category || paper.batch || 'General',
+                total_questions: paper.total_questions || paper.numQuestions || 50,
+                max_marks: paper.max_marks || ((paper.total_questions || 50) * 4),
+                sections: paper.sections || [],
+                exam_type: paper.exam_type || 'standard'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update / Edit Paper Details (Title, Subject, Category, Total Questions, Max Marks, Sections)
+async function handlePaperUpdate(req, res) {
+    try {
+        const paper = await Paper.findById(req.params.id) || await Paper.findOne({ _id: decodeURIComponent(req.params.id) });
+        if (!paper) return res.status(404).json({ error: 'Paper not found' });
+
+        const {
+            title,
+            subject,
+            category,
+            batch,
+            targetFolder,
+            total_questions,
+            numQuestions,
+            max_marks,
+            sections
+        } = req.body;
+
+        if (title !== undefined) {
+            const cleanTitle = String(title).trim();
+            if (!cleanTitle) return res.status(400).json({ error: 'Paper title cannot be empty' });
+            paper.title = cleanTitle;
+        }
+
+        if (subject !== undefined) {
+            paper.subject = String(subject).trim() || 'General';
+        }
+
+        const catVal = String(category || batch || targetFolder || '').trim();
+        if (catVal) {
+            const existing = await Folder.findOne({ name: new RegExp('^' + catVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+            if (!existing) {
+                await Folder.create({ name: catVal });
+            }
+            paper.category = catVal;
+        }
+
+        let newTotalQ = paper.total_questions || paper.numQuestions || 50;
+        if (total_questions !== undefined || numQuestions !== undefined) {
+            const parsedQ = Number(total_questions || numQuestions);
+            if (!isNaN(parsedQ) && parsedQ >= 1 && parsedQ <= 200) {
+                newTotalQ = parsedQ;
+                paper.total_questions = newTotalQ;
+            }
+        }
+
+        // Process sections if provided
+        if (sections !== undefined) {
+            let parsedSections = [];
+            if (typeof sections === 'string' && sections.trim() !== '') {
+                try {
+                    parsedSections = JSON.parse(sections);
+                } catch (e) {
+                    return res.status(400).json({ error: 'Invalid sections format: ' + e.message });
+                }
+            } else if (Array.isArray(sections)) {
+                parsedSections = sections;
+            }
+
+            const sanitizedSections = parsedSections.map((sec, idx) => {
+                const fromQ = Math.max(1, parseInt(sec.from_question || sec.from || 1, 10));
+                const toQ = Math.max(fromQ, parseInt(sec.to_question || sec.to || fromQ, 10));
+                const count = toQ - fromQ + 1;
+                const secMax = (sec.max_marks !== undefined && sec.max_marks !== null && sec.max_marks !== '')
+                    ? Number(sec.max_marks)
+                    : (count * 4);
+                return {
+                    name: String(sec.name || `Section ${idx + 1}`).trim(),
+                    from_question: fromQ,
+                    to_question: toQ,
+                    max_marks: secMax
+                };
+            });
+
+            paper.sections = sanitizedSections;
+
+            let sumSecMarks = 0;
+            sanitizedSections.forEach(s => sumSecMarks += (Number(s.max_marks) || 0));
+            if (sumSecMarks > 0) {
+                paper.max_marks = sumSecMarks;
+            } else if (max_marks !== undefined && !isNaN(Number(max_marks))) {
+                paper.max_marks = Number(max_marks);
+            } else {
+                paper.max_marks = newTotalQ * 4;
+            }
+        } else if (max_marks !== undefined && !isNaN(Number(max_marks))) {
+            paper.max_marks = Number(max_marks);
+        }
+
+        await paper.save();
+
+        res.json({
+            success: true,
+            message: `Paper "${paper.title}" updated successfully.`,
+            paper: {
+                _id: paper._id,
+                title: paper.title,
+                subject: paper.subject,
+                category: paper.category,
+                total_questions: paper.total_questions,
+                max_marks: paper.max_marks,
+                sections: paper.sections
+            }
+        });
+    } catch (err) {
+        console.error('Error updating paper:', err);
+        res.status(500).json({ error: err.message });
+    }
+}
+router.put('/api/paper/:id', requireAdmin, handlePaperUpdate);
+router.post('/api/paper/:id/edit', requireAdmin, handlePaperUpdate);
 
 router.get('/paper/:id', requireAdminOrTeacher, async (req, res) => {
     try {

@@ -239,6 +239,29 @@
             transform: scale(1.08);
         }
 
+        .btn-card-edit-folder {
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: #475569;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 130ms ease;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .btn-card-edit-folder:hover {
+            background: #E2E8F0;
+            color: #1E293B;
+            border-color: #94A3B8;
+            transform: scale(1.08);
+        }
+
         .folder-card-body {
             display: flex;
             flex-direction: column;
@@ -424,8 +447,14 @@
             border-radius: 50%;
             background: currentColor;
         }
-        .status-ready .status-dot-sm { background: #10B981; }
-        .status-pending .status-dot-sm { background: #F59E0B; }
+
+        .status-ready .status-dot-sm {
+            background: #10B981;
+        }
+
+        .status-pending .status-dot-sm {
+            background: #F59E0B;
+        }
 
         .paper-specs {
             display: flex;
@@ -505,35 +534,57 @@
             color: #1D4ED8;
             border-color: #BFDBFE;
         }
-        .btn-act-key:hover { background: #DBEAFE; color: #1E40AF; }
+
+        .btn-act-key:hover {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
 
         .btn-act-scan {
             background: var(--primary);
             color: #FFFFFF;
             border-color: var(--primary-hover);
         }
-        .btn-act-scan:hover { background: var(--primary-hover); }
+
+        .btn-act-scan:hover {
+            background: var(--primary-hover);
+        }
 
         .btn-act-results {
             background: #FFFFFF;
             color: #334155;
             border-color: #CBD5E1;
         }
-        .btn-act-results:hover { background: #F8FAFC; color: #0F172A; border-color: #94A3B8; }
+
+        .btn-act-results:hover {
+            background: #F8FAFC;
+            color: #0F172A;
+            border-color: #94A3B8;
+        }
 
         .btn-act-print {
             background: #F8FAFC;
             color: #475569;
             border-color: #E2E8F0;
         }
-        .btn-act-print:hover { background: #F1F5F9; color: #1E293B; border-color: #CBD5E1; }
+
+        .btn-act-print:hover {
+            background: #F1F5F9;
+            color: #1E293B;
+            border-color: #CBD5E1;
+        }
 
         .btn-act-migrate {
             background: #F0FDF4;
             color: #15803D;
             border-color: #BBF7D0;
         }
-        .btn-act-migrate:hover { background: #DCFCE7; color: #166534; border-color: #86EFAC; }
+
+        .btn-act-migrate:hover {
+            background: #DCFCE7;
+            color: #166534;
+            border-color: #86EFAC;
+        }
 
         .btn-act-delete {
             background: #FEF2F2;
@@ -541,728 +592,1513 @@
             border-color: #FECACA;
             margin-left: auto;
         }
-        .btn-act-delete:hover { background: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+
+        .btn-act-delete:hover {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #FCA5A5;
+        }
+
+        .btn-act-edit {
+            background: #F8FAFC;
+            color: #334155;
+            border-color: #CBD5E1;
+        }
+
+        .btn-act-edit:hover {
+            background: #F1F5F9;
+            color: #0F172A;
+            border-color: #94A3B8;
+        }
+
+        /* Section Builder inside Edit Paper Modal */
+        .section-item-row {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 32px;
+            gap: 8px;
+            align-items: center;
+        }
+        .section-item-row:last-child {
+            margin-bottom: 0;
+        }
+        .sec-field-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #64748B;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .sec-input {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            color: #1E293B;
+            background: #FFFFFF;
+        }
+        .sec-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .sec-input-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            text-align: center;
+        }
+        .btn-remove-sec {
+            background: #FEF2F2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 120ms ease;
+        }
+        .btn-remove-sec:hover {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #F87171;
+        }
 
         @media (max-width: 680px) {
-            .dashboard-container { padding: 1rem 0.85rem 2.5rem 0.85rem; }
-            .section-header-bar { flex-direction: column; align-items: stretch; gap: 10px; }
-            .header-bar-right { flex-direction: column; align-items: stretch; }
-            .search-box { min-width: 100%; }
-            .folders-grid { grid-template-columns: 1fr; }
-            .folder-card-item { padding: 1.1rem; }
-            .directory-info-strip { flex-direction: column; align-items: stretch; gap: 10px; }
-            .folder-nav-bar { flex-direction: column; align-items: stretch; gap: 10px; }
-            .paper-list { grid-template-columns: 1fr; }
-            .btn-act-delete { margin-left: 0; }
+            .dashboard-container {
+                padding: 1rem 0.85rem 2.5rem 0.85rem;
+            }
+
+            .section-header-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .header-bar-right {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+
+            .folders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .folder-card-item {
+                padding: 1.1rem;
+            }
+
+            .directory-info-strip {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .folder-nav-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .paper-list {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-act-delete {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
 
 <body>
     <%- include('partials/sidebar_start', { activeNav: 'dashboard' }) %>
-    <div class="container">
-        <main class="dashboard-container">
-            <!-- FOLDERS DIRECTORY VIEW (Front Page Default: ONLY shows folders in a modern mobile-friendly grid) -->
-            <section id="foldersDirectorySection" style="<%= activeFolder ? 'display: none;' : '' %>">
-                <div class="directory-info-strip">
-                    <div>
-                        <h2 class="directory-heading">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            Sections, Batches & Folders
-                        </h2>
-                        <p class="directory-subheading">Select a folder or batch below to view all papers inside, scan OMR sheets, and evaluate student marks.</p>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <% if (currentUser && currentUser.role === 'admin') { %>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()" style="font-weight: 600; padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+        <div class="container">
+            <main class="dashboard-container">
+                <!-- FOLDERS DIRECTORY VIEW (Front Page Default: ONLY shows folders in a modern mobile-friendly grid) -->
+                <section id="foldersDirectorySection" style="<%= activeFolder ? 'display: none;' : '' %>">
+                    <div class="directory-info-strip">
+                        <div>
+                            <h2 class="directory-heading">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    style="color: #2563EB;">
+                                    <path
+                                        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                    </path>
                                 </svg>
-                                New Folder
-                            </button>
-
-                            <a href="/paper/new" class="btn btn-primary btn-sm" style="font-weight: 600; padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                Create Paper
-                            </a>
-                        <% } %>
-
-                        <a href="/jee" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse>
-                                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse>
-                            </svg>
-                            JEE Mains Section &rarr;
-                        </a>
-                    </div>
-                </div>
-
-                <div class="folders-grid" id="foldersGrid">
-                    <!-- All Assessment Papers Overview Card -->
-                    <div class="folder-card-item folder-card-all" onclick="selectFolder('all')" data-folder-name="all papers" data-folder-desc="all assessment papers combined">
-                        <div class="folder-card-top">
-                            <div class="folder-icon-avatar avatar-all">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>
-                            </div>
-                            <span class="folder-count-badge <%= (papers && papers.length > 0) ? 'has-papers' : 'empty' %>">
-                                <%= papers ? papers.length : 0 %> <%= (papers && papers.length === 1) ? 'Paper' : 'Papers' %>
-                            </span>
-                        </div>
-                        <div class="folder-card-body">
-                            <h3 class="folder-card-title">All Assessment Papers</h3>
-                            <p class="folder-card-desc">Combined overview of all tests across all batches & folders.</p>
-                        </div>
-                        <div class="folder-card-footer">
-                            <span>Open All Papers</span>
-                            <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
-                        <% folders.forEach(f => { %>
-                            <div class="folder-card-item" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-id="<%= f._id %>" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '').toLowerCase() %>">
-                                <div class="folder-card-top">
-                                    <div class="folder-icon-avatar">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                        </svg>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 6px;">
-                                        <span class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
-                                            <%= f.count || 0 %> <%= (f.count === 1) ? 'Paper' : 'Papers' %>
-                                        </span>
-                                        <% if (currentUser && currentUser.role === 'admin') { %>
-                                            <button type="button" class="btn-card-del-folder" onclick="event.stopPropagation(); deleteFolder('<%= f._id %>', '<%= f.name.replace(/'/g, "\\'") %>')" title="Delete this folder">
-                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                </svg>
-                                            </button>
-                                        <% } %>
-                                    </div>
-                                </div>
-                                <div class="folder-card-body">
-                                    <h3 class="folder-card-title"><%= f.name %></h3>
-                                    <p class="folder-card-desc"><%= f.description || 'Assessment tests, answer keys & batch results' %></p>
-                                </div>
-                                <div class="folder-card-footer">
-                                    <span>Open Folder</span>
-                                    <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="9 18 15 12 9 6"></polyline>
-                                    </svg>
-                                </div>
-                            </div>
-                        <% }) %>
-                    <% } else { %>
-                        <div style="grid-column: 1 / -1; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 16px; padding: 2.25rem 1.5rem; text-align: center;">
-                            <div style="width: 46px; height: 46px; border-radius: 12px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                            </div>
-                            <h3 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;">No Custom Folders Created Yet</h3>
-                            <p style="color: #64748B; font-size: 0.85rem; max-width: 440px; margin: 0 auto 1.25rem auto; line-height: 1.5;">
-                                You haven't created any batches or folders yet. Click the button below to create your first Section / Batch / Folder.
-                            </p>
-                            <% if (currentUser && currentUser.role === 'admin') { %>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="openCreateFolderModal()" style="font-weight: 600; padding: 7px 16px; font-size: 0.85rem;">
-                                    + Create Your First Folder
-                                </button>
-                            <% } %>
-                        </div>
-                    <% } %>
-                </div>
-
-                <div id="noFoldersFoundState" style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; margin-top: 1rem;">
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">No folders matching your search.</p>
-                </div>
-            </section>
-
-            <!-- FOLDER PAPERS VIEW (Shown when a folder is selected) -->
-            <section id="folderPapersSection" style="<%= activeFolder ? '' : 'display: none;' %>">
-                <div class="folder-nav-bar">
-                    <div class="folder-active-title-group">
-                        <button type="button" class="btn-back-folders" onclick="exitFolderView()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            All Folders
-                        </button>
-                        <span class="breadcrumb-sep">/</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #2563EB; display: inline-flex; align-items: center;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                            </span>
-                            <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0F172A;" id="activeFolderHeading">
-                                <%= activeFolder || 'Folder' %>
+                                Sections, Batches & Folders
                             </h2>
-                            <span class="count-badge" id="activeFolderPaperBadge">0 Papers</span>
+                            <p class="directory-subheading">Select a folder or batch below to view all papers inside,
+                                scan OMR sheets, and evaluate student marks.</p>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="openCreateFolderModal()"
+                                    style="font-weight: 600; padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    New Folder
+                                </button>
+
+                                <a href="/paper/new" class="btn btn-primary btn-sm"
+                                    style="font-weight: 600; padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Create Paper
+                                </a>
+                                <% } %>
+
+                                    <a href="/jee" class="btn btn-secondary btn-sm"
+                                        style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)">
+                                            </ellipse>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)">
+                                            </ellipse>
+                                        </svg>
+                                        JEE Mains Section &rarr;
+                                    </a>
                         </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <div class="search-box" style="min-width: 200px;">
-                            <span class="search-icon" aria-hidden="true">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <div class="folders-grid" id="foldersGrid">
+                        <!-- All Assessment Papers Overview Card -->
+                        <div class="folder-card-item folder-card-all" onclick="selectFolder('all')"
+                            data-folder-name="all papers" data-folder-desc="all assessment papers combined">
+                            <div class="folder-card-top">
+                                <div class="folder-icon-avatar avatar-all">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                        <polyline points="2 17 12 22 22 17"></polyline>
+                                        <polyline points="2 12 12 17 22 12"></polyline>
+                                    </svg>
+                                </div>
+                                <span
+                                    class="folder-count-badge <%= (papers && papers.length > 0) ? 'has-papers' : 'empty' %>">
+                                    <%= papers ? papers.length : 0 %>
+                                        <%= (papers && papers.length===1) ? 'Paper' : 'Papers' %>
+                                </span>
+                            </div>
+                            <div class="folder-card-body">
+                                <h3 class="folder-card-title">All Assessment Papers</h3>
+                                <p class="folder-card-desc">Combined overview of all tests across all batches & folders.
+                                </p>
+                            </div>
+                            <div class="folder-card-footer">
+                                <span>Open All Papers</span>
+                                <svg class="folder-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
-                            </span>
-                            <input type="search" id="dashboardSearchInput" aria-label="Search papers" placeholder="Search papers in this folder..." oninput="handleSearch()">
+                            </div>
                         </div>
 
-                        <% if (currentUser && currentUser.role === 'admin') { %>
-                            <a href="/paper/new<%= activeFolder && activeFolder !== 'all' ? ('?category=' + encodeURIComponent(activeFolder)) : '' %>" id="btnCreatePaperInActiveFolder" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <% if (typeof folders !=='undefined' && folders.length> 0) { %>
+                            <% folders.forEach(f=> { %>
+                                <div class="folder-card-item" onclick="selectFolder('<%= f.name.replace(/'/g, "\\'") %>')" data-folder-id="<%= f._id %>" data-folder-name="<%= f.name.toLowerCase() %>" data-folder-desc="<%= (f.description || '' ).toLowerCase() %>">
+                                                <div class="folder-card-top">
+                                                    <div class="folder-icon-avatar">
+                                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            stroke-linecap="round" stroke-linejoin="round">
+                                                            <path
+                                                                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                                            </path>
+                                                        </svg>
+                                                    </div>
+                                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                                        <span
+                                                            class="folder-count-badge <%= (f.count || 0) > 0 ? 'has-papers' : 'empty' %>">
+                                                            <%= f.count || 0 %>
+                                                                <%= (f.count===1) ? 'Paper' : 'Papers' %>
+                                                        </span>
+                                                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                            <button type="button" class="btn-card-edit-folder"
+                                                                onclick="event.stopPropagation(); openEditFolderModal('<%= f._id %>', '<%= f.name.replace(/'/g, "\\'") %>', '<%= (f.description || '').replace(/'/g, "\\'") %>')"
+                                                                title="Edit this folder">
+                                                                <svg width="13" height="13" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" class="btn-card-del-folder"
+                                                                onclick="event.stopPropagation(); deleteFolder('<%= f._id %>', '<%= f.name.replace(/'/g, "\\'") %>')" title="Delete this folder">
+                                                                <svg width="13" height="13" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path
+                                                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                                    </path>
+                                                                </svg>
+                                                            </button>
+                                                            <% } %>
+                                                    </div>
+                                                </div>
+                                                <div class="folder-card-body">
+                                                    <h3 class="folder-card-title">
+                                                        <%= f.name %>
+                                                    </h3>
+                                                    <p class="folder-card-desc">
+                                                        <%= f.description
+                                                            || 'Assessment tests, answer keys & batch results' %>
+                                                    </p>
+                                                </div>
+                                                <div class="folder-card-footer">
+                                                    <span>Open Folder</span>
+                                                    <svg class="folder-card-arrow" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2.5" stroke-linecap="round"
+                                                        stroke-linejoin="round">
+                                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                                    </svg>
+                                                </div>
+                                </div>
+                                <% }) %>
+                                    <% } else { %>
+                                        <div
+                                            style="grid-column: 1 / -1; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 16px; padding: 2.25rem 1.5rem; text-align: center;">
+                                            <div
+                                                style="width: 46px; height: 46px; border-radius: 12px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path
+                                                        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <h3
+                                                style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: #0F172A;">
+                                                No Custom Folders Created Yet</h3>
+                                            <p
+                                                style="color: #64748B; font-size: 0.85rem; max-width: 440px; margin: 0 auto 1.25rem auto; line-height: 1.5;">
+                                                You haven't created any batches or folders yet. Click the button below
+                                                to create your first Section / Batch / Folder.
+                                            </p>
+                                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    onclick="openCreateFolderModal()"
+                                                    style="font-weight: 600; padding: 7px 16px; font-size: 0.85rem;">
+                                                    + Create Your First Folder
+                                                </button>
+                                                <% } %>
+                                        </div>
+                                        <% } %>
+                    </div>
+
+                    <div id="noFoldersFoundState"
+                        style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; margin-top: 1rem;">
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">No folders matching your
+                            search.</p>
+                    </div>
+                </section>
+
+                <!-- FOLDER PAPERS VIEW (Shown when a folder is selected) -->
+                <section id="folderPapersSection" style="<%= activeFolder ? '' : 'display: none;' %>">
+                    <div class="folder-nav-bar">
+                        <div class="folder-active-title-group">
+                            <button type="button" class="btn-back-folders" onclick="exitFolderView()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
                                 </svg>
-                                + Create Paper
-                            </a>
-                            <button type="button" id="btnDeleteActiveFolder" class="btn btn-secondary btn-sm" onclick="deleteCurrentActiveFolder()" style="color: #DC2626; border-color: #FECACA; display: <%= (activeFolder && activeFolder !== 'all') ? 'inline-flex' : 'none' %>; align-items: center; gap: 5px;" title="Delete this folder">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                Delete Folder
+                                All Folders
                             </button>
+                            <span class="breadcrumb-sep">/</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: #2563EB; display: inline-flex; align-items: center;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path
+                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                        </path>
+                                    </svg>
+                                </span>
+                                <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0F172A;"
+                                    id="activeFolderHeading">
+                                    <%= activeFolder || 'Folder' %>
+                                </h2>
+                                <span class="count-badge" id="activeFolderPaperBadge">0 Papers</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <div class="search-box" style="min-width: 200px;">
+                                <span class="search-icon" aria-hidden="true">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </span>
+                                <input type="search" id="dashboardSearchInput" aria-label="Search papers"
+                                    placeholder="Search papers in this folder..." oninput="handleSearch()">
+                            </div>
+
+                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                <a href="/paper/new<%= activeFolder && activeFolder !== 'all' ? ('?category=' + encodeURIComponent(activeFolder)) : '' %>"
+                                    id="btnCreatePaperInActiveFolder" class="btn btn-primary btn-sm"
+                                    style="font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    + Create Paper
+                                </a>
+                                <button type="button" id="btnEditActiveFolder" class="btn btn-secondary btn-sm"
+                                    onclick="editCurrentActiveFolder()"
+                                    style="display: <%= (activeFolder && activeFolder !== 'all') ? 'inline-flex' : 'none' %>; align-items: center; gap: 5px;"
+                                    title="Edit this folder name and description">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit Folder
+                                </button>
+                                <button type="button" id="btnDeleteActiveFolder" class="btn btn-secondary btn-sm"
+                                    onclick="deleteCurrentActiveFolder()"
+                                    style="color: #DC2626; border-color: #FECACA; display: <%= (activeFolder && activeFolder !== 'all') ? 'inline-flex' : 'none' %>; align-items: center; gap: 5px;"
+                                    title="Delete this folder">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path
+                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                        </path>
+                                    </svg>
+                                    Delete Folder
+                                </button>
+                                <% } %>
+
+                                    <a href="/jee" class="btn btn-secondary btn-sm"
+                                        style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)">
+                                            </ellipse>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)">
+                                            </ellipse>
+                                        </svg>
+                                        JEE Mains Section &rarr;
+                                    </a>
+                        </div>
+                    </div>
+
+                    <% if (papers && papers.length> 0) { %>
+                        <div class="paper-list" id="paperListGrid">
+                            <% papers.forEach(paper=> { %>
+                                <% const hasKey=(Array.isArray(paper.answer_key) && paper.answer_key.some(k=> k)) ||
+                                    (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length
+                                    > 0));
+                                    const totalQ = paper.total_questions || paper.numQuestions || 50;
+                                    const encodedId = encodeURIComponent(paper._id);
+                                    const pIdStr = String(paper._id);
+                                    const paperCat = (paper.category || paper.batch || 'General').trim();
+                                    const searchStr = `${paper.title || ''} ${paper.subject || ''} ${pIdStr}
+                                    ${paperCat}`.toLowerCase();
+                                    %>
+                                    <article class="paper-card paper-item-card" id="card-<%= pIdStr %>"
+                                        data-search="<%= searchStr %>" data-category="<%= paperCat.toLowerCase() %>">
+                                        <script type="application/json" id="paper-data-<%= pIdStr %>"><%- JSON.stringify({
+                                            _id: String(paper._id),
+                                            title: paper.title,
+                                            subject: paper.subject || 'General',
+                                            category: paperCat,
+                                            total_questions: totalQ,
+                                            max_marks: paper.max_marks || (totalQ * 4),
+                                            sections: paper.sections || []
+                                        }) %></script>
+                                        <div>
+                                            <div class="paper-card-header">
+                                                <h3 class="paper-card-title">
+                                                    <%= paper.title %>
+                                                </h3>
+                                                <% if (hasKey) { %>
+                                                    <span class="status-chip status-ready"
+                                                        title="Answer key configured">
+                                                        <span class="status-dot-sm"></span> Key Ready
+                                                    </span>
+                                                    <% } else { %>
+                                                        <span class="status-chip status-pending"
+                                                            title="Answer key not configured">
+                                                            <span class="status-dot-sm"></span> Key Pending
+                                                        </span>
+                                                        <% } %>
+                                            </div>
+
+                                            <div class="paper-specs">
+                                                <span class="spec-chip spec-chip-cat">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <path
+                                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                                        </path>
+                                                    </svg>
+                                                    <%= paperCat %>
+                                                </span>
+                                                <span class="spec-chip">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                                    </svg>
+                                                    <%= totalQ %> Qs
+                                                </span>
+                                                <% if (paper.sections && paper.sections.length> 0) { %>
+                                                    <span class="spec-chip">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            stroke-linecap="round" stroke-linejoin="round"
+                                                            aria-hidden="true">
+                                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2">
+                                                            </rect>
+                                                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                                                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                                                        </svg>
+                                                        <%= paper.sections.length %> Sec
+                                                    </span>
+                                                    <% } %>
+                                                        <% if (paper.max_marks) { %>
+                                                            <span class="spec-chip">
+                                                                <svg width="12" height="12" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    aria-hidden="true">
+                                                                    <circle cx="12" cy="8" r="6"></circle>
+                                                                    <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11">
+                                                                    </path>
+                                                                </svg>
+                                                                <%= paper.max_marks %> M
+                                                            </span>
+                                                            <% } %>
+                                            </div>
+
+                                            <div class="paper-card-footer-info">
+                                                <span>Subject: <strong>
+                                                        <%= paper.subject || 'General' %>
+                                                    </strong></span>
+                                                <span>ID: <code
+                                                        class="paper-id-code"><%= pIdStr.slice(-8) %></code></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Buttons Side-by-Side in Horizontal Row -->
+                                        <div class="paper-actions-row">
+                                            <a href="/paper/<%= encodedId %>" class="btn-action-pill btn-act-key"
+                                                title="View or edit answer key">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" aria-hidden="true">
+                                                    <circle cx="8" cy="15" r="4"></circle>
+                                                    <line x1="10.85" y1="12.15" x2="19" y2="4"></line>
+                                                    <line x1="18" y1="5" x2="20" y2="7"></line>
+                                                    <line x1="15" y1="8" x2="17" y2="10"></line>
+                                                </svg>
+                                                Key
+                                            </a>
+
+                                            <a href="/paper/<%= encodedId %>/results"
+                                                class="btn-action-pill btn-act-results"
+                                                title="View Results and Checked OMR Copies">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" aria-hidden="true">
+                                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                                </svg>
+                                                Results
+                                            </a>
+
+                                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                <a href="/paper/<%= encodedId %>/omr" target="_blank"
+                                                    class="btn-action-pill btn-act-print"
+                                                    title="Open Printable A4 OMR Sheet">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                                        <path
+                                                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
+                                                        </path>
+                                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                                    </svg>
+                                                    Print
+                                                </a>
+
+                                                <a href="/paper/<%= encodedId %>/scan"
+                                                    class="btn-action-pill btn-act-scan"
+                                                    title="Scan OMR Sheet with Camera">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <path
+                                                            d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                        </path>
+                                                        <circle cx="12" cy="13" r="4"></circle>
+                                                    </svg>
+                                                    Scan
+                                                </a>
+
+                                                <button type="button" class="btn-action-pill btn-act-edit"
+                                                    onclick="openEditPaperModal('<%= pIdStr %>')"
+                                                    title="Edit paper details (Title, Subject, Folder, Questions, Sections)">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                    </svg>
+                                                    Edit
+                                                </button>
+
+                                                <button type="button" class="btn-action-pill btn-act-migrate"
+                                                    onclick="openMigrateModal('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>', '<%= paperCat.replace(/'/g, "\\'") %>')" title="Move / Migrate this paper to another Section / Batch / Folder">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round"
+                                                        aria-hidden="true">
+                                                        <path
+                                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                                        </path>
+                                                        <polyline points="12 11 12 17"></polyline>
+                                                        <polyline points="9 14 12 17 15 14"></polyline>
+                                                    </svg>
+                                                    Move
+                                                </button>
+
+                                                <button type="button" class="btn-action-pill btn-act-delete"
+                                                    onclick="deleteStandardPaper('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>')" title="Delete this paper and all its student submissions and OMR images">
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path
+                                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                        </path>
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                                <% } %>
+                                        </div>
+                                    </article>
+                                    <% }) %>
+                        </div>
                         <% } %>
 
-                        <a href="/jee" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse>
-                                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse>
-                            </svg>
-                            JEE Mains Section &rarr;
-                        </a>
-                    </div>
-                </div>
-
-            <% if (papers && papers.length > 0) { %>
-                <div class="paper-list" id="paperListGrid">
-                    <% papers.forEach(paper => { %>
-                        <% 
-                            const hasKey = (Array.isArray(paper.answer_key) && paper.answer_key.some(k => k)) ||
-                                           (paper.answerKey && (paper.answerKey.size > 0 || Object.keys(paper.answerKey).length > 0));
-                            const totalQ = paper.total_questions || paper.numQuestions || 50;
-                            const encodedId = encodeURIComponent(paper._id);
-                            const pIdStr = String(paper._id);
-                            const paperCat = (paper.category || paper.batch || 'General').trim();
-                            const searchStr = `${paper.title || ''} ${paper.subject || ''} ${pIdStr} ${paperCat}`.toLowerCase();
-                        %>
-                        <article class="paper-card paper-item-card" id="card-<%= pIdStr %>" data-search="<%= searchStr %>" data-category="<%= paperCat.toLowerCase() %>">
-                            <div>
-                                <div class="paper-card-header">
-                                    <h3 class="paper-card-title"><%= paper.title %></h3>
-                                    <% if (hasKey) { %>
-                                        <span class="status-chip status-ready" title="Answer key configured">
-                                            <span class="status-dot-sm"></span> Key Ready
-                                        </span>
-                                    <% } else { %>
-                                        <span class="status-chip status-pending" title="Answer key not configured">
-                                            <span class="status-dot-sm"></span> Key Pending
-                                        </span>
-                                    <% } %>
-                                </div>
-
-                                <div class="paper-specs">
-                                    <span class="spec-chip spec-chip-cat">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                        </svg>
-                                        <%= paperCat %>
-                                    </span>
-                                    <span class="spec-chip">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                        </svg>
-                                        <%= totalQ %> Qs
-                                    </span>
-                                    <% if (paper.sections && paper.sections.length > 0) { %>
-                                        <span class="spec-chip">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                                <line x1="3" y1="9" x2="21" y2="9"></line>
-                                                <line x1="9" y1="21" x2="9" y2="9"></line>
-                                            </svg>
-                                            <%= paper.sections.length %> Sec
-                                        </span>
-                                    <% } %>
-                                    <% if (paper.max_marks) { %>
-                                        <span class="spec-chip">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                <circle cx="12" cy="8" r="6"></circle>
-                                                <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
-                                            </svg>
-                                            <%= paper.max_marks %> M
-                                        </span>
-                                    <% } %>
-                                </div>
-
-                                <div class="paper-card-footer-info">
-                                    <span>Subject: <strong><%= paper.subject || 'General' %></strong></span>
-                                    <span>ID: <code class="paper-id-code"><%= pIdStr.slice(-8) %></code></span>
-                                </div>
-                            </div>
-
-                            <!-- Buttons Side-by-Side in Horizontal Row -->
-                            <div class="paper-actions-row">
-                                <a href="/paper/<%= encodedId %>" class="btn-action-pill btn-act-key" title="View or edit answer key">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <circle cx="8" cy="15" r="4"></circle>
-                                        <line x1="10.85" y1="12.15" x2="19" y2="4"></line>
-                                        <line x1="18" y1="5" x2="20" y2="7"></line>
-                                        <line x1="15" y1="8" x2="17" y2="10"></line>
+                            <!-- Empty Folder State (shown when current active folder has 0 papers) -->
+                            <div id="emptyFolderBox"
+                                style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3.5rem 1.5rem; text-align: center; margin-top: 1rem;">
+                                <div
+                                    style="width: 52px; height: 52px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path
+                                            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                        </path>
                                     </svg>
-                                    Key
-                                </a>
-
-                                <a href="/paper/<%= encodedId %>/results" class="btn-action-pill btn-act-results" title="View Results and Checked OMR Copies">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                                    </svg>
-                                    Results
-                                </a>
-
-                                <% if (currentUser && currentUser.role === 'admin') { %>
-                                    <a href="/paper/<%= encodedId %>/omr" target="_blank" class="btn-action-pill btn-act-print" title="Open Printable A4 OMR Sheet">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                            <rect x="6" y="14" width="12" height="8"></rect>
-                                        </svg>
-                                        Print
+                                </div>
+                                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; font-weight: 700; color: #0F172A;"
+                                    id="emptyFolderTitle">No papers in this folder yet</h3>
+                                <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.88rem; line-height: 1.5;"
+                                    id="emptyFolderDesc">
+                                    Create your first assessment paper in this folder to generate printable OMR answer
+                                    sheets and start evaluating.
+                                </p>
+                                <% if (currentUser && currentUser.role==='admin' ) { %>
+                                    <a href="/paper/new" id="btnEmptyCreatePaper" class="btn btn-primary">
+                                        + Create Paper in this Folder
                                     </a>
-
-                                    <a href="/paper/<%= encodedId %>/scan" class="btn-action-pill btn-act-scan" title="Scan OMR Sheet with Camera">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                            <circle cx="12" cy="13" r="4"></circle>
-                                        </svg>
-                                        Scan
-                                    </a>
-
-                                    <button type="button" class="btn-action-pill btn-act-migrate" onclick="openMigrateModal('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>', '<%= paperCat.replace(/'/g, "\\'") %>')" title="Move / Migrate this paper to another Section / Batch / Folder">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                            <polyline points="12 11 12 17"></polyline>
-                                            <polyline points="9 14 12 17 15 14"></polyline>
-                                        </svg>
-                                        Move
-                                    </button>
-
-                                    <button type="button" class="btn-action-pill btn-act-delete" onclick="deleteStandardPaper('<%= pIdStr %>', '<%= paper.title.replace(/'/g, "\\'") %>')" title="Delete this paper and all its student submissions and OMR images">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        Delete
-                                    </button>
-                                <% } %>
+                                    <% } %>
                             </div>
-                        </article>
-                    <% }) %>
-                </div>
-            <% } %>
+                </section>
+            </main>
+        </div>
 
-                <!-- Empty Folder State (shown when current active folder has 0 papers) -->
-                <div id="emptyFolderBox" style="display: none; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3.5rem 1.5rem; text-align: center; margin-top: 1rem;">
-                    <div style="width: 52px; height: 52px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        <!-- Create Folder Modal Dialog -->
+        <dialog id="createFolderModal" class="folder-modal-dialog" closedby="any"
+            style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+            <div
+                style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                            </path>
                         </svg>
-                    </div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; font-weight: 700; color: #0F172A;" id="emptyFolderTitle">No papers in this folder yet</h3>
-                    <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.88rem; line-height: 1.5;" id="emptyFolderDesc">
-                        Create your first assessment paper in this folder to generate printable OMR answer sheets and start evaluating.
-                    </p>
-                    <% if (currentUser && currentUser.role === 'admin') { %>
-                        <a href="/paper/new" id="btnEmptyCreatePaper" class="btn btn-primary">
-                            + Create Paper in this Folder
-                        </a>
-                    <% } %>
+                    </span>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Create Section / Batch
+                        / Folder</h3>
                 </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Create Folder Modal Dialog -->
-    <dialog id="createFolderModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-flex; align-items: center; color: #2563EB;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                </span>
-                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Create Section / Batch / Folder</h3>
+                <button type="button" onclick="document.getElementById('createFolderModal').close()"
+                    style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
             </div>
-            <button type="button" onclick="document.getElementById('createFolderModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
-        </div>
-        <form onsubmit="submitCreateFolder(event)" style="padding: 20px;">
-            <div style="margin-bottom: 14px;">
-                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Folder Name *</label>
-                <input type="text" id="newFolderNameInput" class="form-control" placeholder="e.g. 11th NEET, Target 2026, Foundation" required style="width: 100%;">
+            <form onsubmit="submitCreateFolder(event)" style="padding: 20px;">
+                <div style="margin-bottom: 14px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Folder
+                        Name *</label>
+                    <input type="text" id="newFolderNameInput" class="form-control"
+                        placeholder="e.g. 11th NEET, Target 2026, Foundation" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 18px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Description
+                        (Optional)</label>
+                    <input type="text" id="newFolderDescInput" class="form-control" placeholder="e.g. Morning Batch"
+                        style="width: 100%;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="document.getElementById('createFolderModal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitCreateFolder">Create
+                        Folder</button>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- Migrate Paper Modal Dialog -->
+        <dialog id="migratePaperModal" class="folder-modal-dialog" closedby="any"
+            style="max-width: 440px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+            <div
+                style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-flex; align-items: center; color: #059669;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                            </path>
+                            <polyline points="12 11 12 17"></polyline>
+                            <polyline points="9 14 12 17 15 14"></polyline>
+                        </svg>
+                    </span>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Migrate Paper to Folder
+                    </h3>
+                </div>
+                <button type="button" onclick="document.getElementById('migratePaperModal').close()"
+                    style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
             </div>
-            <div style="margin-bottom: 18px;">
-                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Description (Optional)</label>
-                <input type="text" id="newFolderDescInput" class="form-control" placeholder="e.g. Morning Batch" style="width: 100%;">
+            <form onsubmit="submitMigratePaper(event)" style="padding: 20px;">
+                <input type="hidden" id="migratePaperId">
+                <div style="margin-bottom: 14px;">
+                    <span
+                        style="font-size: 0.78rem; color: #64748B; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Selected
+                        Paper</span>
+                    <div id="migratePaperTitle"
+                        style="font-weight: 700; font-size: 0.95rem; color: #1E293B; margin-top: 2px;"></div>
+                    <div id="migrateCurrentFolder" style="font-size: 0.8rem; color: #64748B; margin-top: 2px;"></div>
+                </div>
+                <div style="margin-bottom: 18px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Target
+                        Section / Batch / Folder *</label>
+                    <select id="migrateTargetSelect" class="form-control" style="width: 100%; font-weight: 600;"
+                        required>
+                        <% if (typeof folders !=='undefined' && folders.length> 0) { %>
+                            <% folders.forEach(f=> { %>
+                                <option value="<%= f.name %>">
+                                    <%= f.name %>
+                                </option>
+                                <% }) %>
+                                    <% } else if (typeof categories !=='undefined' && categories.length> 0) { %>
+                                        <% categories.forEach(cat=> { %>
+                                            <option value="<%= cat %>">
+                                                <%= cat %>
+                                            </option>
+                                            <% }) %>
+                                                <% } %>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="document.getElementById('migratePaperModal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitMigrate"
+                        style="background: #059669; border-color: #059669;">Migrate Paper</button>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- Edit Folder Modal Dialog -->
+        <dialog id="editFolderModal" class="folder-modal-dialog" closedby="any"
+            style="max-width: 440px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 14px 34px rgba(0,0,0,0.18); background: #FFFFFF;">
+            <div
+                style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-radius: 12px 12px 0 0;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </span>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Edit Section / Batch / Folder</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('editFolderModal').close()"
+                    style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('createFolderModal').close()">Cancel</button>
-                <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitCreateFolder">Create Folder</button>
+            <form onsubmit="submitEditFolder(event)" style="padding: 20px;">
+                <input type="hidden" id="editFolderId">
+                <div style="margin-bottom: 14px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Folder
+                        Name *</label>
+                    <input type="text" id="editFolderNameInput" class="form-control" required style="width: 100%;">
+                </div>
+                <div style="margin-bottom: 18px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Description
+                        (Optional)</label>
+                    <input type="text" id="editFolderDescInput" class="form-control" placeholder="e.g. Morning Batch"
+                        style="width: 100%;">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="document.getElementById('editFolderModal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitEditFolder">Save Changes</button>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- Edit Paper Modal Dialog with Section Builder -->
+        <dialog id="editPaperModal" class="folder-modal-dialog" closedby="any"
+            style="max-width: 680px; width: 95%; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 16px 40px rgba(0,0,0,0.22); background: #FFFFFF;">
+            <div
+                style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-radius: 12px 12px 0 0;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-flex; align-items: center; color: #2563EB;">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </span>
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #1E293B;">Edit Paper Details</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('editPaperModal').close()"
+                    style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #64748B; line-height: 1;">&times;</button>
             </div>
-        </form>
-    </dialog>
+            <form onsubmit="submitEditPaper(event)" style="padding: 20px; max-height: calc(88vh - 80px); overflow-y: auto;">
+                <input type="hidden" id="editPaperId">
 
-    <!-- Migrate Paper Modal Dialog -->
-    <dialog id="migratePaperModal" class="folder-modal-dialog" closedby="any" style="max-width: 440px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-flex; align-items: center; color: #059669;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                        <polyline points="12 11 12 17"></polyline>
-                        <polyline points="9 14 12 17 15 14"></polyline>
-                    </svg>
-                </span>
-                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">Migrate Paper to Folder</h3>
-            </div>
-            <button type="button" onclick="document.getElementById('migratePaperModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
-        </div>
-        <form onsubmit="submitMigratePaper(event)" style="padding: 20px;">
-            <input type="hidden" id="migratePaperId">
-            <div style="margin-bottom: 14px;">
-                <span style="font-size: 0.78rem; color: #64748B; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Selected Paper</span>
-                <div id="migratePaperTitle" style="font-weight: 700; font-size: 0.95rem; color: #1E293B; margin-top: 2px;"></div>
-                <div id="migrateCurrentFolder" style="font-size: 0.8rem; color: #64748B; margin-top: 2px;"></div>
-            </div>
-            <div style="margin-bottom: 18px;">
-                <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Target Section / Batch / Folder *</label>
-                <select id="migrateTargetSelect" class="form-control" style="width: 100%; font-weight: 600;" required>
-                    <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
-                        <% folders.forEach(f => { %>
-                            <option value="<%= f.name %>"><%= f.name %></option>
-                        <% }) %>
-                    <% } else if (typeof categories !== 'undefined' && categories.length > 0) { %>
-                        <% categories.forEach(cat => { %>
-                            <option value="<%= cat %>"><%= cat %></option>
-                        <% }) %>
-                    <% } %>
-                </select>
-            </div>
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('migratePaperModal').close()">Cancel</button>
-                <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitMigrate" style="background: #059669; border-color: #059669;">Migrate Paper</button>
-            </div>
-        </form>
-    </dialog>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 14px;">
+                    <div>
+                        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Paper Title *</label>
+                        <input type="text" id="editPaperTitle" class="form-control" placeholder="e.g. Full NEET Mock Test 01" required style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Subject</label>
+                        <input type="text" id="editPaperSubject" class="form-control" placeholder="e.g. Physics, Chemistry" style="width: 100%;">
+                    </div>
+                </div>
 
-    <script>
-        let currentActiveFolder = <%- JSON.stringify(activeFolder ? activeFolder : null) %>;
+                <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Section / Batch / Folder *</label>
+                        <select id="editPaperFolder" class="form-control" style="width: 100%; font-weight: 600;" required>
+                            <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
+                                <% folders.forEach(f => { %>
+                                    <option value="<%= f.name %>"><%= f.name %></option>
+                                <% }) %>
+                            <% } else if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat %>"><%= cat %></option>
+                                <% }) %>
+                            <% } else { %>
+                                <option value="General">General</option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Total Questions *</label>
+                        <input type="number" id="editPaperTotalQ" class="form-control" min="1" max="200" required style="width: 100%; font-family: 'JetBrains Mono', monospace; font-weight: 600;" oninput="onEditPaperTotalQChanged()">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 5px;">Max Marks</label>
+                        <input type="number" id="editPaperMaxMarks" class="form-control" min="0" style="width: 100%; font-family: 'JetBrains Mono', monospace; font-weight: 600;" placeholder="Auto">
+                    </div>
+                </div>
 
-        function selectFolder(folderName, updateHistory = true) {
-            currentActiveFolder = folderName;
-            const foldersSec = document.getElementById('foldersDirectorySection');
-            const papersSec = document.getElementById('folderPapersSection');
-            const heading = document.getElementById('activeFolderHeading');
-            const folderIcon = document.getElementById('folderTitleIcon');
-            const searchInput = document.getElementById('dashboardSearchInput');
-            const btnCreateInFolder = document.getElementById('btnCreatePaperInActiveFolder');
-            const btnDeleteActive = document.getElementById('btnDeleteActiveFolder');
-            const btnEmptyCreate = document.getElementById('btnEmptyCreatePaper');
+                <!-- Section Configuration Box -->
+                <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px; margin-bottom: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong style="font-size: 0.92rem; color: #1E293B;">Sections &amp; Question Ranges</strong>
+                            <span id="editSecStatusBadge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; border: 1px solid #BFDBFE;">0 Sections</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="autoDivideEditSections()" style="padding: 4px 10px; font-size: 0.78rem;" title="Auto-divide across balanced sections">
+                                Auto Divide
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="addEditSectionRow('', 1, 10, 40)" style="padding: 4px 10px; font-size: 0.78rem;" title="Add another section">
+                                + Add Section
+                            </button>
+                        </div>
+                    </div>
+                    <div id="editSecRowsContainer" style="max-height: 240px; overflow-y: auto;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
 
-            if (foldersSec) foldersSec.style.display = 'none';
-            if (papersSec) papersSec.style.display = 'block';
+                <div style="display: flex; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('editPaperModal').close()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitEditPaper" style="font-weight: 600;">Save Paper Details</button>
+                </div>
+            </form>
+        </dialog>
 
-            const displayName = (folderName === 'all') ? 'All Assessment Papers' : folderName;
-            if (heading) heading.textContent = displayName;
+        <script>
+            let currentActiveFolder = <%- JSON.stringify(activeFolder ? activeFolder : null) %>;
 
-            if (folderIcon) {
-                folderIcon.innerHTML = (folderName === 'all')
-                    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`
-                    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+            function selectFolder(folderName, updateHistory = true) {
+                currentActiveFolder = folderName;
+                const foldersSec = document.getElementById('foldersDirectorySection');
+                const papersSec = document.getElementById('folderPapersSection');
+                const heading = document.getElementById('activeFolderHeading');
+                const folderIcon = document.getElementById('folderTitleIcon');
+                const searchInput = document.getElementById('dashboardSearchInput');
+                const btnCreateInFolder = document.getElementById('btnCreatePaperInActiveFolder');
+                const btnDeleteActive = document.getElementById('btnDeleteActiveFolder');
+                const btnEditActive = document.getElementById('btnEditActiveFolder');
+                const btnEmptyCreate = document.getElementById('btnEmptyCreatePaper');
+
+                if (foldersSec) foldersSec.style.display = 'none';
+                if (papersSec) papersSec.style.display = 'block';
+
+                const displayName = (folderName === 'all') ? 'All Assessment Papers' : folderName;
+                if (heading) heading.textContent = displayName;
+
+                if (folderIcon) {
+                    folderIcon.innerHTML = (folderName === 'all')
+                        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`
+                        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+                }
+
+                if (btnDeleteActive) {
+                    btnDeleteActive.style.display = (folderName === 'all') ? 'none' : 'inline-flex';
+                }
+                if (btnEditActive) {
+                    btnEditActive.style.display = (folderName === 'all') ? 'none' : 'inline-flex';
+                }
+
+                const targetUrlParam = (folderName === 'all') ? '' : ('?category=' + encodeURIComponent(folderName));
+                if (btnCreateInFolder) {
+                    btnCreateInFolder.href = '/paper/new' + targetUrlParam;
+                }
+                if (btnEmptyCreate) {
+                    btnEmptyCreate.href = '/paper/new' + targetUrlParam;
+                    btnEmptyCreate.textContent = (folderName === 'all') ? '+ Create First Paper' : `+ Create Paper in "${displayName}"`;
+                }
+                const emptyTitle = document.getElementById('emptyFolderTitle');
+                if (emptyTitle) {
+                    emptyTitle.textContent = (folderName === 'all') ? 'No assessment papers found' : `No papers in "${displayName}" yet`;
+                }
+
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.placeholder = (folderName === 'all') ? 'Search all papers...' : `Search papers in ${displayName}...`;
+                }
+
+                filterPapersInsideFolder('');
+
+                if (updateHistory) {
+                    const newUrl = (folderName === 'all') ? '/?folder=all' : ('/?folder=' + encodeURIComponent(folderName));
+                    window.history.pushState({ folder: folderName }, '', newUrl);
+                }
             }
 
-            if (btnDeleteActive) {
-                btnDeleteActive.style.display = (folderName === 'all') ? 'none' : 'inline-flex';
+            function exitFolderView(updateHistory = true) {
+                currentActiveFolder = null;
+                const foldersSec = document.getElementById('foldersDirectorySection');
+                const papersSec = document.getElementById('folderPapersSection');
+                const searchInput = document.getElementById('dashboardSearchInput');
+
+                if (foldersSec) foldersSec.style.display = 'block';
+                if (papersSec) papersSec.style.display = 'none';
+
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+
+                if (updateHistory) {
+                    window.history.pushState({}, '', '/');
+                }
             }
 
-            const targetUrlParam = (folderName === 'all') ? '' : ('?category=' + encodeURIComponent(folderName));
-            if (btnCreateInFolder) {
-                btnCreateInFolder.href = '/paper/new' + targetUrlParam;
-            }
-            if (btnEmptyCreate) {
-                btnEmptyCreate.href = '/paper/new' + targetUrlParam;
-                btnEmptyCreate.textContent = (folderName === 'all') ? '+ Create First Paper' : `+ Create Paper in "${displayName}"`;
-            }
-            const emptyTitle = document.getElementById('emptyFolderTitle');
-            if (emptyTitle) {
-                emptyTitle.textContent = (folderName === 'all') ? 'No assessment papers found' : `No papers in "${displayName}" yet`;
+            function handleSearch() {
+                const searchEl = document.getElementById('dashboardSearchInput');
+                const query = (searchEl ? searchEl.value : '').toLowerCase().trim();
+                if (currentActiveFolder) {
+                    filterPapersInsideFolder(query);
+                }
             }
 
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.placeholder = (folderName === 'all') ? 'Search all papers...' : `Search papers in ${displayName}...`;
+            function filterPapersInsideFolder(query = '') {
+                const q = (query || (document.getElementById('dashboardSearchInput') ? document.getElementById('dashboardSearchInput').value : '')).toLowerCase().trim();
+                const items = document.querySelectorAll('.paper-item-card');
+                let visibleCount = 0;
+
+                items.forEach(item => {
+                    const searchStr = item.getAttribute('data-search') || '';
+                    const itemCat = item.getAttribute('data-category') || '';
+                    const matchesSearch = !q || searchStr.includes(q);
+                    const matchesFolder = (currentActiveFolder === 'all') || (itemCat === (currentActiveFolder || '').toLowerCase());
+
+                    const show = matchesSearch && matchesFolder;
+                    item.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                });
+
+                const activeFolderBadge = document.getElementById('activeFolderPaperBadge');
+                if (activeFolderBadge) activeFolderBadge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
+
+                const emptyBox = document.getElementById('emptyFolderBox');
+                const paperGrid = document.getElementById('paperListGrid');
+                if (visibleCount === 0) {
+                    if (emptyBox) emptyBox.style.display = 'block';
+                    if (paperGrid) paperGrid.style.display = 'none';
+                } else {
+                    if (emptyBox) emptyBox.style.display = 'none';
+                    if (paperGrid) paperGrid.style.display = 'grid';
+                }
             }
 
-            filterPapersInsideFolder('');
-
-            if (updateHistory) {
-                const newUrl = (folderName === 'all') ? '/?folder=all' : ('/?folder=' + encodeURIComponent(folderName));
-                window.history.pushState({ folder: folderName }, '', newUrl);
-            }
-        }
-
-        function exitFolderView(updateHistory = true) {
-            currentActiveFolder = null;
-            const foldersSec = document.getElementById('foldersDirectorySection');
-            const papersSec = document.getElementById('folderPapersSection');
-            const searchInput = document.getElementById('dashboardSearchInput');
-
-            if (foldersSec) foldersSec.style.display = 'block';
-            if (papersSec) papersSec.style.display = 'none';
-
-            if (searchInput) {
-                searchInput.value = '';
+            function openCreateFolderModal() {
+                const m = document.getElementById('createFolderModal');
+                if (m) {
+                    document.getElementById('newFolderNameInput').value = '';
+                    document.getElementById('newFolderDescInput').value = '';
+                    if (typeof m.showModal === 'function') m.showModal();
+                    else m.setAttribute('open', '');
+                }
             }
 
-            if (updateHistory) {
-                window.history.pushState({}, '', '/');
+            async function submitCreateFolder(e) {
+                e.preventDefault();
+                const name = document.getElementById('newFolderNameInput').value.trim();
+                const desc = document.getElementById('newFolderDescInput').value.trim();
+                if (!name) return;
+                const btn = document.getElementById('btnSubmitCreateFolder');
+                btn.disabled = true;
+                btn.textContent = 'Creating...';
+                try {
+                    const res = await fetch('/api/folders', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description: desc, examType: 'standard' })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to create folder');
+                    }
+                    document.getElementById('createFolderModal').close();
+                    alert(`Folder "${data.folder.name}" created successfully!`);
+                    window.location.href = '/?folder=' + encodeURIComponent(data.folder.name);
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Create Folder';
+                }
             }
-        }
 
-        function handleSearch() {
-            const searchEl = document.getElementById('dashboardSearchInput');
-            const query = (searchEl ? searchEl.value : '').toLowerCase().trim();
-            if (currentActiveFolder) {
-                filterPapersInsideFolder(query);
+            async function deleteFolder(folderId, folderName) {
+                const ok = confirm(`Are you sure you want to permanently delete folder "${folderName}"?`);
+                if (!ok) return;
+                try {
+                    const res = await fetch('/api/folders/' + encodeURIComponent(folderId), {
+                        method: 'DELETE'
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert(`Folder "${folderName}" deleted successfully.`);
+                        window.location.href = '/';
+                    } else {
+                        alert(data.error || 'Failed to delete folder');
+                    }
+                } catch (err) {
+                    alert(err.message);
+                }
             }
-        }
 
-        function filterPapersInsideFolder(query = '') {
-            const q = (query || (document.getElementById('dashboardSearchInput') ? document.getElementById('dashboardSearchInput').value : '')).toLowerCase().trim();
-            const items = document.querySelectorAll('.paper-item-card');
-            let visibleCount = 0;
+            async function deleteCurrentActiveFolder() {
+                if (!currentActiveFolder || currentActiveFolder === 'all') {
+                    alert('Cannot delete this view.');
+                    return;
+                }
+                const card = document.querySelector(`.folder-card-item[data-folder-name="${currentActiveFolder.toLowerCase()}"]`);
+                const folderId = card ? card.getAttribute('data-folder-id') : currentActiveFolder;
+                await deleteFolder(folderId, currentActiveFolder);
+            }
 
-            items.forEach(item => {
-                const searchStr = item.getAttribute('data-search') || '';
-                const itemCat = item.getAttribute('data-category') || '';
-                const matchesSearch = !q || searchStr.includes(q);
-                const matchesFolder = (currentActiveFolder === 'all') || (itemCat === (currentActiveFolder || '').toLowerCase());
+            function openEditFolderModal(id, name, desc) {
+                document.getElementById('editFolderId').value = id;
+                document.getElementById('editFolderNameInput').value = name || '';
+                document.getElementById('editFolderDescInput').value = desc || '';
+                const m = document.getElementById('editFolderModal');
+                if (m) {
+                    if (typeof m.showModal === 'function') m.showModal();
+                    else m.setAttribute('open', '');
+                }
+            }
 
-                const show = matchesSearch && matchesFolder;
-                item.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
+            function editCurrentActiveFolder() {
+                if (!currentActiveFolder || currentActiveFolder === 'all') {
+                    alert('Cannot edit this view.');
+                    return;
+                }
+                const card = document.querySelector(`.folder-card-item[data-folder-name="${currentActiveFolder.toLowerCase()}"]`);
+                const folderId = card ? card.getAttribute('data-folder-id') : currentActiveFolder;
+                const folderDesc = card ? (card.getAttribute('data-folder-desc') || '') : '';
+                openEditFolderModal(folderId, currentActiveFolder, folderDesc);
+            }
+
+            async function submitEditFolder(e) {
+                e.preventDefault();
+                const folderId = document.getElementById('editFolderId').value;
+                const name = document.getElementById('editFolderNameInput').value.trim();
+                const desc = document.getElementById('editFolderDescInput').value.trim();
+                if (!name) return;
+                const btn = document.getElementById('btnSubmitEditFolder');
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+                try {
+                    const res = await fetch('/api/folders/' + encodeURIComponent(folderId), {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description: desc })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update folder');
+                    }
+                    document.getElementById('editFolderModal').close();
+                    alert(`Folder updated to "${data.folder.name}" successfully!`);
+                    window.location.href = '/?folder=' + encodeURIComponent(data.folder.name);
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Save Changes';
+                }
+            }
+
+            function openMigrateModal(pId, title, currentCat) {
+                document.getElementById('migratePaperId').value = pId;
+                document.getElementById('migratePaperTitle').textContent = title;
+                document.getElementById('migrateCurrentFolder').textContent = 'Currently in: ' + currentCat;
+                const sel = document.getElementById('migrateTargetSelect');
+                if (sel) {
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (sel.options[i].value.toLowerCase() === currentCat.toLowerCase()) {
+                            sel.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                const m = document.getElementById('migratePaperModal');
+                if (m) {
+                    if (typeof m.showModal === 'function') m.showModal();
+                    else m.setAttribute('open', '');
+                }
+            }
+
+            async function submitMigratePaper(e) {
+                e.preventDefault();
+                const paperId = document.getElementById('migratePaperId').value;
+                const targetFolder = document.getElementById('migrateTargetSelect').value;
+                const btn = document.getElementById('btnSubmitMigrate');
+                btn.disabled = true;
+                btn.textContent = 'Migrating...';
+                try {
+                    const res = await fetch(`/api/paper/${encodeURIComponent(paperId)}/migrate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetFolder })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to migrate paper');
+                    }
+                    const card = document.getElementById('card-' + paperId);
+                    if (card) {
+                        card.setAttribute('data-category', targetFolder.toLowerCase());
+                        const catBadge = card.querySelector('.spec-chip-cat');
+                        if (catBadge) {
+                            catBadge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> ${targetFolder}`;
+                        }
+                    }
+                    document.getElementById('migratePaperModal').close();
+                    alert(`Paper migrated to "${targetFolder}" successfully!`);
+                    window.location.reload();
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Migrate Paper';
+                }
+            }
+
+            async function deleteStandardPaper(id, title) {
+                const c1 = confirm(`[1/3 CONFIRMATION REQUIRED]\n\nAre you sure you want to permanently DELETE paper "${title}"?\n\nThis will remove the paper, all graded submissions, and all stored OMR scans.`);
+                if (!c1) return;
+
+                const c2 = confirm(`[2/3 WARNING: CATASTROPHIC DATA LOSS]\n\nAll student marks, rankings, and Cloudinary OMR image copies will be PERMANENTLY DESTROYED.\n\nAre you sure you want to proceed?`);
+                if (!c2) return;
+
+                const c3 = confirm(`[3/3 FINAL CONFIRMATION]\n\nFinal check: Type or confirm to permanently delete paper "${title}" and all its data immediately.`);
+                if (!c3) return;
+
+                try {
+                    const res = await fetch('/api/paper/' + encodeURIComponent(id), {
+                        method: 'DELETE'
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const card = document.getElementById('card-' + id);
+                        if (card) card.remove();
+                        filterPapersInsideFolder('');
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to delete paper'));
+                    }
+                } catch (err) {
+                    alert('Request failed: ' + err.message);
+                }
+            }
+
+            // Section builder state for Edit Paper Modal
+            function addEditSectionRow(name = '', fromQ = 1, toQ = 10, marks = null) {
+                const container = document.getElementById('editSecRowsContainer');
+                if (!container) return;
+                const row = document.createElement('div');
+                row.className = 'section-item-row';
+                const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+                const secMarks = (marks !== null && marks !== undefined) ? marks : (count * 4);
+                const escapedName = String(name || '').replace(/"/g, '&quot;');
+
+                row.innerHTML = `
+                    <div class="sec-col-name">
+                        <label class="sec-field-label">Section Name</label>
+                        <input type="text" class="sec-input sec-name-input" value="${escapedName}" placeholder="e.g. Physics / Botany" oninput="updateEditSectionsJSON()">
+                    </div>
+                    <div>
+                        <label class="sec-field-label">From Q #</label>
+                        <input type="number" min="1" max="200" class="sec-input sec-input-mono sec-from-input" value="${fromQ}" oninput="onEditRangeChange(this)">
+                    </div>
+                    <div>
+                        <label class="sec-field-label">To Q #</label>
+                        <input type="number" min="1" max="200" class="sec-input sec-input-mono sec-to-input" value="${toQ}" oninput="onEditRangeChange(this)">
+                    </div>
+                    <div>
+                        <label class="sec-field-label">Max Marks</label>
+                        <input type="number" min="0" class="sec-input sec-input-mono sec-marks-input" value="${secMarks}" oninput="updateEditSectionsJSON()">
+                    </div>
+                    <div class="sec-col-btn">
+                        <button type="button" class="btn-remove-sec" onclick="removeEditSectionRow(this)" title="Remove section">&times;</button>
+                    </div>
+                `;
+                container.appendChild(row);
+                updateEditSectionsJSON();
+            }
+
+            function removeEditSectionRow(btn) {
+                const row = btn.closest('.section-item-row');
+                if (row) row.remove();
+                updateEditSectionsJSON();
+            }
+
+            function onEditRangeChange(input) {
+                const row = input.closest('.section-item-row');
+                if (row) {
+                    const fromQ = parseInt(row.querySelector('.sec-from-input').value, 10) || 1;
+                    const toQ = parseInt(row.querySelector('.sec-to-input').value, 10) || fromQ;
+                    const marksInput = row.querySelector('.sec-marks-input');
+                    if (marksInput) {
+                        const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+                        marksInput.value = count * 4;
+                    }
+                }
+                updateEditSectionsJSON();
+            }
+
+            function updateEditSectionsJSON() {
+                const container = document.getElementById('editSecRowsContainer');
+                if (!container) return [];
+                const rows = container.querySelectorAll('.section-item-row');
+                const list = [];
+                let totalSecMarks = 0;
+                rows.forEach((r, idx) => {
+                    const name = r.querySelector('.sec-name-input').value.trim() || `Section ${idx + 1}`;
+                    const fromQ = parseInt(r.querySelector('.sec-from-input').value, 10) || 1;
+                    const toQ = parseInt(r.querySelector('.sec-to-input').value, 10) || fromQ;
+                    const count = (toQ >= fromQ) ? (toQ - fromQ + 1) : 0;
+                    const marks = parseInt(r.querySelector('.sec-marks-input').value, 10);
+                    const secMarks = (!isNaN(marks) && marks >= 0) ? marks : (count * 4);
+                    totalSecMarks += secMarks;
+                    list.push({
+                        name: name,
+                        from_question: fromQ,
+                        to_question: toQ,
+                        max_marks: secMarks
+                    });
+                });
+
+                const badge = document.getElementById('editSecStatusBadge');
+                if (badge) badge.textContent = `${list.length} Section${list.length !== 1 ? 's' : ''}`;
+
+                const maxMarksInput = document.getElementById('editPaperMaxMarks');
+                if (maxMarksInput && totalSecMarks > 0) {
+                    maxMarksInput.value = totalSecMarks;
+                }
+                return list;
+            }
+
+            function autoDivideEditSections() {
+                const container = document.getElementById('editSecRowsContainer');
+                if (!container) return;
+                container.innerHTML = '';
+                const totalQ = parseInt(document.getElementById('editPaperTotalQ').value, 10) || 180;
+
+                if (totalQ === 180) {
+                    addEditSectionRow('Physics', 1, 45, 180);
+                    addEditSectionRow('Chemistry', 46, 90, 180);
+                    addEditSectionRow('Botany', 91, 135, 180);
+                    addEditSectionRow('Zoology', 136, 180, 180);
+                } else if (totalQ === 200) {
+                    addEditSectionRow('Physics', 1, 50, 180);
+                    addEditSectionRow('Chemistry', 51, 100, 180);
+                    addEditSectionRow('Botany', 101, 150, 180);
+                    addEditSectionRow('Zoology', 151, 200, 180);
+                } else {
+                    const numSec = (totalQ >= 40) ? 4 : 2;
+                    const perSec = Math.floor(totalQ / numSec);
+                    let start = 1;
+                    const defNames = ['Physics', 'Chemistry', 'Botany', 'Zoology', 'Mathematics', 'Biology'];
+                    for (let s = 1; s <= numSec; s++) {
+                        const end = (s === numSec) ? totalQ : (start + perSec - 1);
+                        const sName = defNames[s - 1] || `Section ${s}`;
+                        addEditSectionRow(sName, start, end, (end - start + 1) * 4);
+                        start = end + 1;
+                    }
+                }
+            }
+
+            function onEditPaperTotalQChanged() {
+                const totalQ = parseInt(document.getElementById('editPaperTotalQ').value, 10) || 50;
+                const maxInput = document.getElementById('editPaperMaxMarks');
+                const container = document.getElementById('editSecRowsContainer');
+                if (container && container.querySelectorAll('.section-item-row').length === 0) {
+                    if (maxInput) maxInput.value = totalQ * 4;
+                } else {
+                    updateEditSectionsJSON();
+                }
+            }
+
+            function openEditPaperModal(paperId) {
+                const scriptEl = document.getElementById('paper-data-' + paperId);
+                let paper = null;
+                if (scriptEl) {
+                    try {
+                        paper = JSON.parse(scriptEl.textContent);
+                    } catch (e) {
+                        console.warn('Failed to parse paper data script:', e);
+                    }
+                }
+
+                function populateModal(p) {
+                    document.getElementById('editPaperId').value = p._id;
+                    document.getElementById('editPaperTitle').value = p.title || '';
+                    document.getElementById('editPaperSubject').value = p.subject || 'General';
+
+                    const folderSelect = document.getElementById('editPaperFolder');
+                    if (folderSelect) {
+                        const cat = (p.category || p.batch || 'General').trim();
+                        let found = false;
+                        for (let i = 0; i < folderSelect.options.length; i++) {
+                            if (folderSelect.options[i].value.toLowerCase() === cat.toLowerCase()) {
+                                folderSelect.selectedIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            const opt = new Option(cat, cat);
+                            folderSelect.add(opt);
+                            folderSelect.value = cat;
+                        }
+                    }
+
+                    const totalQ = p.total_questions || p.numQuestions || 50;
+                    document.getElementById('editPaperTotalQ').value = totalQ;
+                    document.getElementById('editPaperMaxMarks').value = p.max_marks || (totalQ * 4);
+
+                    const container = document.getElementById('editSecRowsContainer');
+                    if (container) {
+                        container.innerHTML = '';
+                        if (Array.isArray(p.sections) && p.sections.length > 0) {
+                            p.sections.forEach(sec => {
+                                const fromQ = sec.from_question || sec.from || 1;
+                                const toQ = sec.to_question || sec.to || fromQ;
+                                addEditSectionRow(sec.name, fromQ, toQ, sec.max_marks);
+                            });
+                        } else {
+                            autoDivideEditSections();
+                        }
+                    }
+
+                    const m = document.getElementById('editPaperModal');
+                    if (m) {
+                        if (typeof m.showModal === 'function') m.showModal();
+                        else m.setAttribute('open', '');
+                    }
+                }
+
+                if (paper) {
+                    populateModal(paper);
+                } else {
+                    fetch('/api/paper/' + encodeURIComponent(paperId))
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.success && data.paper) {
+                                populateModal(data.paper);
+                            } else {
+                                alert('Could not load paper details: ' + (data && data.error ? data.error : 'Unknown error'));
+                            }
+                        })
+                        .catch(err => alert('Error loading paper: ' + err.message));
+                }
+            }
+
+            async function submitEditPaper(e) {
+                e.preventDefault();
+                const paperId = document.getElementById('editPaperId').value;
+                const title = document.getElementById('editPaperTitle').value.trim();
+                const subject = document.getElementById('editPaperSubject').value.trim();
+                const category = document.getElementById('editPaperFolder').value;
+                const totalQ = parseInt(document.getElementById('editPaperTotalQ').value, 10);
+                const maxMarks = parseInt(document.getElementById('editPaperMaxMarks').value, 10);
+                const sections = updateEditSectionsJSON();
+
+                if (!title) {
+                    alert('Please enter a paper title.');
+                    return;
+                }
+                if (isNaN(totalQ) || totalQ < 1 || totalQ > 200) {
+                    alert('Total questions must be between 1 and 200.');
+                    return;
+                }
+
+                for (let i = 0; i < sections.length; i++) {
+                    const s = sections[i];
+                    if (s.to_question < s.from_question) {
+                        alert(`In section "${s.name}", "To Q#" (${s.to_question}) cannot be smaller than "From Q#" (${s.from_question}).`);
+                        return;
+                    }
+                    if (s.to_question > totalQ) {
+                        alert(`In section "${s.name}", "To Q#" (${s.to_question}) exceeds total questions (${totalQ}).`);
+                        return;
+                    }
+                }
+
+                const btn = document.getElementById('btnSubmitEditPaper');
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+
+                try {
+                    const res = await fetch('/api/paper/' + encodeURIComponent(paperId), {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title,
+                            subject,
+                            category,
+                            total_questions: totalQ,
+                            max_marks: maxMarks,
+                            sections
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update paper details');
+                    }
+
+                    document.getElementById('editPaperModal').close();
+                    alert(`Paper "${data.paper.title}" details updated successfully!`);
+
+                    const scriptEl = document.getElementById('paper-data-' + paperId);
+                    if (scriptEl) {
+                        scriptEl.textContent = JSON.stringify(data.paper);
+                    }
+
+                    window.location.reload();
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Save Paper Details';
+                }
+            }
+
+            // Handle browser Back / Forward buttons
+            window.addEventListener('popstate', () => {
+                const params = new URLSearchParams(window.location.search);
+                const folder = params.get('folder') || params.get('category');
+                if (folder) {
+                    selectFolder(folder, false);
+                } else {
+                    exitFolderView(false);
+                }
             });
 
-            const activeFolderBadge = document.getElementById('activeFolderPaperBadge');
-            if (activeFolderBadge) activeFolderBadge.textContent = visibleCount + (visibleCount === 1 ? ' Paper' : ' Papers');
-
-            const emptyBox = document.getElementById('emptyFolderBox');
-            const paperGrid = document.getElementById('paperListGrid');
-            if (visibleCount === 0) {
-                if (emptyBox) emptyBox.style.display = 'block';
-                if (paperGrid) paperGrid.style.display = 'none';
-            } else {
-                if (emptyBox) emptyBox.style.display = 'none';
-                if (paperGrid) paperGrid.style.display = 'grid';
-            }
-        }
-
-        function openCreateFolderModal() {
-            const m = document.getElementById('createFolderModal');
-            if (m) {
-                document.getElementById('newFolderNameInput').value = '';
-                document.getElementById('newFolderDescInput').value = '';
-                if (typeof m.showModal === 'function') m.showModal();
-                else m.setAttribute('open', '');
-            }
-        }
-
-        async function submitCreateFolder(e) {
-            e.preventDefault();
-            const name = document.getElementById('newFolderNameInput').value.trim();
-            const desc = document.getElementById('newFolderDescInput').value.trim();
-            if (!name) return;
-            const btn = document.getElementById('btnSubmitCreateFolder');
-            btn.disabled = true;
-            btn.textContent = 'Creating...';
-            try {
-                const res = await fetch('/api/folders', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description: desc, examType: 'standard' })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    throw new Error(data.error || 'Failed to create folder');
-                }
-                document.getElementById('createFolderModal').close();
-                alert(`Folder "${data.folder.name}" created successfully!`);
-                window.location.href = '/?folder=' + encodeURIComponent(data.folder.name);
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Create Folder';
-            }
-        }
-
-        async function deleteFolder(folderId, folderName) {
-            const ok = confirm(`Are you sure you want to permanently delete folder "${folderName}"?`);
-            if (!ok) return;
-            try {
-                const res = await fetch('/api/folders/' + encodeURIComponent(folderId), {
-                    method: 'DELETE'
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert(`Folder "${folderName}" deleted successfully.`);
-                    window.location.href = '/';
+            // Initialize view on page load
+            window.addEventListener('DOMContentLoaded', () => {
+                if (currentActiveFolder) {
+                    selectFolder(currentActiveFolder, false);
                 } else {
-                    alert(data.error || 'Failed to delete folder');
+                    exitFolderView(false);
                 }
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-
-        async function deleteCurrentActiveFolder() {
-            if (!currentActiveFolder || currentActiveFolder === 'all') {
-                alert('Cannot delete this view.');
-                return;
-            }
-            const card = document.querySelector(`.folder-card-item[data-folder-name="${currentActiveFolder.toLowerCase()}"]`);
-            const folderId = card ? card.getAttribute('data-folder-id') : currentActiveFolder;
-            await deleteFolder(folderId, currentActiveFolder);
-        }
-
-        function openMigrateModal(pId, title, currentCat) {
-            document.getElementById('migratePaperId').value = pId;
-            document.getElementById('migratePaperTitle').textContent = title;
-            document.getElementById('migrateCurrentFolder').textContent = 'Currently in: ' + currentCat;
-            const sel = document.getElementById('migrateTargetSelect');
-            if (sel) {
-                for (let i = 0; i < sel.options.length; i++) {
-                    if (sel.options[i].value.toLowerCase() === currentCat.toLowerCase()) {
-                        sel.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-            const m = document.getElementById('migratePaperModal');
-            if (m) {
-                if (typeof m.showModal === 'function') m.showModal();
-                else m.setAttribute('open', '');
-            }
-        }
-
-        async function submitMigratePaper(e) {
-            e.preventDefault();
-            const paperId = document.getElementById('migratePaperId').value;
-            const targetFolder = document.getElementById('migrateTargetSelect').value;
-            const btn = document.getElementById('btnSubmitMigrate');
-            btn.disabled = true;
-            btn.textContent = 'Migrating...';
-            try {
-                const res = await fetch(`/api/paper/${encodeURIComponent(paperId)}/migrate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ targetFolder })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    throw new Error(data.error || 'Failed to migrate paper');
-                }
-                const card = document.getElementById('card-' + paperId);
-                if (card) {
-                    card.setAttribute('data-category', targetFolder.toLowerCase());
-                    const catBadge = card.querySelector('.spec-chip-cat');
-                    if (catBadge) {
-                        catBadge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> ${targetFolder}`;
-                    }
-                }
-                document.getElementById('migratePaperModal').close();
-                alert(`Paper migrated to "${targetFolder}" successfully!`);
-                window.location.reload();
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Migrate Paper';
-            }
-        }
-
-        async function deleteStandardPaper(id, title) {
-            const c1 = confirm(`[1/3 CONFIRMATION REQUIRED]\n\nAre you sure you want to permanently DELETE paper "${title}"?\n\nThis will remove the paper, all graded submissions, and all stored OMR scans.`);
-            if (!c1) return;
-
-            const c2 = confirm(`[2/3 WARNING: CATASTROPHIC DATA LOSS]\n\nAll student marks, rankings, and Cloudinary OMR image copies will be PERMANENTLY DESTROYED.\n\nAre you sure you want to proceed?`);
-            if (!c2) return;
-
-            const c3 = confirm(`[3/3 FINAL CONFIRMATION]\n\nFinal check: Type or confirm to permanently delete paper "${title}" and all its data immediately.`);
-            if (!c3) return;
-
-            try {
-                const res = await fetch('/api/paper/' + encodeURIComponent(id), {
-                    method: 'DELETE'
-                });
-                const data = await res.json();
-                if (data.success) {
-                    const card = document.getElementById('card-' + id);
-                    if (card) card.remove();
-                    filterPapersInsideFolder('');
-                } else {
-                    alert('Error: ' + (data.error || 'Failed to delete paper'));
-                }
-            } catch (err) {
-                alert('Request failed: ' + err.message);
-            }
-        }
-
-        // Handle browser Back / Forward buttons
-        window.addEventListener('popstate', () => {
-            const params = new URLSearchParams(window.location.search);
-            const folder = params.get('folder') || params.get('category');
-            if (folder) {
-                selectFolder(folder, false);
-            } else {
-                exitFolderView(false);
-            }
-        });
-
-        // Initialize view on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            if (currentActiveFolder) {
-                selectFolder(currentActiveFolder, false);
-            } else {
-                exitFolderView(false);
-            }
-        });
-    </script>
-    <%- include('partials/sidebar_end') %>
+            });
+        </script>
+        <%- include('partials/sidebar_end') %>
 </body>
 
 </html>
