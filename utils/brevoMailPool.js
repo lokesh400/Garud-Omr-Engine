@@ -274,6 +274,70 @@ class BrevoMailPool {
             textContent
         });
     }
+
+    /**
+     * Sends Two-Factor Authentication (2FA) login OTP email to Admin / Teacher
+     */
+    async sendTwoFactorOtpEmail({ toEmail, toName, otp, role = 'admin', expiresMinutes = 10 }) {
+        const roleLabel = role === 'admin' ? 'Administrator' : 'Teacher';
+        const subject = `🔐 ${otp} is your 2-Factor Authentication Code • Garud OMR`;
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC; margin: 0; padding: 24px; color: #0F172A; }
+    .card { max-width: 520px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .brand { font-size: 20px; font-weight: 800; color: #2563EB; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .title { font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 12px 0; }
+    .text { font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px 0; }
+    .role-badge { display: inline-block; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 999px; margin-bottom: 12px; }
+    .otp-box { background: #EFF6FF; border: 2px dashed #93C5FD; border-radius: 10px; padding: 18px; text-align: center; margin: 24px 0; }
+    .otp-code { font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #1D4ED8; font-family: 'Courier New', Courier, monospace; }
+    .warning { font-size: 12px; color: #991B1B; background: #FEF2F2; border-left: 3px solid #EF4444; border-radius: 4px; padding: 10px 14px; margin-top: 20px; line-height: 1.5; }
+    .footer { font-size: 11px; color: #94A3B8; text-align: center; margin-top: 24px; border-top: 1px solid #F1F5F9; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <span>🦅 Garud OMR • Security Center</span>
+    </div>
+    <span class="role-badge">${escapeHtml(roleLabel)} Portal Login</span>
+    <h2 class="title">Two-Factor Authentication (2FA) Code</h2>
+    <p class="text">Hello <strong>${escapeHtml(toName || 'User')}</strong>,</p>
+    <p class="text">A sign-in attempt was initiated for your <strong>${escapeHtml(roleLabel)}</strong> account. To complete your login securely, enter the One-Time Password (OTP) below:</p>
+    
+    <div class="otp-box">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #3B82F6; margin-bottom: 6px; letter-spacing: 1px;">Your 2FA Verification Code</div>
+      <div class="otp-code">${otp}</div>
+    </div>
+
+    <p class="text" style="font-size: 13px;">This verification code is valid for <strong>${expiresMinutes} minutes</strong> and can only be used once. Never share this code with anyone.</p>
+    
+    <div class="warning">
+      <strong>Didn't attempt to sign in?</strong> If you did not make this login attempt, someone may know your password. Please sign in and change your password immediately or contact your administrator.
+    </div>
+
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Garud Classes OMR Examination & Evaluation System. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        const textContent = `Your Garud OMR 2-Factor Authentication (2FA) login code is: ${otp}. It expires in ${expiresMinutes} minutes. If you did not attempt to sign in, please secure your account immediately.`;
+
+        return this.sendEmail({
+            toEmail,
+            toName,
+            subject,
+            htmlContent,
+            textContent
+        });
+    }
 }
 
 function escapeHtml(str) {

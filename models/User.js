@@ -53,6 +53,22 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  twoFactorOtp: {
+    type: String,
+    default: null
+  },
+  twoFactorOtpExpires: {
+    type: Date,
+    default: null
+  },
+  twoFactorOtpAttempts: {
+    type: Number,
+    default: 0
+  },
+  twoFactorLastRequestedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -68,6 +84,10 @@ const userSchema = new mongoose.Schema({
       delete ret.resetPasswordOtpExpires;
       delete ret.resetPasswordOtpAttempts;
       delete ret.resetPasswordLastRequestedAt;
+      delete ret.twoFactorOtp;
+      delete ret.twoFactorOtpExpires;
+      delete ret.twoFactorOtpAttempts;
+      delete ret.twoFactorLastRequestedAt;
       delete ret.__v;
       return ret;
     }
@@ -81,6 +101,10 @@ const userSchema = new mongoose.Schema({
       delete ret.resetPasswordOtpExpires;
       delete ret.resetPasswordOtpAttempts;
       delete ret.resetPasswordLastRequestedAt;
+      delete ret.twoFactorOtp;
+      delete ret.twoFactorOtpExpires;
+      delete ret.twoFactorOtpAttempts;
+      delete ret.twoFactorLastRequestedAt;
       delete ret.__v;
       return ret;
     }

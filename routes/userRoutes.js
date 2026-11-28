@@ -25,7 +25,7 @@ router.param('id', validateIdParam);
 router.get('/users', requireAdmin, async (req, res) => {
     try {
         const users = await User.find()
-            .select('-hash -salt -resetPasswordOtp -resetPasswordOtpExpires -resetPasswordOtpAttempts -resetPasswordLastRequestedAt')
+            .select('-hash -salt -resetPasswordOtp -resetPasswordOtpExpires -resetPasswordOtpAttempts -resetPasswordLastRequestedAt -twoFactorOtp -twoFactorOtpExpires -twoFactorOtpAttempts -twoFactorLastRequestedAt')
             .sort({ role: 1, createdAt: -1 });
         const bulkReport = (req.session && req.session.bulkImportReport) ? req.session.bulkImportReport : null;
         if (req.session && req.session.bulkImportReport) {

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Factor Authentication • Garud OMR</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .auth-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 2.25rem 2rem;
+        }
+
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .shield-icon-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: #EFF6FF;
+            color: #2563EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1.5px solid #BFDBFE;
+        }
+
+        .auth-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 2px 0;
+            letter-spacing: -0.01em;
+        }
+
+        .auth-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .alert-banner {
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.25rem;
+            border: 1px solid transparent;
+            line-height: 1.4;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border-color: #FECACA;
+        }
+
+        .alert-success {
+            background: #F0FDF4;
+            color: #15803D;
+            border-color: #BBF7D0;
+        }
+
+        .role-indicator-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: #EFF6FF;
+            color: #1D4ED8;
+            border: 1px solid #BFDBFE;
+            margin-bottom: 8px;
+        }
+
+        .notice-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 0.835rem;
+            color: #475569;
+            margin-bottom: 1.25rem;
+            line-height: 1.45;
+        }
+
+        .otp-input-field {
+            font-family: 'JetBrains Mono', monospace, Courier;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 12px;
+            text-align: center;
+            padding: 10px 14px;
+            color: #1D4ED8;
+            background: #EFF6FF;
+            border: 2px solid #93C5FD;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 130ms ease;
+        }
+
+        .otp-input-field:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background: #FFFFFF;
+        }
+
+        .auth-footer-links {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #F1F5F9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.84rem;
+        }
+
+        .auth-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .auth-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        .btn-resend {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            font-family: inherit;
+            text-decoration: underline;
+        }
+
+        .btn-resend:disabled {
+            color: #94A3B8;
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 1.75rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="auth-shell">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="shield-icon-badge" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="auth-title">Two-Factor Authentication</h1>
+                    <p class="auth-subtitle">Additional security step required for staff</p>
+                </div>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert-banner alert-error" role="alert" id="twoFactorError">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <% if (typeof message !== 'undefined' && message) { %>
+                <div class="alert-banner alert-success" role="status" id="twoFactorMessage">
+                    <%= message %>
+                </div>
+            <% } %>
+
+            <div class="notice-card">
+                <div class="role-indicator-pill">
+                    ● <%= (typeof role !== 'undefined' && role === 'admin') ? 'Administrator' : 'Teacher (Viewer)' %>
+                </div>
+                <div>
+                    A 6-digit verification code has been sent to:
+                    <div style="font-weight: 700; color: #0F172A; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-top: 4px;">
+                        <%= typeof maskedEmail !== 'undefined' && maskedEmail ? maskedEmail : 'registered email' %>
+                    </div>
+                </div>
+            </div>
+
+            <form action="/login/2fa" method="POST" id="twoFactorForm">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="otp" style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 8px;">
+                        Enter 6-Digit Code
+                    </label>
+                    <input type="text"
+                           id="otp"
+                           name="otp"
+                           class="otp-input-field"
+                           placeholder="••••••"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           inputmode="numeric"
+                           autocomplete="one-time-code"
+                           required
+                           autofocus>
+                    <div style="font-size: 0.76rem; color: #64748B; margin-top: 6px; text-align: center;">
+                        Code expires in 10 minutes &bull; Check inbox or spam folder
+                    </div>
+                </div>
+
+                <button type="submit" id="verifyBtn" class="btn btn-primary btn-lg" style="width: 100%;">
+                    Verify &amp; Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer-links">
+                <form action="/login/2fa/resend" method="POST" style="margin: 0; display: inline;">
+                    <button type="submit" id="resendBtn" class="btn-resend">
+                        Resend Code
+                    </button>
+                </form>
+                <a href="/login/2fa/cancel" class="auth-link">
+                    &larr; Back to Sign In
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('twoFactorForm');
+        const btn = document.getElementById('verifyBtn');
+        const otpInput = document.getElementById('otp');
+        const resendBtn = document.getElementById('resendBtn');
+
+        // Only allow digits
+        if (otpInput) {
+            otpInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length === 6 && form.checkValidity()) {
+                    // Auto-submit on 6th digit entered
+                    btn.disabled = true;
+                    btn.textContent = 'Verifying...';
+                    form.submit();
+                }
+            });
+        }
+
+        if (form && btn) {
+            form.addEventListener('submit', () => {
+                if (form.checkValidity()) {
+                    btn.disabled = true;
+                    btn.textContent = 'Verifying...';
+                }
+            });
+        }
+
+        // Resend countdown timer (60s cooldown)
+        if (resendBtn) {
+            let countdown = 60;
+            resendBtn.disabled = true;
+            resendBtn.textContent = `Resend Code (${countdown}s)`;
+
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    resendBtn.textContent = `Resend Code (${countdown}s)`;
+                } else {
+                    clearInterval(timer);
+                    resendBtn.disabled = false;
+                    resendBtn.textContent = 'Resend Code';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+
+</html>

@@ -111,6 +111,13 @@ const resetPasswordLimiter = new RateLimiter({
     message: 'Too many invalid verification attempts. For security, access is temporarily locked for 15 minutes.'
 });
 
+// Two-Factor Authentication Limiter: Max 8 verification attempts per 15 minutes per IP
+const twoFactorLimiter = new RateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 8,
+    message: 'Too many 2FA verification attempts. Please wait 15 minutes before trying again.'
+});
+
 // API Limiter: Max 120 calls per minute per IP to protect server resources
 const apiLimiter = new RateLimiter({
     windowMs: 60 * 1000,
@@ -366,6 +373,7 @@ module.exports = {
     loginLimiter,
     forgotPasswordLimiter,
     resetPasswordLimiter,
+    twoFactorLimiter,
     passwordChangeLimiter,
     apiLimiter,
     scanLimiter,

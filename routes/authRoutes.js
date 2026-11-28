@@ -8,6 +8,7 @@ const {
     loginLimiter,
     forgotPasswordLimiter,
     resetPasswordLimiter,
+    twoFactorLimiter,
     passwordChangeLimiter,
     isValidEmail
 } = require('../utils/security');
@@ -16,6 +17,20 @@ const {
     getSafeReturnTo,
     requireAuth
 } = require('../middleware/auth');
+
+function maskEmail(email) {
+    if (!email || typeof email !== 'string') return '';
+    const parts = email.trim().toLowerCase().split('@');
+    const local = parts[0] || '';
+    const domain = parts[1] || '';
+    let masked = local;
+    if (local.length > 2) {
+        masked = local[0] + '*'.repeat(Math.max(2, local.length - 2)) + local[local.length - 1];
+    } else {
+        masked = local + '**';
+    }
+    return `${masked}@${domain}`;
+}
 
 // Public Cloud Uptime & Health Check Endpoints (Bypasses auth/session)
 router.get('/healthz', (req, res) => res.status(200).send('OK'));
@@ -45,7 +60,7 @@ router.post('/login', loginLimiter.middleware((req) => {
     const returnTo = req.session ? getSafeReturnTo(req.session.returnTo) : null;
     const rawUsername = String((req.body && req.body.username) || '').trim().toLowerCase();
 
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('local', async (err, user, info) => {
         if (err) return next(err);
         if (!user) {
             return res.status(401).render('login', {
@@ -55,12 +70,195 @@ router.post('/login', loginLimiter.middleware((req) => {
             });
         }
 
-        // Reset rate limiter on successful authentication
+        // Reset rate limiter on successful credentials check
         const ip = req.ip || req.connection.remoteAddress || 'unknown';
         loginLimiter.reset(`${ip}:${rawUsername}`);
 
-        // Session Fixation Defense: regenerate session ID upon authentication
         const savedReturnTo = returnTo;
+
+        // Two-Factor Authentication (2FA) via Email OTP for Admin and Teacher
+        const isStaff = (user.role === 'admin' || user.role === 'teacher');
+        if (isStaff) {
+            // Determine recipient email: user's registered email or ADMIN_EMAIL fallback
+            const targetEmail = (user.email && user.email.trim()) || (user.role === 'admin' ? process.env.ADMIN_EMAIL : null);
+
+            if (!targetEmail) {
+                // If no email configured at all for teacher/admin
+                return res.status(500).render('login', {
+                    error: 'Two-factor authentication is required for staff accounts, but no registered email address was found. Please contact the system administrator.',
+                    message: null,
+                    username: rawUsername
+                });
+            }
+
+            try {
+                // Generate secure 6-digit OTP
+                const otp = crypto.randomInt(100000, 999999).toString();
+                user.twoFactorOtp = otp;
+                user.twoFactorOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+                user.twoFactorOtpAttempts = 0;
+                user.twoFactorLastRequestedAt = new Date();
+                await user.save();
+
+                // Store pending 2FA state in session (user is NOT authenticated yet)
+                req.session.pending2FA = {
+                    userId: user._id.toString(),
+                    username: user.username,
+                    role: user.role,
+                    email: targetEmail,
+                    returnTo: savedReturnTo
+                };
+
+                // Send 2FA OTP via Brevo
+                try {
+                    await brevoMailPool.sendTwoFactorOtpEmail({
+                        toEmail: targetEmail,
+                        toName: user.fullName || user.username,
+                        otp,
+                        role: user.role,
+                        expiresMinutes: 10
+                    });
+                } catch (mailErr) {
+                    console.warn(`[2FA Notice] Brevo email send failed: ${mailErr.message}`);
+                    console.log(`[2FA DEV FALLBACK] Generated OTP for @${user.username} (${targetEmail}): ${otp}`);
+                }
+
+                return res.redirect('/login/2fa');
+            } catch (err) {
+                console.error('Error initiating 2FA:', err);
+                return res.status(500).render('login', {
+                    error: 'Could not generate verification code: ' + err.message,
+                    message: null,
+                    username: rawUsername
+                });
+            }
+        }
+
+        // Students bypass 2FA - standard login flow
+        req.session.regenerate((regenErr) => {
+            if (regenErr) return next(regenErr);
+            req.logIn(user, (loginErr) => {
+                if (loginErr) return next(loginErr);
+                return res.redirect('/student');
+            });
+        });
+    })(req, res, next);
+});
+
+// ============================================================
+// TWO-FACTOR AUTHENTICATION (2FA) ROUTES (ADMIN & TEACHER)
+// ============================================================
+router.get('/login/2fa', (req, res) => {
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+        return res.redirect((req.user.role === 'admin' || req.user.role === 'teacher') ? '/' : '/student');
+    }
+    const pending = req.session && req.session.pending2FA;
+    if (!pending) {
+        return res.redirect('/login');
+    }
+
+    res.render('two_factor', {
+        error: req.query.error || null,
+        message: req.query.message || null,
+        maskedEmail: maskEmail(pending.email),
+        role: pending.role,
+        username: pending.username
+    });
+});
+
+router.post('/login/2fa', twoFactorLimiter.middleware((req) => req.ip || (req.socket && req.socket.remoteAddress) || 'unknown', (req, res, msg) => {
+    const pending = req.session && req.session.pending2FA;
+    return res.status(429).render('two_factor', {
+        error: msg,
+        message: null,
+        maskedEmail: pending ? maskEmail(pending.email) : '',
+        role: pending ? pending.role : '',
+        username: pending ? pending.username : ''
+    });
+}), async (req, res, next) => {
+    try {
+        const pending = req.session && req.session.pending2FA;
+        if (!pending || !pending.userId) {
+            return res.redirect('/login?message=' + encodeURIComponent('Your verification session has expired. Please sign in again.'));
+        }
+
+        const otp = String((req.body && req.body.otp) || '').trim();
+        if (!otp || otp.length !== 6) {
+            return res.render('two_factor', {
+                error: 'Please enter the complete 6-digit verification code.',
+                message: null,
+                maskedEmail: maskEmail(pending.email),
+                role: pending.role,
+                username: pending.username
+            });
+        }
+
+        const user = await User.findById(pending.userId);
+        if (!user || !user.twoFactorOtp) {
+            return res.render('two_factor', {
+                error: 'No active verification code found. Please request a new code.',
+                message: null,
+                maskedEmail: maskEmail(pending.email),
+                role: pending.role,
+                username: pending.username
+            });
+        }
+
+        if (!user.twoFactorOtpExpires || new Date() > user.twoFactorOtpExpires) {
+            user.twoFactorOtp = null;
+            user.twoFactorOtpExpires = null;
+            user.twoFactorOtpAttempts = 0;
+            await user.save();
+            return res.render('two_factor', {
+                error: 'Verification code has expired. Please click "Resend Code" to receive a fresh one.',
+                message: null,
+                maskedEmail: maskEmail(pending.email),
+                role: pending.role,
+                username: pending.username
+            });
+        }
+
+        // Timing-safe comparison to prevent timing side-channel attacks
+        const expectedOtp = String(user.twoFactorOtp || '').trim();
+        const providedOtp = String(otp).trim();
+        const isMatch = (expectedOtp.length === 6 && providedOtp.length === 6 &&
+            crypto.timingSafeEqual(Buffer.from(expectedOtp), Buffer.from(providedOtp)));
+
+        if (!isMatch) {
+            user.twoFactorOtpAttempts = (user.twoFactorOtpAttempts || 0) + 1;
+            const remaining = Math.max(0, 5 - user.twoFactorOtpAttempts);
+            if (remaining === 0) {
+                user.twoFactorOtp = null;
+                user.twoFactorOtpExpires = null;
+                user.twoFactorOtpAttempts = 0;
+                await user.save();
+                delete req.session.pending2FA;
+                return res.status(401).render('login', {
+                    error: 'Too many incorrect verification attempts. For your security, please sign in again.',
+                    message: null,
+                    username: pending.username
+                });
+            }
+            await user.save();
+            return res.render('two_factor', {
+                error: `Incorrect verification code. ${remaining} attempt(s) remaining.`,
+                message: null,
+                maskedEmail: maskEmail(pending.email),
+                role: pending.role,
+                username: pending.username
+            });
+        }
+
+        // OTP Verified successfully! Clear 2FA credentials
+        user.twoFactorOtp = null;
+        user.twoFactorOtpExpires = null;
+        user.twoFactorOtpAttempts = 0;
+        await user.save();
+
+        const savedReturnTo = pending.returnTo;
+        delete req.session.pending2FA;
+
+        // Regenerate session to protect against session fixation upon 2FA success
         req.session.regenerate((regenErr) => {
             if (regenErr) return next(regenErr);
             req.logIn(user, (loginErr) => {
@@ -70,7 +268,74 @@ router.post('/login', loginLimiter.middleware((req) => {
                 return res.redirect(dest);
             });
         });
-    })(req, res, next);
+
+    } catch (err) {
+        console.error('Error during 2FA verification:', err);
+        return res.render('two_factor', {
+            error: 'An unexpected error occurred during verification: ' + err.message,
+            message: null,
+            maskedEmail: req.session && req.session.pending2FA ? maskEmail(req.session.pending2FA.email) : '',
+            role: req.session && req.session.pending2FA ? req.session.pending2FA.role : '',
+            username: req.session && req.session.pending2FA ? req.session.pending2FA.username : ''
+        });
+    }
+});
+
+router.post('/login/2fa/resend', twoFactorLimiter.middleware((req) => req.ip || (req.socket && req.socket.remoteAddress) || 'unknown'), async (req, res) => {
+    try {
+        const pending = req.session && req.session.pending2FA;
+        if (!pending || !pending.userId) {
+            return res.redirect('/login');
+        }
+
+        const user = await User.findById(pending.userId);
+        if (!user) {
+            delete req.session.pending2FA;
+            return res.redirect('/login');
+        }
+
+        // 60-second cooldown check
+        if (user.twoFactorLastRequestedAt && (Date.now() - new Date(user.twoFactorLastRequestedAt).getTime()) < 60 * 1000) {
+            const waitSec = Math.ceil((60 * 1000 - (Date.now() - new Date(user.twoFactorLastRequestedAt).getTime())) / 1000);
+            return res.redirect('/login/2fa?error=' + encodeURIComponent(`Please wait ${waitSec} second(s) before requesting another code.`));
+        }
+
+        // Generate fresh 6-digit OTP
+        const otp = crypto.randomInt(100000, 999999).toString();
+        user.twoFactorOtp = otp;
+        user.twoFactorOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+        user.twoFactorOtpAttempts = 0;
+        user.twoFactorLastRequestedAt = new Date();
+        await user.save();
+
+        const targetEmail = pending.email;
+
+        try {
+            await brevoMailPool.sendTwoFactorOtpEmail({
+                toEmail: targetEmail,
+                toName: user.fullName || user.username,
+                otp,
+                role: user.role,
+                expiresMinutes: 10
+            });
+        } catch (mailErr) {
+            console.warn(`[2FA Resend Notice] Brevo email send failed: ${mailErr.message}`);
+            console.log(`[2FA Resend DEV FALLBACK] Generated OTP for @${user.username}: ${otp}`);
+        }
+
+        return res.redirect('/login/2fa?message=' + encodeURIComponent('A fresh verification code has been sent to your email.'));
+
+    } catch (err) {
+        console.error('Error resending 2FA code:', err);
+        return res.redirect('/login/2fa?error=' + encodeURIComponent('Failed to resend code: ' + err.message));
+    }
+});
+
+router.get('/login/2fa/cancel', (req, res) => {
+    if (req.session && req.session.pending2FA) {
+        delete req.session.pending2FA;
+    }
+    res.redirect('/login');
 });
 
 // Registration is disabled (accounts are created by Admins in /users)
