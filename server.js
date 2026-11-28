@@ -41,6 +41,7 @@ const scanRoutes = require('./routes/scanRoutes');
 const resultsRoutes = require('./routes/resultsRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const ordinaryRoutes = require('./ordinary_checking/routes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 
 const app = express();
 
@@ -126,6 +127,7 @@ app.use('/', scanRoutes);
 app.use('/', resultsRoutes);
 app.use('/', studentRoutes);
 app.use('/ordinary', ordinaryRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // 404 Not Found Handler
 app.use((req, res) => {

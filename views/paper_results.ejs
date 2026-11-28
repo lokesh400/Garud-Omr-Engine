@@ -1282,6 +1282,18 @@
                                 </button>
 
                                 <% if (currentUser && currentUser.role === 'admin') { %>
+                                    <button type="button" class="btn btn-sm" id="sendWhatsAppResultsBtn" onclick="openWhatsAppModal()"
+                                        style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"
+                                        title="Send evaluated scorecards directly to Parents on WhatsApp (Protected by Admin Email OTP)">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                        </svg>
+                                        Send WhatsApp
+                                    </button>
+                                <% } %>
+
+                                <% if (currentUser && currentUser.role === 'admin') { %>
                                     <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn"
                                         onclick="recheckAllSubmissions()"
                                         title="Recalculate all OMR scores against the latest Answer Key">
@@ -2017,6 +2029,153 @@
                 <button type="button" class="btn btn-primary btn-sm" id="hardRecheckActionBtn" style="display: none;" onclick="window.location.reload()">
                     Reload Results Now
                 </button>
+            </div>
+        </dialog>
+
+        <!-- WhatsApp Results Dispatch Modal Dialog -->
+        <dialog id="whatsAppModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="whatsAppModalTitle" style="max-width: 540px;">
+            <div class="recheck-modal-header" style="background: #F0FDF4; border-bottom: 1px solid #BBF7D0;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #25D366; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="whatsAppModalTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #14532D;">
+                            Send WhatsApp Results
+                        </h3>
+                        <div style="font-size: 0.78rem; color: #166534; font-weight: 500;">
+                            Automated &middot; Anti-Ban Delay &middot; Email OTP Protected
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-modal-close" id="waCloseBtn" onclick="closeWhatsAppModal()" aria-label="Close dialog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Step 1: Initial Confirmation & Send OTP -->
+            <div id="waStep1" class="recheck-modal-body">
+                <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.85rem; line-height: 1.5;">
+                    <div><strong>Paper:</strong> <%= paper.title %></div>
+                    <div><strong>Evaluated Students:</strong> <%= results.length %> Copies</div>
+                    <div style="margin-top: 4px; color: #15803D; font-weight: 600;">
+                        📱 Destination: Sent directly to each student's registered <strong>Parent Phone</strong>.
+                    </div>
+                    <div style="margin-top: 2px; color: #166534; font-weight: 500;">
+                        ✓ Safe humanized jitter: 4 to 8s delay between messages to protect WhatsApp from spam bans.
+                    </div>
+                    <div style="color: #475569; font-size: 0.8rem; margin-top: 4px;">
+                        🔒 Tamper-proof HMAC-SHA256 encrypted communication between portals.
+                    </div>
+                </div>
+
+                <div style="font-size: 0.84rem; color: var(--text-body); line-height: 1.45;">
+                    To ensure zero tampering and authorize mass message dispatch from Garud Classes' WhatsApp number, a <strong>6-digit verification code</strong> will be sent to your administrator email.
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeWhatsAppModal()">Cancel</button>
+                    <button type="button" class="btn btn-sm" id="waBtnSendOtp" onclick="requestWhatsAppOtp()"
+                        style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; padding: 6px 14px;">
+                        📧 Send Verification OTP
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: OTP Verification Input -->
+            <div id="waStep2" class="recheck-modal-body" style="display: none;">
+                <div style="text-align: center; margin-bottom: 8px;">
+                    <div style="font-size: 0.88rem; color: var(--text-main); font-weight: 600;">
+                        Verification OTP Sent!
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                        Check your inbox at <strong id="waEmailHintText" style="color: #2563EB;">admin email</strong> (valid for 10 mins).
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 12px 0;">
+                    <input type="text" id="waOtpInput" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="------"
+                        style="font-size: 1.8rem; font-weight: 800; letter-spacing: 12px; text-align: center; width: 220px; padding: 8px 12px; border: 2px solid #CBD5E1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s;"
+                        onfocus="this.style.borderColor='#25D366';" onblur="this.style.borderColor='#CBD5E1';" onkeyup="if(event.key==='Enter') submitWhatsAppOtp();">
+                    <div id="waOtpError" style="color: #DC2626; font-size: 0.82rem; margin-top: 6px; font-weight: 600; display: none;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <button type="button" class="btn btn-sm" onclick="requestWhatsAppOtp()" id="waBtnResend" style="background: transparent; border: none; color: #2563EB; font-size: 0.8rem; text-decoration: underline; cursor: pointer; padding: 0;">
+                        Resend Code
+                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeWhatsAppModal()">Cancel</button>
+                        <button type="button" class="btn btn-sm" id="waBtnVerify" onclick="submitWhatsAppOtp()"
+                            style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; padding: 6px 14px;">
+                            ✓ Verify &amp; Start Dispatch
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Live Dispatch Progress -->
+            <div id="waStep3" class="recheck-modal-body" style="display: none;">
+                <div>
+                    <div class="recheck-progress-track">
+                        <div id="waProgressBar" class="recheck-progress-fill" style="background: linear-gradient(90deg, #25D366, #059669);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
+                        <span id="waProgressCount" style="color: var(--text-main);">0 / <%= results.length %></span>
+                        <span id="waProgressPercent" style="color: #059669; font-family: monospace;">0%</span>
+                    </div>
+                </div>
+
+                <div class="recheck-status-card" id="waStatusCard">
+                    <div class="recheck-spinner" id="waSpinner" style="border-top-color: #25D366;"></div>
+                    <div id="waCurrentStatus" style="font-size: 0.84rem; font-weight: 500; color: var(--text-body);">
+                        Initializing dispatch engine...
+                    </div>
+                </div>
+
+                <!-- Metric Badges Row -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: -4px;">
+                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #166534;">Sent</div>
+                        <div id="waStatSent" style="font-size: 1.1rem; font-weight: 800; color: #15803D; font-family: monospace;">0</div>
+                    </div>
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #92400E;">Skipped (No Parent Phone)</div>
+                        <div id="waStatSkipped" style="font-size: 1.1rem; font-weight: 800; color: #B45309; font-family: monospace;">0</div>
+                    </div>
+                    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #991B1B;">Failed</div>
+                        <div id="waStatFailed" style="font-size: 1.1rem; font-weight: 800; color: #DC2626; font-family: monospace;">0</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-main); margin-bottom: -4px;">
+                    Live Dispatch Log
+                </div>
+                <div class="recheck-log-box" id="waLogBox" style="max-height: 160px;">
+                    <div style="padding: 10px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+                        Connecting to WhatsApp dispatch service...
+                    </div>
+                </div>
+            </div>
+
+            <div class="recheck-modal-footer">
+                <div id="waFooterNote" style="font-size: 0.77rem; color: var(--text-muted);">
+                    Rate-limited: 4-8s delay prevents WhatsApp number blocking.
+                </div>
+                <div id="waFooterActions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="waBtnCancelJob" onclick="cancelWhatsAppJob()" style="display: none; color: #DC2626; border-color: #FECACA;">
+                        Cancel Dispatch
+                    </button>
+                    <button type="button" class="btn btn-sm" id="waBtnFinish" onclick="closeWhatsAppModal()" style="display: none; background: #25D366; color: #FFF; font-weight: 600;">
+                        Done
+                    </button>
+                </div>
             </div>
         </dialog>
 
@@ -3607,6 +3766,293 @@
                     btn.disabled = false;
                     btn.textContent = 'Save Name';
                 }
+            }
+
+            // ==========================================
+            // WhatsApp Result Dispatch (OTP & Live Poll)
+            // ==========================================
+            let activeWaJobId = null;
+            let waPollTimer = null;
+
+            function openWhatsAppModal() {
+                const modal = document.getElementById('whatsAppModal');
+                if (!modal) return;
+
+                // Reset modal to Step 1
+                document.getElementById('waStep1').style.display = 'block';
+                document.getElementById('waStep2').style.display = 'none';
+                document.getElementById('waStep3').style.display = 'none';
+
+                const btnSendOtp = document.getElementById('waBtnSendOtp');
+                if (btnSendOtp) {
+                    btnSendOtp.disabled = false;
+                    btnSendOtp.textContent = '📧 Send Verification OTP';
+                }
+
+                const otpInput = document.getElementById('waOtpInput');
+                if (otpInput) otpInput.value = '';
+
+                const errBox = document.getElementById('waOtpError');
+                if (errBox) {
+                    errBox.style.display = 'none';
+                    errBox.textContent = '';
+                }
+
+                document.getElementById('waBtnCancelJob').style.display = 'none';
+                document.getElementById('waBtnFinish').style.display = 'none';
+
+                modal.showModal();
+            }
+
+            function closeWhatsAppModal() {
+                const modal = document.getElementById('whatsAppModal');
+                if (!modal) return;
+                if (waPollTimer) {
+                    clearInterval(waPollTimer);
+                    waPollTimer = null;
+                }
+                modal.close();
+            }
+
+            async function requestWhatsAppOtp() {
+                const btn = document.getElementById('waBtnSendOtp');
+                const btnResend = document.getElementById('waBtnResend');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Sending OTP...';
+                }
+                if (btnResend) {
+                    btnResend.disabled = true;
+                    btnResend.textContent = 'Sending...';
+                }
+
+                try {
+                    const res = await fetch(`/api/whatsapp/request-otp/${encodeURIComponent(PAPER_ID)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to send verification OTP.');
+                    }
+
+                    // Move to Step 2: OTP Input
+                    document.getElementById('waStep1').style.display = 'none';
+                    document.getElementById('waStep2').style.display = 'block';
+                    document.getElementById('waStep3').style.display = 'none';
+
+                    const emailHint = document.getElementById('waEmailHintText');
+                    if (emailHint && data.emailHint) {
+                        emailHint.textContent = data.emailHint;
+                    }
+
+                    const errBox = document.getElementById('waOtpError');
+                    if (errBox) errBox.style.display = 'none';
+
+                    const otpInput = document.getElementById('waOtpInput');
+                    if (otpInput) {
+                        otpInput.value = '';
+                        setTimeout(() => otpInput.focus(), 150);
+                    }
+                } catch (err) {
+                    alert('OTP Error: ' + err.message);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '📧 Send Verification OTP';
+                    }
+                    if (btnResend) {
+                        btnResend.disabled = false;
+                        btnResend.textContent = 'Resend Code';
+                    }
+                }
+            }
+
+            async function submitWhatsAppOtp() {
+                const otpInput = document.getElementById('waOtpInput');
+                const errBox = document.getElementById('waOtpError');
+                const btnVerify = document.getElementById('waBtnVerify');
+
+                const otp = String(otpInput?.value || '').trim();
+                if (!otp || !/^\d{6}$/.test(otp)) {
+                    if (errBox) {
+                        errBox.style.display = 'block';
+                        errBox.textContent = 'Please enter a valid 6-digit numeric OTP.';
+                    }
+                    return;
+                }
+
+                if (errBox) errBox.style.display = 'none';
+                if (btnVerify) {
+                    btnVerify.disabled = true;
+                    btnVerify.textContent = 'Verifying...';
+                }
+
+                try {
+                    const res = await fetch(`/api/whatsapp/verify-and-dispatch/${encodeURIComponent(PAPER_ID)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ otp })
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Verification failed.');
+                    }
+
+                    // Move to Step 3: Progress Tracker
+                    activeWaJobId = data.jobId;
+                    document.getElementById('waStep1').style.display = 'none';
+                    document.getElementById('waStep2').style.display = 'none';
+                    document.getElementById('waStep3').style.display = 'block';
+
+                    document.getElementById('waBtnCancelJob').style.display = 'inline-block';
+                    document.getElementById('waBtnFinish').style.display = 'none';
+
+                    updateWaProgressDisplay({
+                        total: data.total || 0,
+                        sent: 0,
+                        skipped: 0,
+                        failed: 0,
+                        status: 'running',
+                        currentStudent: null,
+                        logs: ['Starting WhatsApp dispatch engine...']
+                    });
+
+                    // Start polling job status every 2 seconds
+                    if (waPollTimer) clearInterval(waPollTimer);
+                    waPollTimer = setInterval(pollWhatsAppJobStatus, 2000);
+                    pollWhatsAppJobStatus(); // Immediate first poll
+                } catch (err) {
+                    if (errBox) {
+                        errBox.style.display = 'block';
+                        errBox.textContent = err.message;
+                    }
+                } finally {
+                    if (btnVerify) {
+                        btnVerify.disabled = false;
+                        btnVerify.textContent = '✓ Verify & Start Dispatch';
+                    }
+                }
+            }
+
+            async function pollWhatsAppJobStatus() {
+                if (!activeWaJobId) return;
+
+                try {
+                    const res = await fetch(`/api/whatsapp/job-status/${encodeURIComponent(activeWaJobId)}`);
+                    const data = await res.json();
+
+                    if (!res.ok || !data.success || !data.job) {
+                        return;
+                    }
+
+                    const job = data.job;
+                    updateWaProgressDisplay(job);
+
+                    if (job.status === 'completed' || job.status === 'cancelled' || job.status === 'failed') {
+                        if (waPollTimer) {
+                            clearInterval(waPollTimer);
+                            waPollTimer = null;
+                        }
+
+                        document.getElementById('waBtnCancelJob').style.display = 'none';
+                        document.getElementById('waBtnFinish').style.display = 'inline-block';
+
+                        const spinner = document.getElementById('waSpinner');
+                        if (spinner) spinner.style.display = 'none';
+
+                        const statusCard = document.getElementById('waStatusCard');
+                        if (statusCard) {
+                            if (job.status === 'completed') {
+                                statusCard.style.background = '#F0FDF4';
+                                statusCard.style.borderColor = '#86EFAC';
+                                document.getElementById('waCurrentStatus').innerHTML = '<strong>✓ Dispatch Completed!</strong> All students processed successfully.';
+                            } else if (job.status === 'cancelled') {
+                                statusCard.style.background = '#FFFBEB';
+                                statusCard.style.borderColor = '#FDE68A';
+                                document.getElementById('waCurrentStatus').innerHTML = '<strong>⛔ Dispatch Cancelled</strong> by administrator.';
+                            } else {
+                                statusCard.style.background = '#FEF2F2';
+                                statusCard.style.borderColor = '#FECACA';
+                                document.getElementById('waCurrentStatus').innerHTML = '<strong>✗ Dispatch Terminated:</strong> Encountered error.';
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[WhatsApp Poll Warning]:', e.message);
+                }
+            }
+
+            function updateWaProgressDisplay(job) {
+                const total = job.total || 1;
+                const processed = (job.sent || 0) + (job.skipped || 0) + (job.failed || 0);
+                const pct = Math.min(100, Math.round((processed / total) * 100));
+
+                const bar = document.getElementById('waProgressBar');
+                if (bar) bar.style.width = pct + '%';
+
+                const countEl = document.getElementById('waProgressCount');
+                if (countEl) countEl.textContent = `${processed} / ${total} Students`;
+
+                const pctEl = document.getElementById('waProgressPercent');
+                if (pctEl) pctEl.textContent = pct + '%';
+
+                const statSent = document.getElementById('waStatSent');
+                if (statSent) statSent.textContent = job.sent || 0;
+
+                const statSkipped = document.getElementById('waStatSkipped');
+                if (statSkipped) statSkipped.textContent = job.skipped || 0;
+
+                const statFailed = document.getElementById('waStatFailed');
+                if (statFailed) statFailed.textContent = job.failed || 0;
+
+                if (job.status === 'running') {
+                    if (job.currentStudent) {
+                        const s = job.currentStudent;
+                        const delayNote = s.delaySeconds ? ` &middot; Anti-ban delay (${s.delaySeconds}s)` : '';
+                        document.getElementById('waCurrentStatus').innerHTML = `Sending to Parent of <strong>${escapeClientHtml(s.name)}</strong> (Roll: ${escapeClientHtml(s.roll)}) ${delayNote}...`;
+                    } else {
+                        document.getElementById('waCurrentStatus').textContent = `Processing students (${processed} of ${total})...`;
+                    }
+                }
+
+                if (Array.isArray(job.logs) && job.logs.length > 0) {
+                    const logBox = document.getElementById('waLogBox');
+                    if (logBox) {
+                        logBox.innerHTML = job.logs.map(line => {
+                            let color = '#334155';
+                            if (line.startsWith('✓')) color = '#15803D';
+                            else if (line.startsWith('✗')) color = '#DC2626';
+                            else if (line.startsWith('⚠️')) color = '#B45309';
+                            else if (line.startsWith('🏁') || line.startsWith('⛔')) color = '#1E293B';
+                            return `<div style="padding: 4px 6px; font-size: 0.8rem; color: ${color}; font-family: monospace; border-bottom: 1px solid #F1F5F9;">${escapeClientHtml(line)}</div>`;
+                        }).join('');
+                        logBox.scrollTop = logBox.scrollHeight;
+                    }
+                }
+            }
+
+            async function cancelWhatsAppJob() {
+                if (!activeWaJobId) return;
+                if (!confirm('Cancel the remaining WhatsApp message dispatches?')) return;
+
+                try {
+                    await fetch(`/api/whatsapp/cancel-job/${encodeURIComponent(activeWaJobId)}`, { method: 'POST' });
+                    document.getElementById('waCurrentStatus').textContent = 'Cancelling job...';
+                } catch (e) {
+                    alert('Could not cancel job: ' + e.message);
+                }
+            }
+
+            function escapeClientHtml(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
             }
         </script>
 

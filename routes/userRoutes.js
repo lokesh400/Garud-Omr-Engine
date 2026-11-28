@@ -171,7 +171,9 @@ router.post('/users/bulk', requireAdmin, handleBulkUploadMiddleware, async (req,
                         username: row.username,
                         fullName: row.name,
                         role: 'student',
-                        rollnumber: row.rollnumber
+                        rollnumber: row.rollnumber,
+                        phone: row.phone || '',
+                        parentPhone: row.parentPhone || ''
                     });
                     await User.register(userDoc, row.generatedPassword);
                     created.push({
@@ -250,12 +252,15 @@ router.post('/users', requireAdmin, async (req, res) => {
             return res.redirect('/users?error=' + encodeURIComponent('Please enter a valid email address.'));
         }
 
+        const parentPhone = String(req.body.parentPhone || req.body.phone || '').replace(/\D/g, '');
+
         const newUser = new User({
             username,
             fullName,
             role,
             rollnumber,
-            email
+            email,
+            parentPhone
         });
         await User.register(newUser, password);
         return res.redirect('/users?message=' + encodeURIComponent(`Account @${username} (${role}) created successfully.`));

@@ -47,6 +47,12 @@ const HEADER_ALIASES = {
     ]),
     motherName: new Set([
         'mothername', 'mothersname', 'mother', 'mothers', 'mname'
+    ]),
+    parentPhone: new Set([
+        'parentphone', 'parentsphone', 'fatherphone', 'motherphone', 'guardianphone',
+        'parentmobile', 'parentwhatsapp', 'fathermobile', 'mothermobile',
+        'phone', 'phonenumber', 'mobile', 'mobilenumber', 'whatsapp', 'whatsappnumber',
+        'contact', 'contactnumber'
     ])
 };
 
@@ -116,7 +122,8 @@ function detectColumns(firstRow) {
         rollnumber: -1,
         name: -1,
         fatherName: -1,
-        motherName: -1
+        motherName: -1,
+        parentPhone: -1
     };
     let matchedCount = 0;
 
@@ -179,11 +186,13 @@ function buildStudentRowsFromGrid(grid) {
         const rawName = row[indices.name];
         const rawFather = row[indices.fatherName];
         const rawMother = row[indices.motherName];
+        const rawParent = indices.parentPhone !== -1 ? row[indices.parentPhone] : '';
 
         const rollnumber = String(rawRoll == null ? '' : rawRoll).trim();
         const name = String(rawName == null ? '' : rawName).trim();
         const fatherName = String(rawFather == null ? '' : rawFather).trim();
         const motherName = String(rawMother == null ? '' : rawMother).trim();
+        const parentPhone = String(rawParent == null ? '' : rawParent).replace(/\D/g, '');
 
         if (!rollnumber && !name && !fatherName && !motherName) continue;
 
@@ -223,6 +232,7 @@ function buildStudentRowsFromGrid(grid) {
             name,
             fatherName,
             motherName,
+            parentPhone,
             generatedPassword,
             status,
             reason

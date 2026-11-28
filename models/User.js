@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     default: ''
   },
+  parentPhone: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   resetPasswordOtp: {
     type: String,
     default: null

@@ -206,6 +206,74 @@ class BrevoMailPool {
             textContent
         });
     }
+
+    /**
+     * Sends WhatsApp Result Dispatch Authorization OTP email to administrator
+     */
+    async sendDispatchOtpEmail({ toEmail, toName, otp, paperTitle, totalStudents, expiresMinutes = 10 }) {
+        const subject = `🔐 Authorization OTP: Send WhatsApp Results • ${paperTitle || 'OMR Exam'}`;
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC; margin: 0; padding: 24px; color: #0F172A; }
+    .card { max-width: 520px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 32px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .brand { font-size: 20px; font-weight: 800; color: #16A34A; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .title { font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 12px 0; }
+    .text { font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px 0; }
+    .paper-info { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #334155; }
+    .otp-box { background: #F0FDF4; border: 2px dashed #86EFAC; border-radius: 10px; padding: 18px; text-align: center; margin: 20px 0; }
+    .otp-code { font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #15803D; font-family: 'Courier New', Courier, monospace; }
+    .warning { font-size: 12px; color: #9A3412; background: #FFF7ED; border-left: 3px solid #F97316; border-radius: 4px; padding: 10px 14px; margin-top: 20px; }
+    .footer { font-size: 11px; color: #94A3B8; text-align: center; margin-top: 24px; border-top: 1px solid #F1F5F9; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <span>🦅 Garud Classes OMR</span>
+    </div>
+    <h2 class="title">WhatsApp Result Dispatch Authorization</h2>
+    <p class="text">Hello <strong>${escapeHtml(toName || 'Admin')}</strong>,</p>
+    <p class="text">A request was made from your session to send OMR evaluation scorecards via WhatsApp to students.</p>
+
+    <div class="paper-info">
+      <div><strong>Paper:</strong> ${escapeHtml(paperTitle)}</div>
+      <div><strong>Total Evaluated Copies:</strong> ${totalStudents}</div>
+      <div><strong>Security:</strong> HMAC-SHA256 Encrypted Portal Link</div>
+    </div>
+
+    <div class="otp-box">
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #16A34A; margin-bottom: 6px; letter-spacing: 1px;">Your Verification Code</div>
+      <div class="otp-code">${otp}</div>
+    </div>
+
+    <p class="text" style="font-size: 13px;">This code will expire in <strong>${expiresMinutes} minutes</strong>. It authorizes automated dispatch with anti-blocking intervals.</p>
+
+    <div class="warning">
+      <strong>⚠️ Important Notice:</strong> If you did not initiate this dispatch request, do not share or enter this code. Your WhatsApp account remains secure.
+    </div>
+
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Garud Classes Examination & Evaluation System. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        const textContent = `Your Garud Classes WhatsApp result dispatch OTP for "${paperTitle}" (${totalStudents} students) is: ${otp}. Valid for ${expiresMinutes} minutes.`;
+
+        return this.sendEmail({
+            toEmail,
+            toName,
+            subject,
+            htmlContent,
+            textContent
+        });
+    }
 }
 
 function escapeHtml(str) {
