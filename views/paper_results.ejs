@@ -1742,8 +1742,11 @@
                                                                 </span>
                                                                 <% if (currentUser && currentUser.role==='admin' ) { %>
                                                                     <button type="button" class="btn-edit-student-name"
-                                                                        onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "
-                                                                        \\'") %>')" title="Edit Student Name"
+                                                                data-sub-id="<%= r._id %>"
+                                                                data-roll="<%= studentRoll %>"
+                                                                data-name="<%= studentName || '' %>"
+                                                                onclick="openEditStudentNameModal(this.dataset.subId, this.dataset.roll, this.dataset.name)"
+                                                                title="Edit Student Name"
                                                                         aria-label="Edit Student Name">
                                                                         <svg width="11" height="11" viewBox="0 0 24 24"
                                                                             fill="none" stroke="currentColor"
@@ -1936,8 +1939,7 @@
                                                         </span>
                                                         <% if (currentUser && currentUser.role==='admin' ) { %>
                                                             <button type="button" class="btn-edit-student-name"
-                                                                onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "
-                                                                \\'") %>')" title="Edit Student Name" style="padding:
+                                                                data-sub-id="<%= r._id %>" data-roll="<%= studentRoll %>" data-name="<%= studentName || '' %>" onclick="openEditStudentNameModal(this.dataset.subId, this.dataset.roll, this.dataset.name)" title="Edit Student Name" style="padding:
                                                                 1px 4px;">
                                                                 <svg width="11" height="11" viewBox="0 0 24 24"
                                                                     fill="none" stroke="currentColor" stroke-width="2.5"
