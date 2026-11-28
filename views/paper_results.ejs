@@ -2710,18 +2710,18 @@
         </dialog>
 
         <script>
-            const PAPER_ID = <% - JSON.stringify(String(paper._id)) %>;
-            const PAPER_TITLE = <% - JSON.stringify(String(paper.title || '')) %>;
-            const PAPER_SUBJECT = <% - JSON.stringify(String(paper.subject || '')) %>;
-            const PAPER_EXAM_TYPE = <% - JSON.stringify(String(paper.exam_type || 'standard')) %>;
-            const IS_ADMIN = <% - (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
+            const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
+            const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
+            const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
+            const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
+            const IS_ADMIN = <%- (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
             let currentModalSubmission = null;
             let currentModalList = [];
             let currentEditingNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let originalNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let showCheckingOverlay = true;
-            const answerKey = <% - (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
-            const allSubmissionsData = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+            const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
+            const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
             const submissionsMap = {};
             allSubmissionsData.forEach(s => {
                 if (s && s._id) submissionsMap[String(s._id)] = s;
