@@ -246,6 +246,7 @@
             line-height: 1;
             font-family: inherit;
         }
+
         .btn-edit-student-name:hover {
             background: #EFF6FF;
             color: #2563EB;
@@ -630,6 +631,7 @@
                 opacity: 0;
                 transform: translateY(-6px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -958,6 +960,7 @@
             .data-table-wrap {
                 display: none !important;
             }
+
             .mobile-results-cards {
                 display: flex !important;
                 flex-direction: column;
@@ -965,6 +968,7 @@
                 padding: 0.65rem 0.25rem 1.5rem 0.25rem;
             }
         }
+
         @media (min-width: 769px) {
             .mobile-results-cards {
                 display: none !important;
@@ -1167,50 +1171,78 @@
             }
         }
 
-        
+
         /* Dedicated Full-Screen NVT (Section B Numerical) Modal */
-        .nvt-fullscreen-modal {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            max-width: 100vw;
-            max-height: 100vh;
-            margin: 0;
-            padding: 0;
-            border: none;
-            background: #F8FAFC;
-            z-index: 1050;
+        dialog.nvt-fullscreen-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            max-height: 100dvh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: #F8FAFC !important;
+            z-index: 99999 !important;
             display: none;
-            flex-direction: column;
-            overflow: hidden;
-            box-sizing: border-box;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
         }
-        .nvt-fullscreen-modal[open] {
-            display: flex;
+
+        dialog.nvt-fullscreen-modal[open],
+        dialog.nvt-fullscreen-modal:modal {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            max-height: 100dvh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            inset: 0 !important;
         }
-        .nvt-fullscreen-modal::backdrop {
+
+        dialog.nvt-fullscreen-modal::backdrop {
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(4px);
         }
+
         .nvt-modal-header {
-            padding: 14px 28px;
+            flex-shrink: 0 !important;
+            padding: 12px 24px;
             background: #FFFFFF;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 14px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            z-index: 2;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            z-index: 10;
         }
+
         .nvt-modal-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding: 20px 24px;
             background: #F8FAFC;
+            -webkit-overflow-scrolling: touch;
         }
+
         .nvt-cards-container {
             max-width: 1320px;
             margin: 0 auto;
@@ -1218,11 +1250,13 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 22px;
         }
+
         @media (max-width: 1060px) {
             .nvt-cards-container {
                 grid-template-columns: 1fr;
             }
         }
+
         .nvt-subject-card {
             background: #FFFFFF;
             border: 1px solid var(--border-color);
@@ -1232,6 +1266,7 @@
             flex-direction: column;
             overflow: hidden;
         }
+
         .nvt-subject-header {
             padding: 14px 18px;
             background: #FFFFFF;
@@ -1240,10 +1275,12 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .nvt-questions-list {
             display: flex;
             flex-direction: column;
         }
+
         .nvt-q-row {
             padding: 10px 16px;
             border-bottom: 1px solid #F1F5F9;
@@ -1253,12 +1290,15 @@
             gap: 10px;
             transition: background 0.12s ease;
         }
+
         .nvt-q-row:last-child {
             border-bottom: none;
         }
+
         .nvt-q-row:hover {
             background: #F8FAFC;
         }
+
         .nvt-score-group {
             display: inline-flex;
             align-items: center;
@@ -1266,6 +1306,7 @@
             flex-wrap: nowrap;
             flex-shrink: 0;
         }
+
         .nvt-score-btn {
             border: 1.5px solid #CBD5E1;
             background: #FFFFFF;
@@ -1286,39 +1327,66 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
+
         .nvt-score-btn:hover {
             transform: translateY(-1px);
             border-color: #94A3B8;
         }
+
         .nvt-score-btn.btn-c.active {
             background: #10B981 !important;
             color: #FFFFFF !important;
             border-color: #059669 !important;
             box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
         }
+
         .nvt-score-btn.btn-w.active {
             background: #EF4444 !important;
             color: #FFFFFF !important;
             border-color: #DC2626 !important;
             box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
         }
+
         .nvt-score-btn.btn-b.active {
             background: #64748B !important;
             color: #FFFFFF !important;
             border-color: #475569 !important;
             box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
         }
+
         .nvt-modal-footer {
+            flex-shrink: 0 !important;
             padding: 14px 28px;
             background: #FFFFFF;
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: nowrap;
             gap: 12px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
-            z-index: 2;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 20;
+            position: relative;
+        }
+
+        @media (max-width: 640px) {
+            .nvt-modal-footer {
+                padding: 10px 16px;
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+
+            .nvt-modal-footer>button,
+            .nvt-modal-footer>div {
+                width: 100%;
+                display: flex;
+            }
+
+            .nvt-modal-footer>button,
+            .nvt-modal-footer>div>button {
+                flex: 1;
+                justify-content: center;
+                text-align: center;
+            }
         }
 
         /* Numerical Question Editing Bubbles */
@@ -1341,40 +1409,48 @@
             line-height: 1;
             box-sizing: border-box;
         }
+
         .jee-nvq-btn:hover {
             transform: scale(1.1);
             border-color: #94A3B8;
         }
+
         .jee-nvq-btn.btn-c:hover {
             border-color: #10B981;
             color: #10B981;
         }
+
         .jee-nvq-btn.btn-w:hover {
             border-color: #EF4444;
             color: #EF4444;
         }
+
         .jee-nvq-btn.btn-b:hover {
             border-color: #64748B;
             color: #64748B;
         }
+
         .jee-nvq-btn.btn-c.active {
             background: #10B981 !important;
             color: #FFFFFF !important;
             border-color: #059669 !important;
             box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
         }
+
         .jee-nvq-btn.btn-w.active {
             background: #EF4444 !important;
             color: #FFFFFF !important;
             border-color: #DC2626 !important;
             box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
         }
+
         .jee-nvq-btn.btn-b.active {
             background: #64748B !important;
             color: #FFFFFF !important;
             border-color: #475569 !important;
             box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.25);
         }
+
         .nvq-save-floating-bar {
             display: none;
             margin-top: 10px;
@@ -1385,7 +1461,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             position: sticky;
             bottom: 0;
             z-index: 10;
@@ -1435,88 +1511,102 @@
                                     Export CSV
                                 </button>
 
-                                <% const canSendWaResults = (typeof currentUser !== 'undefined' && currentUser && String(currentUser.role || '').toLowerCase() === 'admin') || (!currentUser); %>
-                                <% if (canSendWaResults) { %>
-                                    <button type="button" class="btn btn-sm" id="sendWhatsAppResultsBtn" onclick="openWhatsAppModal()"
-                                        style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;"
-                                        title="Send evaluated results directly to Parents on WhatsApp (Protected by Admin Email OTP)">
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                                        </svg>
-                                        📱 Send Results on WhatsApp
-                                    </button>
-                                <% } %>
-
-                                <% if (currentUser && currentUser.role === 'admin') { %>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="recheckAllBtn"
-                                        onclick="recheckAllSubmissions()"
-                                        title="Recalculate all OMR scores against the latest Answer Key">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
-                                            aria-hidden="true">
-                                            <polyline points="23 4 23 10 17 10"></polyline>
-                                            <polyline points="1 20 1 14 7 14"></polyline>
-                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
-                                            </path>
-                                        </svg>
-                                        Recheck All
-                                    </button>
-
-                                    <button type="button" class="btn btn-warning btn-sm" id="hardRecheckBtn"
-                                        onclick="confirmHardRecheck()"
-                                        style="background: #FFFBEB; color: #B45309; border-color: #FCD34D; font-weight: 600;"
-                                        title="Hard Reset All: Download original student OMR sheets from Cloudinary and re-scan all bubbles from scratch with Computer Vision">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
-                                            aria-hidden="true">
-                                            <path
-                                                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                                        </svg>
-                                        Hard Reset
-                                    </button>
-
-                                    <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject || '' ) || /jee/i.test(paper.title || '' )) { %>
-                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-scan"
-                                            class="btn btn-secondary btn-sm"
-                                            style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;"
-                                            title="Launch JEE Mains Scanner">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                <% const canSendWaResults=(typeof currentUser !=='undefined' && currentUser &&
+                                    String(currentUser.role || '' ).toLowerCase()==='admin' ) || (!currentUser); %>
+                                    <% if (canSendWaResults) { %>
+                                        <button type="button" class="btn btn-sm" id="sendWhatsAppResultsBtn"
+                                            onclick="openWhatsAppModal()"
+                                            style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;"
+                                            title="Send evaluated results directly to Parents on WhatsApp (Protected by Admin Email OTP)">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                                                 stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                                                 stroke-linejoin="round" aria-hidden="true">
                                                 <path
-                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
                                                 </path>
-                                                <circle cx="12" cy="13" r="4"></circle>
                                             </svg>
-                                            JEE Scanner
-                                        </a>
-                                    <% } else { %>
-                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
-                                            class="btn btn-primary btn-sm" title="Launch Live Camera Scanner">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                                                stroke-linejoin="round" aria-hidden="true">
-                                                <path
-                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
-                                                </path>
-                                                <circle cx="12" cy="13" r="4"></circle>
-                                            </svg>
-                                            Live Scanner
-                                        </a>
-                                    <% } %>
+                                            📱 Send Results on WhatsApp
+                                        </button>
+                                        <% } %>
 
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteEntirePaper()"
-                                        title="Permanently delete this paper and all its student submissions and OMR images">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                            aria-hidden="true">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        Delete Paper
-                                    </button>
-                                <% } %>
+                                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                    id="recheckAllBtn" onclick="recheckAllSubmissions()"
+                                                    title="Recalculate all OMR scores against the latest Answer Key">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                                        <path
+                                                            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15">
+                                                        </path>
+                                                    </svg>
+                                                    Recheck All
+                                                </button>
+
+                                                <button type="button" class="btn btn-warning btn-sm" id="hardRecheckBtn"
+                                                    onclick="confirmHardRecheck()"
+                                                    style="background: #FFFBEB; color: #B45309; border-color: #FCD34D; font-weight: 600;"
+                                                    title="Hard Reset All: Download original student OMR sheets from Cloudinary and re-scan all bubbles from scratch with Computer Vision">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                                        stroke-linejoin="round" aria-hidden="true">
+                                                        <path
+                                                            d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                                    </svg>
+                                                    Hard Reset
+                                                </button>
+
+                                                <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject || '' ) ||
+                                                    /jee/i.test(paper.title || '' )) { %>
+                                                    <a href="/paper/<%= encodeURIComponent(paper._id) %>/jee-scan"
+                                                        class="btn btn-secondary btn-sm"
+                                                        style="background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;"
+                                                        title="Launch JEE Mains Scanner">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2.2"
+                                                            stroke-linecap="round" stroke-linejoin="round"
+                                                            aria-hidden="true">
+                                                            <path
+                                                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                            </path>
+                                                            <circle cx="12" cy="13" r="4"></circle>
+                                                        </svg>
+                                                        JEE Scanner
+                                                    </a>
+                                                    <% } else { %>
+                                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
+                                                            class="btn btn-primary btn-sm"
+                                                            title="Launch Live Camera Scanner">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2.2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                aria-hidden="true">
+                                                                <path
+                                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                                </path>
+                                                                <circle cx="12" cy="13" r="4"></circle>
+                                                            </svg>
+                                                            Live Scanner
+                                                        </a>
+                                                        <% } %>
+
+                                                            <button type="button" class="btn btn-danger btn-sm"
+                                                                onclick="deleteEntirePaper()"
+                                                                title="Permanently delete this paper and all its student submissions and OMR images">
+                                                                <svg width="14" height="14" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    aria-hidden="true">
+                                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                                    <path
+                                                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                                    </path>
+                                                                </svg>
+                                                                Delete Paper
+                                                            </button>
+                                                            <% } %>
 
                 </div>
             </header>
@@ -1566,7 +1656,7 @@
                                     <div class="sec-range">
                                         <%= sec.range %>
                                     </div>
-                                <% } %>
+                                    <% } %>
                             </div>
                             <div class="sec-marks">
                                 <div class="sec-marks-val">
@@ -1643,17 +1733,28 @@
                                                             <span class="roll-badge">
                                                                 <%= studentRoll %>
                                                             </span>
-                                                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-                                                                <span class="student-name-text" id="name-display-<%= r._id %>" style="font-size: 0.78rem; font-weight: 600; color: var(--text-main);">
+                                                            <div
+                                                                style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                                                <span class="student-name-text"
+                                                                    id="name-display-<%= r._id %>"
+                                                                    style="font-size: 0.78rem; font-weight: 600; color: var(--text-main);">
                                                                     <%= studentName || '' %>
                                                                 </span>
-                                                                <% if (currentUser && currentUser.role === 'admin') { %>
-                                                                    <button type="button" class="btn-edit-student-name" onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "\\'") %>')" title="Edit Student Name" aria-label="Edit Student Name">
-                                                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                                <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                                    <button type="button" class="btn-edit-student-name"
+                                                                        onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "
+                                                                        \\'") %>')" title="Edit Student Name"
+                                                                        aria-label="Edit Student Name">
+                                                                        <svg width="11" height="11" viewBox="0 0 24 24"
+                                                                            fill="none" stroke="currentColor"
+                                                                            stroke-width="2.5" stroke-linecap="round"
+                                                                            stroke-linejoin="round">
+                                                                            <path
+                                                                                d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                                            </path>
                                                                         </svg>
                                                                     </button>
-                                                                <% } %>
+                                                                    <% } %>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -1671,7 +1772,9 @@
                                                                         <div class="sec-stack-item">
                                                                             <div class="sec-stack-name">
                                                                                 <%= s.sectionName %>
-                                                                                    <% if (s.range && !s.range.includes('MCQ') && !s.range.includes('NVQ')) { %>
+                                                                                    <% if (s.range &&
+                                                                                        !s.range.includes('MCQ') &&
+                                                                                        !s.range.includes('NVQ')) { %>
                                                                                         <span
                                                                                             style="font-weight: 500; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;">(
                                                                                             <%= s.range %>)
@@ -1753,42 +1856,51 @@
                                                             </span>
                                                     </td>
                                                     <td style="text-align: right; white-space: nowrap;">
-                                                        <div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                                                        <div
+                                                            style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
                                                             <button type="button" class="btn btn-primary btn-sm"
                                                                 onclick="openOmrModalById('<%= r._id %>')">
-                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                                                    stroke="currentColor" stroke-width="2"
+                                                                <svg width="14" height="14" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2"
                                                                     stroke-linecap="round" stroke-linejoin="round"
                                                                     aria-hidden="true">
-                                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                                    <path
+                                                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                                                                    </path>
                                                                     <circle cx="12" cy="12" r="3"></circle>
                                                                 </svg>
                                                                 View OMR
                                                             </button>
-                                                            <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
+                                                            <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject
+                                                                || '' ) || /jee/i.test(paper.title || '' )) { %>
                                                                 <button type="button" class="btn btn-outline btn-sm"
                                                                     onclick="openDedicatedNvtModal('<%= r._id %>')"
                                                                     title="Edit Section B Numerical (NVT) Answers"
                                                                     style="font-weight: 700; font-size: 0.76rem; padding: 4px 8px; color: #7E22CE; border-color: #D8B4FE; background: #FAF5FF; display: inline-flex; align-items: center; gap: 4px;">
                                                                     ✏️ NVT
                                                                 </button>
-                                                            <% } %>
-                                                            <% if (currentUser && currentUser.role === 'admin') { %>
-                                                                <button type="button"
-                                                                    class="btn btn-danger btn-sm btn-delete-sub"
-                                                                    onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')"
-                                                                    title="Delete copy from database and Cloudinary"
-                                                                    aria-label="Delete submission for <%= studentRoll %>">
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                                        aria-hidden="true">
-                                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                                        <path
-                                                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                                                        </path>
-                                                                    </svg>
-                                                                </button>
-                                                            <% } %>
+                                                                <% } %>
+                                                                    <% if (currentUser && currentUser.role==='admin' ) {
+                                                                        %>
+                                                                        <button type="button"
+                                                                            class="btn btn-danger btn-sm btn-delete-sub"
+                                                                            onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')"
+                                                                            title="Delete copy from database and Cloudinary"
+                                                                            aria-label="Delete submission for <%= studentRoll %>">
+                                                                            <svg width="14" height="14"
+                                                                                viewBox="0 0 24 24" fill="none"
+                                                                                stroke="currentColor" stroke-width="2"
+                                                                                stroke-linecap="round"
+                                                                                stroke-linejoin="round"
+                                                                                aria-hidden="true">
+                                                                                <polyline points="3 6 5 6 21 6">
+                                                                                </polyline>
+                                                                                <path
+                                                                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                                                </path>
+                                                                            </svg>
+                                                                        </button>
+                                                                        <% } %>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1799,95 +1911,141 @@
 
                             <!-- Mobile Responsive Student Cards (< 768px screens: Zero horizontal scroll) -->
                             <div class="mobile-results-cards" id="mobileResultsCards">
-                                <% results.forEach((r, idx) => { %>
-                                    <% const studentRoll = r.rollnumber || r.rollNumber || 'UNKNOWN';
-                                       const studentName = r.studentName || '';
-                                       const scannedTime = r.submitted_at || r.scannedAt || new Date();
-                                       const sumSec = r.allSectionsSummary || {
-                                           totalMarks: r.maxMarks || ((r.totalQuestions || 50) * 4),
-                                           obtainedMarks: (r.aggregateMarks !== undefined) ? r.aggregateMarks : (r.score * 4),
-                                           totalQuestions: r.totalQuestions || 0,
-                                           attemptedQuestions: Math.max(0, (r.totalQuestions || 0) - (r.blankCount || 0)),
-                                           unattemptedQuestions: r.blankCount || 0,
-                                           correctCount: r.correctCount || 0,
-                                           wrongCount: r.wrongCount || 0
-                                       };
-                                       const searchStr = `${studentRoll} ${studentName}`.toLowerCase();
-                                    %>
-                                    <div class="mobile-student-card" data-roll="<%= studentRoll.toLowerCase() %>" data-search="<%= searchStr %>" id="mcard-<%= r._id %>">
-                                        <div class="mobile-card-header">
-                                            <div class="mobile-card-meta">
-                                                <span class="mobile-rank-badge">#<%= r.rank || (idx + 1) %></span>
-                                                <span class="roll-badge"><%= studentRoll %></span>
-                                                <div style="display: inline-flex; align-items: center; gap: 4px;">
-                                                    <span id="mob-name-display-<%= r._id %>" style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);"><%= studentName || '' %></span>
-                                                    <% if (currentUser && currentUser.role === 'admin') { %>
-                                                        <button type="button" class="btn-edit-student-name" onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "\\'") %>')" title="Edit Student Name" style="padding: 1px 4px;">
-                                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                                            </svg>
-                                                        </button>
-                                                    <% } %>
+                                <% results.forEach((r, idx)=> { %>
+                                    <% const studentRoll=r.rollnumber || r.rollNumber || 'UNKNOWN' ; const
+                                        studentName=r.studentName || '' ; const scannedTime=r.submitted_at ||
+                                        r.scannedAt || new Date(); const sumSec=r.allSectionsSummary || { totalMarks:
+                                        r.maxMarks || ((r.totalQuestions || 50) * 4), obtainedMarks: (r.aggregateMarks
+                                        !==undefined) ? r.aggregateMarks : (r.score * 4), totalQuestions:
+                                        r.totalQuestions || 0, attemptedQuestions: Math.max(0, (r.totalQuestions || 0) -
+                                        (r.blankCount || 0)), unattemptedQuestions: r.blankCount || 0, correctCount:
+                                        r.correctCount || 0, wrongCount: r.wrongCount || 0 }; const
+                                        searchStr=`${studentRoll} ${studentName}`.toLowerCase(); %>
+                                        <div class="mobile-student-card" data-roll="<%= studentRoll.toLowerCase() %>"
+                                            data-search="<%= searchStr %>" id="mcard-<%= r._id %>">
+                                            <div class="mobile-card-header">
+                                                <div class="mobile-card-meta">
+                                                    <span class="mobile-rank-badge">#<%= r.rank || (idx + 1) %></span>
+                                                    <span class="roll-badge">
+                                                        <%= studentRoll %>
+                                                    </span>
+                                                    <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                                        <span id="mob-name-display-<%= r._id %>"
+                                                            style="font-weight: 600; font-size: 0.85rem; color: var(--text-main);">
+                                                            <%= studentName || '' %>
+                                                        </span>
+                                                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                            <button type="button" class="btn-edit-student-name"
+                                                                onclick="openEditStudentNameModal('<%= r._id %>', '<%= studentRoll %>', '<%= (studentName || "").replace(/'/g, "
+                                                                \\'") %>')" title="Edit Student Name" style="padding:
+                                                                1px 4px;">
+                                                                <svg width="11" height="11" viewBox="0 0 24 24"
+                                                                    fill="none" stroke="currentColor" stroke-width="2.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                                    <path
+                                                                        d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                                    </path>
+                                                                </svg>
+                                                            </button>
+                                                            <% } %>
+                                                    </div>
+                                                </div>
+                                                <div class="mobile-card-score">
+                                                    <%= sumSec.obtainedMarks %> <span class="max-score">/ <%=
+                                                                sumSec.totalMarks %></span>
                                                 </div>
                                             </div>
-                                            <div class="mobile-card-score">
-                                                <%= sumSec.obtainedMarks %> <span class="max-score">/ <%= sumSec.totalMarks %></span>
-                                            </div>
-                                        </div>
 
-                                        <% if (r.sectionWise && r.sectionWise.length > 0) { %>
-                                            <div class="mobile-sec-grid">
-                                                <% r.sectionWise.forEach(s => { %>
-                                                    <% const secUnatt = s.unattempted !== undefined ? s.unattempted : (s.blank || 0);
-                                                       const secTotalQ = s.totalQuestions !== undefined ? s.totalQuestions : ((s.correct || 0) + (s.wrong || 0) + secUnatt);
-                                                       const secAtt = s.attempted !== undefined ? s.attempted : Math.max(0, secTotalQ - secUnatt);
-                                                    %>
-                                                    <div class="mobile-sec-box">
-                                                        <div class="mobile-sec-name"><%= s.sectionName %></div>
-                                                        <div class="mobile-sec-marks"><%= s.marks %> <span class="mobile-sec-max">/ <%= s.maxMarks %></span></div>
-                                                        <div class="mobile-sec-stats">
-                                                            <span style="color: var(--success-hover);"><%= s.correct || 0 %>C</span> · 
-                                                            <span style="color: var(--danger);"><%= s.wrong || 0 %>W</span> · 
-                                                            <span style="color: var(--text-muted);"><%= secUnatt %>U</span>
-                                                        </div>
+                                            <% if (r.sectionWise && r.sectionWise.length> 0) { %>
+                                                <div class="mobile-sec-grid">
+                                                    <% r.sectionWise.forEach(s=> { %>
+                                                        <% const secUnatt=s.unattempted !==undefined ? s.unattempted :
+                                                            (s.blank || 0); const secTotalQ=s.totalQuestions
+                                                            !==undefined ? s.totalQuestions : ((s.correct || 0) +
+                                                            (s.wrong || 0) + secUnatt); const secAtt=s.attempted
+                                                            !==undefined ? s.attempted : Math.max(0, secTotalQ -
+                                                            secUnatt); %>
+                                                            <div class="mobile-sec-box">
+                                                                <div class="mobile-sec-name">
+                                                                    <%= s.sectionName %>
+                                                                </div>
+                                                                <div class="mobile-sec-marks">
+                                                                    <%= s.marks %> <span class="mobile-sec-max">/ <%=
+                                                                                s.maxMarks %></span>
+                                                                </div>
+                                                                <div class="mobile-sec-stats">
+                                                                    <span style="color: var(--success-hover);">
+                                                                        <%= s.correct || 0 %>C
+                                                                    </span> ·
+                                                                    <span style="color: var(--danger);">
+                                                                        <%= s.wrong || 0 %>W
+                                                                    </span> ·
+                                                                    <span style="color: var(--text-muted);">
+                                                                        <%= secUnatt %>U
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <% }) %>
+                                                </div>
+                                                <% } %>
+
+                                                    <div class="mobile-card-summary-row">
+                                                        <span>Att: <strong>
+                                                                <%= sumSec.attemptedQuestions %> / <%=
+                                                                        sumSec.totalQuestions %>
+                                                            </strong></span>
+                                                        <span>Acc: <strong
+                                                                style="color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;">
+                                                                <%= r.percentage %>%
+                                                            </strong></span>
+                                                        <span>
+                                                            <%= new Date(scannedTime).toLocaleDateString() %>
+                                                        </span>
                                                     </div>
-                                                <% }) %>
-                                            </div>
-                                        <% } %>
 
-                                        <div class="mobile-card-summary-row">
-                                            <span>Att: <strong><%= sumSec.attemptedQuestions %> / <%= sumSec.totalQuestions %></strong></span>
-                                            <span>Acc: <strong style="color: <%= r.percentage >= 60 ? 'var(--success-hover)' : (r.percentage >= 35 ? 'var(--warning-hover)' : 'var(--danger)') %>;"><%= r.percentage %>%</strong></span>
-                                            <span><%= new Date(scannedTime).toLocaleDateString() %></span>
+                                                    <div class="mobile-card-actions">
+                                                        <button type="button"
+                                                            class="btn btn-primary btn-sm mobile-btn-view"
+                                                            onclick="openOmrModalById('<%= r._id %>')">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                aria-hidden="true">
+                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
+                                                                </path>
+                                                                <circle cx="12" cy="12" r="3"></circle>
+                                                            </svg>
+                                                            View OMR Sheet
+                                                        </button>
+                                                        <% if (paper.exam_type==='jee' || /jee/i.test(paper.subject
+                                                            || '' ) || /jee/i.test(paper.title || '' )) { %>
+                                                            <button type="button" class="btn btn-outline btn-sm"
+                                                                onclick="openDedicatedNvtModal('<%= r._id %>')"
+                                                                title="Edit Section B Numerical (NVT) Answers"
+                                                                style="font-weight: 700; font-size: 0.76rem; padding: 4px 10px; color: #7E22CE; border-color: #D8B4FE; background: #FAF5FF; display: inline-flex; align-items: center; gap: 4px; height: 36px;">
+                                                                ✏️ NVT
+                                                            </button>
+                                                            <% } %>
+                                                                <% if (currentUser && currentUser.role==='admin' ) { %>
+                                                                    <button type="button"
+                                                                        class="btn btn-danger btn-sm btn-delete-sub"
+                                                                        onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')"
+                                                                        title="Delete copy"
+                                                                        style="height: 36px; padding: 0 12px;">
+                                                                        <svg width="14" height="14" viewBox="0 0 24 24"
+                                                                            fill="none" stroke="currentColor"
+                                                                            stroke-width="2" stroke-linecap="round"
+                                                                            stroke-linejoin="round" aria-hidden="true">
+                                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                                            <path
+                                                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                                                            </path>
+                                                                        </svg>
+                                                                    </button>
+                                                                    <% } %>
+                                                    </div>
                                         </div>
-
-                                        <div class="mobile-card-actions">
-                                            <button type="button" class="btn btn-primary btn-sm mobile-btn-view" onclick="openOmrModalById('<%= r._id %>')">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                    <circle cx="12" cy="12" r="3"></circle>
-                                                </svg>
-                                                View OMR Sheet
-                                            </button>
-                                            <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
-                                                <button type="button" class="btn btn-outline btn-sm"
-                                                    onclick="openDedicatedNvtModal('<%= r._id %>')"
-                                                    title="Edit Section B Numerical (NVT) Answers"
-                                                    style="font-weight: 700; font-size: 0.76rem; padding: 4px 10px; color: #7E22CE; border-color: #D8B4FE; background: #FAF5FF; display: inline-flex; align-items: center; gap: 4px; height: 36px;">
-                                                    ✏️ NVT
-                                                </button>
-                                            <% } %>
-                                            <% if (currentUser && currentUser.role === 'admin') { %>
-                                                <button type="button" class="btn btn-danger btn-sm btn-delete-sub" onclick="deleteSubmission('<%= r._id %>', '<%= studentRoll %>')" title="Delete copy" style="height: 36px; padding: 0 12px;">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                    </svg>
-                                                </button>
-                                            <% } %>
-                                        </div>
-                                    </div>
-                                <% }) %>
+                                        <% }) %>
                             </div>
                             <% } else { %>
                                 <div class="empty-state">
@@ -1908,16 +2066,17 @@
                                         the answer key and archive checked copies.
                                     </p>
                                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                                        <% if (currentUser && currentUser.role === 'admin') { %>
+                                        <% if (currentUser && currentUser.role==='admin' ) { %>
                                             <a href="/paper/<%= encodeURIComponent(paper._id) %>/scan"
                                                 class="btn btn-primary btn-lg">
                                                 Launch Live Scanner
                                             </a>
-                                        <% } %>
-                                        <a href="/paper/<%= encodeURIComponent(paper._id) %>"
-                                            class="btn btn-secondary btn-lg">
-                                            <%= (currentUser && currentUser.role === 'admin') ? 'Configure Answer Key' : 'View Answer Key' %>
-                                        </a>
+                                            <% } %>
+                                                <a href="/paper/<%= encodeURIComponent(paper._id) %>"
+                                                    class="btn btn-secondary btn-lg">
+                                                    <%= (currentUser && currentUser.role==='admin' )
+                                                        ? 'Configure Answer Key' : 'View Answer Key' %>
+                                                </a>
                                     </div>
                                 </div>
                                 <% } %>
@@ -1928,40 +2087,54 @@
         <dialog id="omrModal" class="omr-modal-dialog" closedby="any" aria-labelledby="modalRollNo">
             <header class="omr-modal-header">
                 <div class="omr-modal-header-left">
-                    <button type="button" class="btn-omr-back" onclick="closeOmrModalDirect()" title="Return to Paper Results">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <button type="button" class="btn-omr-back" onclick="closeOmrModalDirect()"
+                        title="Return to Paper Results">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="19" y1="12" x2="5" y2="12"></line>
                             <polyline points="12 19 5 12 12 5"></polyline>
                         </svg>
                         <span class="back-text">Back</span>
                     </button>
-                    <span class="roll-badge" id="modalRollNo" style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
-                    <span class="aggregate-badge" id="modalAggregateText" style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0 / 0</span>
+                    <span class="roll-badge" id="modalRollNo"
+                        style="font-size: 0.8rem; padding: 2px 8px; background: #0284C7; color: #FFFFFF; border: none; font-weight: 700; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;">ROLL</span>
+                    <span class="aggregate-badge" id="modalAggregateText"
+                        style="font-size: 0.82rem; padding: 2px 8px; background: #059669; color: #FFFFFF; border: 1px solid #10B981; font-weight: 700; border-radius: 999px; white-space: nowrap;">0
+                        / 0</span>
                     <div style="display: inline-flex; align-items: center; gap: 4px;">
-                        <span style="font-size: 0.82rem; font-weight: 600; color: #F8FAFC; display: none;" id="modalStudentName"></span>
-                        <% if (currentUser && currentUser.role === 'admin') { %>
-                            <button type="button" id="modalEditNameBtn" class="btn-omr-tool" onclick="openEditCurrentModalStudentName()" title="Edit Student Name" style="padding: 2px 6px; font-size: 0.72rem; height: 24px; display: none;">
+                        <span style="font-size: 0.82rem; font-weight: 600; color: #F8FAFC; display: none;"
+                            id="modalStudentName"></span>
+                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                            <button type="button" id="modalEditNameBtn" class="btn-omr-tool"
+                                onclick="openEditCurrentModalStudentName()" title="Edit Student Name"
+                                style="padding: 2px 6px; font-size: 0.72rem; height: 24px; display: none;">
                                 ✏️ Edit
                             </button>
-                        <% } %>
+                            <% } %>
                     </div>
                 </div>
 
                 <div class="omr-modal-header-center" id="omrMobileNav">
-                    <button type="button" class="omr-tab-pill active" id="tabMobileOmr" onclick="setMobileModalTab('omr')">Sheet</button>
-                    <button type="button" class="omr-tab-pill" id="tabMobileBreakdown" onclick="setMobileModalTab('breakdown')">Marks</button>
+                    <button type="button" class="omr-tab-pill active" id="tabMobileOmr"
+                        onclick="setMobileModalTab('omr')">Sheet</button>
+                    <button type="button" class="omr-tab-pill" id="tabMobileBreakdown"
+                        onclick="setMobileModalTab('breakdown')">Marks</button>
                 </div>
 
                 <div class="omr-modal-header-right">
-                    <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()" title="Toggle live check marks overlay">
+                    <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()"
+                        title="Toggle live check marks overlay">
                         Marks: ON
                     </button>
-                    <% if (currentUser && currentUser.role === 'admin') { %>
-                        <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary" style="padding: 2px 8px; font-size: 0.75rem; height: 28px;">
+                    <% if (currentUser && currentUser.role==='admin' ) { %>
+                        <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn"
+                            onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary"
+                            style="padding: 2px 8px; font-size: 0.75rem; height: 28px;">
                             Delete
                         </button>
-                    <% } %>
-                    <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()" aria-label="Close modal">&times;</button>
+                        <% } %>
+                            <button type="button" class="btn-modal-close" onclick="closeOmrModalDirect()"
+                                aria-label="Close modal">&times;</button>
                 </div>
             </header>
 
@@ -1970,23 +2143,27 @@
                 <div class="omr-stage-pane">
                     <div class="omr-stage-viewport">
                         <div class="omr-preview-frame">
-                            <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
-                                onerror="this.onerror=null;">
+                            <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet" onerror="this.onerror=null;">
                             <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
                     <div class="omr-stage-footer">
-                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
+                        <div
+                            style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.76rem; font-weight: 600;">
                             <span><span style="color: #10B981;">&#9679;</span> Correct (+4)</span>
                             <span><span style="color: #EF4444;">&#9679;</span> Wrong (-1)</span>
                             <span><span style="color: #10B981;">&#9676;</span> Key</span>
                             <span><span style="color: #06B6D4;">&#9679;</span> Roll</span>
                         </div>
                         <div class="omr-zoom-bar">
-                            <span style="font-size: 0.72rem; color: #94A3B8; margin-right: 3px; font-weight: 600;">Zoom:</span>
-                            <button type="button" class="btn-zoom active" id="btnZoom1" onclick="setOmrModalZoom(1, this)">1×</button>
-                            <button type="button" class="btn-zoom" id="btnZoom15" onclick="setOmrModalZoom(1.5, this)">1.5×</button>
-                            <button type="button" class="btn-zoom" id="btnZoom2" onclick="setOmrModalZoom(2, this)">2×</button>
+                            <span
+                                style="font-size: 0.72rem; color: #94A3B8; margin-right: 3px; font-weight: 600;">Zoom:</span>
+                            <button type="button" class="btn-zoom active" id="btnZoom1"
+                                onclick="setOmrModalZoom(1, this)">1×</button>
+                            <button type="button" class="btn-zoom" id="btnZoom15"
+                                onclick="setOmrModalZoom(1.5, this)">1.5×</button>
+                            <button type="button" class="btn-zoom" id="btnZoom2"
+                                onclick="setOmrModalZoom(2, this)">2×</button>
                         </div>
                     </div>
                 </div>
@@ -1995,18 +2172,24 @@
                 <div class="omr-details-pane">
                     <!-- Collapsible Score & Performance Toggle Bar (Hidden by Default) -->
                     <div class="scorecard-toggle-wrap">
-                        <button type="button" class="btn-scorecard-toggle" id="btnScorecardToggle" onclick="toggleScorecardVisibility()">
+                        <button type="button" class="btn-scorecard-toggle" id="btnScorecardToggle"
+                            onclick="toggleScorecardVisibility()">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                    style="color: #2563EB;">
                                     <path d="M18 20V10"></path>
                                     <path d="M12 20V4"></path>
                                     <path d="M6 20v-6"></path>
                                 </svg>
-                                <span id="scorecardToggleLabel" style="font-weight: 700; font-size: 0.88rem;">Show Score & Subject Performance</span>
+                                <span id="scorecardToggleLabel" style="font-weight: 700; font-size: 0.88rem;">Show Score
+                                    & Subject Performance</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span class="scorecard-toggle-badge" id="scorecardToggleSummaryBadge">0 / 0</span>
-                                <svg class="scorecard-toggle-chevron" id="scorecardToggleChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="scorecard-toggle-chevron" id="scorecardToggleChevron" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
                             </div>
@@ -2024,7 +2207,8 @@
                                 <div class="aggregate-grand-val" id="modalGrandAggregate">
                                     0 / 0
                                 </div>
-                                <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;" id="modalAllSectionsStats">
+                                <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;"
+                                    id="modalAllSectionsStats">
                                     Total: 0 Qs &middot; Attempted: 0 &middot; Unattempted: 0
                                 </div>
                             </div>
@@ -2060,8 +2244,11 @@
 
                         <!-- Subject/Section Breakdown Section -->
                         <div>
-                            <h4 style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;">
+                            <h4
+                                style="margin: 0 0 10px 0; font-size: 0.94rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                    style="color: #2563EB;">
                                     <rect x="3" y="3" width="7" height="7"></rect>
                                     <rect x="14" y="3" width="7" height="7"></rect>
                                     <rect x="14" y="14" width="7" height="7"></rect>
@@ -2069,36 +2256,46 @@
                                 </svg>
                                 Subject Performance
                             </h4>
-                            <div id="modalSectionContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
+                            <div id="modalSectionContainer"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            </div>
                         </div>
                     </div>
 
                     <!-- Question Breakdown Table Section -->
                     <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <h4 style="margin: 0; font-size: 0.94rem; font-weight: 700; color: #0F172A;">
                                 Question-by-Question Breakdown
                             </h4>
                             <div class="breakdown-filter-bar">
-                                <button type="button" class="filter-pill active" data-filter="all" onclick="filterModalBreakdown('all')">
+                                <button type="button" class="filter-pill active" data-filter="all"
+                                    onclick="filterModalBreakdown('all')">
                                     All (<span id="filterCountAll">0</span>)
                                 </button>
-                                <button type="button" class="filter-pill" data-filter="correct" onclick="filterModalBreakdown('correct')">
+                                <button type="button" class="filter-pill" data-filter="correct"
+                                    onclick="filterModalBreakdown('correct')">
                                     Correct (<span id="filterCountCorrect">0</span>)
                                 </button>
-                                <button type="button" class="filter-pill" data-filter="wrong" onclick="filterModalBreakdown('wrong')">
+                                <button type="button" class="filter-pill" data-filter="wrong"
+                                    onclick="filterModalBreakdown('wrong')">
                                     Wrong (<span id="filterCountWrong">0</span>)
                                 </button>
-                                <button type="button" class="filter-pill" data-filter="blank" onclick="filterModalBreakdown('blank')">
+                                <button type="button" class="filter-pill" data-filter="blank"
+                                    onclick="filterModalBreakdown('blank')">
                                     Blank (<span id="filterCountBlank">0</span>)
                                 </button>
                             </div>
                         </div>
 
-                        <div style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; box-shadow: var(--shadow-sm);">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 0.825rem; text-align: center; font-variant-numeric: tabular-nums;">
+                        <div
+                            style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; box-shadow: var(--shadow-sm);">
+                            <table
+                                style="width: 100%; border-collapse: collapse; font-size: 0.825rem; text-align: center; font-variant-numeric: tabular-nums;">
                                 <thead>
-                                    <tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                                    <tr
+                                        style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 1; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">
                                         <th style="padding: 9px 8px; font-weight: 700;" id="thSubjectCol">Subject</th>
                                         <th style="padding: 9px 8px; font-weight: 700;">Q#</th>
                                         <th style="padding: 9px 8px; font-weight: 700;">Student Response</th>
@@ -2112,56 +2309,59 @@
                         </div>
 
                         <!-- Floating NVQ Edit Save Bar -->
-                        <% if (currentUser && currentUser.role === 'admin') { %>
-                        <div id="nvqEditActionBar" class="nvq-save-floating-bar">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.05rem;">✏️</span>
-                                <span style="font-size: 0.82rem; font-weight: 600; color: #92400E;">Unsaved changes to numerical answers</span>
+                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                            <div id="nvqEditActionBar" class="nvq-save-floating-bar">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.05rem;">✏️</span>
+                                    <span style="font-size: 0.82rem; font-weight: 600; color: #92400E;">Unsaved changes
+                                        to numerical answers</span>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelNvqEdits()"
+                                        style="padding: 5px 12px; font-size: 0.8rem;">Discard</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveNvq"
+                                        onclick="saveEditedNumericalScores()"
+                                        style="padding: 5px 14px; font-size: 0.8rem; font-weight: 700; background: #059669; border-color: #059669; color: white;">💾
+                                        Save Changes</button>
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelNvqEdits()" style="padding: 5px 12px; font-size: 0.8rem;">Discard</button>
-                                <button type="button" class="btn btn-primary btn-sm" id="btnSaveNvq" onclick="saveEditedNumericalScores()" style="padding: 5px 14px; font-size: 0.8rem; font-weight: 700; background: #059669; border-color: #059669; color: white;">💾 Save Changes</button>
-                            </div>
-                        </div>
-                        <% } %>
+                            <% } %>
                     </div>
                 </div>
             </div>
         </dialog>
 
         <!-- Hard Recheck Progress Modal -->
-        
+
         <!-- Dedicated Fullscreen NVT (Section B Numerical Only) Modal -->
         <dialog id="nvtEditModal" class="nvt-fullscreen-modal" closedby="any" aria-labelledby="nvtModalTitle">
             <!-- Sticky Header -->
             <div class="nvt-modal-header">
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #FAF5FF; color: #7E22CE; border: 1.5px solid #D8B4FE; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                        ✏️
-                    </div>
                     <div>
                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <h3 id="nvtModalTitle" style="font-size: 1.15rem; font-weight: 800; margin: 0; color: #0F172A;">
-                                Section B Numerical Questions (NVT)
-                            </h3>
-                            <span class="count-pill" id="nvtModalRoll" style="font-size: 0.82rem; padding: 3px 10px;">ROLL</span>
-                            <span id="nvtModalStudentName" style="font-weight: 700; color: #334155; font-size: 0.95rem;"></span>
-                        </div>
-                        <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
-                            Grading 15 Numerical Value Questions (Physics Q21–25 &bull; Chem Q46–50 &bull; Math Q71–75)
+                            <span class="count-pill" id="nvtModalRoll"
+                                style="font-size: 0.82rem; padding: 3px 10px;">ROLL</span>
+                            <span id="nvtModalStudentName"
+                                style="font-weight: 700; color: #334155; font-size: 0.95rem;"></span>
                         </div>
                     </div>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                    <div style="background: #FFFFFF; border: 1px solid var(--border-color); padding: 6px 14px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 0.82rem; font-weight: 600; color: #64748B;">Total Numerical Score:</span>
-                        <span id="nvtModalTotalScore" style="font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: #2563EB;">+0</span>
+                    <div
+                        style="background: #FFFFFF; border: 1px solid var(--border-color); padding: 6px 14px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.82rem; font-weight: 600; color: #64748B;">Total Numerical
+                            Score:</span>
+                        <span id="nvtModalTotalScore"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: #2563EB;">+0</span>
                         <span style="font-size: 0.82rem; color: #94A3B8; font-weight: 600;">/ 60 Marks</span>
                     </div>
 
-                    <button type="button" class="btn-modal-close" onclick="closeDedicatedNvtModal()" aria-label="Close NVT dialog" style="width: 36px; height: 36px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <button type="button" class="btn-modal-close" onclick="closeDedicatedNvtModal()"
+                        aria-label="Close NVT dialog" style="width: 36px; height: 36px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
@@ -2178,11 +2378,14 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.25rem;">⚛️</span>
                                 <div>
-                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Physics Section B</h4>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Physics
+                                        Section B</h4>
                                     <div style="font-size: 0.74rem; color: #64748B;">Questions Q21 to Q25</div>
                                 </div>
                             </div>
-                            <span id="nvtPhySubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                            <span id="nvtPhySubTotal"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px;">+0
+                                Marks</span>
                         </div>
                         <div id="nvtPhyQuestionsList" class="nvt-questions-list"></div>
                     </div>
@@ -2193,11 +2396,14 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.25rem;">🧪</span>
                                 <div>
-                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Chemistry Section B</h4>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Chemistry
+                                        Section B</h4>
                                     <div style="font-size: 0.74rem; color: #64748B;">Questions Q46 to Q50</div>
                                 </div>
                             </div>
-                            <span id="nvtChemSubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                            <span id="nvtChemSubTotal"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 6px;">+0
+                                Marks</span>
                         </div>
                         <div id="nvtChemQuestionsList" class="nvt-questions-list"></div>
                     </div>
@@ -2208,11 +2414,14 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.25rem;">📐</span>
                                 <div>
-                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Mathematics Section B</h4>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">
+                                        Mathematics Section B</h4>
                                     <div style="font-size: 0.74rem; color: #64748B;">Questions Q71 to Q75</div>
                                 </div>
                             </div>
-                            <span id="nvtMathSubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #7C3AED; background: #FAF5FF; border: 1px solid #E9D5FF; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                            <span id="nvtMathSubTotal"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #7C3AED; background: #FAF5FF; border: 1px solid #E9D5FF; padding: 2px 8px; border-radius: 6px;">+0
+                                Marks</span>
                         </div>
                         <div id="nvtMathQuestionsList" class="nvt-questions-list"></div>
                     </div>
@@ -2221,14 +2430,18 @@
 
             <!-- Sticky Footer -->
             <div class="nvt-modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="resetDedicatedNvtScores()" style="font-weight: 600; padding: 8px 16px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="resetDedicatedNvtScores()"
+                    style="font-weight: 600; padding: 8px 18px; white-space: nowrap;">
                     ↺ Reset Changes
                 </button>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="closeDedicatedNvtModal()" style="font-weight: 600; padding: 8px 16px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeDedicatedNvtModal()"
+                        style="font-weight: 600; padding: 8px 18px; white-space: nowrap;">
                         Cancel
                     </button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveDedicatedNvt" onclick="saveDedicatedNvtScores()" style="font-weight: 700; padding: 8px 24px; background: #059669; border-color: #059669; font-size: 0.88rem;">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveDedicatedNvt"
+                        onclick="saveDedicatedNvtScores()"
+                        style="font-weight: 700; padding: 8px 24px; background: #059669; border-color: #059669; font-size: 0.88rem; white-space: nowrap;">
                         💾 Save Numerical Scores
                     </button>
                 </div>
@@ -2238,13 +2451,17 @@
         <dialog id="hardRecheckModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="hardRecheckTitle">
             <div class="recheck-modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 700;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    <div
+                        style="width: 32px; height: 32px; border-radius: 8px; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
                         </svg>
                     </div>
                     <div>
-                        <h3 id="hardRecheckTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">
+                        <h3 id="hardRecheckTitle"
+                            style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">
                             Hard Reset / Recheck (Cloudinary Extraction)
                         </h3>
                         <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
@@ -2252,8 +2469,10 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn-modal-close" id="hardRecheckCloseBtn" onclick="closeHardRecheckModal()" aria-label="Close dialog">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="btn-modal-close" id="hardRecheckCloseBtn" onclick="closeHardRecheckModal()"
+                    aria-label="Close dialog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -2262,14 +2481,16 @@
 
             <div class="recheck-modal-body">
                 <div style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.45;">
-                    Extracting original student OMR sheet scans from Cloudinary one by one and re-running the bubble detection engine. Section B numerical answers will be preserved.
+                    Extracting original student OMR sheet scans from Cloudinary one by one and re-running the bubble
+                    detection engine. Section B numerical answers will be preserved.
                 </div>
 
                 <div>
                     <div class="recheck-progress-track">
                         <div id="hardRecheckProgressBar" class="recheck-progress-fill"></div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
                         <span id="hardRecheckProgressCount" style="color: var(--text-main);">0 / 0 Sheets</span>
                         <span id="hardRecheckProgressPercent" style="color: #D97706; font-family: monospace;">0%</span>
                     </div>
@@ -2277,7 +2498,8 @@
 
                 <div class="recheck-status-card">
                     <div class="recheck-spinner" id="hardRecheckSpinner"></div>
-                    <div id="hardRecheckCurrentStatus" style="font-size: 0.84rem; font-weight: 500; color: var(--text-body);">
+                    <div id="hardRecheckCurrentStatus"
+                        style="font-size: 0.84rem; font-weight: 500; color: var(--text-body);">
                         Ready to extract sheets...
                     </div>
                 </div>
@@ -2296,23 +2518,30 @@
                 <div id="hardRecheckFooterNote" style="font-size: 0.77rem; color: var(--text-muted);">
                     Please do not close this window during recheck.
                 </div>
-                <button type="button" class="btn btn-primary btn-sm" id="hardRecheckActionBtn" style="display: none;" onclick="window.location.reload()">
+                <button type="button" class="btn btn-primary btn-sm" id="hardRecheckActionBtn" style="display: none;"
+                    onclick="window.location.reload()">
                     Reload Results Now
                 </button>
             </div>
         </dialog>
 
         <!-- WhatsApp Results Dispatch Modal Dialog -->
-        <dialog id="whatsAppModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="whatsAppModalTitle" style="max-width: 540px;">
+        <dialog id="whatsAppModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="whatsAppModalTitle"
+            style="max-width: 540px;">
             <div class="recheck-modal-header" style="background: #F0FDF4; border-bottom: 1px solid #BBF7D0;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #25D366; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    <div
+                        style="width: 34px; height: 34px; border-radius: 8px; background: #25D366; color: #FFFFFF; display: flex; align-items: center; justify-content: center;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                            </path>
                         </svg>
                     </div>
                     <div>
-                        <h3 id="whatsAppModalTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #14532D;">
+                        <h3 id="whatsAppModalTitle"
+                            style="font-size: 1.05rem; font-weight: 700; margin: 0; color: #14532D;">
                             Send WhatsApp Results
                         </h3>
                         <div style="font-size: 0.78rem; color: #166534; font-weight: 500;">
@@ -2320,8 +2549,10 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn-modal-close" id="waCloseBtn" onclick="closeWhatsAppModal()" aria-label="Close dialog">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="btn-modal-close" id="waCloseBtn" onclick="closeWhatsAppModal()"
+                    aria-label="Close dialog">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -2330,9 +2561,14 @@
 
             <!-- Step 1: Initial Confirmation & Send OTP -->
             <div id="waStep1" class="recheck-modal-body">
-                <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.85rem; line-height: 1.5;">
-                    <div><strong>Paper:</strong> <%= paper.title %></div>
-                    <div><strong>Evaluated Students:</strong> <%= results.length %> Copies</div>
+                <div
+                    style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.85rem; line-height: 1.5;">
+                    <div><strong>Paper:</strong>
+                        <%= paper.title %>
+                    </div>
+                    <div><strong>Evaluated Students:</strong>
+                        <%= results.length %> Copies
+                    </div>
                     <div style="margin-top: 4px; color: #15803D; font-weight: 600;">
                         📱 Destination: Sent directly to each student's registered <strong>Parent Phone</strong>.
                     </div>
@@ -2345,11 +2581,13 @@
                 </div>
 
                 <div style="font-size: 0.84rem; color: var(--text-body); line-height: 1.45;">
-                    To ensure zero tampering and authorize mass message dispatch from Garud Classes' WhatsApp number, a <strong>6-digit verification code</strong> will be sent to your administrator email.
+                    To ensure zero tampering and authorize mass message dispatch from Garud Classes' WhatsApp number, a
+                    <strong>6-digit verification code</strong> will be sent to your administrator email.
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeWhatsAppModal()">Cancel</button>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="closeWhatsAppModal()">Cancel</button>
                     <button type="button" class="btn btn-sm" id="waBtnSendOtp" onclick="requestWhatsAppOtp()"
                         style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; padding: 6px 14px;">
                         📧 Send Verification OTP
@@ -2364,23 +2602,30 @@
                         Verification OTP Sent!
                     </div>
                     <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                        Check your inbox at <strong id="waEmailHintText" style="color: #2563EB;">admin email</strong> (valid for 10 mins).
+                        Check your inbox at <strong id="waEmailHintText" style="color: #2563EB;">admin email</strong>
+                        (valid for 10 mins).
                     </div>
                 </div>
 
                 <div style="text-align: center; margin: 12px 0;">
-                    <input type="text" id="waOtpInput" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="------"
+                    <input type="text" id="waOtpInput" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code"
+                        placeholder="------"
                         style="font-size: 1.8rem; font-weight: 800; letter-spacing: 12px; text-align: center; width: 220px; padding: 8px 12px; border: 2px solid #CBD5E1; border-radius: 8px; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s;"
-                        onfocus="this.style.borderColor='#25D366';" onblur="this.style.borderColor='#CBD5E1';" onkeyup="if(event.key==='Enter') submitWhatsAppOtp();">
-                    <div id="waOtpError" style="color: #DC2626; font-size: 0.82rem; margin-top: 6px; font-weight: 600; display: none;"></div>
+                        onfocus="this.style.borderColor='#25D366';" onblur="this.style.borderColor='#CBD5E1';"
+                        onkeyup="if(event.key==='Enter') submitWhatsAppOtp();">
+                    <div id="waOtpError"
+                        style="color: #DC2626; font-size: 0.82rem; margin-top: 6px; font-weight: 600; display: none;">
+                    </div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <button type="button" class="btn btn-sm" onclick="requestWhatsAppOtp()" id="waBtnResend" style="background: transparent; border: none; color: #2563EB; font-size: 0.8rem; text-decoration: underline; cursor: pointer; padding: 0;">
+                    <button type="button" class="btn btn-sm" onclick="requestWhatsAppOtp()" id="waBtnResend"
+                        style="background: transparent; border: none; color: #2563EB; font-size: 0.8rem; text-decoration: underline; cursor: pointer; padding: 0;">
                         Resend Code
                     </button>
                     <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeWhatsAppModal()">Cancel</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="closeWhatsAppModal()">Cancel</button>
                         <button type="button" class="btn btn-sm" id="waBtnVerify" onclick="submitWhatsAppOtp()"
                             style="background: #25D366; color: #FFFFFF; border-color: #20BA5A; font-weight: 600; padding: 6px 14px;">
                             ✓ Verify &amp; Start Dispatch
@@ -2393,9 +2638,11 @@
             <div id="waStep3" class="recheck-modal-body" style="display: none;">
                 <div>
                     <div class="recheck-progress-track">
-                        <div id="waProgressBar" class="recheck-progress-fill" style="background: linear-gradient(90deg, #25D366, #059669);"></div>
+                        <div id="waProgressBar" class="recheck-progress-fill"
+                            style="background: linear-gradient(90deg, #25D366, #059669);"></div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; font-weight: 600;">
                         <span id="waProgressCount" style="color: var(--text-main);">0 / <%= results.length %></span>
                         <span id="waProgressPercent" style="color: #059669; font-family: monospace;">0%</span>
                     </div>
@@ -2410,17 +2657,26 @@
 
                 <!-- Metric Badges Row -->
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: -4px;">
-                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 6px; text-align: center;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #166534;">Sent</div>
-                        <div id="waStatSent" style="font-size: 1.1rem; font-weight: 800; color: #15803D; font-family: monospace;">0</div>
+                    <div
+                        style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #166534;">
+                            Sent</div>
+                        <div id="waStatSent"
+                            style="font-size: 1.1rem; font-weight: 800; color: #15803D; font-family: monospace;">0</div>
                     </div>
-                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 6px; text-align: center;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #92400E;">Skipped (No Parent Phone)</div>
-                        <div id="waStatSkipped" style="font-size: 1.1rem; font-weight: 800; color: #B45309; font-family: monospace;">0</div>
+                    <div
+                        style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #92400E;">
+                            Skipped (No Parent Phone)</div>
+                        <div id="waStatSkipped"
+                            style="font-size: 1.1rem; font-weight: 800; color: #B45309; font-family: monospace;">0</div>
                     </div>
-                    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 6px; text-align: center;">
-                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #991B1B;">Failed</div>
-                        <div id="waStatFailed" style="font-size: 1.1rem; font-weight: 800; color: #DC2626; font-family: monospace;">0</div>
+                    <div
+                        style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: #991B1B;">
+                            Failed</div>
+                        <div id="waStatFailed"
+                            style="font-size: 1.1rem; font-weight: 800; color: #DC2626; font-family: monospace;">0</div>
                     </div>
                 </div>
 
@@ -2439,10 +2695,12 @@
                     Rate-limited: 4-8s delay prevents WhatsApp number blocking.
                 </div>
                 <div id="waFooterActions">
-                    <button type="button" class="btn btn-secondary btn-sm" id="waBtnCancelJob" onclick="cancelWhatsAppJob()" style="display: none; color: #DC2626; border-color: #FECACA;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="waBtnCancelJob"
+                        onclick="cancelWhatsAppJob()" style="display: none; color: #DC2626; border-color: #FECACA;">
                         Cancel Dispatch
                     </button>
-                    <button type="button" class="btn btn-sm" id="waBtnFinish" onclick="closeWhatsAppModal()" style="display: none; background: #25D366; color: #FFF; font-weight: 600;">
+                    <button type="button" class="btn btn-sm" id="waBtnFinish" onclick="closeWhatsAppModal()"
+                        style="display: none; background: #25D366; color: #FFF; font-weight: 600;">
                         Done
                     </button>
                 </div>
@@ -2450,18 +2708,18 @@
         </dialog>
 
         <script>
-            const PAPER_ID = <%- JSON.stringify(String(paper._id)) %>;
-            const PAPER_TITLE = <%- JSON.stringify(String(paper.title || '')) %>;
-            const PAPER_SUBJECT = <%- JSON.stringify(String(paper.subject || '')) %>;
-            const PAPER_EXAM_TYPE = <%- JSON.stringify(String(paper.exam_type || 'standard')) %>;
-            const IS_ADMIN = <%- (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
+            const PAPER_ID = <% - JSON.stringify(String(paper._id)) %>;
+            const PAPER_TITLE = <% - JSON.stringify(String(paper.title || '')) %>;
+            const PAPER_SUBJECT = <% - JSON.stringify(String(paper.subject || '')) %>;
+            const PAPER_EXAM_TYPE = <% - JSON.stringify(String(paper.exam_type || 'standard')) %>;
+            const IS_ADMIN = <% - (currentUser && currentUser.role === 'admin') ? 'true' : 'false' %>;
             let currentModalSubmission = null;
             let currentModalList = [];
             let currentEditingNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let originalNumericalScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let showCheckingOverlay = true;
-            const answerKey = <%- (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
-            const allSubmissionsData = <%- JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
+            const answerKey = <% - (typeof answerKeyJson !== 'undefined' ? answerKeyJson : '{}').replace(/</g, '\\u003c') %>;
+            const allSubmissionsData = <% - JSON.stringify(results || []).replace(/</g, '\\u003c') %>;
             const submissionsMap = {};
             allSubmissionsData.forEach(s => {
                 if (s && s._id) submissionsMap[String(s._id)] = s;
@@ -3015,8 +3273,8 @@
                 return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
 
-            
-            
+
+
             let currentNvtEditingSubId = null;
             let currentNvtScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
             let originalNvtScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
@@ -4511,23 +4769,32 @@
         </script>
 
         <!-- Edit Student Name Modal Dialog -->
-        <dialog id="editStudentNameModal" class="folder-modal-dialog" closedby="any" style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
-            <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+        <dialog id="editStudentNameModal" class="folder-modal-dialog" closedby="any"
+            style="max-width: 420px; border-radius: 12px; border: 1px solid #CBD5E1; padding: 0; box-shadow: 0 12px 30px rgba(0,0,0,0.18); background: #FFFFFF;">
+            <div
+                style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1E293B;">✏️ Edit Student Name</h3>
-                <button type="button" onclick="document.getElementById('editStudentNameModal').close()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
+                <button type="button" onclick="document.getElementById('editStudentNameModal').close()"
+                    style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #64748B;">&times;</button>
             </div>
             <form onsubmit="submitEditStudentName(event)" style="padding: 20px;">
                 <input type="hidden" id="editStudentSubId">
                 <input type="hidden" id="editStudentRoll">
                 <div style="margin-bottom: 12px; font-size: 0.85rem; color: #64748B;">
-                    Roll Number: <strong id="editStudentRollDisplay" style="color: #1E293B; font-family: 'JetBrains Mono', monospace;"></strong>
+                    Roll Number: <strong id="editStudentRollDisplay"
+                        style="color: #1E293B; font-family: 'JetBrains Mono', monospace;"></strong>
                 </div>
                 <div style="margin-bottom: 18px;">
-                    <label style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Student Full Name *</label>
-                    <input type="text" id="editStudentNameInput" class="form-control" placeholder="e.g. John Doe, Aditi Sharma" required style="width: 100%; font-size: 0.95rem; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px;">
+                    <label
+                        style="display: block; font-size: 0.84rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Student
+                        Full Name *</label>
+                    <input type="text" id="editStudentNameInput" class="form-control"
+                        placeholder="e.g. John Doe, Aditi Sharma" required
+                        style="width: 100%; font-size: 0.95rem; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 6px;">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('editStudentNameModal').close()">Cancel</button>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="document.getElementById('editStudentNameModal').close()">Cancel</button>
                     <button type="submit" class="btn btn-primary btn-sm" id="btnSaveStudentName">Save Name</button>
                 </div>
             </form>
