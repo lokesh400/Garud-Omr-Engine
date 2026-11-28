@@ -113,8 +113,6 @@ function formatStudentWhatsAppMessage(studentResult, paper, rank, totalStudents)
         }).join('\n');
     }
 
-    const omrLink = studentResult.cloudinary_image_url || studentResult.omrImageUrl || '';
-
     return `🦅 *GARUD CLASSES*
 📊 *Official Student Examination Result*
 ━━━━━━━━━━━━━━━━━━━━━
@@ -131,8 +129,7 @@ Here is the official performance report of your ward:
 ✅ *Correct Answers:* ${correct}
 ❌ *Wrong Answers:* ${wrong}
 ⚪ *Unattempted:* ${blank}
-${secText ? `\n📚 *Subject-wise Marks:*\n${secText}\n` : ''}
-${omrLink ? `📄 *Evaluated OMR Sheet:*\n${omrLink}\n` : ''}━━━━━━━━━━━━━━━━━━━━━
+${secText ? `\n📚 *Subject-wise Marks:*\n${secText}\n` : ''}━━━━━━━━━━━━━━━━━━━━━
 _Garud Classes — Learn Today, Lead Tomorrow_
 🌐 garudclasses.com`;
 }
@@ -250,13 +247,11 @@ async function runDispatchLoop(job, results, parentContactMap, paper) {
         };
 
         const messageText = formatStudentWhatsAppMessage(r, paper, rank, totalStudents);
-        const imageUrl = r.cloudinary_image_url || r.omrImageUrl || null;
 
         try {
             await postSignedToWhatsAppServer('/send', {
                 to: phone,
-                message: messageText,
-                imageUrl: imageUrl
+                message: messageText
             });
 
             job.sent++;

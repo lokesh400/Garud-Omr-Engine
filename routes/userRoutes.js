@@ -329,6 +329,58 @@ router.post('/users/:id/name', requireAdmin, async (req, res) => {
     }
 });
 
+router.post('/users/:id/phone', requireAdmin, async (req, res) => {
+    try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (!isValidMongoId(req.params.id)) {
+            if (wantsJson) return res.status(400).json({ success: false, error: 'Invalid user identifier.' });
+            return res.redirect('/users?error=' + encodeURIComponent('Invalid user identifier.'));
+        }
+
+        const rawPhone = String((req.body && (req.body.parentPhone || req.body.phone)) || '').trim();
+        let cleanPhone = rawPhone.replace(/\D/g, '');
+
+        // If user submitted with +91 or leading 0, strip country code
+        if (cleanPhone.length > 10 && cleanPhone.startsWith('91')) {
+            cleanPhone = cleanPhone.slice(2);
+        } else if (cleanPhone.length > 10 && cleanPhone.startsWith('0')) {
+            cleanPhone = cleanPhone.slice(1);
+        }
+        if (cleanPhone.length > 10) {
+            cleanPhone = cleanPhone.slice(-10);
+        }
+
+        // Validate 10-digit format if not empty
+        if (cleanPhone && cleanPhone.length !== 10) {
+            const errStr = 'Please enter a valid 10-digit mobile number without +91.';
+            if (wantsJson) return res.status(400).json({ success: false, error: errStr });
+            return res.redirect('/users?error=' + encodeURIComponent(errStr));
+        }
+
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            if (wantsJson) return res.status(404).json({ success: false, error: 'User not found.' });
+            return res.redirect('/users?error=' + encodeURIComponent('User not found.'));
+        }
+
+        targetUser.parentPhone = cleanPhone;
+        await targetUser.save();
+
+        if (wantsJson) {
+            return res.json({
+                success: true,
+                message: cleanPhone ? `Parent WhatsApp phone updated for @${targetUser.username}.` : `Phone removed for @${targetUser.username}.`,
+                parentPhone: targetUser.parentPhone
+            });
+        }
+        return res.redirect('/users?message=' + encodeURIComponent(`Parent phone updated for @${targetUser.username}.`));
+    } catch (err) {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
+        if (wantsJson) return res.status(500).json({ success: false, error: err.message || 'Could not update phone.' });
+        return res.redirect('/users?error=' + encodeURIComponent(err.message || 'Could not update phone.'));
+    }
+});
+
 router.post('/users/:id/password', requireAdmin, passwordChangeLimiter.middleware(), async (req, res) => {
     try {
         const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');

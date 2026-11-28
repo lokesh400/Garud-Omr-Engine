@@ -975,6 +975,7 @@
                             <th>Role</th>
                             <th>Roll Number</th>
                             <th>Email Address</th>
+                            <th>Parent Phone</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
@@ -988,7 +989,8 @@
                                     const rollStr = (u.rollnumber || '').trim();
                                     const userStr = (u.username || '').trim();
                                     const emailStr = (u.email || '').trim();
-                                    const searchContent = `${userStr} ${nameStr} ${rollStr} ${roleStr} ${emailStr}`.toLowerCase();
+                                    const parentPhoneStr = (u.parentPhone || '').trim();
+                                    const searchContent = `${userStr} ${nameStr} ${rollStr} ${roleStr} ${emailStr} ${parentPhoneStr}`.toLowerCase();
                                     const initials = (nameStr || userStr)
                                         .split(/\s+/)
                                         .filter(Boolean)
@@ -1043,8 +1045,34 @@
                                             </button>
                                         <% } %>
                                     </td>
+                                    <td id="phone-cell-<%= u._id %>">
+                                        <% if (parentPhoneStr) { %>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="user-phone-text" id="phone-text-<%= u._id %>" style="font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-main); font-weight: 600;"><%= parentPhoneStr %></span>
+                                                <button type="button" class="btn-phone-inline-edit" onclick="openEditPhoneModal('<%= u._id %>', '<%= parentPhoneStr %>', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')" title="Edit parent WhatsApp phone" style="border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 4px; padding: 1px 6px; font-size: 0.7rem; cursor: pointer; color: #475569; font-weight: 600;">
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        <% } else { %>
+                                            <button type="button" class="btn-phone-add-pill" onclick="openEditPhoneModal('<%= u._id %>', '', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')" title="Add parent WhatsApp phone (without +91)" style="background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                                <span>+</span> Add Phone
+                                            </button>
+                                        <% } %>
+                                    </td>
                                     <td>
                                         <div class="um-actions-cell">
+                                            <!-- Edit/Add Parent Phone Button -->
+                                            <button type="button"
+                                                    id="btn-action-phone-<%= u._id %>"
+                                                    class="btn-act"
+                                                    style="background: #F0FDF4; color: #15803D; border-color: #BBF7D0;"
+                                                    title="<%= parentPhoneStr ? 'Edit parent phone' : 'Add parent phone' %>"
+                                                    onclick="openEditPhoneModal('<%= u._id %>', '<%= parentPhoneStr %>', '<%= userStr.replace(/'/g, "\\'") %>', '<%= nameStr.replace(/'/g, "\\'") %>')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                                </svg>
+                                                <%= parentPhoneStr ? 'Edit Phone' : 'Add Phone' %>
+                                            </button>
                                             <!-- Edit/Add Email Button -->
                                             <button type="button"
                                                     id="btn-action-email-<%= u._id %>"
@@ -1177,6 +1205,15 @@
                     <label for="newEmail">Email Address (for Password Reset OTP)</label>
                     <input type="email" id="newEmail" name="email" class="um-input" placeholder="e.g. student@gmail.com" autocomplete="email">
                     <span class="um-input-desc">Used to send password reset OTPs via Brevo Mail.</span>
+                </div>
+
+                <div class="um-form-group">
+                    <label for="newParentPhone">Parent WhatsApp Phone (10 digits without +91)</label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 700; color: #475569; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; padding: 7px 11px;">+91</span>
+                        <input type="tel" id="newParentPhone" name="parentPhone" class="um-input" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" autocomplete="tel" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10);" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 600;">
+                    </div>
+                    <span class="um-input-desc">Enter strictly 10 digits without country code. Used to send official test results on WhatsApp.</span>
                 </div>
 
                 <div class="um-form-group">
@@ -1439,6 +1476,48 @@
         </form>
     </dialog>
 
+    <!-- ============================================================ -->
+    <!-- 5. EDIT PARENT PHONE MODAL                                    -->
+    <!-- ============================================================ -->
+    <dialog id="editPhoneModal" class="um-modal" aria-labelledby="modalEditPhoneTitle">
+        <div class="um-modal-header" style="background: #F0FDF4; border-bottom: 1px solid #BBF7D0;">
+            <div class="um-modal-header-left">
+                <div class="um-modal-icon" style="background: #25D366; color: #FFFFFF;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                </div>
+                <h3 id="modalEditPhoneTitle" class="um-modal-title" style="color: #14532D;">Edit Parent WhatsApp Phone</h3>
+            </div>
+            <button type="button" class="um-modal-close-btn" onclick="closeEditPhoneModal()">&times;</button>
+        </div>
+
+        <form id="editPhoneForm" onsubmit="submitEditPhone(event)">
+            <input type="hidden" id="editPhoneUserId">
+            <div class="um-modal-body">
+                <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 1.25rem 0;">
+                    Update the registered Parent WhatsApp number for <strong id="editPhoneUsernameLabel" style="color: #0F172A; font-family: 'JetBrains Mono', monospace;"></strong>. This phone receives official OMR exam scorecards.
+                </p>
+
+                <div class="um-form-group">
+                    <label for="editPhoneInput">Parent Mobile Number (without +91) *</label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 700; color: #475569; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; padding: 7px 11px;">+91</span>
+                        <input type="tel" id="editPhoneInput" name="parentPhone" class="um-input" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" autocomplete="tel" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10);" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; letter-spacing: 1px;">
+                    </div>
+                    <span class="um-input-desc">Enter strictly the 10-digit mobile number without +91 country code. Leave blank to remove phone.</span>
+                </div>
+            </div>
+
+            <div class="um-modal-footer">
+                <button type="button" class="btn-um-secondary" onclick="closeEditPhoneModal()">Cancel</button>
+                <button type="submit" class="btn-um-primary" id="btnSaveUserPhone" style="background: #25D366; border-color: #20BA5A;">
+                    Save Phone
+                </button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
         let currentRoleFilter = 'all';
 
@@ -1646,6 +1725,107 @@
             const m = document.getElementById('editEmailModal');
             if (m && typeof m.close === 'function') m.close();
             else if (m) m.removeAttribute('open');
+        }
+
+        // 5. Parent Phone Modal & Submission
+        function openEditPhoneModal(userId, currentPhone, username, fullName) {
+            document.getElementById('editPhoneUserId').value = userId;
+            document.getElementById('editPhoneInput').value = currentPhone || '';
+            document.getElementById('editPhoneUsernameLabel').textContent = fullName ? `${fullName} (@${username})` : `@${username}`;
+            const m = document.getElementById('editPhoneModal');
+            if (m && typeof m.showModal === 'function') m.showModal();
+            else if (m) m.setAttribute('open', '');
+            setTimeout(() => {
+                const inp = document.getElementById('editPhoneInput');
+                if (inp) inp.focus();
+            }, 60);
+        }
+
+        function closeEditPhoneModal() {
+            const m = document.getElementById('editPhoneModal');
+            if (m && typeof m.close === 'function') m.close();
+            else if (m) m.removeAttribute('open');
+        }
+
+        async function submitEditPhone(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editPhoneUserId').value;
+            let rawPhone = document.getElementById('editPhoneInput').value.trim();
+            let cleanPhone = rawPhone.replace(/\D/g, '');
+
+            // Strip +91 or leading 0 if pasted
+            if (cleanPhone.length > 10 && cleanPhone.startsWith('91')) cleanPhone = cleanPhone.slice(2);
+            else if (cleanPhone.length > 10 && cleanPhone.startsWith('0')) cleanPhone = cleanPhone.slice(1);
+            if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
+
+            if (cleanPhone && cleanPhone.length !== 10) {
+                alert('Please enter strictly a 10-digit mobile number without +91 country code.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSaveUserPhone');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            try {
+                const res = await fetch('/users/' + encodeURIComponent(userId) + '/phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ parentPhone: cleanPhone })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to update phone number');
+                }
+
+                // Update cell and button state on table row
+                const cell = document.getElementById('phone-cell-' + userId);
+                const row = document.getElementById('row-' + userId);
+                const username = row ? (row.querySelector('.um-user-handle')?.textContent.replace(/^@/, '') || '') : '';
+                const fullName = row ? (row.querySelector('.user-fullname-display')?.textContent || '') : '';
+
+                if (cell) {
+                    if (cleanPhone) {
+                        cell.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="user-phone-text" id="phone-text-${userId}" style="font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; color: var(--text-main); font-weight: 600;">${escapeHtml(cleanPhone)}</span>
+                                <button type="button" class="btn-phone-inline-edit" onclick="openEditPhoneModal('${userId}', '${escapeAttr(cleanPhone)}', '${escapeAttr(username)}', '${escapeAttr(fullName)}')" title="Edit parent WhatsApp phone" style="border: 1px solid #CBD5E1; background: #F8FAFC; border-radius: 4px; padding: 1px 6px; font-size: 0.7rem; cursor: pointer; color: #475569; font-weight: 600;">
+                                    Edit
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = `
+                            <button type="button" class="btn-phone-add-pill" onclick="openEditPhoneModal('${userId}', '', '${escapeAttr(username)}', '${escapeAttr(fullName)}')" title="Add parent WhatsApp phone (without +91)" style="background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 2px 9px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                                <span>+</span> Add Phone
+                            </button>
+                        `;
+                    }
+                }
+
+                const actionBtn = document.getElementById('btn-action-phone-' + userId);
+                if (actionBtn) {
+                    actionBtn.setAttribute('onclick', `openEditPhoneModal('${userId}', '${escapeAttr(cleanPhone)}', '${escapeAttr(username)}', '${escapeAttr(fullName)}')`);
+                    actionBtn.title = cleanPhone ? 'Edit parent phone' : 'Add parent phone';
+                    actionBtn.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        ${cleanPhone ? 'Edit Phone' : 'Add Phone'}
+                    `;
+                }
+
+                if (row) {
+                    const oldSearch = row.getAttribute('data-search') || '';
+                    row.setAttribute('data-search', oldSearch + ' ' + cleanPhone);
+                }
+
+                closeEditPhoneModal();
+            } catch (err) {
+                alert(err.message || 'Error updating phone.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Phone';
+            }
         }
 
         async function submitEditEmail(e) {
