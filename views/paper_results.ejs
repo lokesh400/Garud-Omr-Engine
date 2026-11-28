@@ -1245,12 +1245,12 @@
             flex-direction: column;
         }
         .nvt-q-row {
-            padding: 12px 18px;
+            padding: 10px 16px;
             border-bottom: 1px solid #F1F5F9;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 10px;
             transition: background 0.12s ease;
         }
         .nvt-q-row:last-child {
@@ -1259,22 +1259,32 @@
         .nvt-q-row:hover {
             background: #F8FAFC;
         }
+        .nvt-score-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
+        }
         .nvt-score-btn {
             border: 1.5px solid #CBD5E1;
             background: #FFFFFF;
             color: #475569;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.76rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.14s ease;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 3px;
             user-select: none;
             font-family: inherit;
             line-height: 1.2;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .nvt-score-btn:hover {
             transform: translateY(-1px);
@@ -1305,7 +1315,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 12px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
             z-index: 2;
@@ -1946,9 +1956,6 @@
                     <button type="button" id="toggleOverlayBtn" class="btn-omr-tool" onclick="toggleCheckingOverlay()" title="Toggle live check marks overlay">
                         Marks: ON
                     </button>
-                    <a id="modalOpenFullBtn" href="#" target="_blank" class="btn-omr-tool" title="Open full resolution photo in new tab">
-                        Photo &#8599;
-                    </a>
                     <% if (currentUser && currentUser.role === 'admin') { %>
                         <button type="button" class="btn btn-danger btn-sm" id="modalDeleteBtn" onclick="deleteCurrentModalSubmission()" title="Delete copy from database and Cloudinary" style="padding: 2px 8px; font-size: 0.75rem; height: 28px;">
                             Delete
@@ -1964,7 +1971,7 @@
                     <div class="omr-stage-viewport">
                         <div class="omr-preview-frame">
                             <img id="modalOmrImg" src="" alt="Evaluated OMR Sheet"
-                                onerror="this.onerror=null; document.getElementById('modalCloudInfo').textContent='Image preview unavailable or blocked';">
+                                onerror="this.onerror=null;">
                             <svg id="modalOmrOverlay" viewBox="0 0 1000 1461" preserveAspectRatio="none"></svg>
                         </div>
                     </div>
@@ -1980,9 +1987,6 @@
                             <button type="button" class="btn-zoom active" id="btnZoom1" onclick="setOmrModalZoom(1, this)">1×</button>
                             <button type="button" class="btn-zoom" id="btnZoom15" onclick="setOmrModalZoom(1.5, this)">1.5×</button>
                             <button type="button" class="btn-zoom" id="btnZoom2" onclick="setOmrModalZoom(2, this)">2×</button>
-                        </div>
-                        <div id="modalCloudInfo" style="color: #64748B; font-size: 0.73rem;">
-                            Stored on Cloudinary
                         </div>
                     </div>
                 </div>
@@ -3137,13 +3141,13 @@
                                 </div>
                                 <div class="nvt-score-group">
                                     <button type="button" class="nvt-score-btn btn-c ${val === 4 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, 4)" title="Right (+4 marks)">
-                                        &#10003; Right (+4)
+                                        &#10003; +4
                                     </button>
                                     <button type="button" class="nvt-score-btn btn-w ${val === -1 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, -1)" title="Wrong (-1 mark)">
-                                        &#10005; Wrong (-1)
+                                        &#10005; -1
                                     </button>
                                     <button type="button" class="nvt-score-btn btn-b ${val === 0 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, 0)" title="Skipped (0 marks)">
-                                        &#9675; Skip (0)
+                                        &#9675; Skip
                                     </button>
                                 </div>
                             </div>
@@ -3825,12 +3829,7 @@
 
                 const img = document.getElementById('modalOmrImg');
                 img.src = imgUrl;
-                document.getElementById('modalOpenFullBtn').href = imgUrl || '#';
 
-                const accName = data.cloudinary_account || data.cloudinaryAccount;
-                document.getElementById('modalCloudInfo').textContent = accName
-                    ? `Stored on Cloudinary (${accName}) • Live Checking Overlay`
-                    : 'Stored on Cloudinary Multi-Account Pool';
 
                 // Populate Sections + Sum of All Sections
                 const secContainer = document.getElementById('modalSectionContainer');
