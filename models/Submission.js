@@ -9,7 +9,7 @@ const submissionSchema = new mongoose.Schema({
   },
   // Explicitly referencing the Paper collection instead of using Mixed
   paper_id: {
-    type: String, 
+    type: String,
     required: true,
     ref: 'Paper'
   },
@@ -63,13 +63,13 @@ const submissionSchema = new mongoose.Schema({
 submissionSchema.index({ rollnumber: 1, paper_id: 1 });
 
 // Virtual aliases for your existing backend logic compatibility
-submissionSchema.virtual('rollNumber').get(function() { return this.rollnumber; }).set(function(val) { this.rollnumber = val; });
-submissionSchema.virtual('paperId').get(function() { return this.paper_id; }).set(function(val) { this.paper_id = val; });
-submissionSchema.virtual('omrImageUrl').get(function() { return this.cloudinary_image_url; }).set(function(val) { this.cloudinary_image_url = val; });
-submissionSchema.virtual('cloudinaryPublicId').get(function() { return this.cloudinary_public_id; }).set(function(val) { this.cloudinary_public_id = val; });
-submissionSchema.virtual('cloudinaryAccount').get(function() { return this.cloudinary_account; }).set(function(val) { this.cloudinary_account = val; });
-submissionSchema.virtual('scannedAt').get(function() { return this.submitted_at; }).set(function(val) { this.submitted_at = val; });
-submissionSchema.virtual('aggregateMarks').get(function() {
+submissionSchema.virtual('rollNumber').get(function () { return this.rollnumber; }).set(function (val) { this.rollnumber = val; });
+submissionSchema.virtual('paperId').get(function () { return this.paper_id; }).set(function (val) { this.paper_id = val; });
+submissionSchema.virtual('omrImageUrl').get(function () { return this.cloudinary_image_url; }).set(function (val) { this.cloudinary_image_url = val; });
+submissionSchema.virtual('cloudinaryPublicId').get(function () { return this.cloudinary_public_id; }).set(function (val) { this.cloudinary_public_id = val; });
+submissionSchema.virtual('cloudinaryAccount').get(function () { return this.cloudinary_account; }).set(function (val) { this.cloudinary_account = val; });
+submissionSchema.virtual('scannedAt').get(function () { return this.submitted_at; }).set(function (val) { this.submitted_at = val; });
+submissionSchema.virtual('aggregateMarks').get(function () {
   if (this.examType === 'jee') {
     return this.score !== undefined ? this.score : 0;
   }
