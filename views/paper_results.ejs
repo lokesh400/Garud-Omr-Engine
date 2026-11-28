@@ -1167,6 +1167,150 @@
             }
         }
 
+        
+        /* Dedicated Full-Screen NVT (Section B Numerical) Modal */
+        .nvt-fullscreen-modal {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: #F8FAFC;
+            z-index: 1050;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .nvt-fullscreen-modal[open] {
+            display: flex;
+        }
+        .nvt-fullscreen-modal::backdrop {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+        }
+        .nvt-modal-header {
+            padding: 14px 28px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            z-index: 2;
+        }
+        .nvt-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #F8FAFC;
+        }
+        .nvt-cards-container {
+            max-width: 1320px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+        }
+        @media (max-width: 1060px) {
+            .nvt-cards-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .nvt-subject-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .nvt-subject-header {
+            padding: 14px 18px;
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nvt-questions-list {
+            display: flex;
+            flex-direction: column;
+        }
+        .nvt-q-row {
+            padding: 12px 18px;
+            border-bottom: 1px solid #F1F5F9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            transition: background 0.12s ease;
+        }
+        .nvt-q-row:last-child {
+            border-bottom: none;
+        }
+        .nvt-q-row:hover {
+            background: #F8FAFC;
+        }
+        .nvt-score-btn {
+            border: 1.5px solid #CBD5E1;
+            background: #FFFFFF;
+            color: #475569;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.14s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+            font-family: inherit;
+            line-height: 1.2;
+        }
+        .nvt-score-btn:hover {
+            transform: translateY(-1px);
+            border-color: #94A3B8;
+        }
+        .nvt-score-btn.btn-c.active {
+            background: #10B981 !important;
+            color: #FFFFFF !important;
+            border-color: #059669 !important;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        }
+        .nvt-score-btn.btn-w.active {
+            background: #EF4444 !important;
+            color: #FFFFFF !important;
+            border-color: #DC2626 !important;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+        }
+        .nvt-score-btn.btn-b.active {
+            background: #64748B !important;
+            color: #FFFFFF !important;
+            border-color: #475569 !important;
+            box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
+        }
+        .nvt-modal-footer {
+            padding: 14px 28px;
+            background: #FFFFFF;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+            z-index: 2;
+        }
+
         /* Numerical Question Editing Bubbles */
         .jee-nvq-btn {
             border: 1.5px solid #CBD5E1;
@@ -1613,7 +1757,7 @@
                                                             </button>
                                                             <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
                                                                 <button type="button" class="btn btn-outline btn-sm"
-                                                                    onclick="openOmrModalAndFocusNvq('<%= r._id %>')"
+                                                                    onclick="openDedicatedNvtModal('<%= r._id %>')"
                                                                     title="Edit Section B Numerical (NVT) Answers"
                                                                     style="font-weight: 700; font-size: 0.76rem; padding: 4px 8px; color: #7E22CE; border-color: #D8B4FE; background: #FAF5FF; display: inline-flex; align-items: center; gap: 4px;">
                                                                     ✏️ NVT
@@ -1717,7 +1861,7 @@
                                             </button>
                                             <% if (paper.exam_type === 'jee' || /jee/i.test(paper.subject || '') || /jee/i.test(paper.title || '')) { %>
                                                 <button type="button" class="btn btn-outline btn-sm"
-                                                    onclick="openOmrModalAndFocusNvq('<%= r._id %>')"
+                                                    onclick="openDedicatedNvtModal('<%= r._id %>')"
                                                     title="Edit Section B Numerical (NVT) Answers"
                                                     style="font-weight: 700; font-size: 0.76rem; padding: 4px 10px; color: #7E22CE; border-color: #D8B4FE; background: #FAF5FF; display: inline-flex; align-items: center; gap: 4px; height: 36px;">
                                                     ✏️ NVT
@@ -1982,6 +2126,111 @@
         </dialog>
 
         <!-- Hard Recheck Progress Modal -->
+        
+        <!-- Dedicated Fullscreen NVT (Section B Numerical Only) Modal -->
+        <dialog id="nvtEditModal" class="nvt-fullscreen-modal" closedby="any" aria-labelledby="nvtModalTitle">
+            <!-- Sticky Header -->
+            <div class="nvt-modal-header">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #FAF5FF; color: #7E22CE; border: 1.5px solid #D8B4FE; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                        ✏️
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <h3 id="nvtModalTitle" style="font-size: 1.15rem; font-weight: 800; margin: 0; color: #0F172A;">
+                                Section B Numerical Questions (NVT)
+                            </h3>
+                            <span class="count-pill" id="nvtModalRoll" style="font-size: 0.82rem; padding: 3px 10px;">ROLL</span>
+                            <span id="nvtModalStudentName" style="font-weight: 700; color: #334155; font-size: 0.95rem;"></span>
+                        </div>
+                        <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
+                            Grading 15 Numerical Value Questions (Physics Q21–25 &bull; Chem Q46–50 &bull; Math Q71–75)
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                    <div style="background: #FFFFFF; border: 1px solid var(--border-color); padding: 6px 14px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.82rem; font-weight: 600; color: #64748B;">Total Numerical Score:</span>
+                        <span id="nvtModalTotalScore" style="font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: #2563EB;">+0</span>
+                        <span style="font-size: 0.82rem; color: #94A3B8; font-weight: 600;">/ 60 Marks</span>
+                    </div>
+
+                    <button type="button" class="btn-modal-close" onclick="closeDedicatedNvtModal()" aria-label="Close NVT dialog" style="width: 36px; height: 36px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Body (Numerical Questions ONLY and nothing else) -->
+            <div class="nvt-modal-body">
+                <div class="nvt-cards-container">
+                    <!-- Physics Section B -->
+                    <div class="nvt-subject-card">
+                        <div class="nvt-subject-header" style="border-top: 3.5px solid #2563EB;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.25rem;">⚛️</span>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Physics Section B</h4>
+                                    <div style="font-size: 0.74rem; color: #64748B;">Questions Q21 to Q25</div>
+                                </div>
+                            </div>
+                            <span id="nvtPhySubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                        </div>
+                        <div id="nvtPhyQuestionsList" class="nvt-questions-list"></div>
+                    </div>
+
+                    <!-- Chemistry Section B -->
+                    <div class="nvt-subject-card">
+                        <div class="nvt-subject-header" style="border-top: 3.5px solid #059669;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.25rem;">🧪</span>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Chemistry Section B</h4>
+                                    <div style="font-size: 0.74rem; color: #64748B;">Questions Q46 to Q50</div>
+                                </div>
+                            </div>
+                            <span id="nvtChemSubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #059669; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                        </div>
+                        <div id="nvtChemQuestionsList" class="nvt-questions-list"></div>
+                    </div>
+
+                    <!-- Mathematics Section B -->
+                    <div class="nvt-subject-card">
+                        <div class="nvt-subject-header" style="border-top: 3.5px solid #7C3AED;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.25rem;">📐</span>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0F172A;">Mathematics Section B</h4>
+                                    <div style="font-size: 0.74rem; color: #64748B;">Questions Q71 to Q75</div>
+                                </div>
+                            </div>
+                            <span id="nvtMathSubTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #7C3AED; background: #FAF5FF; border: 1px solid #E9D5FF; padding: 2px 8px; border-radius: 6px;">+0 Marks</span>
+                        </div>
+                        <div id="nvtMathQuestionsList" class="nvt-questions-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Footer -->
+            <div class="nvt-modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="resetDedicatedNvtScores()" style="font-weight: 600; padding: 8px 16px;">
+                    ↺ Reset Changes
+                </button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeDedicatedNvtModal()" style="font-weight: 600; padding: 8px 16px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSaveDedicatedNvt" onclick="saveDedicatedNvtScores()" style="font-weight: 700; padding: 8px 24px; background: #059669; border-color: #059669; font-size: 0.88rem;">
+                        💾 Save Numerical Scores
+                    </button>
+                </div>
+            </div>
+        </dialog>
+
         <dialog id="hardRecheckModal" class="hard-recheck-dialog" closedby="any" aria-labelledby="hardRecheckTitle">
             <div class="recheck-modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -2763,22 +3012,193 @@
             }
 
             
-            function openOmrModalAndFocusNvq(id) {
-                openOmrModalById(id);
-                if (typeof setMobileModalTab === 'function') {
-                    setMobileModalTab('breakdown');
+            
+            let currentNvtEditingSubId = null;
+            let currentNvtScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
+            let originalNvtScores = { phy: [0, 0, 0, 0, 0], chem: [0, 0, 0, 0, 0], math: [0, 0, 0, 0, 0] };
+
+            function openDedicatedNvtModal(id) {
+                const data = submissionsMap[String(id)];
+                if (!data) {
+                    alert('Could not load submission details for ID: ' + id);
+                    return;
                 }
-                setTimeout(() => {
-                    const firstNvq = document.querySelector('#modalBreakdownBody tr[data-numerical="true"]') ||
-                                     document.querySelector('#modalBreakdownBody .jee-nvq-btn')?.closest('tr');
-                    if (firstNvq) {
-                        firstNvq.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstNvq.style.transition = 'background-color 0.4s ease';
-                        firstNvq.style.backgroundColor = '#F3E8FF';
-                        setTimeout(() => { firstNvq.style.backgroundColor = ''; }, 2000);
-                    }
-                }, 300);
+                currentNvtEditingSubId = String(id);
+
+                const extractNums = (arr) => Array.isArray(arr) ? arr.slice(0, 5).map(v => Number(v) || 0) : [0, 0, 0, 0, 0];
+                const ns = data.numericalScores || {};
+                let pNums = extractNums(ns.phy);
+                let cNums = extractNums(ns.chem);
+                let mNums = extractNums(ns.math);
+
+                if (data.breakdown && Array.isArray(data.breakdown)) {
+                    data.breakdown.forEach(item => {
+                        if (item.isNumerical) {
+                            const q = Number(item.displayQ || item.q);
+                            const val = (item.verdict === 'correct' || item.marks === '+4') ? 4 : ((item.verdict === 'wrong' || item.marks === '-1') ? -1 : 0);
+                            if (q >= 21 && q <= 25 && (!ns.phy || ns.phy.length === 0)) pNums[q - 21] = val;
+                            else if (q >= 46 && q <= 50 && (!ns.chem || ns.chem.length === 0)) cNums[q - 46] = val;
+                            else if (q >= 71 && q <= 75 && (!ns.math || ns.math.length === 0)) mNums[q - 71] = val;
+                        }
+                    });
+                }
+
+                currentNvtScores = {
+                    phy: pNums,
+                    chem: cNums,
+                    math: mNums
+                };
+                originalNvtScores = JSON.parse(JSON.stringify(currentNvtScores));
+
+                const roll = data.rollnumber || data.rollNumber || 'UNKNOWN';
+                document.getElementById('nvtModalRoll').textContent = roll;
+                const nameEl = document.getElementById('nvtModalStudentName');
+                if (nameEl) {
+                    nameEl.textContent = data.studentName ? ('• ' + data.studentName) : '';
+                }
+
+                renderDedicatedNvtGrid();
+
+                const modal = document.getElementById('nvtEditModal');
+                if (modal && typeof modal.showModal === 'function') {
+                    modal.showModal();
+                } else if (modal) {
+                    modal.setAttribute('open', '');
+                    modal.style.display = 'flex';
+                }
             }
+
+            function closeDedicatedNvtModal() {
+                const modal = document.getElementById('nvtEditModal');
+                if (modal && modal.open) {
+                    modal.close();
+                } else if (modal) {
+                    modal.removeAttribute('open');
+                    modal.style.display = 'none';
+                }
+                currentNvtEditingSubId = null;
+            }
+
+            function setDedicatedNvtScore(subKey, index, marks) {
+                if (!currentNvtScores[subKey]) currentNvtScores[subKey] = [0, 0, 0, 0, 0];
+                currentNvtScores[subKey][index] = Number(marks);
+                renderDedicatedNvtGrid();
+            }
+
+            function resetDedicatedNvtScores() {
+                currentNvtScores = JSON.parse(JSON.stringify(originalNvtScores));
+                renderDedicatedNvtGrid();
+            }
+
+            function renderDedicatedNvtGrid() {
+                const sumArr = (arr) => (arr || []).reduce((a, b) => a + Number(b), 0);
+                const phyTot = sumArr(currentNvtScores.phy);
+                const chemTot = sumArr(currentNvtScores.chem);
+                const mathTot = sumArr(currentNvtScores.math);
+                const grandTot = phyTot + chemTot + mathTot;
+
+                const fmtScore = (s) => (s > 0 ? '+' + s : String(s)) + ' Marks';
+                document.getElementById('nvtPhySubTotal').textContent = fmtScore(phyTot);
+                document.getElementById('nvtChemSubTotal').textContent = fmtScore(chemTot);
+                document.getElementById('nvtMathSubTotal').textContent = fmtScore(mathTot);
+
+                const grandEl = document.getElementById('nvtModalTotalScore');
+                if (grandEl) {
+                    grandEl.textContent = grandTot > 0 ? '+' + grandTot : String(grandTot);
+                    grandEl.style.color = grandTot > 0 ? '#059669' : (grandTot < 0 ? '#DC2626' : '#2563EB');
+                }
+
+                const buildList = (containerId, subKey, startQ) => {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    let html = '';
+                    const scores = currentNvtScores[subKey] || [0, 0, 0, 0, 0];
+                    for (let i = 0; i < 5; i++) {
+                        const qNum = startQ + i;
+                        const val = Number(scores[i] || 0);
+                        let badgeColor = '#64748B';
+                        let badgeBg = '#F1F5F9';
+                        let badgeText = 'Skipped (0)';
+                        if (val === 4) {
+                            badgeColor = '#065F46';
+                            badgeBg = '#D1FAE5';
+                            badgeText = '+4 Correct';
+                        } else if (val === -1) {
+                            badgeColor = '#991B1B';
+                            badgeBg = '#FEE2E2';
+                            badgeText = '-1 Wrong';
+                        }
+
+                        html += `
+                            <div class="nvt-q-row">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 800; color: #1E293B;">Q${qNum}</span>
+                                    <span style="font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: ${badgeBg}; color: ${badgeColor};">${badgeText}</span>
+                                </div>
+                                <div class="nvt-score-group">
+                                    <button type="button" class="nvt-score-btn btn-c ${val === 4 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, 4)" title="Right (+4 marks)">
+                                        &#10003; Right (+4)
+                                    </button>
+                                    <button type="button" class="nvt-score-btn btn-w ${val === -1 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, -1)" title="Wrong (-1 mark)">
+                                        &#10005; Wrong (-1)
+                                    </button>
+                                    <button type="button" class="nvt-score-btn btn-b ${val === 0 ? 'active' : ''}" onclick="setDedicatedNvtScore('${subKey}', ${i}, 0)" title="Skipped (0 marks)">
+                                        &#9675; Skip (0)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    container.innerHTML = html;
+                };
+
+                buildList('nvtPhyQuestionsList', 'phy', 21);
+                buildList('nvtChemQuestionsList', 'chem', 46);
+                buildList('nvtMathQuestionsList', 'math', 71);
+            }
+
+            async function saveDedicatedNvtScores() {
+                if (!currentNvtEditingSubId) return;
+                const btn = document.getElementById('btnSaveDedicatedNvt');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Saving...';
+                }
+
+                try {
+                    const res = await fetch('/api/submission/' + encodeURIComponent(currentNvtEditingSubId) + '/numerical', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numericalScores: currentNvtScores })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update numerical scores');
+                    }
+
+                    const updatedSub = data.submission;
+                    if (submissionsMap[currentNvtEditingSubId]) {
+                        Object.assign(submissionsMap[currentNvtEditingSubId], updatedSub);
+                    }
+
+                    updateTableRowForSubmission(updatedSub);
+                    closeDedicatedNvtModal();
+                    alert('Section B Numerical (NVT) scores updated and recalculated successfully!');
+                } catch (err) {
+                    console.error('Failed to save numerical scores:', err);
+                    alert('Error saving numerical scores: ' + err.message);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = '💾 Save Numerical Scores';
+                    }
+                }
+            }
+
+            function openOmrModalAndFocusNvq(id) {
+                openDedicatedNvtModal(id);
+            }
+
             function openOmrModalById(id) {
                 const data = submissionsMap[String(id)];
                 if (!data) {
